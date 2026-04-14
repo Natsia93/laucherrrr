@@ -219,10 +219,10 @@ export default function Home() {
 
                 {/* Modern Plus Menu - NOW ON THE RIGHT */}
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-[#4d7537]/20 hover:text-[#4d7537]">
+                  <DropdownMenuTrigger>
+                    <div className="h-9 w-9 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-[#4d7537]/20 hover:text-[#4d7537] cursor-pointer transition-all">
                       <Plus className="w-5 h-5" />
-                    </Button>
+                    </div>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-56 p-2 rounded-xl shadow-2xl border-neutral-100 dark:border-neutral-800">
                     <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="flex items-center gap-3 p-2.5 cursor-pointer rounded-lg hover:bg-[#4d7537]/10">

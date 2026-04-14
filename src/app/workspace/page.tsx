@@ -275,10 +275,10 @@ function WorkspaceContent() {
                <input type="file" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
                
                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-[#4d7537]/20 hover:text-[#4d7537] transition-all">
+                  <DropdownMenuTrigger>
+                    <div className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-[#4d7537]/20 hover:text-[#4d7537] cursor-pointer transition-all">
                       <Plus className="w-6 h-6" />
-                    </Button>
+                    </div>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-56 p-2 rounded-2xl shadow-2xl border-neutral-100 dark:border-neutral-800">
                     <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="flex items-center gap-3 p-3 cursor-pointer rounded-xl hover:bg-[#4d7537]/10">
