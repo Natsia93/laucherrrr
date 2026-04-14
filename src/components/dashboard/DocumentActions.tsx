@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Download, Pencil, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { ActionModal } from "@/components/ui/ActionModal";
 
 interface DocumentActionsProps {
   docId: string;
@@ -13,12 +14,9 @@ interface DocumentActionsProps {
 export function DocumentActions({ docId, title }: DocumentActionsProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleDelete = async () => {
-    if (!window.confirm(`Apakah Anda yakin ingin menghapus dokumen "${title}"?`)) {
-      return;
-    }
-
     setIsDeleting(true);
     try {
       const response = await fetch(`/api/documents/${docId}`, {
@@ -26,6 +24,7 @@ export function DocumentActions({ docId, title }: DocumentActionsProps) {
       });
 
       if (response.ok) {
+        setShowDeleteModal(false);
         router.refresh();
       } else {
         const data = await response.json();
@@ -69,10 +68,23 @@ export function DocumentActions({ docId, title }: DocumentActionsProps) {
         className="h-8 w-8 text-neutral-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
         disabled={isDeleting}
         title="Hapus Dokumen"
-        onClick={handleDelete}
+        onClick={() => setShowDeleteModal(true)}
       >
-        {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+        <Trash2 className="w-4 h-4" />
       </Button>
+
+      <ActionModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
+        title="Hapus Dokumen?"
+        description={`Dokumen "${title}" akan dihapus secara permanen dari penyimpanan Anda. Tindakan ini tidak dapat dibatalkan.`}
+        type="danger"
+        confirmText="Hapus Sekarang"
+        cancelText="Batal"
+      />
     </div>
   );
 }
+
