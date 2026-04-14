@@ -33,16 +33,33 @@ function GenerateContent() {
   const [showOther, setShowOther] = useState<Record<number, boolean>>({});
   const [selectedModel, setSelectedModel] = useState("deepseek");
 
+  const mandatoryQuestions: Question[] = [
+    { 
+      id: 1001, 
+      question: "Mata Pelajaran apa yang ingin Anda rancang?", 
+      type: "text", 
+      placeholder: "Misal: Matematika, Bahasa Arab, IPA, Fisika...", 
+      category: "mandatory" 
+    },
+    { 
+      id: 1002, 
+      question: "Pilih Kelas:", 
+      type: "chips", 
+      options: ["Kelas 1", "Kelas 2", "Kelas 3", "Kelas 4", "Kelas 5", "Kelas 6", "Kelas 7", "Kelas 8", "Kelas 9", "Kelas 10", "Kelas 11", "Kelas 12"], 
+      category: "mandatory" 
+    },
+    { 
+      id: 1003, 
+      question: "Pilih Fase:", 
+      type: "chips", 
+      options: ["Fase A", "Fase B", "Fase C", "Fase D", "Fase E", "Fase F"], 
+      category: "mandatory" 
+    }
+  ];
+
   // Fetch dynamic questions from AI based on the user's prompt
   useEffect(() => {
     const fetchQuestions = async () => {
-      // Jika bukan LKPD, kita tidak butuh wawancara panjang
-      if (docType !== "LKPD") {
-        setQuestions([]);
-        setLoading(false);
-        return;
-      }
-
       try {
         const response = await fetch("/api/generate-questions", {
           method: "POST",
@@ -51,26 +68,37 @@ function GenerateContent() {
         });
         const data = await response.json();
         
+        let initialQuestions = [...mandatoryQuestions];
+
         // Tambahkan pertanyaan bahasa di awal khusus LKPD
-        const langQuestion: Question = {
-            id: 0,
-            question: "Pilih Bahasa untuk LKPD ini:",
-            type: "chips",
-            options: ["Bahasa Indonesia", "Bahasa Arab (Ber-Harokat/Tasykil)"],
-            category: "data"
-        };
+        if (docType === "LKPD") {
+           initialQuestions.push({
+              id: 0,
+              question: "Pilih Bahasa untuk LKPD ini:",
+              type: "chips",
+              options: ["Bahasa Indonesia", "Bahasa Arab (Ber-Harokat/Tasykil)"],
+              category: "data"
+           });
+        }
         
-        setQuestions([langQuestion, ...(data.questions || [])]);
+        // Filter out AI questions that might duplicate mandatory ones (Phase/Class/Mata Pelajaran)
+        const filteredAiQuestions = (data.questions || []).filter((q: Question) => {
+           const lowerQ = q.question.toLowerCase();
+           return !lowerQ.includes("kelas") && !lowerQ.includes("fase") && !lowerQ.includes("mata pelajaran");
+        });
+
+        setQuestions([...initialQuestions, ...filteredAiQuestions]);
       } catch (err) {
-        // Fallback LKPD questions
-        setQuestions([
-            { id: 0, question: "Pilih Bahasa untuk LKPD ini:", type: "chips", options: ["Bahasa Indonesia", "Bahasa Arab (Ber-Harokat/Tasykil)"], category: "data" },
-            { id: 1, question: "Untuk Fase dan Kelas berapakah LKPD ini dirancang?", type: "chips", options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E (Kls 10)", "Fase F (Kls 11-12)"], category: "data" },
-            { id: 2, question: "Apa materi spesifik yang ingin diujikan?", type: "text", placeholder: "Misal: Rantai Makanan, Thaharah, Persamaan Kuadrat...", category: "data" },
-            { id: 3, question: "Jumlah Soal Pilihan Ganda (PG) yang Anda inginkan?", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal", "15 Soal"], category: "data" },
-            { id: 4, question: "Jumlah Soal Jawaban Singkat yang Anda inginkan?", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal"], category: "data" },
-            { id: 5, question: "Jumlah Soal Esai yang Anda inginkan?", type: "chips", options: ["0 Soal", "2 Soal", "5 Soal"], category: "data" },
-        ]);
+        // Fallback
+        let fallback = [...mandatoryQuestions];
+        if (docType === "LKPD") {
+            fallback.push({ id: 0, question: "Pilih Bahasa untuk LKPD ini:", type: "chips", options: ["Bahasa Indonesia", "Bahasa Arab (Ber-Harokat/Tasykil)"], category: "data" });
+            fallback.push({ id: 2, question: "Apa materi spesifik yang ingin diujikan?", type: "text", placeholder: "Misal: Rantai Makanan, Thaharah, Persamaan Kuadrat...", category: "data" });
+            fallback.push({ id: 3, question: "Jumlah Soal Pilihan Ganda (PG) yang Anda inginkan?", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal", "15 Soal"], category: "data" });
+            fallback.push({ id: 4, question: "Jumlah Soal Jawaban Singkat yang Anda inginkan?", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal"], category: "data" });
+            fallback.push({ id: 5, question: "Jumlah Soal Esai yang Anda inginkan?", type: "chips", options: ["0 Soal", "2 Soal", "5 Soal"], category: "data" });
+        }
+        setQuestions(fallback);
       } finally {
         setLoading(false);
       }
@@ -96,6 +124,9 @@ function GenerateContent() {
   };
 
   const toggleSkip = (id: number) => {
+    const q = questions.find(q => q.id === id);
+    if (q?.category === "mandatory") return; // Cannot skip mandatory
+
     if (skipped.includes(id)) {
       setSkipped(prev => prev.filter(s => s !== id));
     } else {
@@ -109,6 +140,8 @@ function GenerateContent() {
     }
   };
 
+  const mandatoryIds = questions.filter(q => q.category === "mandatory").map(q => q.id);
+  const allMandatoryAnswered = mandatoryIds.length > 0 && mandatoryIds.every(id => !!answers[id]);
   const answeredCount = Object.keys(answers).length + skipped.length;
 
   if (loading) {
@@ -184,12 +217,16 @@ function GenerateContent() {
                      <span className="text-[#4d7537]">{idx + 1}.</span> 
                      {q.question}
                    </h2>
-                   <button 
-                     onClick={() => toggleSkip(q.id)}
-                     className={`text-xs font-bold uppercase tracking-wider transition-colors ${skipped.includes(q.id) ? 'text-[#4d7537]' : 'text-neutral-400 hover:text-neutral-600'}`}
-                   >
-                     {skipped.includes(q.id) ? 'Dilewati' : 'Lewati'}
-                   </button>
+                   {q.category !== "mandatory" ? (
+                     <button 
+                       onClick={() => toggleSkip(q.id)}
+                       className={`text-xs font-bold uppercase tracking-wider transition-colors ${skipped.includes(q.id) ? 'text-[#4d7537]' : 'text-neutral-400 hover:text-neutral-600'}`}
+                     >
+                       {skipped.includes(q.id) ? 'Dilewati' : 'Lewati'}
+                     </button>
+                   ) : (
+                     <Badge variant="outline" className="text-[10px] uppercase tracking-tighter bg-[#4d7537]/10 text-[#4d7537] border-none font-bold">Wajib Diisi</Badge>
+                   )}
                 </div>
 
                 <div className={`transition-opacity duration-300 ${skipped.includes(q.id) ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
@@ -248,7 +285,7 @@ function GenerateContent() {
 
         <footer className="mt-20 flex justify-center">
            <Button 
-             disabled={answeredCount < questions.length - 2 && answeredCount < 2}
+             disabled={!allMandatoryAnswered || (answeredCount < questions.length - 2 && answeredCount < mandatoryIds.length + 1)}
              onClick={() => {
                const contextStr = questions.map(q => {
                  const ans = answers[q.id] || (skipped.includes(q.id) ? "Lewati (isi manual)" : "");
@@ -262,7 +299,7 @@ function GenerateContent() {
                params.append("model", selectedModel);
                router.push(`/workspace?${params.toString()}`);
              }}
-             className="w-full max-w-md h-16 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-lg text-lg font-bold shadow-xl shadow-[#4d7537]/20 transition-all hover:scale-[1.02] active:scale-95 group"
+             className="w-full max-w-md h-16 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-lg text-lg font-bold shadow-xl shadow-[#4d7537]/20 transition-all hover:scale-[1.02] active:scale-95 group disabled:opacity-50 disabled:grayscale disabled:hover:scale-100"
            >
              Generate {docType}
              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
