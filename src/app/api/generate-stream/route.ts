@@ -25,25 +25,28 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { rawPrompt, type = "Dokumen Kurikulum", model: requestedModel = "deepseek", image } = body;
 
-    // Detect Language
     const isArabic = rawPrompt.toLowerCase().includes("bahasa arab") || 
                      rawPrompt.toLowerCase().includes("pondok") || 
                      rawPrompt.toLowerCase().includes("tasykil") ||
                      type === "LKPD (Arabic Mode)";
+    
+    const isEnglish = rawPrompt.toLowerCase().includes("bahasa inggris") || 
+                      rawPrompt.toLowerCase().includes("english");
 
-    // System Prompts (simplified for brevity here, but usually very specific)
-    const lkpdPrompt = `Tugas Anda adalah membuat Lembar Kerja Peserta Didik (LKPD) profesional dan estetik.
-    BAHASA: ${isArabic ? "Arab Ber-Harokat (Tasykil)" : "Indonesia formal"}.
-    URUTAN: Pilihan Ganda -> Jawaban Singkat -> Esai.
+    const lkpdPrompt = `Tugas Anda adalah membuat Lembar Kerja Peserta Didik (LKPD) profesional.
+    MODALITAS: ${isArabic ? "Bahasa Arab WAJIB BER-HAROKAT (TASYKIL)" : (isEnglish ? "English Language" : "Bahasa Indonesia formal")}.
+    STRUKTUR: Pilihan Ganda -> Jawaban Singkat -> Esai.
     LAYOUT: Gunakan tabel dengan border hitam tegas. Font Arab: 'Noto Naskh Arabic'.
     MULAI LANGSUNG DENGAN TAG <div>. JANGAN PAKAI MARKDOWN (\`\`\`).`;
 
-    const atpPrompt = `Anda adalah pakar kurikulum Merdeka. Buatkan ATP lengkap untuk materi: ${rawPrompt}. 
-    Ikuti standar 046/2025. Gunakan tabel A4 profesional. 
+    const atpPrompt = `Anda adalah pakar kurikulum Merdeka. Buatkan dokumen lengkap sesuai standar 046/2025.
+    MODALITAS: ${isArabic ? "Bahasa Arab WAJIB BER-HAROKAT (TASYKIL)" : (isEnglish ? "English Language" : "Bahasa Indonesia formal")}.
+    Gunakan tabel A4 profesional. 
     MULAI LANGSUNG DENGAN TAG <div>. JANGAN PAKAI MARKDOWN (\`\`\`).`;
     
     // Choose appropriate prompt
-    const systemPrompt = type.includes("LKPD") ? lkpdPrompt : atpPrompt;
+    const isType = (t: string) => type.includes(t) || t.includes(type);
+    const systemPrompt = isType("LKPD") ? lkpdPrompt : atpPrompt;
 
     const encoder = new TextEncoder();
     let fullText = "";
@@ -57,7 +60,6 @@ export async function POST(req: Request) {
         try {
           send({ type: "stage", stage: 0, label: "Menganalisis Konteks & File..." });
 
-          // If image is present, WE MUST USE GEMINI
           const useGemini = !!image || requestedModel === "gemini";
           let providerUsed = useGemini ? "Gemini 2.0 Flash" : "DeepSeek V3";
 
@@ -109,7 +111,6 @@ export async function POST(req: Request) {
                 .replace(/```$/, "")
                 .trim();
             
-            // Extra cleaning for prefixes
             const firstTag = cleanedText.indexOf("<div");
             if (firstTag !== -1) {
                 cleanedText = cleanedText.substring(firstTag);
