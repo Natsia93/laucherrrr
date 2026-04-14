@@ -226,10 +226,32 @@ export default function Home() {
           className="mt-12 w-full max-w-3xl relative z-10"
         >
           {/* Main Box Area */}
-          <div className="w-full bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-neutral-800 p-4 flex flex-col gap-4 shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!session) {
+                router.push("/login");
+                return;
+              }
+              if (!prompt.trim() || loading) return;
+              
+              setLoading(true);
+              const params = new URLSearchParams();
+              params.append("prompt", prompt);
+              params.append("type", docType);
+              router.push(`/generate?${params.toString()}`);
+            }}
+            className="w-full bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-neutral-800 p-4 flex flex-col gap-4 shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
+          >
             <textarea 
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  e.currentTarget.form?.requestSubmit();
+                }
+              }}
               placeholder="Tuliskan mata pelajaran, jenjang, atau paste silabus di sini..."
               className="w-full bg-transparent border-none text-neutral-900 dark:text-[#f4f3ed] placeholder:text-neutral-400 dark:placeholder:text-neutral-600 focus:ring-0 text-base md:text-lg outline-none resize-none min-h-[100px] font-sans"
             />
@@ -252,33 +274,18 @@ export default function Home() {
                   </select>
                   <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400 pointer-events-none" />
                 </div>
-
-                <Button variant="outline" size="sm" className="h-9 rounded-none text-xs font-normal border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-[#141414] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white">
-                  <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Prompt Builder
-                </Button>
               </div>
               
               <Button 
+                type="submit"
                 size="icon" 
-                onClick={() => {
-                  if (!session) {
-                    router.push("/login");
-                    return;
-                  }
-                  if (!prompt.trim()) return;
-                  
-                  const params = new URLSearchParams();
-                  params.append("prompt", prompt);
-                  params.append("type", docType);
-                  router.push(`/generate?${params.toString()}`);
-                }}
-                disabled={!prompt.trim()}
+                disabled={!prompt.trim() || loading}
                 className="h-10 w-10 rounded-none bg-neutral-900 dark:bg-neutral-800 text-white hover:bg-[#4d7537] transition-colors shrink-0 disabled:opacity-50"
               >
-                <ArrowRight className="w-5 h-5" />
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
               </Button>
             </div>
-          </div>
+          </form>
         </motion.div>
 
         {/* Quick Filters */}

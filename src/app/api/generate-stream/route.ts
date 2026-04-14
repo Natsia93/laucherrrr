@@ -468,7 +468,13 @@ export async function POST(req: Request) {
 
     PERINGATAN: LANGSUNG MULAI HTML. JANGAN awali dengan "Berikut..." atau markdown. TOTAL DOKUMEN MINIMAL 1500 KATA.`;
 
-    const systemPrompt = type === "PROSEM" ? prosemSystemPrompt : (type === "PROTA" ? protaSystemPrompt : (type === "KKTP" ? kktpSystemPrompt : (type === "CP" ? cpSystemPrompt : (type === "LKPD" ? lkpdSystemPrompt : atpSystemPrompt))));
+    const isType = (t: string) => type.includes(t) || t.includes(type);
+
+    const systemPrompt = isType("Program Semester") || isType("PROSEM") ? prosemSystemPrompt : 
+                        (isType("Program Tahunan") || isType("PROTA") ? protaSystemPrompt : 
+                        (isType("KKTP") ? kktpSystemPrompt : 
+                        (isType("Capaian Pembelajaran") || isType("CP") ? cpSystemPrompt : 
+                        (isType("LKPD") ? lkpdSystemPrompt : atpSystemPrompt))));
     const encoder = new TextEncoder();
     let fullText = "";
 
@@ -500,7 +506,7 @@ export async function POST(req: Request) {
           const attemptDeepSeek = async () => {
             const completion = await deepseek.chat.completions.create({
               messages: [{ role: "system", content: systemPrompt }],
-              model: "deepseek-reasoner",
+              model: "deepseek-chat", // Gunakan V3 agar super cepat (< 30 detik)
               stream: true,
             });
             for await (const chunk of completion) {
