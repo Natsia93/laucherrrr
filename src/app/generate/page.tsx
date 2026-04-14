@@ -240,12 +240,15 @@ function GenerateContent() {
                      {q.question}
                    </h2>
                    {q.category !== "mandatory" ? (
-                     <button 
-                       onClick={() => toggleSkip(q.id)}
-                       className={`text-xs font-bold uppercase tracking-wider transition-colors ${skipped.includes(q.id) ? 'text-[#4d7537]' : 'text-neutral-400 hover:text-neutral-600'}`}
-                     >
-                       {skipped.includes(q.id) ? 'Dilewati' : 'Lewati'}
-                     </button>
+                     <div className="flex items-center gap-3">
+                       <Badge variant="outline" className="text-[10px] uppercase tracking-tighter bg-neutral-100 dark:bg-white/5 text-neutral-400 border-none font-bold">Opsional</Badge>
+                       <button 
+                         onClick={() => toggleSkip(q.id)}
+                         className={`text-xs font-bold uppercase tracking-wider transition-colors ${skipped.includes(q.id) ? 'text-[#4d7537]' : 'text-neutral-400 hover:text-neutral-600'}`}
+                       >
+                         {skipped.includes(q.id) ? 'Dilewati' : 'Lewati'}
+                       </button>
+                     </div>
                    ) : (
                      <Badge variant="outline" className="text-[10px] uppercase tracking-tighter bg-[#4d7537]/10 text-[#4d7537] border-none font-bold">Wajib Diisi</Badge>
                    )}
@@ -321,7 +324,7 @@ function GenerateContent() {
                params.append("model", selectedModel);
                router.push(`/workspace?${params.toString()}`);
              }}
-             className="w-full max-w-md h-16 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-lg text-lg font-bold shadow-xl shadow-[#4d7537]/20 transition-all hover:scale-[1.02] active:scale-95 group disabled:opacity-50 disabled:grayscale disabled:hover:scale-100"
+             className="w-full max-w-md h-14 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-lg text-base font-bold shadow-md shadow-[#4d7537]/10 transition-all hover:scale-[1.01] active:scale-95 group disabled:opacity-50 disabled:grayscale disabled:hover:scale-100"
            >
              Generate {docType}
              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
