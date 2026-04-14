@@ -172,7 +172,6 @@ function WorkspaceContent() {
     if (loading) return;
     const isArabicDoc = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
     
-    // PERBAIKAN: Instruksi yang SANGAT KETAT agar AI tidak mengulang header/kop surat
     const textToSend = isContinue 
       ? `INI ADALAH KONTINUASI (LANJUTAN). TUGAS ANDA HANYA MENERUSKAN ISI. 
          DILARANG KERAS: 
@@ -180,7 +179,8 @@ function WorkspaceContent() {
          2. JANGAN membuat judul baru. 
          3. JANGAN mengulang teks yang sudah ada. 
          LANGSUNG LANJUT KE BAGIAN BERIKUTNYA (Soal selanjutnya atau materi selanjutnya). 
-         Gunakan Bahasa ${isArabicDoc ? 'Arab Ber-Harokat (Full Tasykil) dan RTL' : 'Indonesia'}.`
+         Gunakan Bahasa ${isArabicDoc ? 'Arab Ber-Harokat (Full Tasykil) dan RTL' : 'Indonesia'}.
+         WAJIB: Gunakan text-align: justify untuk narasi dan text-align: center untuk baris BAB pada tabel.`
       : chatInput;
       
     if (!textToSend.trim()) return;
@@ -267,7 +267,8 @@ function WorkspaceContent() {
           font-size: 12pt;
           line-height: 1.5;
         }
-        .curriculum-content table { border-collapse: collapse; width: 100%; border: 1px solid black; }
+        .curriculum-content { text-align: justify; }
+        .curriculum-content table { border-collapse: collapse; width: 100%; border: 1px solid black; text-align: left; }
         .curriculum-content th, .curriculum-content td { border: 1px solid black; padding: 8px; vertical-align: top; }
         .curriculum-content [dir="rtl"] { direction: rtl; text-align: right; }
       `}</style>

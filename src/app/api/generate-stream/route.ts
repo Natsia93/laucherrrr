@@ -54,7 +54,7 @@ export async function POST(req: Request) {
        Tuliskan narasi pemahaman minimal 200 kata + Deskripsi Elemen.
 
     3. BAGIAN B (TABEL ATP COLORFUL):
-       Header tabel background #fae3e3. Baris BAB background #e6f7ff (Bold Center).
+       Header tabel background #fae3e3. Baris BAB background #e6f7ff (WAJIB: text-align: center dan Font Bold).
        Kolom: No | Alur Tujuan Pembelajaran | Dimensi Profil Lulusan | Materi Pokok | Alokasi Waktu.
        Highlight kuning pada Materi Pokok.
 
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
          <h1 style="margin: 0; font-size: 14pt; font-weight: bold; text-decoration: underline;">PROGRAM TAHUNAN (PROTA)</h1>
        </div>
     2. TABEL IDENTITAS: Seperti format ATP.
-    3. TABEL PROTA: Header #8db4e2. Baris BAB #daeef3. Materi highlight kuning.
+    3. TABEL PROTA: Header #8db4e2. Baris BAB #daeef3 (text-align: center). Materi highlight kuning.
     4. CAKUPAN: Ganjil & Genap (7-10 BAB).`;
 
     const prosemSystemPrompt = `Anda menyusun Program Semester (PROSEM) Kurikulum Merdeka.
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
          <h1 style="margin: 0; font-size: 13pt;">PROGRAM SEMESTER (PROSEM)</h1>
        </div>
     2. TABEL PROSEM: Header bertingkat (Bulan & Minggu 1-5). Gunakan sel-sel kecil untuk tanda "V".
-       Background header #f2f2f2. Baris BAB #e6f7ff.
+       Background header #f2f2f2. Baris BAB #e6f7ff (text-align: center).
     3. WAJIB ADA baris STS dan SAS di akhir tabel (Abu-abu).`;
 
     const kktpSystemPrompt = `Anda menyusun Kriteria Ketercapaian Tujuan Pembelajaran (KKTP).
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
        <div style="background-color: #ccb9db; text-align: center; border: 1.5 solid #b3a2c7; padding: 10px; margin-bottom: 20px;">
          <h1 style="margin: 0; font-size: 14pt; font-weight: bold; text-decoration: underline;">KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN (KKTP)</h1>
        </div>
-    2. TABEL KKTP: Header #f2f2f2. Sub-header Interval #e6e6fa. Baris BAB #fbd5b5.
+    2. TABEL KKTP: Header #f2f2f2. Sub-header Interval #e6e6fa. Baris BAB #fbd5b5 (text-align: center).
     3. MATERI: Highlight kuning. Interval 0-40%, 41-65%, 66-85%, 86-100%.`;
 
     const isType = (t: string) => type.includes(t) || t.includes(type);
