@@ -36,6 +36,13 @@ function GenerateContent() {
   // Fetch dynamic questions from AI based on the user's prompt
   useEffect(() => {
     const fetchQuestions = async () => {
+      // Jika bukan LKPD, kita tidak butuh wawancara panjang
+      if (docType !== "LKPD") {
+        setQuestions([]);
+        setLoading(false);
+        return;
+      }
+
       try {
         const response = await fetch("/api/generate-questions", {
           method: "POST",
@@ -43,61 +50,26 @@ function GenerateContent() {
           body: JSON.stringify({ prompt, docType })
         });
         const data = await response.json();
-        setQuestions(data.questions);
+        
+        // Tambahkan pertanyaan bahasa di awal khusus LKPD
+        const langQuestion: Question = {
+            id: 0,
+            question: "Pilih Bahasa untuk LKPD ini:",
+            type: "chips",
+            options: ["Bahasa Indonesia", "Bahasa Arab (Ber-Harokat/Tasykil)"],
+            category: "data"
+        };
+        
+        setQuestions([langQuestion, ...(data.questions || [])]);
       } catch (err) {
-        if (docType === "PROSEM" || docType === "Program Semester") {
-            setQuestions([
-                { id: 1, question: "Untuk Mata Pelajaran apa Program Semester ini dibuat?", type: "text" as const, placeholder: "Misal: IPA, Fiqih, Bahasa Arab, Matematika...", category: "data" },
-                { id: 2, question: "Pilih Semester yang ingin disusun jadwalnya:", type: "chips" as const, options: ["Ganjil (Juli-Desember)", "Genap (Januari-Juni)"], category: "data" },
-                { id: 3, question: "Fase dan Kelas berapakah PROSEM ini?", type: "chips" as const, options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E (Kls 10)", "Fase F (Kls 11-12)"], category: "data" },
-                { id: 4, question: "Berapa Alokasi JP per minggu untuk mata pelajaran ini?", type: "chips" as const, options: ["2 JP", "3 JP", "4 JP", "5 JP"], category: "data" },
-                { id: 5, question: "Tuliskan Tahun Pelajaran:", type: "text" as const, placeholder: "Misal: 2024/2025", category: "data" },
-            ]);
-        } else if (docType === "PROTA" || docType === "Program Tahunan") {
-            setQuestions([
-                { id: 1, question: "Untuk Mata Pelajaran apa Program Tahunan ini dibuat?", type: "text" as const, placeholder: "Misal: IPA, Fiqih, Bahasa Arab, Al-Quran Hadits...", category: "data" },
-                { id: 2, question: "Fase dan Kelas berapakah PROTA ini?", type: "chips" as const, options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E (Kls 10)", "Fase F (Kls 11-12)"], category: "data" },
-                { id: 3, question: "Berapa Total Jam Pelajaran (JP) dalam satu tahun ajaran?", type: "chips" as const, options: ["72 JP", "108 JP", "144 JP", "Lainnya"], category: "data" },
-                { id: 4, question: "Tuliskan Tahun Pelajaran:", type: "text" as const, placeholder: "Misal: 2024/2025", category: "data" },
-            ]);
-        } else if (docType === "ATP") {
-            setQuestions([
-                { id: 1, question: "Untuk Fase dan Kelas berapakah ATP ini dirancang?", type: "chips" as const, options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E (Kls 10)", "Fase F (Kls 11-12)"], category: "data" },
-                { id: 2, question: "Apa elemen materi utama yang ingin disusun alurnya?", type: "text" as const, placeholder: "Misal: Bilangan, Geometri, Sistem Organ...", category: "data" },
-                { id: 3, question: "Pilih Dimensi Profil Pelajar Pancasila yang diprioritaskan:", type: "multi-chips" as const, options: ["Beriman & Bertaqwa", "Berkebinekaan Global", "Gotong Royong", "Mandiri", "Bernalar Kritis", "Kreatif"], category: "data" },
-                { id: 4, question: "Urutan logis materi yang Anda inginkan?", type: "chips" as const, options: ["Mudah ke Sulit", "Konkrit ke Abstrak", "Kronologis Sejarah"], category: "data" },
-            ]);
-        } else if (docType === "CP") {
-            setQuestions([
-                { id: 1, question: "Apa Nama Mata Pelajaran yang ingin disusun CP-nya?", type: "text", placeholder: "Misal: IPAS, Fiqih, Bahasa Arab, Seni Budaya...", category: "data" },
-                { id: 2, question: "Untuk Fase manakah dokumen CP ini dirancang?", type: "chips", options: ["Fase A", "Fase B", "Fase C", "Fase D", "Fase E", "Fase F"], category: "data" },
-                { id: 3, question: "Jelaskan secara singkat rasionalitas atau alasan pentingnya mapel ini bagi siswa:", type: "text", placeholder: "Misal: Untuk mengembangkan logika berpikir kritis dalam...", category: "data" },
-                { id: 4, question: "Apa elemen materi utama yang menjadi fokus kompetensi?", type: "text", placeholder: "Misal: Menyimak, Tilawah, Istima', Bilangan...", category: "data" },
-                { id: 5, question: "Apakah ada instruksi tambahan terkait karakteristik sekolah?", type: "text", placeholder: "Misal: Hubungkan dengan kearifan lokal, teknologi, dsb...", category: "data" },
-            ]);
-        } else if (docType === "LKPD") {
-            setQuestions([
-                { id: 1, question: "Untuk Fase dan Kelas berapakah LKPD ini dirancang?", type: "chips" as const, options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E (Kls 10)", "Fase F (Kls 11-12)"], category: "data" },
-                { id: 2, question: "Apa materi spesifik yang ingin diujikan?", type: "text" as const, placeholder: "Misal: Rantai Makanan, Thaharah, Persamaan Kuadrat...", category: "data" },
-                { id: 3, question: "Pilih jenis soal (bisa pilih lebih dari satu):", type: "multi-chips" as const, options: ["Pilihan Ganda", "Esai", "Jawaban Singkat"], category: "data" },
-                { id: 4, question: "Berapa jumlah soal yang Anda butuhkan?", type: "chips" as const, options: ["10 Soal", "20 Soal", "30 Soal"], category: "data" },
-                { id: 5, question: "Instruksi tambahan (opsional):", type: "text" as const, placeholder: "HOTS, Kunci jawaban, dsb...", category: "data" },
-            ]);
-        } else if (docType === "KKTP") {
-            setQuestions([
-                { id: 1, question: "Untuk Mata Pelajaran apa KKTP ini dibuat?", type: "text" as const, placeholder: "Misal: IPA, Fiqih, Bahasa Arab, B. Mandarin...", category: "data" },
-                { id: 2, question: "Fase dan Kelas berapakah KKTP ini?", type: "chips" as const, options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E (Kls 10)", "Fase F (Kls 11-12)"], category: "data" },
-                { id: 3, question: "Apa Materi Utama atau Tujuan Pembelajaran yang ingin difokuskan?", type: "text" as const, placeholder: "Misal: Rangkaian Listrik, Thaharah, Hukum Tajwid...", category: "data" },
-                { id: 4, question: "Metode Penilaian apa yang ingin digunakan?", type: "chips" as const, options: ["Interval Nilai (0-100%)", "Rubrik Deskripsi"], category: "data" },
-            ]);
-        } else {
-            setQuestions([
-                { id: 1, question: "Untuk Fase dan Kelas berapakah dokumen ini dirancang?", type: "chips", options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E/F (SMA)"], category: "data" },
-                { id: 2, question: "Apa elemen materi utama yang menjadi fokus?", type: "text", placeholder: "Misal: Geometri, Tilawah, Qira'ah, Zat dan Perubahannya...", category: "data" },
-                { id: 3, question: "Media pembelajaran apa saja yang tersedia di sekolah Anda?", type: "chips", options: ["Alat Peraga Fisik", "Laboratorium Komputer", "Lingkungan Terbuka", "Buku Teks & Internet"], category: "data" },
-                { id: 4, question: "Berapa total Jam Pelajaran (JP) yang tersedia?", type: "chips", options: ["2 JP", "4 JP", "6 JP", "Sesuai Kurikulum"], category: "data" },
-            ]);
-        }
+        // Fallback LKPD questions
+        setQuestions([
+            { id: 0, question: "Pilih Bahasa untuk LKPD ini:", type: "chips", options: ["Bahasa Indonesia", "Bahasa Arab (Ber-Harokat/Tasykil)"], category: "data" },
+            { id: 1, question: "Untuk Fase dan Kelas berapakah LKPD ini dirancang?", type: "chips", options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E (Kls 10)", "Fase F (Kls 11-12)"], category: "data" },
+            { id: 2, question: "Apa materi spesifik yang ingin diujikan?", type: "text", placeholder: "Misal: Rantai Makanan, Thaharah, Persamaan Kuadrat...", category: "data" },
+            { id: 3, question: "Pilih jenis soal (bisa pilih lebih dari satu):", type: "multi-chips", options: ["Pilihan Ganda", "Esai", "Jawaban Singkat"], category: "data" },
+            { id: 4, question: "Berapa jumlah soal yang Anda butuhkan?", type: "chips", options: ["5 Soal", "10 Soal", "20 Soal"], category: "data" },
+        ]);
       } finally {
         setLoading(false);
       }

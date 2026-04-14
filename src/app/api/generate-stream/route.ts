@@ -82,29 +82,32 @@ export async function POST(req: Request) {
 
     PERINGATAN: LANGSUNG MULAI DENGAN KONTEN HTML. JANGAN awali dengan kata-kata seperti "Berikut adalah..." atau markdown. TOTAL DOKUMEN MINIMAL 1500 KATA.`;
 
+    const isArabic = rawPrompt.toLowerCase().includes("bahasa arab") || rawPrompt.toLowerCase().includes("pondok") || rawPrompt.toLowerCase().includes("tasykil");
+
     const lkpdSystemPrompt = `Anda adalah PAKAR KURIKULUM SENIOR yang sangat cerdas. Tugas Anda adalah menyusun Lembar Kerja Peserta Didik (LKPD) yang sangat spesifik, bermutu tinggi, dan estetik.
 
     KONTEKS GURU: "${rawPrompt}"
 
     === KRITERIA INTELEGENSI (WAJIB) ===
-    1. KETAATAN MAPEL: Identifikasi mata pelajaran dari konteks (misal: "IPA"). Jika konteks menyebutkan pelajaran tertentu, soal HARUS murni tentang pelajaran tersebut. JANGAN mencampuradukkan materi (misal: jangan beri soal IPS jika diminta IPA).
-    2. STRUKTUR LKPD PROFESIONAL:
+    1. KETAATAN MAPEL: Identifikasi mata pelajaran dari konteks. Jika konteks menyebutkan pelajaran tertentu, soal HARUS murni tentang pelajaran tersebut. JANGAN mencampuradukkan materi.
+    2. MODE BAHASA: ${isArabic ? "GUNAKAN BAHASA ARAB SEBAGAI BAHASA UTAMA. Sertakan HAROKAT LENGKAP (Tasykil) pada setiap teks Arab agar mudah dibaca santri/siswa. Gunakan bahasa Arab yang fushah dan baku." : "Gunakan Bahasa Indonesia yang formal dan edukatif."}
+    3. STRUKTUR LKPD PROFESIONAL:
        - Header Identitas yang rapi (Sekolah, Mapel, Kelas, Semester, Nama Siswa).
-       - Capaian Pembelajaran (CP) & Tujuan Pembelajaran (TP) yang disesuaikan tingkat kesulitannya.
-       - Petunjuk Pengerjaan yang formal.
+       - Capaian Pembelajaran (CP) & Tujuan Pembelajaran (TP).
        - Stimulus Materi: Berikan teks pendukung atau data sebelum soal agar siswa terbiasa dengan literasi.
        - Variasi Soal: Gabungan Pilihan Ganda (HOTS/Bloom C1-C4), Esai (Analisis), dan Tugas Proyek/Diskusi.
-    3. KUALITAS DIGITAL:
+    4. KUALITAS DIGITAL:
        - Gunakan tag HTML murni (<table>, <div>, <p>, <h3>).
        - JANGAN gunakan markdown code blocks ( \`\`\`html ).
        - JANGAN beri pengantar apapun di luar tag HTML.
 
     === LAYOUT HTML (CETAK LANGSUNG) ===
-    - Bungkus seluruh konten dalam <div style="font-family: 'Arial', sans-serif; color: black; line-height: 1.5; padding: 10px;">.
-    - HEADER: Buat kotak border hitam tebal berisi judul "LEMBAR KERJA PESERTA DIDIK (LKPD)".
+    - Bungkus seluruh konten dalam <div ${isArabic ? 'dir="rtl"' : 'dir="ltr"'} style="font-family: 'Times New Roman', serif; color: black; line-height: 1.8; padding: 10px;">.
+    - HEADER: Buat kotak border hitam tebal berisi judul ${isArabic ? '"ورقة عمل الطالب (LKPD)"' : '"LEMBAR KERJA PESERTA DIDIK (LKPD)"'}.
     - SECTION HEADER: Gunakan block warna abu-abu muda (#f2f2f2) dengan teks bold.
+    - TABEL: Pastikan border terlihat jelas (border="1" atau style="border: 1px solid black;").
 
-    WAJIB: LANGSUNG MULAI DENGAN KONTEN HTML. JANGAN memberikan teks penjelasan apapun di luar tag HTML.`;
+    WAJIB: LANGSUNG MULAI DENGAN KONTEN HTML.`;
 
     const cpSystemPrompt = `Anda adalah PAKAR SENIOR Kurikulum Merdeka Indonesia yang bertugas menyusun dokumen Capaian Pembelajaran (CP) sesuai Keputusan Kepala BSKAP Nomor 046/H/KR/2025.
     
@@ -226,7 +229,7 @@ export async function POST(req: Request) {
        <div style="background-color: #e0e0e0; font-weight: bold; padding: 5px; font-size: 12pt; margin-bottom: 10px; margin-top: 20px; border: 1px solid #ccc;">
        B. PROGRAM TAHUNAN
        </div>
-       <table style="width: 100%; border-collapse: collapse; border: 1.5px solid black; font-size: 10pt;">
+       <table style="width: 100%; border-collapse: collapse; border: 1.5 solid black; font-size: 10pt;">
           <thead>
             <tr style="background-color: #8db4e2; text-align: center; font-weight: bold; color: #000;">
               <th style="border: 1px solid black; padding: 8px; width: 40px;">No</th>
@@ -288,7 +291,7 @@ export async function POST(req: Request) {
     === LAYOUT HTML (SESUAI TEMPLATE) ===
     ATURAN LAYOUT UTAMA (WAJIB DIIKUTI):
     1. HEADER & IDENTITAS:
-       <div style="background-color: #e6e6fa; text-align: center; border: 1.5px solid #d1d1e0; padding: 10px; margin-bottom: 20px;">
+       <div style="background-color: #e6e6fa; text-align: center; border: 1.5 solid #d1d1e0; padding: 10px; margin-bottom: 20px;">
          <h1 style="margin: 0; font-size: 13pt;">PROGRAM SEMESTER (PROSEM)</h1>
          <h2 style="margin: 5px 0 0 0; font-size: 12pt;">MATA PELAJARAN : [NAMA MAPEL]</h2>
        </div>
@@ -371,7 +374,7 @@ export async function POST(req: Request) {
 
     === LAYOUT HTML (SESUAI TEMPLATE) ===
     1. HEADER & IDENTITAS:
-       <div style="background-color: #ccb9db; text-align: center; border: 1.5px solid #b3a2c7; padding: 10px; margin-bottom: 20px;">
+       <div style="background-color: #ccb9db; text-align: center; border: 1.5 solid #b3a2c7; padding: 10px; margin-bottom: 20px;">
          <h1 style="margin: 0; font-size: 14pt; font-weight: bold; color: #333; text-decoration: underline;">KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN (KKTP)</h1>
          <h2 style="margin: 5px 0 0 0; font-size: 12pt; font-weight: bold; color: #c00000; text-decoration: underline;">MATA PELAJARAN : [NAMA MAPEL]</h2>
        </div>
@@ -408,7 +411,7 @@ export async function POST(req: Request) {
        <div style="background-color: #e0e0e0; font-weight: bold; padding: 5px; font-size: 12pt; margin-bottom: 10px; margin-top: 20px; border: 1px solid #ccc;">
        B. KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN (KKTP)
        </div>
-       <table style="width: 100%; border-collapse: collapse; border: 1.5px solid black; font-size: 10pt;">
+       <table style="width: 100%; border-collapse: collapse; border: 1.5 solid black; font-size: 10pt;">
           <thead>
             <tr style="background-color: #f2f2f2; text-align: center; font-weight: bold;">
               <th rowspan="2" style="border: 1px solid black; padding: 10px; width: 40px;">NO</th>
