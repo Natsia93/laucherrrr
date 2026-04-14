@@ -59,9 +59,18 @@ function WorkspaceContent() {
     return mins > 0 ? `${mins}m ${secs < 10 ? '0' : ''}${secs}s` : `${secs}s`;
   };
 
+  const MAX_DOC_SIZE = 10 * 1024 * 1024; // 10MB
+  const MAX_IMG_SIZE = 5 * 1024 * 1024;  // 5MB
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_DOC_SIZE) {
+      alert("File terlalu besar (Maksimal 10MB).");
+      return;
+    }
+
     setExtracting(true);
     setAttachedFileName(file.name);
     const formData = new FormData();
@@ -76,6 +85,12 @@ function WorkspaceContent() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_IMG_SIZE) {
+      alert("Gambar terlalu besar (Maksimal 5MB).");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onloadend = () => setAttachedImage(reader.result as string);
     reader.readAsDataURL(file);

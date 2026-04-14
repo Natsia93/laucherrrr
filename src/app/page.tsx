@@ -47,9 +47,17 @@ export default function Home() {
     };
   }, [heroWords.length]);
 
+  const MAX_DOC_SIZE = 10 * 1024 * 1024; // 10MB
+  const MAX_IMG_SIZE = 5 * 1024 * 1024;  // 5MB
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_DOC_SIZE) {
+      alert("Waduh, file kegedean! Maksimal 10MB ya, supaya AI bacanya gak pusing.");
+      return;
+    }
 
     setExtracting(true);
     setAttachedFileName(file.name);
@@ -77,6 +85,11 @@ export default function Home() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_IMG_SIZE) {
+        alert("Gambar terlalu besar! Maksimal 5MB ya, biar prosesnya sat-set.");
+        return;
+    }
 
     const reader = new FileReader();
     reader.onloadend = () => {
