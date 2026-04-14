@@ -203,23 +203,37 @@ export default function Home() {
                 <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf,.docx" className="hidden" />
                 <input type="file" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
                 
-                {/* Modern Plus Menu */}
+                <div className="relative group">
+                  <select value={docType} onChange={(e) => setDocType(e.target.value)} className="h-9 px-4 rounded-xl bg-neutral-100 dark:bg-neutral-900 border-none text-xs font-semibold text-[#4d7537] focus:ring-1 focus:ring-[#4d7537]/30 appearance-none pr-10 cursor-pointer">
+                    <option value="Modul Ajar">Pilih Tipe Dokumen</option>
+                    <option value="CP">Capaian Pembelajaran (CP)</option>
+                    <option value="ATP">Alur Tujuan Pembelajaran (ATP)</option>
+                    <option value="LKPD">LKPD</option>
+                    <option value="PROTA">Program Tahunan</option>
+                    <option value="PROSEM">Program Semester</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#4d7537] pointer-events-none" />
+                </div>
+
+                <div className="h-6 w-px bg-neutral-200 dark:bg-neutral-800 mx-1"></div>
+
+                {/* Modern Plus Menu - NOW ON THE RIGHT */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-[#4d7537]/20 hover:text-[#4d7537]">
                       <Plus className="w-5 h-5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-56 p-2 rounded-xl">
-                    <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="flex items-center gap-3 p-2.5 cursor-pointer rounded-lg">
-                      <FileUp className="w-4 h-4 text-neutral-500" />
+                  <DropdownMenuContent align="start" className="w-56 p-2 rounded-xl shadow-2xl border-neutral-100 dark:border-neutral-800">
+                    <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="flex items-center gap-3 p-2.5 cursor-pointer rounded-lg hover:bg-[#4d7537]/10">
+                      <FileUp className="w-4 h-4 text-[#4d7537]" />
                       <div className="flex flex-col">
                         <span className="font-medium text-sm">Upload File</span>
                         <span className="text-[10px] text-neutral-400">PDF atau Word (.docx)</span>
                       </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => imageInputRef.current?.click()} className="flex items-center gap-3 p-2.5 cursor-pointer rounded-lg">
-                      <ImageIcon className="w-4 h-4 text-neutral-500" />
+                    <DropdownMenuItem onClick={() => imageInputRef.current?.click()} className="flex items-center gap-3 p-2.5 cursor-pointer rounded-lg hover:bg-[#4d7537]/10">
+                      <ImageIcon className="w-4 h-4 text-[#4d7537]" />
                       <div className="flex flex-col">
                         <span className="font-medium text-sm">Upload Media</span>
                         <span className="text-[10px] text-neutral-400">Gambar/Foto Modul</span>
@@ -227,20 +241,6 @@ export default function Home() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-
-                <div className="h-6 w-px bg-neutral-200 dark:bg-neutral-800 mx-1"></div>
-
-                <div className="relative group">
-                  <select value={docType} onChange={(e) => setDocType(e.target.value)} className="h-9 px-3 rounded-xl bg-neutral-50 dark:bg-neutral-900 border-none text-xs font-semibold text-[#4d7537] focus:ring-1 focus:ring-[#4d7537]/30 appearance-none pr-8 cursor-pointer">
-                    <option value="Modul Ajar">Modul Ajar</option>
-                    <option value="CP">Capaian Pembelajaran (CP)</option>
-                    <option value="ATP">Alur Tujuan Pembelajaran (ATP)</option>
-                    <option value="LKPD">LKPD</option>
-                    <option value="PROTA">Program Tahunan</option>
-                    <option value="PROSEM">Program Semester</option>
-                  </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#4d7537] pointer-events-none" />
-                </div>
               </div>
               
               <Button type="submit" disabled={(!prompt.trim() && !attachedText && !attachedImage) || loading || extracting} className="bg-neutral-900 dark:bg-[#4d7537] text-white hover:bg-[#4d7537] rounded-full px-8 gap-2 h-10 shadow-lg shadow-[#4d7537]/20">
