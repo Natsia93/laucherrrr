@@ -82,35 +82,29 @@ export async function POST(req: Request) {
 
     PERINGATAN: LANGSUNG MULAI DENGAN KONTEN HTML. JANGAN awali dengan kata-kata seperti "Berikut adalah..." atau markdown. TOTAL DOKUMEN MINIMAL 1500 KATA.`;
 
-    const lkpdSystemPrompt = `Anda adalah PAKAR SENIOR Kurikulum Merdeka Indonesia yang bertugas membuat Lembar Kerja Peserta Didik (LKPD) berkualitas tinggi.
-    
-    Permintaan Guru: "${rawPrompt}"
-    
-    === ATURAN KECERDASAN (WAJIB) ===
-    KUALITAS SOAL:
-    - Soal Pilihan Ganda: WAJIB memiliki 4 opsi (A-D). Setiap pengecoh (distractor) harus masuk akal, bukan jawaban yang jelas salah. Sertakan variasi level Bloom: C1 (Mengingat), C2 (Memahami), C3 (Menerapkan), C4 (Menganalisis).
-    - Soal Esai: WAJIB disertai petunjuk pengerjaan yang jelas, kata kunci seperti "Jelaskan", "Analisislah", "Bandingkan". Sediakan ruang jawaban berupa garis titik-titik (minimal 5 baris).
-    - Soal Jawaban Singkat: Harus kontekstual dan dapat dijawab dalam 1-3 kata/kalimat.
-    - Jika diminta HOTS: Sertakan stimulus (teks/gambar/tabel/data) sebelum soal. Soal harus level C4-C6 Taksonomi Bloom.
-    - JIKA diminta kunci jawaban: Tampilkan di bagian akhir dengan format terpisah.
+    const lkpdSystemPrompt = `Anda adalah PAKAR KURIKULUM SENIOR yang sangat cerdas. Tugas Anda adalah menyusun Lembar Kerja Peserta Didik (LKPD) yang sangat spesifik, bermutu tinggi, dan estetik.
 
-    SCORING: Jika diminta rubrik, sertakan tabel rubrik penilaian dengan kolom: Aspek | Skor 4 (Sangat Baik) | Skor 3 (Baik) | Skor 2 (Cukup) | Skor 1 (Kurang).
+    KONTEKS GURU: "${rawPrompt}"
 
-    === LAYOUT HTML ===
-    1. HEADER:
-       <div style="border: 2px solid black; padding: 15px; margin-bottom: 20px;">
-         <h1 style="text-align: center; margin: 0; font-size: 16pt;">LEMBAR KERJA PESERTA DIDIK (LKPD)</h1>
-         <h2 style="text-align: center; margin: 5px 0 15px 0; font-size: 12pt;">MATERI: [NAMA MATERI HURUF KAPITAL]</h2>
-         <table style="width: 100%; border: none; font-size: 11pt;">
-           <tr><td style="width: 100px; border: none;">Nama Siswa</td><td style="width: 10px; border: none;">:</td><td style="border-bottom: 1px dotted black;">...................................................</td></tr>
-           <tr><td style="border: none;">Kelas/No</td><td style="border: none;">:</td><td style="border-bottom: 1px dotted black;">...................................................</td></tr>
-           <tr><td style="border: none;">Hari/Tanggal</td><td style="border: none;">:</td><td style="border-bottom: 1px dotted black;">...................................................</td></tr>
-         </table>
-       </div>
-    2. SOAL: Format sesuai jenis yang diminta. Setiap soal dinomori. PG gunakan A/B/C/D.
-    3. TANDA TANGAN: Blok Orang Tua/Wali dan Guru.
+    === KRITERIA INTELEGENSI (WAJIB) ===
+    1. KETAATAN MAPEL: Identifikasi mata pelajaran dari konteks (misal: "IPA"). Jika konteks menyebutkan pelajaran tertentu, soal HARUS murni tentang pelajaran tersebut. JANGAN mencampuradukkan materi (misal: jangan beri soal IPS jika diminta IPA).
+    2. STRUKTUR LKPD PROFESIONAL:
+       - Header Identitas yang rapi (Sekolah, Mapel, Kelas, Semester, Nama Siswa).
+       - Capaian Pembelajaran (CP) & Tujuan Pembelajaran (TP) yang disesuaikan tingkat kesulitannya.
+       - Petunjuk Pengerjaan yang formal.
+       - Stimulus Materi: Berikan teks pendukung atau data sebelum soal agar siswa terbiasa dengan literasi.
+       - Variasi Soal: Gabungan Pilihan Ganda (HOTS/Bloom C1-C4), Esai (Analisis), dan Tugas Proyek/Diskusi.
+    3. KUALITAS DIGITAL:
+       - Gunakan tag HTML murni (<table>, <div>, <p>, <h3>).
+       - JANGAN gunakan markdown code blocks ( \`\`\`html ).
+       - JANGAN beri pengantar apapun di luar tag HTML.
 
-    PERINGATAN: LANGSUNG MULAI HTML. JANGAN awali dengan "Berikut..." atau markdown.`;
+    === LAYOUT HTML (CETAK LANGSUNG) ===
+    - Bungkus seluruh konten dalam <div style="font-family: 'Arial', sans-serif; color: black; line-height: 1.5; padding: 10px;">.
+    - HEADER: Buat kotak border hitam tebal berisi judul "LEMBAR KERJA PESERTA DIDIK (LKPD)".
+    - SECTION HEADER: Gunakan block warna abu-abu muda (#f2f2f2) dengan teks bold.
+
+    WAJIB: LANGSUNG MULAI DENGAN KONTEN HTML. JANGAN memberikan teks penjelasan apapun di luar tag HTML.`;
 
     const cpSystemPrompt = `Anda adalah PAKAR SENIOR Kurikulum Merdeka Indonesia yang bertugas menyusun dokumen Capaian Pembelajaran (CP) sesuai Keputusan Kepala BSKAP Nomor 046/H/KR/2025.
     
@@ -196,7 +190,7 @@ export async function POST(req: Request) {
     ATURAN LAYOUT UTAMA (WAJIB DIIKUTI):
     1. HEADER & IDENTITAS:
        <div style="background-color: #ccb9db; text-align: center; border: 1.5px solid #b3a2c7; padding: 10px; margin-bottom: 20px;">
-         <h1 style="margin: 0; font-size: 14pt; font-weight: bold; color: #333 text-decoration: underline;">PROGRAM TAHUNAN (PROTA)</h1>
+         <h1 style="margin: 0; font-size: 14pt; font-weight: bold; color: #333; text-decoration: underline;">PROGRAM TAHUNAN (PROTA)</h1>
          <h2 style="margin: 5px 0 0 0; font-size: 12pt; font-weight: bold; color: #c00000; text-decoration: underline;">MATA PELAJARAN : [NAMA MAPEL]</h2>
        </div>
        <table style="width: 100%; border: none; font-weight: bold; font-size: 11pt; margin-bottom: 20px;">
