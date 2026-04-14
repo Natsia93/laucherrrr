@@ -190,8 +190,8 @@ export default function Home() {
               transition={{ delay: 0.1 }}
               className="font-bricolage text-3xl sm:text-5xl md:text-6xl font-normal tracking-tight text-neutral-900 dark:text-[#f4f3ed] flex flex-col md:flex-row items-center justify-center gap-y-2 md:gap-x-4"
             >
-              <span className="shrink-0">Buat Dokumen</span>
-              <div className="relative h-[48px] sm:h-[60px] md:h-[80px] flex items-center justify-center min-w-0 md:min-w-[400px]">
+              <span>Buat Dokumen</span>
+              <div className="relative h-[48px] sm:h-[60px] md:h-[80px] flex items-center justify-center md:justify-start min-w-[300px] md:min-w-[500px]">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={heroWords[wordIndex]}
@@ -199,7 +199,7 @@ export default function Home() {
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -20, opacity: 0 }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="text-[#4d7537] dark:text-[#89b867] font-semibold whitespace-nowrap text-3xl sm:text-5xl md:text-6xl"
+                    className="text-[#4d7537] dark:text-[#89b867] font-semibold whitespace-nowrap text-3xl sm:text-5xl md:text-6xl text-center md:text-left"
                   >
                     {heroWords[wordIndex]}
                   </motion.span>
