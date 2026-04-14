@@ -172,15 +172,21 @@ function WorkspaceContent() {
     if (loading) return;
     const isArabicDoc = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
     
-    // PERBAIKAN: Instruksi yang sangat spesifik agar tidak "belok" tipe dokumen
+    // PERBAIKAN: Instruksi yang SANGAT KETAT agar AI tidak mengulang header/kop surat
     const textToSend = isContinue 
-      ? `INI ADALAH LANJUTAN DARI DOKUMEN ${docType}. JANGAN MEMBUAT ATP. JANGAN MEMBUAT JUDUL BARU. Lanjutkan isi konten ${docType} dari titik terakhir secara natural. Gunakan Bahasa ${isArabicDoc ? 'Arab (Harokat)' : 'Indonesia'}.`
+      ? `INI ADALAH KONTINUASI (LANJUTAN). TUGAS ANDA HANYA MENERUSKAN ISI. 
+         DILARANG KERAS: 
+         1. JANGAN membuat Kop Surat/Header baru. 
+         2. JANGAN membuat judul baru. 
+         3. JANGAN mengulang teks yang sudah ada. 
+         LANGSUNG LANJUT KE BAGIAN BERIKUTNYA (Soal selanjutnya atau materi selanjutnya). 
+         Gunakan Bahasa ${isArabicDoc ? 'Arab Ber-Harokat (Full Tasykil) dan RTL' : 'Indonesia'}.`
       : chatInput;
       
     if (!textToSend.trim()) return;
     
     const contextPrompt = isContinue 
-      ? `LANJUTKAN: Dokumen ini berjenis ${docType}. Pastikan layout tidak rusak. Lanjutkan dari teks terakhir ini: [ ${docContent.slice(-300)} ]`
+      ? `LANJUTKAN DOKUMEN ${docType}. SAYA INGIN ANDA HANYA MENULIS SAMBUNGANNYA SAJA TANPA PEMBUKA. Ini adalah akhir dari draf sebelumnya: [ ${docContent.slice(-500)} ]`
       : `Revisi draf: ${textToSend}. Tetap pada jenis dokumen ${docType}.`;
 
     if (!isContinue) setMessages(prev => [...prev, { role: "user", text: textToSend }]);
