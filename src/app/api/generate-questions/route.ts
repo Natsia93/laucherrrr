@@ -20,6 +20,7 @@ export async function POST(req: Request) {
       2. Kelas
       3. Fase (A, B, C, D, E, F)
       4. Semester (Ganjil, Genap, atau Keduanya)
+      5. Alokasi Jam Pelajaran (JP)
       
       Fokuslah langsung pada substansi pedagogis, materi spesifik, metode pembelajaran, karakteristik siswa, dan kebutuhan teknis dokumen ${docType}.
 
@@ -105,7 +106,6 @@ export async function POST(req: Request) {
       return NextResponse.json({
         questions: [
             ...(docType === "PROSEM" || docType === "Program Semester" ? [{ id: 4, question: "Pilih Semester yang ingin disusun jadwalnya:", type: "chips", options: ["Ganjil (Juli-Desember)", "Genap (Januari-Juni)"], category: "data" }] : []),
-            { id: 5, question: "Berapa Alokasi JP per minggu untuk mata pelajaran ini?", type: "chips", options: ["2 JP", "3 JP", "4 JP", "5 JP"], category: "data" },
             { id: 6, question: "Tuliskan Tahun Pelajaran:", type: "text", placeholder: "Misal: 2024/2025", category: "data" },
         ]
       });
@@ -123,8 +123,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ 
       questions: [
         { id: 4, question: "Apa elemen materi utama yang menjadi fokus?", type: "text", placeholder: "Misal: Geometri, Menulis, atau Zat dan Perubahannya..." },
-        { id: 5, question: "Media pembelajaran apa saja yang tersedia di sekolah Anda?", type: "chips", options: ["Alat Peraga Fisik", "Laboratorium Komputer", "Lingkungan Terbuka", "Buku Teks & Internet"] },
-        { id: 6, question: "Berapa total Jam Pelajaran (JP) yang tersedia untuk materi ini?", "type": "chips", "options": ["4 JP", "8 JP", "12 JP", "Sesuai Kurikulum"] }
+        { id: 5, question: "Media pembelajaran apa saja yang tersedia di sekolah Anda?", type: "chips", options: ["Alat Peraga Fisik", "Laboratorium Komputer", "Lingkungan Terbuka", "Buku Teks & Internet"] }
       ]
     });
   }

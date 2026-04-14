@@ -54,6 +54,13 @@ function GenerateContent() {
       type: "chips", 
       options: ["Fase A", "Fase B", "Fase C", "Fase D", "Fase E", "Fase F"], 
       category: "mandatory" 
+    },
+    {
+      id: 1005,
+      question: "Berapa alokasi Jam Pelajaran (JP) yang tersedia?",
+      type: "chips",
+      options: ["2 JP", "4 JP", "8 JP", "12 JP", "Sesuai Kurikulum"],
+      category: "mandatory"
     }
   ];
 
@@ -95,7 +102,7 @@ function GenerateContent() {
         // Filter out AI questions that might duplicate mandatory ones (Phase/Class/Mata Pelajaran)
         const filteredAiQuestions = (data.questions || []).filter((q: Question) => {
            const lowerQ = q.question.toLowerCase();
-           return !lowerQ.includes("kelas") && !lowerQ.includes("fase") && !lowerQ.includes("mata pelajaran") && !lowerQ.includes("semester");
+           return !lowerQ.includes("kelas") && !lowerQ.includes("fase") && !lowerQ.includes("mata pelajaran") && !lowerQ.includes("semester") && !lowerQ.includes("jp") && !lowerQ.includes("jam pelajaran");
         });
 
         setQuestions([...initialQuestions, ...filteredAiQuestions]);
