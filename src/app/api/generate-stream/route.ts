@@ -33,30 +33,33 @@ export async function POST(req: Request) {
     Permintaan Guru: "${rawPrompt}"
     
     === LOGIKA PERHITUNGAN JP & BAB (KRITIKAL) ===
-    1. JP PER BAB: Angka "Jam Pelajaran (JP)" yang ada di konteks adalah ALOKASI JP UNTUK SETIAP BAB.
-    2. JUMLAH BAB: Anda harus menjabarkan SEMUA BAB yang ada dalam periode yang diminta (Semester Ganjil, Genap, atau Tahunan).
-       - Jika 1 Semester: Berikan MINIMAL 4 hingga 5 BAB lengkap.
-       - Jika Tahunan (Ganjil & Genap): Berikan MINIMAL 8 hingga 10 BAB lengkap.
-    3. TOTAL JP: AI harus menghitung secara logis. Jika JP per Bab = 12, dan ada 5 Bab, maka Total JP dokumen adalah 60 JP.
+    1. JP PER BAB: Angka "Jam Pelajaran (JP)" di konteks adalah ALOKASI JP UNTUK SETIAP BAB.
+    2. JUMLAH BAB: Jabarkan SEMUA BAB untuk periode yang diminta (Ganjil: 3-5 BAB, Tahunan: 7-10 BAB).
     
-    === ATURAN KECERDASAN (WAJIB) ===
-    ADAPTASI MAPEL UNIVERSAL: Menyesuaikan elemen CP dengan mata pelajaran yang diminta (IPA, Matematika, Bahasa, Fiqih, dll). JANGAN gunakan elemen IPA secara default.
-    
-    ATURAN KONTEN:
-    - Narasi Pemahaman CP di Bagian A: MINIMAL 200 kata, ditulis dalam DAFTAR POIN (bullet points) yang mendalam, bukan paragraf panjang.
-    - Setiap Elemen/Keterampilan Proses: WAJIB dijabarkan per poin dengan deskripsi yang jelas.
-    - Tabel ATP Bagian B: Setiap baris kolom "Alur Tujuan Pembelajaran" harus berisi kalimat lengkap yang dimulai dengan kata kerja operasional (Menganalisis, Mendeskripsikan, dsb).
-    - Materi Pokok di-highlight kuning.
-    - Alokasi Waktu harus konsisten dengan "JP per Bab" yang diminta.
-    - TOTAL DOKUMEN MINIMAL 1500 KATA.
+    === ATURAN LAYOUT HTML (WAJIB CETAK PERSIS) ===
+    1. HEADER IDENTITAS (WARNA UNGU):
+       <div style="background-color: #d1c4e9; text-align: center; font-weight: bold; padding: 12px; border: 1px solid #b39ddb; margin-bottom: 20px;">
+         <div style="font-size: 14pt; border-bottom: 1px solid #7e57c2; display: inline-block; margin-bottom: 5px;">ALUR TUJUAN PEMBELAJARAN (ATP)</div>
+         <div style="font-size: 12pt;">MATA PELAJARAN : [NAMA MAPEL]</div>
+       </div>
+       <table style="width: 100%; border: none; margin-bottom: 25px; font-weight: bold; font-size: 11pt; border-collapse: collapse;">
+         <tr><td style="width: 160px; border: none; padding: 4px;">Nama Sekolah</td><td style="width: 20px; border: none;">:</td><td style="border: none;">...................................................</td></tr>
+         <tr><td style="border: none; padding: 4px;">Mata Pelajaran</td><td style="border: none;">:</td><td style="border: none;">[Nama Mapel]</td></tr>
+         <tr><td style="border: none; padding: 4px;">Kelas / Semester</td><td style="border: none;">:</td><td style="border: none;">[Kelas] / [Semester]</td></tr>
+         <tr><td style="border: none; padding: 4px;">Tahun Pelajaran</td><td style="border: none;">:</td><td style="border: none;">20... / 20...</td></tr>
+       </table>
 
-    TANDA TANGAN: Selalu akhiri dengan blok tanda tangan formal.
+    2. BAGIAN A (CP 046/2025): 
+       Gunakan <div style="background-color: #e0e0e0; font-weight: bold; padding: 8px; font-size: 12pt; margin-bottom: 12px; border: 1px solid #ccc;">A. PEMAHAMAN CAPAIAN PEMBELAJARAN (CP)</div>
+       Tuliskan narasi pemahaman minimal 200 kata + Deskripsi Elemen.
 
-    === ATURAN LAYOUT HTML (CETAK PERSIS) ===
-    1. HEADER: Gunakan background #d1c4e9 untuk judul. Tampilkan Nama Sekolah, Mapel, Kelas/Semester (Sesuai Konteks), dan Tahun Pelajaran.
-    2. BAGIAN A: Header background #e0e0e0. Narasi pemahaman panjang + elemen.
-    3. BAGIAN B: Header tabel #fae3e3. Baris BAB background #e6f7ff.
-    4. TANDA TANGAN di akhir.`;
+    3. BAGIAN B (TABEL ATP COLORFUL):
+       Header tabel background #fae3e3. Baris BAB background #e6f7ff (Bold Center).
+       Kolom: No | Alur Tujuan Pembelajaran | Dimensi Profil Lulusan | Materi Pokok | Alokasi Waktu.
+       Highlight kuning pada Materi Pokok.
+
+    TANDA TANGAN: Gunakan tabel border none di akhir dok.
+    TOTAL DOKUMEN MINIMAL 1500 KATA. LANGSUNG MULAI HTML.`;
 
     const isArabic = rawPrompt.toLowerCase().includes("bahasa arab") || rawPrompt.toLowerCase().includes("pondok") || rawPrompt.toLowerCase().includes("tasykil");
 
@@ -64,72 +67,57 @@ export async function POST(req: Request) {
     
     KONTEKS GURU: "${rawPrompt}"
 
-    === ATURAN TEKNIS (SANGAT PENTING) ===
-    1. LANGSUNG MULAI DENGAN TAG <div>.
-    2. MODE BAHASA: ${isArabic ? "WAJIB SERTAKAN HAROKAT/TASYKIL LENGKAP PADA SETIAP KATA ARAB." : "Bahasa Indonesia formal."}
-    3. STRUKTUR: Pilih jenis soal (PG, Singkat, Esai) sesuai permintaan jumlah soal di konteks.
-    4. MATERI: Berikan materi dan soal yang mendalam sesuai Capaian Pembelajaran terbaru.
+    === ATURAN TEKNIS ===
+    1. Gunakan Layout Kop Surat yang rapi.
+    2. Gunakan Border Tebal untuk Judul.
+    3. MODE BAHASA: ${isArabic ? "WAJIB SERTAKAN HAROKAT/TASYKIL LENGKAP PADA SETIAP KATA ARAB." : "Bahasa Indonesia formal."}
+    4. Selesaikan soal sesuai urutan: PG, Singkat, Esai.
     `;
 
-    const cpSystemPrompt = `Anda adalah PAKAR SENIOR Kurikulum Merdeka Indonesia yang menyusun dokumen Capaian Pembelajaran (CP) sesuai Keputusan Nomor 046/H/KR/2025.
+    const cpSystemPrompt = `Anda adalah PAKAR Kurikulum Merdeka menyusun Capaian Pembelajaran (CP) 046/H/KR/2025.
     
-    Permintaan Guru: "${rawPrompt}"
+    === ATURAN LAYOUT ===
+    1. HEADER (WARNA LAVENDER): 
+       <div style="background-color: #e6e6fa; text-align: center; border: 1px solid #d1d1e0; padding: 15px; margin-bottom: 25px;">
+         <h1 style="margin: 0; font-size: 14pt;">CAPAIAN PEMBELAJARAN (NOMOR 046/H/KR/2025)</h1>
+         <h2 style="margin: 5px 0 0 0; font-size: 13pt;">[NAMA MATA PELAJARAN]</h2>
+       </div>
     
-    === ATURAN KONTEN (WAJIB) ===
-    1. RASIONAL: Ditulis dalam DAFTAR POIN per paragraf (minimal 4 poin besar) mengenai urgensi mapel tersebut.
-    2. TUJUAN & KARAKTERISTIK: Penjelasan mendalam tentang pendekatan pembelajaran, dijabarkan per poin.
-    3. TABEL ELEMEN: Minimal 4 elemen dengan deskripsi padat (100+ kata per elemen).
-    4. CP PER FASE: Jabarkan CP Fase yang diminta secara utuh dan detail, gunakan DAFTAR POIN untuk setiap keterampilan/kompetensi. JANGAN buat paragraf panjang yang menyatu.
-    
-    === LAYOUT HTML ===
-    1. Header background #e6e6fa.
-    2. Tabel Elemen border hitam tebal.
-    3. TOTAL KATA MINIMAL 2000.
-    `;
+    2. RASIONAL & TUJUAN: Narasi panjang minimal 500 kata.
+    3. TABEL ELEMEN: Border hitam tebal, header background putih.
+    4. TOTAL KATA MINIMAL 2000.`;
 
-    const protaSystemPrompt = `Anda adalah PAKAR SENIOR yang menyusun Program Tahunan (PROTA) berdasarkan CP 046/H/KR/2025.
+    const protaSystemPrompt = `Anda menyusun Program Tahunan (PROTA) Kurikulum Merdeka.
     
-    Permintaan Guru: "${rawPrompt}"
+    === ATURAN LAYOUT ===
+    1. HEADER (WARNA UNGU): 
+       <div style="background-color: #ccb9db; text-align: center; border: 1.5px solid #b3a2c7; padding: 10px; margin-bottom: 20px;">
+         <h1 style="margin: 0; font-size: 14pt; font-weight: bold; text-decoration: underline;">PROGRAM TAHUNAN (PROTA)</h1>
+       </div>
+    2. TABEL IDENTITAS: Seperti format ATP.
+    3. TABEL PROTA: Header #8db4e2. Baris BAB #daeef3. Materi highlight kuning.
+    4. CAKUPAN: Ganjil & Genap (7-10 BAB).`;
 
-    === LOGIKA JP & MATERI ===
-    - JP per Bab: Angka JP di konteks adalah alokasi per BAB.
-    - Cakupan: Karena ini Program TAHUNAN, Anda WAJIB menjabarkan materi Ganjil DAN Genap secara lengkap (MINIMAL 8-10 BAB).
-    - Distribusi JP harus proporsional untuk satu tahun pelajaran.
-
-    === LAYOUT HTML ===
-    - Header background #ccb9db.
-    - Tabel dengan kolom No, ATP, Materi, Alokasi Waktu, Semester.
-    - Header BAB background #daeef3.
-    `;
-
-    const prosemSystemPrompt = `Anda adalah PAKAR SENIOR yang menyusun Program Semester (PROSEM) berdasarkan CP 046/H/KR/2025.
+    const prosemSystemPrompt = `Anda menyusun Program Semester (PROSEM) Kurikulum Merdeka.
     
-    Permintaan Guru: "${rawPrompt}"
-    
-    === KALENDER & JP ===
-    - Jika Ganjil: Juli-Desember. Jika Genap: Januari-Juni.
-    - Jabarkan SEMUA BAB yang ada dalam semester tersebut (MINIMAL 4-5 BAB).
-    - Angka JP di konteks adalah JP PER BAB. Tebarkan tanda "V" pada minggu-minggu aktif secara logis.
-    - WAJIB ada baris STS dan SAS di akhir tabel.
+    === ATURAN LAYOUT ===
+    1. HEADER (WARNA LAVENDER): 
+       <div style="background-color: #e6e6fa; text-align: center; border: 1.5 solid #d1d1e0; padding: 10px; margin-bottom: 20px;">
+         <h1 style="margin: 0; font-size: 13pt;">PROGRAM SEMESTER (PROSEM)</h1>
+       </div>
+    2. TABEL PROSEM: Header bertingkat (Bulan & Minggu 1-5). Gunakan sel-sel kecil untuk tanda "V".
+       Background header #f2f2f2. Baris BAB #e6f7ff.
+    3. WAJIB ADA baris STS dan SAS di akhir tabel (Abu-abu).`;
 
-    === LAYOUT HTML ===
-    - Header background #e6e6fa.
-    - Tabel header bertingkat (Bulan & Minggu 1-5).
-    `;
-
-    const kktpSystemPrompt = `Anda adalah PAKAR SENIOR yang menyusun Kriteria Ketercapaian Tujuan Pembelajaran (KKTP) berdasarkan CP 046/H/KR/2025.
+    const kktpSystemPrompt = `Anda menyusun Kriteria Ketercapaian Tujuan Pembelajaran (KKTP).
     
-    Permintaan Guru: "${rawPrompt}"
-    
-    === KONTEN ===
-    - Jabarkan SEMUA BAB/Materi untuk semester yang diminta (MINIMAL 4-5 BAB).
-    - Untuk setiap BAB, berikan indikator ketercapaian yang detail.
-    - Gunakan format Interval Nilai: 0-40%, 41-65%, 66-85%, 86-100%.
-
-    === LAYOUT HTML ===
-    - Header background #ccb9db.
-    - Tabel Skala Interval background #e6e6fa.
-    `;
+    === ATURAN LAYOUT ===
+    1. HEADER (WARNA UNGU): 
+       <div style="background-color: #ccb9db; text-align: center; border: 1.5 solid #b3a2c7; padding: 10px; margin-bottom: 20px;">
+         <h1 style="margin: 0; font-size: 14pt; font-weight: bold; text-decoration: underline;">KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN (KKTP)</h1>
+       </div>
+    2. TABEL KKTP: Header #f2f2f2. Sub-header Interval #e6e6fa. Baris BAB #fbd5b5.
+    3. MATERI: Highlight kuning. Interval 0-40%, 41-65%, 66-85%, 86-100%.`;
 
     const isType = (t: string) => type.includes(t) || t.includes(type);
 
