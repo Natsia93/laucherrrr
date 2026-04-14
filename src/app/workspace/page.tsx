@@ -44,36 +44,6 @@ function WorkspaceContent() {
   const docAreaRef = useRef<HTMLDivElement>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
 
-  const tableStyles = `
-    .scroll-hide {
-      scrollbar-width: none !important;
-      -ms-overflow-style: none !important;
-    }
-    .scroll-hide::-webkit-scrollbar {
-      display: none !important;
-    }
-
-    .a4-paper {
-      width: 210mm;
-      max-width: 100%;
-      min-height: 297mm;
-      height: fit-content;
-      background-color: white !important;
-      color: black !important;
-      box-shadow: 0 10px 50px rgba(0,0,0,0.5);
-      border: 1px solid #333;
-      padding: 15mm 10mm;
-      box-sizing: border-box;
-      font-family: 'Times New Roman', Times, serif;
-      font-size: 11pt;
-      line-height: 1.5;
-    }
-
-    @media (min-width: 768px) {
-      .a4-paper { padding: 25mm 20mm; font-size: 12pt; }
-    }
-  `;
-
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -86,13 +56,17 @@ function WorkspaceContent() {
       setAbortController(null);
       setLoading(false);
       setProgressStage(-1);
-      setMessages(prev => [...prev.filter(m => !m.text.startsWith("⏳")), { role: "ai", text: "⏹️ Proses dihentikan." }]);
+      setMessages(prev => [
+        ...prev.filter(m => !m.text.startsWith("⏳")), 
+        { role: "ai", text: "⏹️ Proses pembuatan dokumen telah dihentikan oleh Anda." }
+      ]);
     }
   };
 
   const streamGenerate = useCallback(async (rawPrompt: string, appendToExisting = false) => {
     setLoading(true);
     setProgressStage(0);
+    setElapsedTime(0);
     
     if (!appendToExisting) {
       setDisplayedContent("");
@@ -116,7 +90,7 @@ function WorkspaceContent() {
         body: JSON.stringify({ rawPrompt, type: docType, model }),
       });
 
-      if (!response.ok) throw new Error("Gagal menyambung ke server AI");
+      if (!response.ok) throw new Error("Gagal menyambung ke AI");
 
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
@@ -144,10 +118,9 @@ function WorkspaceContent() {
               setIsGenerated(true);
               setMessages(prev => [
                 ...prev.filter(m => !m.text.startsWith("⏳")), 
-                { role: "ai", text: "✅ Dokumen berhasil disusun!" }
+                { role: "ai", text: "✅ Selesai! Dokumen sudah siap. Ingin revisi?" }
               ]);
             }
-            if (data.type === "error") throw new Error(data.message);
           } catch {}
         }
       }
@@ -183,12 +156,12 @@ function WorkspaceContent() {
           setDisplayedContent(data.content);
           contentRef.current = data.content;
           setIsGenerated(true);
-          setMessages([{ role: "ai", text: `✅ Dokumen "${data.title}" berhasil dimuat.` }]);
+          setMessages([{ role: "ai", text: `✅ Dokumen berhasil dimuat.` }]);
         } catch (e) {} finally { setLoading(false); }
       };
       fetchDoc();
     } else if (context) {
-      const prompt = `Berdasarkan wawancara: ${context.replace(/\|/g, ". ")}. Buatkan dokumen ${docType} lengkap.`;
+      const prompt = `Wawancara: ${context.replace(/\|/g, ". ")}. Buatkan dokumen ${docType} LENGKAP.`;
       streamGenerate(prompt);
     } else if (initialPrompt) {
       streamGenerate(initialPrompt);
@@ -199,15 +172,16 @@ function WorkspaceContent() {
     if (loading) return;
     const isArabicDoc = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
     
+    // PERBAIKAN: Instruksi yang sangat spesifik agar tidak "belok" tipe dokumen
     const textToSend = isContinue 
-      ? `Lanjutkan penulisan dokumen ${docType} ini. WAJIB tetap gunakan Bahasa ${isArabicDoc ? 'Arab Ber-Harokat (Tasykil)' : 'Indonesia'} dan format yang sama. Sambung materi berikutnya.` 
+      ? `INI ADALAH LANJUTAN DARI DOKUMEN ${docType}. JANGAN MEMBUAT ATP. JANGAN MEMBUAT JUDUL BARU. Lanjutkan isi konten ${docType} dari titik terakhir secara natural. Gunakan Bahasa ${isArabicDoc ? 'Arab (Harokat)' : 'Indonesia'}.`
       : chatInput;
       
     if (!textToSend.trim()) return;
     
     const contextPrompt = isContinue 
-      ? `KONTEKS: Dokumen ${docType} ${isArabicDoc ? 'Arab' : 'Indonesia'}. LANJUTKAN dari draf terakhir: ${docContent.slice(-400)}`
-      : `Revisi draf: ${textToSend}. Berdasarkan diskusi sebelumnya.`;
+      ? `LANJUTKAN: Dokumen ini berjenis ${docType}. Pastikan layout tidak rusak. Lanjutkan dari teks terakhir ini: [ ${docContent.slice(-300)} ]`
+      : `Revisi draf: ${textToSend}. Tetap pada jenis dokumen ${docType}.`;
 
     if (!isContinue) setMessages(prev => [...prev, { role: "user", text: textToSend }]);
     setChatInput("");
@@ -217,15 +191,15 @@ function WorkspaceContent() {
   };
 
   const exportToWord = () => {
-    const isArabicDoc = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
+    const isArabic = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
     const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head><meta charset='utf-8'><style>
         body { font-family: 'Times New Roman', serif; }
         table { width: 100%; border-collapse: collapse; border: 1px solid black; }
         th, td { border: 1px solid black; padding: 6px; }
-        [dir="rtl"] { direction: rtl; text-align: right; }
-      </style></head><body>`;
-    const sourceHTML = header + `<div ${isArabicDoc ? 'dir="rtl"' : 'dir="ltr"'}>` + docContent + "</div></body></html>";
+        [dir="rtl"] { direction: rtl; text-align: right; font-family: 'Amiri', serif; }
+      </style></head><body><div ${isArabic ? 'dir="rtl"' : 'dir="ltr"'}>`;
+    const sourceHTML = header + docContent + "</div></body></html>";
     const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
     const link = document.createElement("a");
     link.href = source;
@@ -234,81 +208,83 @@ function WorkspaceContent() {
   };
 
   const renderProgressIndicator = () => (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center min-h-[900px] w-full py-12">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center min-h-[900px] w-full py-12 scroll-hide">
       <div className="relative w-16 h-16 mb-8">
         <div className="absolute inset-0 rounded-full bg-[#4d7537]/20 animate-ping" />
         <div className="relative w-16 h-16 rounded-full bg-[#4d7537] flex items-center justify-center shadow-lg">
           <Zap className="w-8 h-8 text-white" />
         </div>
       </div>
-      <h3 className="text-xl font-bold text-white mb-2 font-bricolage">AI Sedang Menyusun Dokumen</h3>
-      <p className="text-sm text-neutral-400 mb-8 flex items-center gap-2">
+      <h3 className="text-xl font-bold text-white mb-2 font-bricolage tracking-tight">AI Sedang Menyusun Dokumen</h3>
+      <p className="text-sm text-neutral-400 mb-10 flex items-center gap-2">
         <Clock className="w-4 h-4" /> {formatTime(elapsedTime)}
       </p>
       
-      <div className="w-full max-w-sm space-y-3 mb-10">
+      <div className="w-full max-w-sm space-y-3 mb-12">
         {PROGRESS_STAGES.map((s, i) => (
-          <div key={i} className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all duration-500 ${i <= progressStage ? 'bg-[#4d7537]/10 border-[#4d7537]/30 shadow-sm' : 'opacity-20 border-white/10'}`}>
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-500 ${i <= progressStage ? 'bg-[#4d7537] text-white' : 'bg-white/5'}`}>
+          <div key={i} className={`flex items-center gap-3 p-4 rounded-xl border transition-all duration-500 ${i <= progressStage ? 'bg-[#4d7537]/10 border-[#4d7537]/30 shadow-md' : 'opacity-20 border-white/5'}`}>
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center ${i <= progressStage ? 'bg-[#4d7537] text-white shadow-lg' : 'bg-white/5'}`}>
               {i < progressStage ? <CheckCircle2 className="w-5 h-5" /> : <s.icon className="w-4.5 h-4.5" />}
             </div>
             <div>
-              <p className="text-sm font-semibold text-white">{s.label}</p>
-              {i === progressStage && <p className="text-[10px] text-neutral-400">{s.description}</p>}
+              <p className="text-sm font-bold text-white leading-none">{s.label}</p>
+              {i === progressStage && <p className="text-[10px] text-neutral-400 mt-1">{s.description}</p>}
             </div>
           </div>
         ))}
       </div>
 
-      <Button variant="outline" onClick={stopGeneration} className="border-red-500/30 text-red-500 hover:bg-red-500/10 rounded-full px-8 gap-2 transition-all active:scale-95 shadow-sm">
-        <XCircle className="w-4 h-4" /> Hentikan Generate
+      <Button 
+        variant="outline" 
+        onClick={stopGeneration} 
+        className="border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white rounded-full px-10 h-12 gap-2 shadow-2xl transition-all active:scale-95 bg-transparent"
+      >
+        <XCircle className="w-5 h-5" /> Batalkan Proses
       </Button>
     </motion.div>
   );
 
   return (
     <div className="min-h-screen bg-[#050505] flex flex-col h-screen overflow-hidden text-neutral-200">
-      <style>{tableStyles}</style>
+      <style>{`
+        .scroll-hide { scrollbar-width: none; -ms-overflow-style: none; }
+        .scroll-hide::-webkit-scrollbar { display: none; }
+        .a4-paper {
+          width: 210mm;
+          min-height: 297mm;
+          background: white !important;
+          color: black !important;
+          box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+          padding: 25mm 20mm;
+          margin: 40px auto;
+          font-family: 'Times New Roman', serif;
+          font-size: 12pt;
+          line-height: 1.5;
+        }
+        .curriculum-content table { border-collapse: collapse; width: 100%; border: 1px solid black; }
+        .curriculum-content th, .curriculum-content td { border: 1px solid black; padding: 8px; vertical-align: top; }
+        .curriculum-content [dir="rtl"] { direction: rtl; text-align: right; }
+      `}</style>
 
-      {/* Top Navbar - Forced Dark */}
-      <nav className="flex items-center justify-between px-6 py-3 border-b border-white/5 bg-[#0a0a0a] z-50 shrink-0">
+      <nav className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#0a0a0a] z-50 shrink-0">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-neutral-400 hover:bg-white/5">
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-          <Link href="/" className="flex items-center gap-2 px-1">
-            <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center shadow-md">
-              <BookOpen className="text-white w-4.5 h-4.5" />
-            </div>
-            <span className="font-bricolage font-bold text-lg tracking-tight hidden sm:block">Dekstorio</span>
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-neutral-400 hover:bg-white/5"><ChevronLeft className="w-5 h-5" /></Button>
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center shadow-lg"><BookOpen className="text-white w-4.5 h-4.5" /></div>
+            <span className="font-bricolage font-bold text-xl text-white">Dekstorio</span>
           </Link>
         </div>
-
-        <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-white/5 rounded-lg p-1 border border-white/5 backdrop-blur-md">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="sm" className="text-neutral-400 hover:text-white hover:bg-white/10 rounded-md">
-              <Folder className="w-4 h-4 mr-2" /> Penyimpanan File
-            </Button>
-          </Link>
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="bg-[#4d7537] text-white rounded-md shadow-sm">
-              <Sparkles className="w-4 h-4 mr-2" /> AI Generate
-            </Button>
-          </Link>
-        </div>
-
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Button onClick={exportToWord} size="sm" className="bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-lg shadow-lg">
+          <Button onClick={exportToWord} size="sm" className="bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-lg shadow-xl shadow-[#4d7537]/20 border-none transition-all active:scale-95">
              <Download className="w-4 h-4 mr-2" /> Export .doc
           </Button>
         </div>
       </nav>
 
       <main className="flex-1 flex overflow-hidden min-h-0 relative">
-        {/* Document Area - Hidden Scrollbar */}
-        <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto p-4 md:p-12 text-center bg-[#050505] scroll-hide">
-          <div className="a4-paper curriculum-content relative my-4 mx-auto inline-block text-left w-full max-w-[210mm] shadow-[0_0_100px_rgba(0,0,0,0.8)] transition-all duration-300">
+        <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto p-8 md:p-12 text-center bg-[#050505] scroll-hide">
+          <div className="a4-paper curriculum-content relative inline-block text-left w-full max-w-[210mm]">
             <AnimatePresence mode="wait">
               {displayedContent ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
@@ -316,77 +292,53 @@ function WorkspaceContent() {
                 />
               ) : loading ? renderProgressIndicator() : (
                 <div className="flex flex-col items-center justify-center min-h-[900px] opacity-10 py-20">
-                   <div className="w-20 h-20 rounded-3xl bg-white/5 mb-6 flex items-center justify-center">
-                      <BookOpen className="w-10 h-10 text-white" />
-                   </div>
-                   <p className="font-semibold text-lg">Menunggu Konteks...</p>
+                   <BookOpen className="w-16 h-16 text-white mb-4" />
+                   <p className="text-xl font-bold">Menunggu Konteks...</p>
                 </div>
               )}
             </AnimatePresence>
           </div>
           {isGenerated && !loading && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-10 mb-20">
-              <Button onClick={() => handleSendMessage(true)} className="bg-transparent border-2 border-[#4d7537] text-[#4d7537] hover:bg-[#4d7537] hover:text-white rounded-full px-12 h-14 font-bold shadow-2xl transition-all">
-                <Sparkles className="w-5 h-5 mr-3" /> Lanjutkan Penulisan
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-12 mb-32 pb-10">
+              <Button onClick={() => handleSendMessage(true)} className="bg-transparent border-2 border-[#4d7537] text-[#4d7537] hover:bg-[#4d7537] hover:text-white rounded-full px-14 h-16 font-bold text-lg shadow-2xl shadow-[#4d7537]/20 transition-all hover:scale-105 active:scale-95">
+                <Sparkles className="w-6 h-6 mr-3" /> Lanjutkan Penulisan
               </Button>
             </motion.div>
           )}
         </div>
 
-        {/* Sidebar Chat Area - Hidden Scrollbar */}
-        <div className={`fixed inset-0 z-[100] md:relative md:inset-auto md:z-10 w-full md:w-[400px] border-l border-white/5 bg-[#0a0a0a] flex flex-col transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
+        <div className={`fixed inset-0 z-[100] md:relative md:inset-auto md:z-10 w-full md:w-[420px] border-l border-white/5 bg-[#0a0a0a] flex flex-col transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
           <div className="p-5 border-b border-white/5 bg-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-               <div className="w-8 h-8 rounded-lg bg-[#4d7537]/20 flex items-center justify-center"><Sparkles className="w-4 h-4 text-[#4d7537]" /></div>
-               <h2 className="font-bold text-white font-bricolage">AI Assistant</h2>
-            </div>
-            {loading && <div className="text-[10px] text-[#4d7537] font-mono">{formatTime(elapsedTime)}</div>}
+            <h2 className="font-bold text-lg text-white font-bricolage flex items-center gap-2"><Sparkles className="w-5 h-5 text-[#4d7537]" /> AI Assistant</h2>
             <Button variant="ghost" size="icon" className="md:hidden text-neutral-400" onClick={() => setIsSidebarOpen(false)}><XCircle className="w-5 h-5" /></Button>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-5 space-y-5 scroll-hide" data-lenis-prevent="true">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 scroll-hide">
             {messages.map((m, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} 
-                className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}
-              >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-lg ${m.role === 'user' ? 'bg-white/5 border border-white/10 text-white' : 'bg-[#4d7537] text-white'}`}>
-                  {m.role === 'user' ? <div className="text-[10px] font-bold">U</div> : <Sparkles className="w-4 h-4" />}
-                </div>
-                <div className={`p-4 rounded-2xl text-sm leading-relaxed max-w-[85%] border shadow-lg ${
-                  m.role === 'user' 
-                    ? 'bg-[#4d7537]/70 backdrop-blur-md text-white border-white/10' 
-                    : m.text.startsWith('⏳') ? 'bg-white/5 border-white/10 text-amber-500'
-                    : 'bg-[#151515] border-white/5 text-neutral-300'
-                }`}>
-                  {m.text}
-                </div>
+              <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-lg ${m.role === 'user' ? 'bg-white/5 text-white border border-white/10' : 'bg-[#4d7537] text-white'}`}>{m.role === 'user' ? 'U' : <Sparkles className="w-5 h-5" />}</div>
+                <div className={`p-4 rounded-2xl text-[13px] leading-relaxed max-w-[85%] border shadow-xl ${m.role === 'user' ? 'bg-[#4d7537]/70 backdrop-blur-md border-white/10 text-white' : 'bg-white/5 border-white/5 text-neutral-300'}`}>{m.text}</div>
               </motion.div>
             ))}
           </div>
           
-          <div className="p-5 bg-[#0a0a0a] border-t border-white/5">
-            <div className="relative flex items-center bg-white/5 border border-white/10 rounded-2xl p-1.5 shadow-inner">
-              <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Tulis revisi di sini..." className="border-none focus-visible:ring-0 text-sm bg-transparent text-white" />
-              <Button onClick={() => handleSendMessage()} disabled={loading} className="h-10 w-10 bg-[#4d7537] rounded-xl shadow-lg hover:scale-105 transition-all">
-                <Send className="w-4 h-4" />
-              </Button>
+          <div className="p-6 bg-[#0a0a0a] border-t border-white/5">
+            <div className="relative flex items-center bg-white/5 border border-white/10 rounded-2xl p-2 shadow-inner">
+              <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Tulis instruksi revisi..." className="border-none focus-visible:ring-0 text-sm bg-transparent text-white" />
+              <Button onClick={() => handleSendMessage()} disabled={loading} className="h-11 w-11 bg-[#4d7537] rounded-xl shadow-lg transition-transform hover:scale-105"><Send className="w-5 h-5" /></Button>
             </div>
           </div>
         </div>
       </main>
       
-      {!isSidebarOpen && (
-        <Button onClick={() => setIsSidebarOpen(true)} className="fixed bottom-6 right-6 z-50 md:hidden w-14 h-14 rounded-full bg-[#4d7537] text-white shadow-2xl flex items-center justify-center p-0">
-          <Sparkles className="w-6 h-6" />
-        </Button>
-      )}
+      {!isSidebarOpen && <Button onClick={() => setIsSidebarOpen(true)} className="fixed bottom-6 right-6 z-50 md:hidden w-16 h-16 rounded-full bg-[#4d7537] text-white shadow-2xl flex items-center justify-center p-0"><Sparkles className="w-8 h-8" /></Button>}
     </div>
   );
 }
 
 export default function WorkspacePage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#050505] text-[#4d7537]"><Loader2 className="w-12 h-12 animate-spin" /></div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#050505]"><Loader2 className="w-12 h-12 animate-spin text-[#4d7537]" /></div>}>
       <WorkspaceContent />
     </Suspense>
   );
