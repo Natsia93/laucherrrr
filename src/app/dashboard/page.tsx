@@ -69,17 +69,17 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#f4f3ed] dark:bg-[#080b06] text-[#1a2315] dark:text-[#e8eedd] flex flex-col font-sans selection:bg-[#4d7537]/30 selection:text-neutral-900 dark:selection:text-white transition-colors duration-300">
       {/* Navbar Minimalis Dashboard */}
-      <nav className="flex items-center justify-between px-6 py-4 border-b border-[#dcdad1] dark:border-[#3f612d]/20 bg-[#f4f3ed]/90 dark:bg-[#080b06]/90 sticky top-0 z-50 backdrop-blur-md transition-colors duration-300">
+      <nav className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-[#dcdad1] dark:border-[#3f612d]/20 bg-[#f4f3ed]/90 dark:bg-[#080b06]/90 sticky top-0 z-50 backdrop-blur-md transition-colors duration-300">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 text-[#1a2315] dark:text-[#f4f3ed]">
             <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center">
               <BookOpen className="text-white w-5 h-5" />
             </div>
-            <span className="font-bricolage font-semibold text-lg hidden md:block">EduAuto Workspace</span>
+            <span className="font-bricolage font-semibold text-lg hidden sm:block">EduAuto</span>
           </Link>
         </div>
 
-        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-white dark:bg-[#10140d]/80 rounded-lg p-1 border border-[#dcdad1] dark:border-[#3f612d]/30 backdrop-blur-md">
+        <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-white dark:bg-[#10140d]/80 rounded-lg p-1 border border-[#dcdad1] dark:border-[#3f612d]/30 backdrop-blur-md">
             <Link href="/dashboard" passHref>
               <Button variant="ghost" size="sm" className="bg-neutral-100 dark:bg-[#1a2315] text-neutral-900 dark:text-[#f4f3ed] hover:bg-neutral-200 dark:hover:bg-[#2c471c] hover:text-neutral-900 dark:hover:text-white rounded-md">
                 <Folder className="w-4 h-4 mr-2" />
@@ -93,12 +93,12 @@ export default async function DashboardPage() {
               </Button>
             </Link>
           </div>
-        <div className="flex items-center gap-4">
-          <div className="relative hidden md:block">
+        <div className="flex items-center gap-2 md:gap-4">
+          <div className="relative hidden xl:block">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-[#6b7b59]" />
             <Input 
               placeholder="Cari dokumen..." 
-              className="w-64 pl-9 bg-white dark:bg-[#1a2315]/50 border-[#dcdad1] dark:border-[#3f612d]/30 text-sm focus-visible:ring-[#4d7537]/50 text-neutral-900 dark:text-[#f4f3ed] placeholder:text-neutral-400 dark:placeholder:text-[#6b7b59]"
+              className="w-48 xl:w-64 pl-9 bg-white dark:bg-[#1a2315]/50 border-[#dcdad1] dark:border-[#3f612d]/30 text-sm focus-visible:ring-[#4d7537]/50 text-neutral-900 dark:text-[#f4f3ed] placeholder:text-neutral-400 dark:placeholder:text-[#6b7b59]"
             />
           </div>
           <DashboardNavbarActions user={user} />

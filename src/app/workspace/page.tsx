@@ -37,6 +37,7 @@ function WorkspaceContent() {
   const [progressStage, setProgressStage] = useState(-1);
   const [elapsedTime, setElapsedTime] = useState(0);
   const hasStarted = useRef(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const contentRef = useRef("");
   const docAreaRef = useRef<HTMLDivElement>(null);
 
@@ -48,11 +49,11 @@ function WorkspaceContent() {
     /* === A4 Paper multiple pages illusion === */
     .a4-paper {
       width: 210mm;
+      max-width: 100%;
       min-height: 297mm;
-      height: fit-content; /* Ensure it wraps all content */
+      height: fit-content;
       background-color: white !important;
       
-      /* Draw a subtle separator line every 297mm to look like separate pages */
       background-image: repeating-linear-gradient(
         to bottom,
         white 0mm,
@@ -64,12 +65,19 @@ function WorkspaceContent() {
       color: black;
       box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08);
       border: 1px solid #d1d5db;
-      padding: 25mm 20mm;
+      padding: 10mm 10mm; /* Reduced mobile padding */
       box-sizing: border-box;
       font-family: 'Times New Roman', Times, serif;
-      font-size: 12pt;
-      line-height: 1.6;
+      font-size: 11pt; /* Slightly smaller for better fit */
+      line-height: 1.5;
       text-align: left;
+    }
+
+    @media (min-width: 768px) {
+      .a4-paper {
+        padding: 25mm 20mm;
+        font-size: 12pt;
+      }
     }
 
     /* === Curriculum content styles === */
@@ -480,27 +488,19 @@ function WorkspaceContent() {
           </Link>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Live streaming indicator */}
+        <div className="flex items-center gap-2">
           {loading && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-2 bg-[#4d7537]/10 text-[#4d7537] px-3 py-1.5 rounded-full text-xs font-medium border border-[#4d7537]/20"
-            >
-              <span className="relative flex h-2 w-2">
+            <div className="flex items-center gap-2 bg-[#4d7537]/10 text-[#4d7537] px-3 py-1.5 rounded-full text-[10px] font-medium border border-[#4d7537]/20">
+              <span className="relative flex h-1.5 w-1.5 pt-0.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4d7537] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#4d7537]"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#4d7537]"></span>
               </span>
-              Generating...
-            </motion.div>
+              <span className="hidden xs:inline">Generating...</span>
+            </div>
           )}
           <ThemeToggle />
-          <Button variant="outline" size="sm" className="hidden sm:flex border-[#dcdad1] dark:border-[#3f612d]/30 rounded-md">
-            <History className="w-4 h-4 mr-2" /> Riwayat
-          </Button>
-          <Button onClick={exportToWord} size="sm" className="bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-md">
-            <Download className="w-4 h-4 mr-2" /> Export .doc
+          <Button onClick={exportToWord} size="sm" className="bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-md px-3 sm:px-4">
+            <Download className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Export .doc</span>
           </Button>
         </div>
       </nav>
@@ -537,8 +537,25 @@ function WorkspaceContent() {
           )}
         </div>
 
+        {/* Floating AI Toggle (Mobile Only) */}
+        {!isSidebarOpen && (
+          <Button 
+            onClick={() => setIsSidebarOpen(true)}
+            className="fixed bottom-6 right-6 z-[60] md:hidden w-14 h-14 rounded-full bg-[#4d7537] text-white shadow-2xl flex items-center justify-center p-0"
+          >
+            <Sparkles className="w-6 h-6" />
+          </Button>
+        )}
+
         {/* AI Sidebar */}
-        <div className="w-full md:w-[350px] lg:w-[420px] border-l border-[#dcdad1] dark:border-[#3f612d]/30 bg-white dark:bg-[#0a0a0a] flex flex-col">
+        <div className={`
+          fixed inset-0 z-[100] md:relative md:inset-auto md:z-10
+          w-full md:w-[350px] lg:w-[420px] 
+          border-l border-[#dcdad1] dark:border-[#3f612d]/30 
+          bg-white dark:bg-[#0a0a0a] flex flex-col 
+          transition-transform duration-300 ease-in-out
+          ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+        `}>
           <div className="p-5 border-b border-[#dcdad1] dark:border-[#3f612d]/20 bg-neutral-50/50 dark:bg-[#10140d]/50 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-[#4d7537]" />
             <h2 className="font-bricolage font-semibold text-neutral-900 dark:text-white">AI Assistant</h2>
@@ -548,6 +565,14 @@ function WorkspaceContent() {
                 {formatTime(elapsedTime)}
               </div>
             )}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="md:hidden ml-auto text-neutral-400"
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <ChevronLeft className="w-5 h-5 rotate-180" />
+            </Button>
           </div>
 
           <div data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto scroll-hidden p-5 space-y-4">
@@ -614,7 +639,7 @@ function WorkspaceContent() {
             )}
           </div>
 
-          <div className="p-5">
+          <div className="p-5 pb-8 md:pb-5">
             <div className="relative flex items-center bg-neutral-50 dark:bg-[#151a11] border border-neutral-200 dark:border-[#3f612d]/40 rounded-xl p-1 shadow-sm">
               <Input 
                 value={chatInput}
