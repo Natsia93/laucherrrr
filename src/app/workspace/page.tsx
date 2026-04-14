@@ -280,7 +280,7 @@ function WorkspaceContent() {
             <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center shadow-md">
               <BookOpen className="text-white w-4.5 h-4.5" />
             </div>
-            <span className="font-bricolage font-bold text-lg tracking-tight hidden sm:block">Dekstorio Editor</span>
+            <span className="font-bricolage font-bold text-lg tracking-tight hidden sm:block">Dekstorio</span>
           </Link>
         </div>
 
@@ -354,7 +354,7 @@ function WorkspaceContent() {
                 </div>
                 <div className={`p-4 rounded-2xl text-sm leading-relaxed max-w-[85%] border shadow-lg ${
                   m.role === 'user' 
-                    ? 'bg-[#4d7537] text-white border-[#4d7537]' 
+                    ? 'bg-[#4d7537]/70 backdrop-blur-md text-white border-white/10' 
                     : m.text.startsWith('⏳') ? 'bg-white/5 border-white/10 text-amber-500'
                     : 'bg-[#151515] border-white/5 text-neutral-300'
                 }`}>
