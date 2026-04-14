@@ -84,11 +84,11 @@ export function ActionModal({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", damping: 25, stiffness: 350 }}
-              className="w-full max-w-md bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-xl border border-[#dcdad1] dark:border-[#3f612d]/30 rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] pointer-events-auto overflow-hidden"
+              className="w-full max-w-md bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-xl border border-[#dcdad1] dark:border-[#3f612d]/30 rounded-xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] pointer-events-auto overflow-hidden"
             >
               <div className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${colors[type]}`}>
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${colors[type]}`}>
                     {icons[type]}
                   </div>
                   <div className="flex-1">
@@ -112,14 +112,14 @@ export function ActionModal({
                     variant="ghost"
                     onClick={onClose}
                     disabled={isLoading}
-                    className="text-neutral-500 hover:bg-neutral-100 dark:hover:bg-[#1a2315] rounded-xl px-6"
+                    className="text-neutral-500 hover:bg-neutral-100 dark:hover:bg-[#1a2315] rounded-lg px-6"
                   >
                     {cancelText}
                   </Button>
                   <Button
                     onClick={onConfirm}
                     disabled={isLoading}
-                    className={`text-white rounded-xl px-6 shadow-lg transition-all active:scale-95 ${buttonColors[type === "info" ? "info" : type]}`}
+                    className={`text-white rounded-lg px-6 shadow-lg transition-all active:scale-95 ${buttonColors[type === "info" ? "info" : type]}`}
                   >
                     {isLoading ? (
                       <span className="flex items-center gap-2">
