@@ -492,7 +492,7 @@ function WorkspaceContent() {
             <div className="w-7 h-7 rounded bg-[#4d7537] flex items-center justify-center">
               <BookOpen className="text-white w-4 h-4" />
             </div>
-            <span className="font-bricolage font-semibold text-lg hidden sm:block">EduAuto Editor</span>
+            <span className="font-bricolage font-semibold text-lg hidden sm:block">Dekstorio Editor</span>
           </div>
         </div>
 

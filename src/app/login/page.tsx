@@ -85,7 +85,7 @@ export default function LoginPage() {
         <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center">
           <BookOpen className="text-white w-5 h-5" />
         </div>
-        <span className="font-bricolage font-semibold text-lg tracking-tight text-[#1a2315] dark:text-[#f4f3ed]">EduAuto</span>
+        <span className="font-bricolage font-semibold text-lg tracking-tight text-[#1a2315] dark:text-[#f4f3ed]">Dekstorio</span>
       </Link>
 
       <Card className="w-full max-w-md bg-white/90 dark:bg-[#10140d]/80 border-[#dcdad1] dark:border-[#3f612d]/30 shadow-none relative z-10 backdrop-blur-xl">

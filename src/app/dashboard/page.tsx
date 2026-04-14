@@ -77,7 +77,7 @@ export default async function DashboardPage() {
             <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center">
               <BookOpen className="text-white w-5 h-5" />
             </div>
-            <span className="font-bricolage font-semibold text-lg hidden sm:block">EduAuto</span>
+            <span className="font-bricolage font-semibold text-lg hidden sm:block">Dekstorio</span>
           </Link>
         </div>
 

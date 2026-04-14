@@ -89,7 +89,7 @@ export default function Home() {
           <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center">
             <BookOpen className="text-white w-5 h-5" />
           </div>
-          <span className="font-bricolage font-semibold text-lg tracking-tight hidden md:inline-block">EduAuto</span>
+          <span className="font-bricolage font-semibold text-lg tracking-tight hidden md:inline-block">Dekstorio</span>
         </div>
         
         <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-white dark:bg-[#10140d]/80 backdrop-blur-md rounded-lg p-1 border border-[#dcdad1] dark:border-[#3f612d]/30">
@@ -365,7 +365,7 @@ export default function Home() {
             <div className="w-6 h-6 rounded bg-[#4d7537] flex items-center justify-center">
               <BookOpen className="text-white w-3 h-3" />
             </div>
-            <span className="font-bricolage font-semibold text-sm text-neutral-900 dark:text-[#f4f3ed]">EduAuto AI</span>
+            <span className="font-bricolage font-semibold text-sm text-neutral-900 dark:text-[#f4f3ed]">Dekstorio AI</span>
           </div>
           <p className="text-xs text-neutral-500 dark:text-[#a2b591] text-center md:text-left font-sans">
             Platform AI asisten khusus guru untuk pembuatan kurikulum cerdas.
