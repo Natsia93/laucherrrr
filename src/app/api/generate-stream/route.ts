@@ -84,30 +84,36 @@ export async function POST(req: Request) {
 
     const isArabic = rawPrompt.toLowerCase().includes("bahasa arab") || rawPrompt.toLowerCase().includes("pondok") || rawPrompt.toLowerCase().includes("tasykil");
 
-    const lkpdSystemPrompt = `Anda adalah PAKAR KURIKULUM SENIOR yang sangat cerdas. Tugas Anda adalah menyusun Lembar Kerja Peserta Didik (LKPD) yang sangat spesifik, bermutu tinggi, dan estetik.
-
+    const lkpdSystemPrompt = `Tugas Anda adalah membuat Lembar Kerja Peserta Didik (LKPD) profesional dan estetik.
+    
     KONTEKS GURU: "${rawPrompt}"
 
-    === KRITERIA INTELEGENSI (WAJIB) ===
-    1. KETAATAN MAPEL: Identifikasi mata pelajaran dari konteks. Jika konteks menyebutkan pelajaran tertentu, soal HARUS murni tentang pelajaran tersebut. JANGAN mencampuradukkan materi.
-    2. MODE BAHASA: ${isArabic ? "GUNAKAN BAHASA ARAB SEBAGAI BAHASA UTAMA. Sertakan HAROKAT LENGKAP (Tasykil) pada setiap teks Arab agar mudah dibaca santri/siswa. Gunakan bahasa Arab yang fushah dan baku." : "Gunakan Bahasa Indonesia yang formal dan edukatif."}
-    3. STRUKTUR LKPD PROFESIONAL:
-       - Header Identitas yang rapi (Sekolah, Mapel, Kelas, Semester, Nama Siswa).
-       - Capaian Pembelajaran (CP) & Tujuan Pembelajaran (TP).
-       - Stimulus Materi: Berikan teks pendukung atau data sebelum soal agar siswa terbiasa dengan literasi.
-       - Variasi Soal: Gabungan Pilihan Ganda (HOTS/Bloom C1-C4), Esai (Analisis), dan Tugas Proyek/Diskusi.
-    4. KUALITAS DIGITAL:
-       - Gunakan tag HTML murni (<table>, <div>, <p>, <h3>).
-       - JANGAN gunakan markdown code blocks ( \`\`\`html ).
-       - JANGAN beri pengantar apapun di luar tag HTML.
+    === ATURAN TEKNIS (SANGAT PENTING) ===
+    1. JANGAN gunakan tanda kutip di luar tag HTML.
+    2. JANGAN awali dengan penjelasan apapun. LANGSUNG MULAI DENGAN TAG <div>.
+    3. JANGAN gunakan markdown code blocks (\`\`\`html).
+    4. MODE BAHASA: ${isArabic ? "GUNAKAN BAHASA ARAB SEBAGAI BAHASA UTAMA. WAJIB SERTAKAN HAROKAT/TASYKIL LENGKAP PADA SETIAP KATA ARAB. Gunakan struktur Right-to-Left (RTL)." : "Gunakan Bahasa Indonesia formal."}
 
-    === LAYOUT HTML (CETAK LANGSUNG) ===
-    - Bungkus seluruh konten dalam <div ${isArabic ? 'dir="rtl"' : 'dir="ltr"'} style="font-family: 'Times New Roman', serif; color: black; line-height: 1.8; padding: 10px;">.
-    - HEADER: Buat kotak border hitam tebal berisi judul ${isArabic ? '"ورقة عمل الطالب (LKPD)"' : '"LEMBAR KERJA PESERTA DIDIK (LKPD)"'}.
-    - SECTION HEADER: Gunakan block warna abu-abu muda (#f2f2f2) dengan teks bold.
-    - TABEL: Pastikan border terlihat jelas (border="1" atau style="border: 1px solid black;").
+    === STRUKTUR LAYOUT (PRO) ===
+    - Container Utama: <div ${isArabic ? 'dir="rtl"' : 'dir="ltr"'} style="font-family: 'Times New Roman', serif; padding: 20px; color: black;">
+    - Header Identitas Sekolah dalam bentuk tabel tanpa border.
+    - Judul Besar: HEADER DALAM KOTAK BORDER HITAM TEBAL.
+    - Tabel Soal: Gunakan format grid yang rapi.
+      Contoh Header Tabel Arab (RTL):
+      <table style="width:100%; border-collapse: collapse; border: 1px solid black;">
+        <tr style="background-color: #f2f2f2; font-weight: bold; text-align: center;">
+          <th style="border: 1px solid black; padding: 8px; width: 50px;">م</th>
+          <th style="border: 1px solid black; padding: 8px;">السؤال (Soal)</th>
+          <th style="border: 1px solid black; padding: 8px; width: 250px;">الخيارات (Pilihan)</th>
+        </tr>
+      </table>
 
-    WAJIB: LANGSUNG MULAI DENGAN KONTEN HTML.`;
+    === KONTEN ===
+    - Sesuaikan dengan mata pelajaran (Fiqih, IPA, dll).
+    - Jika Pilihan Ganda, buat pilihan A, B, C, D yang berkarakter.
+    - Sertakan bagian rubrik nilai di bawah soal.
+
+    LANGSUNG MULAI HTML SEKARANG.`;
 
     const cpSystemPrompt = `Anda adalah PAKAR SENIOR Kurikulum Merdeka Indonesia yang bertugas menyusun dokumen Capaian Pembelajaran (CP) sesuai Keputusan Kepala BSKAP Nomor 046/H/KR/2025.
     
@@ -363,7 +369,7 @@ export async function POST(req: Request) {
     ATURAN KONTEN:
     - Bagian A (CP): Narasi Pemahaman MINIMAL 150 kata. Elemen/Keterampilan MINIMAL 2 kalimat per poin.
     - Tabel KKTP Bagian B: MINIMAL 4 baris materi tersebar dalam MINIMAL 2 BAB.
-    - Setiap baris kolom "ALUR TUJUAN PEMBELAJARAN" harus berisi: (1) Judul materi dengan highlight kuning dan bold, (2) Daftar bullet tujuan pembelajaran spesifik (minimal 2 poin per materi).
+    - Setiap baris kolom "ALUR TUJUAN PEMBELAJARAN" harus berisi: (1) Judul materi dengan highlight kuning and bold, (2) Daftar bullet tujuan pembelajaran spesifik (minimal 2 poin per materi).
     - 4 kolom Interval WAJIB ada: 0-40% | 41-65% | 66-85% | 86-100%.
     - Kolom interval dibiarkan KOSONG (untuk diisi guru). JANGAN isi dengan teks.
     - Keterangan di bawah tabel menjelaskan arti setiap interval.
@@ -503,7 +509,7 @@ export async function POST(req: Request) {
           const attemptDeepSeek = async () => {
             const completion = await deepseek.chat.completions.create({
               messages: [{ role: "system", content: systemPrompt }],
-              model: "deepseek-chat", // Gunakan V3 agar super cepat (< 30 detik)
+              model: "deepseek-chat", 
               stream: true,
             });
             for await (const chunk of completion) {
@@ -555,13 +561,26 @@ export async function POST(req: Request) {
 
           if (fullText.length > 0) {
             send({ type: "stage", stage: 3, label: "Menyimpan ke database..." });
+            
+            // Clean up common AI prefixes if they leaked
+            let cleanedText = fullText.trim();
+            if (cleanedText.startsWith("```html")) {
+              cleanedText = cleanedText.replace(/^```html/, "").replace(/```$/, "").trim();
+            }
+            if (cleanedText.startsWith("Berikut") || cleanedText.startsWith("\"") || cleanedText.startsWith("`")) {
+              const firstTag = cleanedText.indexOf("<div");
+              if (firstTag !== -1) {
+                cleanedText = cleanedText.substring(firstTag);
+              }
+            }
+
             const [newDoc] = await db.insert(documents).values({
               title: `${type} - ${rawPrompt.substring(0, 30)}`,
               type: type,
               userId: session.user.id,
-              content: fullText,
+              content: cleanedText,
               status: "Selesai",
-              size: `${(fullText.length / 1024).toFixed(1)} KB`,
+              size: `${(cleanedText.length / 1024).toFixed(1)} KB`,
             }).returning();
             send({ type: "done", docId: newDoc.id, provider: providerUsed });
           } else {

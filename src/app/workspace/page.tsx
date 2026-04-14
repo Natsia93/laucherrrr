@@ -538,7 +538,11 @@ function WorkspaceContent() {
                   key="content"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  dangerouslySetInnerHTML={{ __html: marked.parse(displayedContent) as string }} 
+                  dangerouslySetInnerHTML={{ 
+                    __html: displayedContent.trim().startsWith("<") 
+                      ? displayedContent 
+                      : (marked.parse(displayedContent) as string) 
+                  }} 
                 />
               ) : loading ? (
                 renderProgressIndicator()
