@@ -180,7 +180,7 @@ export default function Home() {
             className="inline-flex items-center gap-2 bg-white dark:bg-[#1a2315] border border-[#dcdad1] dark:border-[#3f612d]/40 px-3 py-1.5 rounded-full text-sm text-[#4d7537] dark:text-[#d4e4c8] shadow-sm"
           >
             <Sparkles className="w-4 h-4 text-[#4d7537] dark:text-[#89b867]" />
-            <span className="font-sans font-medium dark:font-normal">AI Model Gemin 3.5 & GPT-4o Ready</span>
+            <span className="font-sans font-medium dark:font-normal">DeepSeek V3 & Gemini Flash Ready</span>
           </motion.div>
           
           <motion.h1 
