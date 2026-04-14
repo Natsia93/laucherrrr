@@ -35,15 +35,16 @@ export async function POST(req: Request) {
     === LOGIKA PERHITUNGAN JP & BAB (KRITIKAL) ===
     1. JP PER BAB: Angka "Jam Pelajaran (JP)" yang ada di konteks adalah ALOKASI JP UNTUK SETIAP BAB.
     2. JUMLAH BAB: Anda harus menjabarkan SEMUA BAB yang ada dalam periode yang diminta (Semester Ganjil, Genap, atau Tahunan).
-       - Jika 1 Semester: Berikan MINIMAL 3 hingga 5 BAB lengkap.
-       - Jika Tahunan (Ganjil & Genap): Berikan MINIMAL 7 hingga 10 BAB lengkap.
+       - Jika 1 Semester: Berikan MINIMAL 4 hingga 5 BAB lengkap.
+       - Jika Tahunan (Ganjil & Genap): Berikan MINIMAL 8 hingga 10 BAB lengkap.
     3. TOTAL JP: AI harus menghitung secara logis. Jika JP per Bab = 12, dan ada 5 Bab, maka Total JP dokumen adalah 60 JP.
     
     === ATURAN KECERDASAN (WAJIB) ===
     ADAPTASI MAPEL UNIVERSAL: Menyesuaikan elemen CP dengan mata pelajaran yang diminta (IPA, Matematika, Bahasa, Fiqih, dll). JANGAN gunakan elemen IPA secara default.
     
     ATURAN KONTEN:
-    - Narasi Pemahaman CP di Bagian A: MINIMAL 200 kata, ditulis dalam paragraf utuh, bahasa akademis-formal sesuai CP 046/2025.
+    - Narasi Pemahaman CP di Bagian A: MINIMAL 200 kata, ditulis dalam DAFTAR POIN (bullet points) yang mendalam, bukan paragraf panjang.
+    - Setiap Elemen/Keterampilan Proses: WAJIB dijabarkan per poin dengan deskripsi yang jelas.
     - Tabel ATP Bagian B: Setiap baris kolom "Alur Tujuan Pembelajaran" harus berisi kalimat lengkap yang dimulai dengan kata kerja operasional (Menganalisis, Mendeskripsikan, dsb).
     - Materi Pokok di-highlight kuning.
     - Alokasi Waktu harus konsisten dengan "JP per Bab" yang diminta.
@@ -75,10 +76,10 @@ export async function POST(req: Request) {
     Permintaan Guru: "${rawPrompt}"
     
     === ATURAN KONTEN (WAJIB) ===
-    1. RASIONAL: MINIMAL 4 paragraf besar mengenai urgensi mapel.
-    2. TUJUAN & KARAKTERISTIK: Penjelasan mendalam tentang pendekatan pembelajaran.
+    1. RASIONAL: Ditulis dalam DAFTAR POIN per paragraf (minimal 4 poin besar) mengenai urgensi mapel tersebut.
+    2. TUJUAN & KARAKTERISTIK: Penjelasan mendalam tentang pendekatan pembelajaran, dijabarkan per poin.
     3. TABEL ELEMEN: Minimal 4 elemen dengan deskripsi padat (100+ kata per elemen).
-    4. CP PER FASE: Jabarkan CP Fase yang diminta secara utuh dan detail, mencakup semua kompetensi esensial.
+    4. CP PER FASE: Jabarkan CP Fase yang diminta secara utuh dan detail, gunakan DAFTAR POIN untuk setiap keterampilan/kompetensi. JANGAN buat paragraf panjang yang menyatu.
     
     === LAYOUT HTML ===
     1. Header background #e6e6fa.
