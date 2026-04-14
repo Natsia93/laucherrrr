@@ -134,8 +134,25 @@
   }
 }
 
-/* Document Styles */
-@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lateef:wght@400;700&display=swap');
+/* Local Arabic Fonts definition */
+@font-face {
+  font-family: 'Noto Naskh Arabic';
+  src: url('/fonts/NotoNaskhArabic-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Noto Naskh Arabic';
+  src: url('/fonts/NotoNaskhArabic-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Noto Naskh Arabic';
+  src: url('/fonts/NotoNaskhArabic-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
 
 .a4-paper {
   background: white !important;
@@ -143,6 +160,7 @@
   padding: 2.5cm 2cm;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   color: black !important;
+  font-family: 'Times New Roman', Times, serif; /* Default Indo */
 }
 
 .curriculum-content {
@@ -175,10 +193,11 @@
   color: black !important;
 }
 
+/* Specific Arabic Alignment and Font */
 .curriculum-content [dir="rtl"] {
-  font-family: 'Amiri', 'Traditional Arabic', serif !important;
+  font-family: 'Noto Naskh Arabic', serif !important;
   font-size: 14pt;
-  line-height: 2;
+  line-height: 2.2;
   text-align: right;
 }
 
