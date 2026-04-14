@@ -123,9 +123,22 @@ export default function Home() {
           <ThemeToggle />
           <div className="h-6 w-px bg-neutral-300 dark:bg-[#3f612d]/30 hidden md:block mx-1"></div>
           
-          {isPending ? (
-            <div className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-[#1a2315] animate-pulse"></div>
-          ) : session ? (
+          {!isPending && !session && (
+            <div className="flex items-center gap-2">
+              <Link href="/login">
+                <Button variant="ghost" size="sm" className="text-neutral-500 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-white font-medium text-sm transition-colors cursor-pointer">
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button size="sm" className="bg-[#4d7537] text-white hover:bg-[#5a8b41] shadow-sm border border-[#4d7537] dark:border-[#6b9d4f]/50 font-medium px-4 py-1.5 text-sm rounded-md transition-all cursor-pointer">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
+          )}
+
+          {session && !isPending && (
             <div className="flex items-center gap-3">
               <Link 
                 href="/dashboard" 
@@ -151,14 +164,12 @@ export default function Home() {
                 </AvatarFallback>
               </Avatar>
             </div>
-          ) : (
+          )}
+
+          {isPending && (
             <div className="flex items-center gap-2">
-              <Link href="/login" className="hidden md:flex text-neutral-500 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-white bg-transparent font-medium text-sm px-4 py-2 transition-colors cursor-pointer" prefetch={true}>
-                Sign In
-              </Link>
-              <Link href="/register" className="bg-[#4d7537] text-white hover:bg-[#5a8b41] shadow-sm border border-[#4d7537] dark:border-[#6b9d4f]/50 font-medium px-4 py-1.5 text-sm rounded-md transition-all cursor-pointer" prefetch={true}>
-                Get Started
-              </Link>
+              <div className="w-20 h-8 rounded-md bg-neutral-200/50 dark:bg-[#1a2315]/50 animate-pulse"></div>
+              <div className="w-24 h-8 rounded-md bg-neutral-200/50 dark:bg-[#1a2315]/50 animate-pulse"></div>
             </div>
           )}
         </div>
