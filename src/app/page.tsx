@@ -187,10 +187,10 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="font-bricolage text-4xl sm:text-5xl md:text-6xl font-normal tracking-tight flex flex-wrap justify-center items-center gap-x-4 md:gap-x-5 h-auto md:h-[100px] w-full text-center pl-0 md:pl-20"
+            className="font-bricolage text-4xl sm:text-5xl md:text-6xl font-normal tracking-tight flex flex-col md:flex-row justify-center items-center gap-y-1 md:gap-x-5 h-auto w-full text-center"
           >
             <span className="text-neutral-900 dark:text-[#f4f3ed] shrink-0">Buat Dokumen</span>
-            <div className="relative inline-flex items-center overflow-hidden min-w-[200px] sm:min-w-[300px] md:min-w-[480px] h-[55px] md:h-[80px]">
+            <div className="relative inline-flex items-center overflow-hidden min-w-[260px] sm:min-w-[300px] md:min-w-[480px] h-[40px] sm:h-[55px] md:h-[80px]">
               <AnimatePresence mode="popLayout">
                 <motion.span
                   key={heroWords[wordIndex]}
@@ -198,7 +198,7 @@ export default function Home() {
                   animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
                   exit={{ y: -40, opacity: 0, filter: "blur(8px)" }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 text-[#4d7537] dark:text-[#89b867] font-semibold text-left whitespace-nowrap"
+                  className="absolute left-0 right-0 md:left-0 top-1/2 -translate-y-1/2 text-[#4d7537] dark:text-[#89b867] font-semibold text-center md:text-left whitespace-nowrap text-2xl sm:text-5xl md:text-6xl"
                 >
                   {heroWords[wordIndex]}
                 </motion.span>
