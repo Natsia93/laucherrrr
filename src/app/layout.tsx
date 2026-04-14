@@ -4,6 +4,7 @@ import "./globals.css";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import NextTopLoader from 'nextjs-toploader';
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -35,6 +36,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <NextTopLoader color="#4d7537" showSpinner={false} shadow="0 0 10px #4d7537,0 0 5px #4d7537" />
+          <MobileBottomNav />
           <SmoothScroll>
             {children}
           </SmoothScroll>
