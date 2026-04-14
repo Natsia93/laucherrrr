@@ -474,13 +474,13 @@ function WorkspaceContent() {
         </div>
 
         <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-white dark:bg-[#10140d]/80 rounded-lg p-1 border border-[#dcdad1] dark:border-[#3f612d]/30 backdrop-blur-md shadow-sm">
-          <Link href="/dashboard" passHref>
+          <Link href="/dashboard">
             <Button variant="ghost" size="sm" className="text-neutral-500 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-[#f4f3ed] hover:bg-neutral-100 dark:hover:bg-[#1a2315] rounded-md transition-all">
               <Folder className="w-4 h-4 mr-2" />
               Penyimpanan File
             </Button>
           </Link>
-          <Link href="/" passHref>
+          <Link href="/">
             <Button variant="ghost" size="sm" className="bg-neutral-100 dark:bg-[#1a2315] text-neutral-900 dark:text-[#f4f3ed] hover:bg-neutral-200 dark:hover:bg-[#2c471c] hover:text-neutral-900 dark:hover:text-white rounded-md shadow-sm transition-all">
               <Sparkles className="w-4 h-4 mr-2 text-[#4d7537] dark:text-[#89b867]" />
               AI Generate
