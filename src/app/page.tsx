@@ -177,36 +177,36 @@ export default function Home() {
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 bg-white dark:bg-[#1a2315] border border-[#dcdad1] dark:border-[#3f612d]/40 px-3 py-1.5 rounded-full text-[10px] sm:text-sm text-[#4d7537] dark:text-[#d4e4c8] shadow-sm mb-2"
+            className="inline-flex items-center gap-2 bg-white dark:bg-[#1a2315] border border-[#dcdad1] dark:border-[#3f612d]/40 px-3 py-1.5 rounded-full text-[10px] sm:text-xs md:text-sm text-[#4d7537] dark:text-[#d4e4c8] shadow-sm mb-2"
           >
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#4d7537] dark:text-[#89b867]" />
             <span className="font-sans font-medium dark:font-normal">DeepSeek V3 & Gemini Flash Ready</span>
           </motion.div>
           
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="font-bricolage text-4xl sm:text-5xl md:text-6xl font-normal tracking-tight flex flex-col items-center justify-center w-full text-center"
-          >
-            <div className="flex flex-col md:flex-row items-center justify-center gap-y-2 md:gap-x-4">
-              <span className="text-neutral-900 dark:text-[#f4f3ed] whitespace-nowrap">Buat Dokumen</span>
-              <div className="relative inline-flex items-center justify-center md:justify-start overflow-hidden min-w-[280px] sm:min-w-[400px] md:min-w-[480px] h-[45px] sm:h-[60px] md:h-[80px]">
-                <AnimatePresence mode="popLayout">
+          <div className="w-full flex flex-col items-center">
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="font-bricolage text-3xl sm:text-5xl md:text-6xl font-normal tracking-tight text-neutral-900 dark:text-[#f4f3ed] flex flex-col md:flex-row items-center justify-center gap-y-2 md:gap-x-4"
+            >
+              <span className="shrink-0">Buat Dokumen</span>
+              <div className="relative h-[48px] sm:h-[60px] md:h-[80px] flex items-center justify-center min-w-0 md:min-w-[400px]">
+                <AnimatePresence mode="wait">
                   <motion.span
                     key={heroWords[wordIndex]}
-                    initial={{ y: 40, opacity: 0, filter: "blur(8px)" }}
-                    animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
-                    exit={{ y: -40, opacity: 0, filter: "blur(8px)" }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
-                    className="absolute inset-x-0 md:inset-auto md:left-0 top-1/2 -translate-y-1/2 text-[#4d7537] dark:text-[#89b867] font-semibold text-center md:text-left whitespace-nowrap text-3xl sm:text-5xl md:text-6xl"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="text-[#4d7537] dark:text-[#89b867] font-semibold whitespace-nowrap text-3xl sm:text-5xl md:text-6xl"
                   >
                     {heroWords[wordIndex]}
                   </motion.span>
                 </AnimatePresence>
               </div>
-            </div>
-          </motion.h1>
+            </motion.h1>
+          </div>
           
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
