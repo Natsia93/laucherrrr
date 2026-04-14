@@ -323,13 +323,13 @@ function WorkspaceContent() {
             {messages.map((m, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-lg ${m.role === 'user' ? 'bg-white/5 text-white border border-white/10' : 'bg-[#4d7537] text-white'}`}>{m.role === 'user' ? 'U' : <Sparkles className="w-5 h-5" />}</div>
-                <div className={`p-4 rounded-lg text-[13px] leading-relaxed max-w-[85%] border shadow-xl ${m.role === 'user' ? 'bg-[#4d7537]/70 backdrop-blur-md border-white/10 text-white' : 'bg-white/5 border-white/5 text-neutral-300'}`}>{m.text}</div>
+                <div className={`p-4 rounded-xl text-[13px] leading-relaxed max-w-[85%] border shadow-xl ${m.role === 'user' ? 'bg-[#4d7537]/70 backdrop-blur-md border-white/10 text-white' : 'bg-white/5 border-white/5 text-neutral-300'}`}>{m.text}</div>
               </motion.div>
             ))}
           </div>
           
           <div className="p-6 bg-[#0a0a0a] border-t border-white/5">
-            <div className="relative flex items-center bg-white/5 border border-white/10 rounded-lg p-2 shadow-inner">
+            <div className="relative flex items-center bg-white/5 border border-white/10 rounded-xl p-2 shadow-inner">
               <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Tulis instruksi revisi..." className="border-none focus-visible:ring-0 text-sm bg-transparent text-white" />
               <Button onClick={() => handleSendMessage()} disabled={loading} className="h-11 w-11 bg-[#4d7537] rounded-lg shadow-lg transition-transform hover:scale-105"><Send className="w-5 h-5" /></Button>
             </div>
