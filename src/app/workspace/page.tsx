@@ -488,12 +488,12 @@ function WorkspaceContent() {
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-neutral-500 rounded-md">
             <ChevronLeft className="w-5 h-5" />
           </Button>
-          <div className="flex items-center gap-2 px-2">
+          <Link href="/" className="flex items-center gap-2 px-2 hover:opacity-80 transition-opacity">
             <div className="w-7 h-7 rounded bg-[#4d7537] flex items-center justify-center">
               <BookOpen className="text-white w-4 h-4" />
             </div>
-            <span className="font-bricolage font-semibold text-lg hidden sm:block">Dekstorio Editor</span>
-          </div>
+            <span className="font-bricolage font-semibold text-lg hidden sm:block">Dekstorio</span>
+          </Link>
         </div>
 
         <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-white dark:bg-[#10140d]/80 rounded-lg p-1 border border-[#dcdad1] dark:border-[#3f612d]/30 backdrop-blur-md shadow-sm">
