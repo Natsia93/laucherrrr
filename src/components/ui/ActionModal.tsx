@@ -65,16 +65,17 @@ export function ActionModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-[2px]"
+            className="fixed inset-0 z-[999] bg-black/40 backdrop-blur-md transition-all duration-300"
           />
 
           {/* Modal Container */}
-          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 pointer-events-none">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-md bg-white dark:bg-[#0a0a0a] border border-[#dcdad1] dark:border-[#3f612d]/30 rounded-2xl shadow-2xl pointer-events-auto overflow-hidden"
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              className="w-full max-w-md bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-xl border border-[#dcdad1] dark:border-[#3f612d]/30 rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] pointer-events-auto overflow-hidden"
             >
               <div className="p-6">
                 <div className="flex items-start gap-4">
