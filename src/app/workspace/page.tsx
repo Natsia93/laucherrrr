@@ -44,6 +44,36 @@ function WorkspaceContent() {
   const docAreaRef = useRef<HTMLDivElement>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
 
+  const tableStyles = `
+    .scroll-hide {
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+    .scroll-hide::-webkit-scrollbar {
+      display: none !important;
+    }
+
+    .a4-paper {
+      width: 210mm;
+      max-width: 100%;
+      min-height: 297mm;
+      height: fit-content;
+      background-color: white !important;
+      color: black !important;
+      box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+      border: 1px solid #333;
+      padding: 15mm 10mm;
+      box-sizing: border-box;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 11pt;
+      line-height: 1.5;
+    }
+
+    @media (min-width: 768px) {
+      .a4-paper { padding: 25mm 20mm; font-size: 12pt; }
+    }
+  `;
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -82,8 +112,8 @@ function WorkspaceContent() {
       const response = await fetch("/api/generate-stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({ rawPrompt, type: docType, model }),
-        signal: controller.signal
       });
 
       if (!response.ok) throw new Error("Gagal menyambung ke server AI");
@@ -211,61 +241,83 @@ function WorkspaceContent() {
           <Zap className="w-8 h-8 text-white" />
         </div>
       </div>
-      <h3 className="text-xl font-bold text-[#2a4a1c] mb-2 font-bricolage">AI Sedang Menyusun Dokumen</h3>
-      <p className="text-sm text-neutral-500 mb-8 flex items-center gap-2">
+      <h3 className="text-xl font-bold text-white mb-2 font-bricolage">AI Sedang Menyusun Dokumen</h3>
+      <p className="text-sm text-neutral-400 mb-8 flex items-center gap-2">
         <Clock className="w-4 h-4" /> {formatTime(elapsedTime)}
       </p>
       
       <div className="w-full max-w-sm space-y-3 mb-10">
         {PROGRESS_STAGES.map((s, i) => (
-          <div key={i} className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all duration-500 ${i <= progressStage ? 'bg-[#4d7537]/5 border-[#4d7537]/20 shadow-sm' : 'opacity-30 border-neutral-200'}`}>
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-500 ${i <= progressStage ? 'bg-[#4d7537] text-white' : 'bg-neutral-100'}`}>
+          <div key={i} className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all duration-500 ${i <= progressStage ? 'bg-[#4d7537]/10 border-[#4d7537]/30 shadow-sm' : 'opacity-20 border-white/10'}`}>
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-500 ${i <= progressStage ? 'bg-[#4d7537] text-white' : 'bg-white/5'}`}>
               {i < progressStage ? <CheckCircle2 className="w-5 h-5" /> : <s.icon className="w-4.5 h-4.5" />}
             </div>
             <div>
-              <p className="text-sm font-semibold">{s.label}</p>
-              {i === progressStage && <p className="text-[10px] text-neutral-500">{s.description}</p>}
+              <p className="text-sm font-semibold text-white">{s.label}</p>
+              {i === progressStage && <p className="text-[10px] text-neutral-400">{s.description}</p>}
             </div>
           </div>
         ))}
       </div>
 
-      <Button variant="outline" onClick={stopGeneration} className="border-red-200 text-red-600 hover:bg-red-50 rounded-full px-8 gap-2 transition-all active:scale-95 shadow-sm">
+      <Button variant="outline" onClick={stopGeneration} className="border-red-500/30 text-red-500 hover:bg-red-500/10 rounded-full px-8 gap-2 transition-all active:scale-95 shadow-sm">
         <XCircle className="w-4 h-4" /> Hentikan Generate
       </Button>
     </motion.div>
   );
 
   return (
-    <div className="min-h-screen bg-[#f4f3ed] dark:bg-[#080b06] flex flex-col h-screen overflow-hidden">
-      <nav className="flex items-center justify-between px-6 py-4 border-b border-[#dcdad1] dark:border-[#3f612d]/20 bg-white dark:bg-[#0a0a0a] z-50 shadow-sm shrink-0">
+    <div className="min-h-screen bg-[#050505] flex flex-col h-screen overflow-hidden text-neutral-200">
+      <style>{tableStyles}</style>
+
+      {/* Top Navbar - Forced Dark */}
+      <nav className="flex items-center justify-between px-6 py-3 border-b border-white/5 bg-[#0a0a0a] z-50 shrink-0">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-neutral-500 dark:hover:bg-[#1a2315]"><ChevronLeft className="w-5 h-5" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-neutral-400 hover:bg-white/5">
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
           <Link href="/" className="flex items-center gap-2 px-1">
-            <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center shadow-md"><BookOpen className="text-white w-4.5 h-4.5" /></div>
-            <span className="font-bricolage font-bold text-xl tracking-tight hidden sm:block">Dekstorio</span>
+            <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center shadow-md">
+              <BookOpen className="text-white w-4.5 h-4.5" />
+            </div>
+            <span className="font-bricolage font-bold text-lg tracking-tight hidden sm:block">Dekstorio Editor</span>
           </Link>
         </div>
+
+        <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-white/5 rounded-lg p-1 border border-white/5 backdrop-blur-md">
+          <Link href="/dashboard">
+            <Button variant="ghost" size="sm" className="text-neutral-400 hover:text-white hover:bg-white/10 rounded-md">
+              <Folder className="w-4 h-4 mr-2" /> Penyimpanan File
+            </Button>
+          </Link>
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="bg-[#4d7537] text-white rounded-md shadow-sm">
+              <Sparkles className="w-4 h-4 mr-2" /> AI Generate
+            </Button>
+          </Link>
+        </div>
+
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Button onClick={exportToWord} size="sm" className="bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-lg shadow-md hover:shadow-lg transition-all active:scale-95">
+          <Button onClick={exportToWord} size="sm" className="bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-lg shadow-lg">
              <Download className="w-4 h-4 mr-2" /> Export .doc
           </Button>
         </div>
       </nav>
 
       <main className="flex-1 flex overflow-hidden min-h-0 relative">
-        <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto p-4 md:p-12 text-center bg-[#e5e5e0] dark:bg-[#050704]/50 scroll-hidden">
-          <div className="a4-paper curriculum-content relative my-4 mx-auto inline-block text-left w-full max-w-[210mm] shadow-2xl transition-all duration-300">
+        {/* Document Area - Hidden Scrollbar */}
+        <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto p-4 md:p-12 text-center bg-[#050505] scroll-hide">
+          <div className="a4-paper curriculum-content relative my-4 mx-auto inline-block text-left w-full max-w-[210mm] shadow-[0_0_100px_rgba(0,0,0,0.8)] transition-all duration-300">
             <AnimatePresence mode="wait">
               {displayedContent ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
                   dangerouslySetInnerHTML={{ __html: displayedContent.trim().startsWith("<") ? displayedContent : marked.parse(displayedContent) }} 
                 />
               ) : loading ? renderProgressIndicator() : (
-                <div className="flex flex-col items-center justify-center min-h-[900px] opacity-20 py-20">
-                   <div className="w-20 h-20 rounded-3xl bg-neutral-200 mb-6 flex items-center justify-center">
-                      <BookOpen className="w-10 h-10 text-neutral-400" />
+                <div className="flex flex-col items-center justify-center min-h-[900px] opacity-10 py-20">
+                   <div className="w-20 h-20 rounded-3xl bg-white/5 mb-6 flex items-center justify-center">
+                      <BookOpen className="w-10 h-10 text-white" />
                    </div>
                    <p className="font-semibold text-lg">Menunggu Konteks...</p>
                 </div>
@@ -274,56 +326,47 @@ function WorkspaceContent() {
           </div>
           {isGenerated && !loading && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-10 mb-20">
-              <Button onClick={() => handleSendMessage(true)} className="bg-white dark:bg-[#1a2315] border-2 border-[#4d7537] text-[#4d7537] hover:bg-[#4d7537] hover:text-white rounded-full px-12 h-14 font-bold shadow-xl transition-all active:scale-95 group">
-                <Sparkles className="w-5 h-5 mr-3 group-hover:animate-spin" /> Lanjutkan Penulisan
+              <Button onClick={() => handleSendMessage(true)} className="bg-transparent border-2 border-[#4d7537] text-[#4d7537] hover:bg-[#4d7537] hover:text-white rounded-full px-12 h-14 font-bold shadow-2xl transition-all">
+                <Sparkles className="w-5 h-5 mr-3" /> Lanjutkan Penulisan
               </Button>
             </motion.div>
           )}
         </div>
 
-        <div className={`fixed inset-0 z-[100] md:relative md:inset-auto md:z-10 w-full md:w-[400px] border-l border-[#dcdad1] dark:border-[#3f612d]/30 bg-white dark:bg-[#0a0a0a] flex flex-col transition-transform duration-300 shadow-2xl ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
-          <div className="p-5 border-b bg-neutral-50/50 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#4d7537]/10 flex items-center justify-center"><Sparkles className="w-4 h-4 text-[#4d7537]" /></div>
-            <h2 className="font-bold text-neutral-800 dark:text-white font-bricolage">AI Assistant</h2>
-            <Button variant="ghost" size="icon" className="md:hidden ml-auto text-neutral-400" onClick={() => setIsSidebarOpen(false)}><XCircle className="w-5 h-5" /></Button>
+        {/* Sidebar Chat Area - Hidden Scrollbar */}
+        <div className={`fixed inset-0 z-[100] md:relative md:inset-auto md:z-10 w-full md:w-[400px] border-l border-white/5 bg-[#0a0a0a] flex flex-col transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
+          <div className="p-5 border-b border-white/5 bg-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+               <div className="w-8 h-8 rounded-lg bg-[#4d7537]/20 flex items-center justify-center"><Sparkles className="w-4 h-4 text-[#4d7537]" /></div>
+               <h2 className="font-bold text-white font-bricolage">AI Assistant</h2>
+            </div>
+            {loading && <div className="text-[10px] text-[#4d7537] font-mono">{formatTime(elapsedTime)}</div>}
+            <Button variant="ghost" size="icon" className="md:hidden text-neutral-400" onClick={() => setIsSidebarOpen(false)}><XCircle className="w-5 h-5" /></Button>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-5 space-y-5 scroll-hidden" data-lenis-prevent="true">
-            {messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-full opacity-30 text-center">
-                 <Brain className="w-12 h-12 mb-3" />
-                 <p className="text-sm font-semibold">Siap menulis kurikulum Anda</p>
-              </div>
-            )}
+          <div className="flex-1 overflow-y-auto p-5 space-y-5 scroll-hide" data-lenis-prevent="true">
             {messages.map((m, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} 
                 className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm ${m.role === 'user' ? 'bg-neutral-100' : 'bg-[#4d7537] text-white'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-lg ${m.role === 'user' ? 'bg-white/5 border border-white/10 text-white' : 'bg-[#4d7537] text-white'}`}>
                   {m.role === 'user' ? <div className="text-[10px] font-bold">U</div> : <Sparkles className="w-4 h-4" />}
                 </div>
-                <div className={`p-4 rounded-2xl text-sm leading-relaxed max-w-[85%] border shadow-sm ${
+                <div className={`p-4 rounded-2xl text-sm leading-relaxed max-w-[85%] border shadow-lg ${
                   m.role === 'user' 
                     ? 'bg-[#4d7537] text-white border-[#4d7537]' 
-                    : m.text.startsWith('⏳') ? 'bg-amber-50 border-amber-200 text-amber-900'
-                    : m.text.startsWith('✅') ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                    : 'bg-neutral-50 dark:bg-[#1a2315] dark:border-[#3f612d]/30 text-neutral-700 dark:text-neutral-200'
+                    : m.text.startsWith('⏳') ? 'bg-white/5 border-white/10 text-amber-500'
+                    : 'bg-[#151515] border-white/5 text-neutral-300'
                 }`}>
                   {m.text}
                 </div>
               </motion.div>
             ))}
-            {loading && (
-              <div className="flex gap-3 animate-pulse">
-                <div className="w-8 h-8 rounded-full bg-[#4d7537]/20" />
-                <div className="bg-neutral-50 p-4 rounded-2xl w-[60%] h-14 border" />
-              </div>
-            )}
           </div>
           
-          <div className="p-5 bg-white dark:bg-[#0a0a0a] border-t">
-            <div className="relative flex items-center bg-neutral-50 dark:bg-[#151a11] border border-neutral-200 dark:border-[#3f612d]/30 rounded-2xl p-1.5 shadow-inner">
-              <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Tulis revisi di sini..." className="border-none focus-visible:ring-0 text-sm bg-transparent" />
+          <div className="p-5 bg-[#0a0a0a] border-t border-white/5">
+            <div className="relative flex items-center bg-white/5 border border-white/10 rounded-2xl p-1.5 shadow-inner">
+              <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Tulis revisi di sini..." className="border-none focus-visible:ring-0 text-sm bg-transparent text-white" />
               <Button onClick={() => handleSendMessage()} disabled={loading} className="h-10 w-10 bg-[#4d7537] rounded-xl shadow-lg hover:scale-105 transition-all">
                 <Send className="w-4 h-4" />
               </Button>
@@ -343,7 +386,7 @@ function WorkspaceContent() {
 
 export default function WorkspacePage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#f4f3ed]"><Loader2 className="w-12 h-12 animate-spin text-[#4d7537]" /></div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#050505] text-[#4d7537]"><Loader2 className="w-12 h-12 animate-spin" /></div>}>
       <WorkspaceContent />
     </Suspense>
   );
