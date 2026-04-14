@@ -212,7 +212,7 @@ export default function Home() {
             transition={{ delay: 0.2 }}
             className="font-sans text-neutral-600 dark:text-[#a2b591] text-lg md:text-xl font-light max-w-2xl text-center mx-auto"
           >
-            Asisten AI perancang CP, ATP, KKTP, Program Tahunan, Program Semester, hingga Lembar Kerja PD (LKPD). Terstandarisasi dan siap export ke Word.
+            Asisten AI perancang CP, ATP, KKTP, Program Tahunan, Program Semester, hingga Lembar Kerja Peserta Didik (LKPD). Terstandarisasi dan siap export ke Word.
           </motion.p>
         </div>
 
