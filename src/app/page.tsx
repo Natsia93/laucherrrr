@@ -188,7 +188,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="font-bricolage text-3xl sm:text-5xl md:text-6xl font-normal tracking-tight text-neutral-900 dark:text-[#f4f3ed] flex flex-col md:flex-row items-center justify-center gap-y-2 md:gap-x-4"
+              className="font-bricolage text-3xl sm:text-5xl md:text-6xl font-normal tracking-tight text-neutral-900 dark:text-[#f4f3ed] flex flex-col md:flex-row items-center justify-center gap-y-2 md:gap-x-8 md:pl-10"
             >
               <span>Buat Dokumen</span>
               <div className="relative h-[48px] sm:h-[60px] md:h-[80px] flex items-center justify-center md:justify-start min-w-[300px] md:min-w-[500px]">
