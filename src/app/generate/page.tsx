@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
   Sparkles, ArrowRight, ChevronLeft, 
-  CheckCircle2, Circle, Loader2, Plus, ArrowLeft
+  CheckCircle2, Circle, Loader2, Plus, ArrowLeft, Zap, Brain
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 interface Question {
   id: number;
   question: string;
-  type: "chips" | "text";
+  type: "chips" | "multi-chips" | "text";
   options?: string[];
   placeholder?: string;
   category: string;
@@ -31,6 +31,7 @@ function GenerateContent() {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [skipped, setSkipped] = useState<number[]>([]);
   const [showOther, setShowOther] = useState<Record<number, boolean>>({});
+  const [selectedModel, setSelectedModel] = useState("deepseek");
 
   // Fetch dynamic questions from AI based on the user's prompt
   useEffect(() => {
@@ -44,12 +45,59 @@ function GenerateContent() {
         const data = await response.json();
         setQuestions(data.questions);
       } catch (err) {
-        setQuestions([
-          { id: 1, question: "Untuk Fase dan Kelas berapakah dokumen ini dirancang?", type: "chips", options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E/F (SMA)"], category: "data" },
-          { id: 2, question: "Apa elemen materi utama yang menjadi fokus?", type: "text", placeholder: "Misal: Geometri, Menulis, atau Zat dan Perubahannya...", category: "data" },
-          { id: 3, question: "Media pembelajaran apa saja yang tersedia di sekolah Anda?", type: "chips", options: ["Alat Peraga Fisik", "Laboratorium Komputer", "Lingkungan Terbuka", "Buku Teks & Internet"], category: "data" },
-          { id: 4, question: "Berapa total Jam Pelajaran (JP) yang tersedia?", type: "chips", options: ["2 JP", "4 JP", "6 JP", "Sesuai Kurikulum"], category: "data" },
-        ]);
+        if (docType === "PROSEM" || docType === "Program Semester") {
+            setQuestions([
+                { id: 1, question: "Untuk Mata Pelajaran apa Program Semester ini dibuat?", type: "text" as const, placeholder: "Misal: IPA, Fiqih, Bahasa Arab, Matematika...", category: "data" },
+                { id: 2, question: "Pilih Semester yang ingin disusun jadwalnya:", type: "chips" as const, options: ["Ganjil (Juli-Desember)", "Genap (Januari-Juni)"], category: "data" },
+                { id: 3, question: "Fase dan Kelas berapakah PROSEM ini?", type: "chips" as const, options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E (Kls 10)", "Fase F (Kls 11-12)"], category: "data" },
+                { id: 4, question: "Berapa Alokasi JP per minggu untuk mata pelajaran ini?", type: "chips" as const, options: ["2 JP", "3 JP", "4 JP", "5 JP"], category: "data" },
+                { id: 5, question: "Tuliskan Tahun Pelajaran:", type: "text" as const, placeholder: "Misal: 2024/2025", category: "data" },
+            ]);
+        } else if (docType === "PROTA" || docType === "Program Tahunan") {
+            setQuestions([
+                { id: 1, question: "Untuk Mata Pelajaran apa Program Tahunan ini dibuat?", type: "text" as const, placeholder: "Misal: IPA, Fiqih, Bahasa Arab, Al-Quran Hadits...", category: "data" },
+                { id: 2, question: "Fase dan Kelas berapakah PROTA ini?", type: "chips" as const, options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E (Kls 10)", "Fase F (Kls 11-12)"], category: "data" },
+                { id: 3, question: "Berapa Total Jam Pelajaran (JP) dalam satu tahun ajaran?", type: "chips" as const, options: ["72 JP", "108 JP", "144 JP", "Lainnya"], category: "data" },
+                { id: 4, question: "Tuliskan Tahun Pelajaran:", type: "text" as const, placeholder: "Misal: 2024/2025", category: "data" },
+            ]);
+        } else if (docType === "ATP") {
+            setQuestions([
+                { id: 1, question: "Untuk Fase dan Kelas berapakah ATP ini dirancang?", type: "chips" as const, options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E (Kls 10)", "Fase F (Kls 11-12)"], category: "data" },
+                { id: 2, question: "Apa elemen materi utama yang ingin disusun alurnya?", type: "text" as const, placeholder: "Misal: Bilangan, Geometri, Sistem Organ...", category: "data" },
+                { id: 3, question: "Pilih Dimensi Profil Pelajar Pancasila yang diprioritaskan:", type: "multi-chips" as const, options: ["Beriman & Bertaqwa", "Berkebinekaan Global", "Gotong Royong", "Mandiri", "Bernalar Kritis", "Kreatif"], category: "data" },
+                { id: 4, question: "Urutan logis materi yang Anda inginkan?", type: "chips" as const, options: ["Mudah ke Sulit", "Konkrit ke Abstrak", "Kronologis Sejarah"], category: "data" },
+            ]);
+        } else if (docType === "CP") {
+            setQuestions([
+                { id: 1, question: "Apa Nama Mata Pelajaran yang ingin disusun CP-nya?", type: "text", placeholder: "Misal: IPAS, Fiqih, Bahasa Arab, Seni Budaya...", category: "data" },
+                { id: 2, question: "Untuk Fase manakah dokumen CP ini dirancang?", type: "chips", options: ["Fase A", "Fase B", "Fase C", "Fase D", "Fase E", "Fase F"], category: "data" },
+                { id: 3, question: "Jelaskan secara singkat rasionalitas atau alasan pentingnya mapel ini bagi siswa:", type: "text", placeholder: "Misal: Untuk mengembangkan logika berpikir kritis dalam...", category: "data" },
+                { id: 4, question: "Apa elemen materi utama yang menjadi fokus kompetensi?", type: "text", placeholder: "Misal: Menyimak, Tilawah, Istima', Bilangan...", category: "data" },
+                { id: 5, question: "Apakah ada instruksi tambahan terkait karakteristik sekolah?", type: "text", placeholder: "Misal: Hubungkan dengan kearifan lokal, teknologi, dsb...", category: "data" },
+            ]);
+        } else if (docType === "LKPD") {
+            setQuestions([
+                { id: 1, question: "Untuk Fase dan Kelas berapakah LKPD ini dirancang?", type: "chips" as const, options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E (Kls 10)", "Fase F (Kls 11-12)"], category: "data" },
+                { id: 2, question: "Apa materi spesifik yang ingin diujikan?", type: "text" as const, placeholder: "Misal: Rantai Makanan, Thaharah, Persamaan Kuadrat...", category: "data" },
+                { id: 3, question: "Pilih jenis soal (bisa pilih lebih dari satu):", type: "multi-chips" as const, options: ["Pilihan Ganda", "Esai", "Jawaban Singkat"], category: "data" },
+                { id: 4, question: "Berapa jumlah soal yang Anda butuhkan?", type: "chips" as const, options: ["10 Soal", "20 Soal", "30 Soal"], category: "data" },
+                { id: 5, question: "Instruksi tambahan (opsional):", type: "text" as const, placeholder: "HOTS, Kunci jawaban, dsb...", category: "data" },
+            ]);
+        } else if (docType === "KKTP") {
+            setQuestions([
+                { id: 1, question: "Untuk Mata Pelajaran apa KKTP ini dibuat?", type: "text" as const, placeholder: "Misal: IPA, Fiqih, Bahasa Arab, B. Mandarin...", category: "data" },
+                { id: 2, question: "Fase dan Kelas berapakah KKTP ini?", type: "chips" as const, options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E (Kls 10)", "Fase F (Kls 11-12)"], category: "data" },
+                { id: 3, question: "Apa Materi Utama atau Tujuan Pembelajaran yang ingin difokuskan?", type: "text" as const, placeholder: "Misal: Rangkaian Listrik, Thaharah, Hukum Tajwid...", category: "data" },
+                { id: 4, question: "Metode Penilaian apa yang ingin digunakan?", type: "chips" as const, options: ["Interval Nilai (0-100%)", "Rubrik Deskripsi"], category: "data" },
+            ]);
+        } else {
+            setQuestions([
+                { id: 1, question: "Untuk Fase dan Kelas berapakah dokumen ini dirancang?", type: "chips", options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E/F (SMA)"], category: "data" },
+                { id: 2, question: "Apa elemen materi utama yang menjadi fokus?", type: "text", placeholder: "Misal: Geometri, Tilawah, Qira'ah, Zat dan Perubahannya...", category: "data" },
+                { id: 3, question: "Media pembelajaran apa saja yang tersedia di sekolah Anda?", type: "chips", options: ["Alat Peraga Fisik", "Laboratorium Komputer", "Lingkungan Terbuka", "Buku Teks & Internet"], category: "data" },
+                { id: 4, question: "Berapa total Jam Pelajaran (JP) yang tersedia?", type: "chips", options: ["2 JP", "4 JP", "6 JP", "Sesuai Kurikulum"], category: "data" },
+            ]);
+        }
       } finally {
         setLoading(false);
       }
@@ -57,8 +105,20 @@ function GenerateContent() {
     fetchQuestions();
   }, [prompt, docType]);
 
-  const handleAnswer = (id: number, val: string) => {
-    setAnswers(prev => ({ ...prev, [id]: val }));
+  const handleAnswer = (id: number, val: string, multi = false) => {
+    setAnswers(prev => {
+        if (!multi) return { ...prev, [id]: val };
+        
+        const current = prev[id] || "";
+        const currentList = current ? current.split(", ") : [];
+        if (currentList.includes(val)) {
+            const updated = currentList.filter(v => v !== val).join(", ");
+            return { ...prev, [id]: updated };
+        } else {
+            const updated = [...currentList, val].join(", ");
+            return { ...prev, [id]: updated };
+        }
+    });
     setSkipped(prev => prev.filter(s => s !== id));
   };
 
@@ -113,6 +173,37 @@ function GenerateContent() {
         </header>
 
         <div className="space-y-12">
+           {/* AI Model Selection */}
+           <section className="relative group">
+              <div className="flex items-center justify-between mb-4">
+                 <h2 className="text-lg font-bold flex gap-3 items-start">
+                   <span className="text-[#4d7537]">A.</span> 
+                   Pilih Otak AI Perancang
+                 </h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 {[
+                   { id: "gemini", name: "Gemini 2.0 Flash", desc: "Super cepat & kreatif", icon: Zap },
+                   { id: "deepseek", name: "DeepSeek V3", desc: "Logika kuat & rapi", icon: Brain }
+                 ].map(m => (
+                   <button
+                     key={m.id}
+                     onClick={() => setSelectedModel(m.id)}
+                     className={`p-4 rounded-xl border text-left transition-all flex items-start gap-3 ${selectedModel === m.id ? 'bg-[#4d7537]/5 border-[#4d7537] ring-1 ring-[#4d7537]' : 'bg-white dark:bg-[#1a2315] border-neutral-200 dark:border-[#3f612d]/30 hover:border-[#4d7537]'}`}
+                   >
+                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${selectedModel === m.id ? 'bg-[#4d7537] text-white' : 'bg-neutral-100 dark:bg-[#080b06] text-neutral-400'}`}>
+                       <m.icon className="w-5 h-5" />
+                     </div>
+                     <div>
+                       <div className={`font-bold text-sm ${selectedModel === m.id ? 'text-[#4d7537]' : ''}`}>{m.name}</div>
+                       <div className="text-[11px] text-neutral-500">{m.desc}</div>
+                     </div>
+                   </button>
+                 ))}
+              </div>
+              <div className="absolute -bottom-6 left-0 w-full h-[1px] bg-neutral-100 dark:bg-[#3f612d]/10" />
+           </section>
+
            {questions.map((q, idx) => (
              <section key={q.id} className="relative group">
                 <div className="flex items-center justify-between mb-4">
@@ -129,26 +220,33 @@ function GenerateContent() {
                 </div>
 
                 <div className={`transition-opacity duration-300 ${skipped.includes(q.id) ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-                   {q.type === "chips" ? (
+                   {q.type === "chips" || q.type === "multi-chips" ? (
                      <div className="flex flex-col gap-3">
                         <div className="flex flex-wrap gap-2">
-                            {q.options?.map(opt => (
-                            <button
-                                key={opt}
-                                onClick={() => { handleAnswer(q.id, opt); setShowOther(prev => ({ ...prev, [q.id]: false })); }}
-                                className={`px-4 py-2 rounded-md border text-sm transition-all ${answers[q.id] === opt && !showOther[q.id] ? 'bg-[#4d7537] text-white border-[#4d7537] shadow-lg shadow-[#4d7537]/20 font-semibold' : 'bg-white dark:bg-[#1a2315] border-neutral-200 dark:border-[#3f612d]/30 hover:border-[#4d7537]'}`}
-                            >
-                                {opt}
-                            </button>
-                            ))}
-                            <button 
-                                onClick={() => { setShowOther(prev => ({ ...prev, [q.id]: !prev[q.id] })); if (!showOther[q.id]) handleAnswer(q.id, ""); }}
-                                className={`px-4 py-2 rounded-md border border-dashed transition-all text-sm flex items-center gap-1 ${showOther[q.id] ? 'bg-[#4d7537]/10 border-[#4d7537] text-[#4d7537] font-semibold' : 'border-neutral-300 dark:border-[#3f612d]/50 text-neutral-400 hover:text-[#4d7537] hover:border-[#4d7537]'}`}
-                            >
-                            <Plus className="w-3.5 h-3.5" /> Lainnya
-                            </button>
+                            {q.options?.map(opt => {
+                             const isActive = q.type === "multi-chips" 
+                               ? (answers[q.id] || "").split(", ").includes(opt)
+                               : answers[q.id] === opt && !showOther[q.id];
+                             
+                             return (
+                             <button
+                                 key={opt}
+                                 onClick={() => { handleAnswer(q.id, opt, q.type === "multi-chips"); if(q.type === "chips") setShowOther(prev => ({ ...prev, [q.id]: false })); }}
+                                 className={`px-4 py-2 rounded-md border text-sm transition-all ${isActive ? 'bg-[#4d7537] text-white border-[#4d7537] shadow-lg shadow-[#4d7537]/20 font-semibold' : 'bg-white dark:bg-[#1a2315] border-neutral-200 dark:border-[#3f612d]/30 hover:border-[#4d7537]'}`}
+                             >
+                                 {opt}
+                             </button>
+                             )})}
+                             {q.type === "chips" && (
+                              <button 
+                                  onClick={() => { setShowOther(prev => ({ ...prev, [q.id]: !prev[q.id] })); if (!showOther[q.id]) handleAnswer(q.id, ""); }}
+                                  className={`px-4 py-2 rounded-md border border-dashed transition-all text-sm flex items-center gap-1 ${showOther[q.id] ? 'bg-[#4d7537]/10 border-[#4d7537] text-[#4d7537] font-semibold' : 'border-neutral-300 dark:border-[#3f612d]/50 text-neutral-400 hover:text-[#4d7537] hover:border-[#4d7537]'}`}
+                              >
+                              <Plus className="w-3.5 h-3.5" /> Lainnya
+                              </button>
+                             )}
                         </div>
-                        {showOther[q.id] && (
+                        {q.type === "chips" && showOther[q.id] && (
                           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
                              <Input 
                                 placeholder="Ketik jawaban lainnya di sini..."
@@ -188,6 +286,7 @@ function GenerateContent() {
                params.append("context", contextStr);
                params.append("type", docType);
                params.append("prompt", prompt);
+               params.append("model", selectedModel);
                router.push(`/workspace?${params.toString()}`);
              }}
              className="w-full max-w-md h-16 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-lg text-lg font-bold shadow-xl shadow-[#4d7537]/20 transition-all hover:scale-[1.02] active:scale-95 group"

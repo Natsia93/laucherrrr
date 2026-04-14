@@ -51,27 +51,28 @@ export async function POST(req: Request) {
     let providerUsed = "Gemini";
 
     try {
-      // STRATEGI 1: Gunakan Gemini 2.0 Flash (Utama)
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-      const result = await model.generateContent(systemPrompt);
-      const response = await result.response;
-      generatedText = response.text();
-    } catch (geminiError) {
-      console.warn("Gemini 2.0 Flash Gagal, mencoba 1.5 Flash...", geminiError);
+      // STRATEGI 1: Gunakan DeepSeek R1 (Utama)
+      const completion = await deepseek.chat.completions.create({
+        messages: [{ role: "system", content: systemPrompt }],
+        model: "deepseek-reasoner",
+      });
+      generatedText = completion.choices[0].message.content || "";
+      providerUsed = "DeepSeek R1";
+    } catch (deepseekError) {
+      console.warn("DeepSeek R1 Gagal, mencoba Gemini...", deepseekError);
       try {
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const result = await model.generateContent(systemPrompt);
+        const response = await result.response;
+        generatedText = response.text();
+        providerUsed = "Gemini 2.0 Flash";
+      } catch (geminiError) {
+        console.warn("Gemini Gagal, mencoba 1.5 Flash...", geminiError);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const result = await model.generateContent(systemPrompt);
         const response = await result.response;
         generatedText = response.text();
-      } catch (flashError) {
-        console.warn("1.5 Flash Gagal, mencoba DeepSeek...", flashError);
-        // STRATEGI 2: Fallback ke DeepSeek
-        const completion = await deepseek.chat.completions.create({
-          messages: [{ role: "system", content: systemPrompt }],
-          model: "deepseek-chat",
-        });
-        generatedText = completion.choices[0].message.content || "";
-        providerUsed = "DeepSeek";
+        providerUsed = "Gemini 1.5 Flash";
       }
     }
 

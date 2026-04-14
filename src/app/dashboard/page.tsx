@@ -20,6 +20,8 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
+import { DocumentActions } from "@/components/dashboard/DocumentActions";
+
 
 export default async function DashboardPage() {
   const session = await auth.api.getSession({
@@ -205,22 +207,7 @@ export default async function DashboardPage() {
                         <TableCell className="text-neutral-500 dark:text-[#a2b591] text-sm font-sans px-4">{doc.date}</TableCell>
                         <TableCell className="text-neutral-500 dark:text-[#a2b591] text-sm font-sans px-4">{doc.size}</TableCell>
                         <TableCell className="text-right px-6">
-                          <div className="flex items-center justify-end gap-1">
-                            <a 
-                              href={`/api/export-docx?id=${doc.id}`} 
-                              download
-                              className="inline-flex items-center justify-center h-8 w-8 rounded-md text-neutral-500 hover:text-[#4d7537] hover:bg-[#4d7537]/10 dark:hover:text-[#89b867] transition-colors"
-                              title="Download Word"
-                            >
-                              <Download className="w-4 h-4" />
-                            </a>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
+                          <DocumentActions docId={doc.id} title={doc.title} />
                         </TableCell>
                       </DashboardTableRow>
                     ))

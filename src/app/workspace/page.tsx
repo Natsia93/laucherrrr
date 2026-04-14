@@ -28,6 +28,8 @@ function WorkspaceContent() {
   const initialPrompt = searchParams.get("prompt");
   const context = searchParams.get("context");
   const docType = searchParams.get("type") || "Alur Tujuan Pembelajaran (ATP)";
+  const model = searchParams.get("model") || "deepseek";
+  const docId = searchParams.get("id");
 
   const [chatInput, setChatInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -152,7 +154,7 @@ function WorkspaceContent() {
       const response = await fetch("/api/generate-stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rawPrompt, type: docType }),
+        body: JSON.stringify({ rawPrompt, type: docType, model }),
       });
 
       if (!response.ok) {
@@ -228,7 +230,28 @@ function WorkspaceContent() {
   useEffect(() => {
     if (hasStarted.current) return;
     
-    if (context) {
+    if (docId) {
+      hasStarted.current = true;
+      const fetchDoc = async () => {
+        setLoading(true);
+        try {
+          const response = await fetch(`/api/documents/${docId}`);
+          const data = await response.json();
+          if (data.content) {
+            setDocContent(data.content);
+            setDisplayedContent(data.content);
+            contentRef.current = data.content;
+            setIsGenerated(true);
+            setMessages([{ role: "ai", text: `✅ Dokumen "${data.title}" berhasil dimuat. Silakan lanjutkan pengeditan atau minta revisi.` }]);
+          }
+        } catch (err) {
+          console.error("Fetch error:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchDoc();
+    } else if (context) {
       hasStarted.current = true;
       const prompt = `Berdasarkan hasil wawancara ini: ${context.replace(/\|/g, ". ")}. Tolong buatkan dokumen ${docType} lengkap.`;
       streamGenerate(prompt);
