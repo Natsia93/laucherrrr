@@ -3,6 +3,7 @@ import { Inter, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import NextTopLoader from 'nextjs-toploader';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -33,6 +34,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <NextTopLoader color="#4d7537" showSpinner={false} shadow="0 0 10px #4d7537,0 0 5px #4d7537" />
           <SmoothScroll>
             {children}
           </SmoothScroll>
