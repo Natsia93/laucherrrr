@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import pdf from "pdf-parse";
 import mammoth from "mammoth";
 
 export async function POST(req: NextRequest) {
@@ -11,10 +10,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
     let text = "";
 
     if (file.name.endsWith(".pdf")) {
+      // Dynamic import to avoid build-time evaluation of pdf-parse dependencies (like canvas polyfills)
+      const pdf = require("pdf-parse");
       const data = await pdf(buffer);
       text = data.text;
     } else if (file.name.endsWith(".docx")) {
