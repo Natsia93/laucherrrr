@@ -80,17 +80,39 @@ function GenerateContent() {
               category: "data"
            });
         }
+
+        // Tambahkan pertanyaan Semester khusus ATP, CP, KKTP
+        if (["Alur Tujuan Pembelajaran (ATP)", "Capaian Pembelajaran (CP)", "KKTP", "ATP", "CP"].includes(docType)) {
+           initialQuestions.push({
+              id: 1004,
+              question: "Pilih Semester yang ingin di-generate:",
+              type: "chips",
+              options: ["Semester Ganjil", "Semester Genap", "Ganjil & Genap"],
+              category: "mandatory"
+           });
+        }
         
         // Filter out AI questions that might duplicate mandatory ones (Phase/Class/Mata Pelajaran)
         const filteredAiQuestions = (data.questions || []).filter((q: Question) => {
            const lowerQ = q.question.toLowerCase();
-           return !lowerQ.includes("kelas") && !lowerQ.includes("fase") && !lowerQ.includes("mata pelajaran");
+           return !lowerQ.includes("kelas") && !lowerQ.includes("fase") && !lowerQ.includes("mata pelajaran") && !lowerQ.includes("semester");
         });
 
         setQuestions([...initialQuestions, ...filteredAiQuestions]);
       } catch (err) {
         // Fallback
         let fallback = [...mandatoryQuestions];
+        
+        if (["Alur Tujuan Pembelajaran (ATP)", "Capaian Pembelajaran (CP)", "KKTP", "ATP", "CP"].includes(docType)) {
+           fallback.push({
+              id: 1004,
+              question: "Pilih Semester yang ingin di-generate:",
+              type: "chips",
+              options: ["Semester Ganjil", "Semester Genap", "Ganjil & Genap"],
+              category: "mandatory"
+           });
+        }
+
         if (docType === "LKPD") {
             fallback.push({ id: 0, question: "Pilih Bahasa untuk LKPD ini:", type: "chips", options: ["Bahasa Indonesia", "Bahasa Arab (Ber-Harokat/Tasykil)"], category: "data" });
             fallback.push({ id: 2, question: "Apa materi spesifik yang ingin diujikan?", type: "text", placeholder: "Misal: Rantai Makanan, Thaharah, Persamaan Kuadrat...", category: "data" });

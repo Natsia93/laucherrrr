@@ -19,6 +19,7 @@ export async function POST(req: Request) {
       1. Nama Mata Pelajaran
       2. Kelas
       3. Fase (A, B, C, D, E, F)
+      4. Semester (Ganjil, Genap, atau Keduanya)
       
       Fokuslah langsung pada substansi pedagogis, materi spesifik, metode pembelajaran, karakteristik siswa, dan kebutuhan teknis dokumen ${docType}.
 
