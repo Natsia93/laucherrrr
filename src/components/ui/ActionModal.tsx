@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 import { Button } from "./button";
@@ -28,6 +29,12 @@ export function ActionModal({
   cancelText = "Batal",
   isLoading = false,
 }: ModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Close on ESC key
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -36,6 +43,8 @@ export function ActionModal({
     if (isOpen) window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
+
+  if (!mounted) return null;
 
   const icons = {
     danger: <AlertTriangle className="w-6 h-6 text-red-500" />,
@@ -55,7 +64,7 @@ export function ActionModal({
     success: "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20",
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -127,6 +136,8 @@ export function ActionModal({
           </div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
+
