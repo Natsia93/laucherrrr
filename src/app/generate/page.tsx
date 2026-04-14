@@ -67,8 +67,9 @@ function GenerateContent() {
             { id: 0, question: "Pilih Bahasa untuk LKPD ini:", type: "chips", options: ["Bahasa Indonesia", "Bahasa Arab (Ber-Harokat/Tasykil)"], category: "data" },
             { id: 1, question: "Untuk Fase dan Kelas berapakah LKPD ini dirancang?", type: "chips", options: ["Fase A (Kls 1-2)", "Fase B (Kls 3-4)", "Fase C (Kls 5-6)", "Fase D (Kls 7-9)", "Fase E (Kls 10)", "Fase F (Kls 11-12)"], category: "data" },
             { id: 2, question: "Apa materi spesifik yang ingin diujikan?", type: "text", placeholder: "Misal: Rantai Makanan, Thaharah, Persamaan Kuadrat...", category: "data" },
-            { id: 3, question: "Pilih jenis soal (bisa pilih lebih dari satu):", type: "multi-chips", options: ["Pilihan Ganda", "Esai", "Jawaban Singkat"], category: "data" },
-            { id: 4, question: "Berapa jumlah soal yang Anda butuhkan?", type: "chips", options: ["5 Soal", "10 Soal", "20 Soal"], category: "data" },
+            { id: 3, question: "Jumlah Soal Pilihan Ganda (PG) yang Anda inginkan?", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal", "15 Soal"], category: "data" },
+            { id: 4, question: "Jumlah Soal Jawaban Singkat yang Anda inginkan?", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal"], category: "data" },
+            { id: 5, question: "Jumlah Soal Esai yang Anda inginkan?", type: "chips", options: ["0 Soal", "2 Soal", "5 Soal"], category: "data" },
         ]);
       } finally {
         setLoading(false);

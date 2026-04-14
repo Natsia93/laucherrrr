@@ -89,16 +89,25 @@ export async function POST(req: Request) {
     KONTEKS GURU: "${rawPrompt}"
 
     === ATURAN TEKNIS (SANGAT PENTING) ===
-    1. JANGAN gunakan tanda kutip di luar tag HTML.
+    1. JANGAN gunakan tanda kutip di luar tag HTML. 
     2. JANGAN awali dengan penjelasan apapun. LANGSUNG MULAI DENGAN TAG <div>.
     3. JANGAN gunakan markdown code blocks (\`\`\`html).
     4. MODE BAHASA: ${isArabic ? "GUNAKAN BAHASA ARAB SEBAGAI BAHASA UTAMA. WAJIB SERTAKAN HAROKAT/TASYKIL LENGKAP PADA SETIAP KATA ARAB. Gunakan struktur Right-to-Left (RTL)." : "Gunakan Bahasa Indonesia formal."}
+    
+    === STRUKTUR & URUTAN SOAL (STRIP GROUPING) ===
+    Anda WAJIB mengelompokkan soal berdasarkan tipenya. JANGAN mencampuradukkan tipe soal yang berbeda.
+    URUTAN WAJIB:
+    1. PILIHAN GANDA (PG): Selesaikan semua soal PG terlebih dahulu.
+    2. JAWABAN SINGKAT: Kerjakan setelah semua PG selesai.
+    3. ESAI/URAIAN: Kerjakan di bagian paling akhir.
+    
+    Jika dalam konteks disebutkan "0 Soal" untuk tipe tertentu, lewati tipe tersebut.
 
     === STRUKTUR LAYOUT (PRO) ===
-    - Container Utama: <div ${isArabic ? 'dir="rtl"' : 'dir="ltr"'} style="font-family: 'Times New Roman', serif; padding: 20px; color: black;">
-    - Header Identitas Sekolah dalam bentuk tabel tanpa border.
+    - Container Utama: <div ${isArabic ? 'dir="rtl"' : 'dir="ltr"'} style="font-family: 'Noto Naskh Arabic', serif; padding: 20px; color: black;">
+    - Header Identitas Sekolah (Kop Surat) harus lengkap dan rapi.
     - Judul Besar: HEADER DALAM KOTAK BORDER HITAM TEBAL.
-    - Tabel Soal: Gunakan format grid yang rapi.
+    - Tabel Soal: Gunakan format grid yang rapi dengan nomor urut yang bersambung (1, 2, 3...).
       Contoh Header Tabel Arab (RTL):
       <table style="width:100%; border-collapse: collapse; border: 1px solid black;">
         <tr style="background-color: #f2f2f2; font-weight: bold; text-align: center;">
