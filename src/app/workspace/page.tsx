@@ -179,12 +179,19 @@ function WorkspaceContent() {
     const isArabicDoc = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
     
     const textToSend = isContinue 
-      ? `INI ADALAH KONTINUASI (LANJUTAN). TUGAS ANDA HANYA MENERUSKAN ISI. 
-         DILARANG KERAS: 
-         1. JANGAN membuat Kop Surat/Header baru. 
-         2. JANGAN membuat judul baru. 
-         3. JANGAN mengulang teks yang sudah ada. 
-         LANGSUNG LANJUT KE BAGIAN BERIKUTNYA (Soal selanjutnya atau materi selanjutnya). 
+      ? `INI ADALAH KONTINUASI (LANJUTAN) DARI DRAF SEBELUMNYA. 
+         TUGAS ANDA HANYA MENERUSKAN ISI HTML YANG TERPOTONG. 
+         
+         DILARANG KERAS MELAKUKAN HAL BERIKUT:
+         1. DILARANG membuat Kop Surat/Identitas baru.
+         2. DILARANG membuat ulang tag header dokumen.
+         3. DILARANG membuat ulang kerangka tabel dari awal jika sedang di tengah tabel.
+         4. DILARANG menduplikasi/mengulang isi yang sudah ada di draf.
+         5. DILARANG membuat kalimat pembuka atau penutup.
+         
+         Jika draf sebelumnya terpotong di tengah baris tabel, lanjutkan langsung elemen HTML (\`<tr>\`, \`<td>\`, dll) yang terpotong tersebut.
+         LANGSUNG BERIKAN KELANJUTAN KONTEN HTML-NYA SAJA DARI TITIK TERAKHIR.
+         
          Gunakan Bahasa ${isArabicDoc ? 'Arab Ber-Harokat (Full Tasykil) dan RTL' : 'Indonesia'}.
          WAJIB: Gunakan text-align: justify untuk narasi dan text-align: center untuk baris BAB pada tabel.`
       : chatInput;
@@ -192,13 +199,17 @@ function WorkspaceContent() {
     if (!textToSend.trim()) return;
     
     const contextPrompt = isContinue 
-      ? `LANJUTKAN DOKUMEN ${docType}. SAYA INGIN ANDA HANYA MENULIS SAMBUNGANNYA SAJA TANPA PEMBUKA. Ini adalah akhir dari draf sebelumnya: [ ${docContent.slice(-500)} ]`
+      ? `INI ADALAH BAGIAN AKHIR DARI DRAF SEBELUMNYA:\n\n[ ... ${docContent.slice(-1500)} ]\n\nTUGAS ANDA: LANJUTKAN DRAF HTML TERSEBUT DARI TITIK TERAKHIR. JANGAN MENGULANG KALIMAT TERAKHIR. LANGSUNG SAMBUNG KODE HTML-NYA.`
       : `Revisi draf: ${textToSend}. Tetap pada jenis dokumen ${docType}.`;
 
     if (!isContinue) setMessages(prev => [...prev, { role: "user", text: textToSend }]);
     setChatInput("");
     
-    if (isContinue) contentRef.current = docContent + "\n";
+    // Jangan tambah enter jika sedang di tengah tag HTML
+    if (isContinue) {
+      // Hilangkan tag penutup yang mungkin terpotong agar nyambung
+      contentRef.current = docContent.replace(/(<\/td>|<\/tr>|<\/tbody>|<\/table>|<\/div>|<\/body>|<\/html>|\s+)$/gi, " ");
+    }
     await streamGenerate(contextPrompt, isContinue);
   };
 
