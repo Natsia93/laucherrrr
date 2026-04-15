@@ -120,6 +120,12 @@ function WorkspaceContent() {
                 ...prev.filter(m => !m.text.startsWith("⏳")), 
                 { role: "ai", text: "✅ Selesai! Dokumen sudah siap. Ingin revisi?" }
               ]);
+              
+              // PERBAIKAN: Update URL agar saat refresh tidak generate ulang
+              if (data.docId) {
+                const newUrl = `${window.location.pathname}?id=${data.docId}`;
+                window.history.replaceState({ ...window.history.state, path: newUrl }, '', newUrl);
+              }
             }
           } catch {}
         }
