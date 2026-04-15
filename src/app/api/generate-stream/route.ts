@@ -29,7 +29,7 @@ const SHARED_RULES = `
 3. SEMUA tabel WAJIB border "1px solid black" dengan padding yang nyaman.
 4. Gunakan Bahasa Indonesia formal, kecuali untuk konten khusus Bahasa Arab/Inggris.
 5. Gunakan font serif (Times New Roman style) untuk kesan dokumen resmi.
-6. TOTAL KONTEN MINIMAL 1500 - 2000 KATA (Jabarkan setiap elemen sedalam mungkin).
+6. TOTAL KONTEN: Minimal 1500 - 2000 kata untuk dokumen perencanaan (ATP, CP, PROTA, PROSEM), namun untuk dokumen seperti LKPD, SESUAIKAN dengan jumlah soal yang diminta user (Jangan bertele-tele jika user meminta soal sedikit).
 
 === TEMPLATE TANDA TANGAN (WAJIB DI AKHIR) ===
 <table style="width: 100%; border: none; margin-top: 50px; font-family: serif; border-collapse: collapse;">
@@ -105,10 +105,14 @@ ${SHARED_RULES}`,
     // ──────────── LKPD ────────────
     "LKPD": `Anda adalah DESAINER INSTRUKSIONAL yang handal. Tugas Anda: Membuat LKPD yang interaktif dan menantang bagi siswa.
 
-KONTEKS DATA GURU:
+KONTEKS DATA GURU (UTAMAKAN DATA INI):
 ${rawPrompt}
 
 ${langRule}
+
+=== ATURAN PRIORITAS INPUT USER ===
+1. JUMLAH SOAL: Jika dalam KONTEKS DATA GURU tertulis jumlah soal tertentu (misal: 7 soal, 10 soal), Anda WAJIB membuat soal persis sesuai jumlah tersebut. DILARANG melebihkan.
+2. TIPE SOAL: Hanya buat tipe soal yang diminta di KONTEKS DATA GURU. Jika user hanya meminta Pilihan Ganda, JANGAN buat Isian Singkat atau Esai.
 
 === STRUKTUR DOKUMEN LKPD ===
 1. KOP FORMAL & IDENTITAS SISWA (Nama, Kelas, No Absen).
@@ -116,10 +120,9 @@ ${langRule}
 3. PETUNJUK KERJA: Langkah-langkah eksplorasi untuk siswa.
 4. RINGKASAN MATERI: Materi singkat namun padat sebagai bekal siswa menjawab.
 5. KEGIATAN SISWA:
-   - Bagian 1: Soal Pilihan Ganda (Minimal 10-15 soal dengan opsi A, B, C, D).
-   - Bagian 2: Soal Menjodohkan / Isian Singkat.
-   - Bagian 3: Soal Esai HOTS (Analisis & Penalaran).
-6. KUNCI JAWABAN & RUBRIK: Sertakan di bagian paling bawah.
+   - Buat soal berdasarkan preferensi di KONTEKS DATA GURU. 
+   - Gunakan format Pilihan Ganda A, B, C, D jika diminta.
+6. KUNCI JAWABAN & RUBRIK (Wajib disediakan).
 
 ${SHARED_RULES}`,
 
