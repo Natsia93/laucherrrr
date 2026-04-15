@@ -213,10 +213,8 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
                       </div>
                       <span className="translate-y-[1px] truncate">{doc.title}</span>
                     </TableCell>
-                    <TableCell className="px-4">
-                      <Badge variant="outline" className="bg-neutral-50 dark:bg-[#080b06]/50 border-neutral-200 dark:border-[#3f612d]/30 text-neutral-600 dark:text-[#a2b591] font-normal font-sans">
-                        {doc.type}
-                      </Badge>
+                    <TableCell className="text-neutral-500 dark:text-[#a2b591] text-sm font-sans px-4">
+                      {doc.type}
                     </TableCell>
                     <TableCell className="text-neutral-500 dark:text-[#a2b591] text-sm font-sans px-4">{doc.date}</TableCell>
                     <TableCell className="text-neutral-500 dark:text-[#a2b591] text-sm font-sans px-4">{doc.size}</TableCell>
