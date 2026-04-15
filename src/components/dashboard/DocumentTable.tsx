@@ -96,10 +96,10 @@ export function DocumentTable({ documents }: DocumentTableProps) {
                 Batal
               </Button>
               <Button 
-                variant="destructive" 
+                variant="ghost" 
                 size="sm" 
                 onClick={() => setShowBulkDeleteModal(true)}
-                className="bg-red-600 hover:bg-red-700 text-white border-none text-xs flex items-center gap-2 shadow-lg shadow-red-900/40 transition-all active:scale-95 font-bold"
+                className="!bg-[#ff0000] hover:!bg-[#cc0000] text-white border-none text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(255,0,0,0.5)] transition-all active:scale-95 font-bold rounded-md px-4"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 Hapus Terpilih
