@@ -28,8 +28,9 @@ export async function GET(
     }
 
     return NextResponse.json(doc);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -57,8 +58,9 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Delete Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

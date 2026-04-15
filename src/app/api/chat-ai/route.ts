@@ -9,11 +9,10 @@ export async function POST(req: Request) {
     
     const lastMessage = messages[messages.length - 1].text;
     
-    // Prompt untuk berperan sebagai pewawancara kurikulum
     const systemPrompt = `Anda adalah asisten kurikulum yang membantu guru menyiapkan data untuk membuat dokumen ${type}.
     Tugas Anda adalah menanyakan detail yang HANYA diperlukan untuk membuat ${type} tersebut.
     
-    Percakapan saat ini: ${messages.map((m: any) => `${m.role}: ${m.text}`).join("\n")}
+    Percakapan saat ini: ${messages.map((m: { role: string; text: string }) => `${m.role}: ${m.text}`).join("\n")}
     
     Aturan:
     1. Jadilah formal namun ramah.
@@ -24,11 +23,11 @@ export async function POST(req: Request) {
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const result = await model.generateContent(systemPrompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = result.response.text();
 
     return NextResponse.json({ success: true, reply: text });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

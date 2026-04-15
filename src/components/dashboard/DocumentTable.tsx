@@ -18,6 +18,7 @@ interface Document {
   type: string;
   date: string;
   size: string;
+  status?: string | null;
 }
 
 interface DocumentTableProps {
@@ -123,6 +124,7 @@ export function DocumentTable({ documents }: DocumentTableProps) {
               <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans px-4">Nama Dokumen</TableHead>
               <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans px-4">Kategori</TableHead>
               <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans px-4">Tanggal</TableHead>
+              <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans px-4">Status</TableHead>
               <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans px-4 whitespace-nowrap">Ukuran</TableHead>
               <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans text-right px-6">Aksi</TableHead>
             </TableRow>
@@ -130,7 +132,7 @@ export function DocumentTable({ documents }: DocumentTableProps) {
           <TableBody>
             {documents.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-20 text-neutral-400 dark:text-[#6b7b59] font-sans">
+                <TableCell colSpan={7} className="text-center py-20 text-neutral-400 dark:text-[#6b7b59] font-sans">
                   <div className="flex flex-col items-center gap-2">
                     <Folder className="w-10 h-10 opacity-20" />
                     <p>Belum ada dokumen. Mulai buat perangkat ajar pertama Anda!</p>
@@ -159,6 +161,11 @@ export function DocumentTable({ documents }: DocumentTableProps) {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-neutral-500 dark:text-[#a2b591] text-sm font-sans px-4">{doc.date}</TableCell>
+                  <TableCell className="px-4">
+                    <Badge variant="outline" className={`font-sans font-normal text-[10px] px-2 py-0 border-none rounded-full ${doc.status === "Selesai" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"}`}>
+                      {doc.status || "Proses"}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-neutral-500 dark:text-[#a2b591] text-sm font-sans px-4">{doc.size}</TableCell>
                   <TableCell className="text-right px-6">
                     <DocumentActions docId={doc.id} title={doc.title} />

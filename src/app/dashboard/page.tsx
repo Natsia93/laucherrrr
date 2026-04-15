@@ -18,8 +18,15 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { DocumentTable } from "@/components/dashboard/DocumentTable";
+import { DashboardSearchBar } from "@/components/dashboard/DashboardSearchBar";
+import { DashboardFilter } from "@/components/dashboard/DashboardFilter";
+import { Suspense } from "react";
 
-export default async function DashboardPage() {
+export default async function DashboardPage(props: { searchParams: Promise<{ search?: string; category?: string }> }) {
+  const searchParams = await props.searchParams;
+  const searchQuery = searchParams.search || "";
+  const categoryQuery = searchParams.category || "";
+  
   const session = await auth.api.getSession({
     headers: await headers()
   });
@@ -35,7 +42,13 @@ export default async function DashboardPage() {
     .where(eq(documentsTable.userId, user.id))
     .orderBy(desc(documentsTable.createdAt));
   
-  const displayDocuments = realDocuments.map(doc => ({
+  const filteredDocuments = realDocuments.filter(doc => {
+    const matchesSearch = searchQuery ? doc.title.toLowerCase().includes(searchQuery.toLowerCase()) : true;
+    const matchesCategory = categoryQuery ? doc.type === categoryQuery : true;
+    return matchesSearch && matchesCategory;
+  });
+  
+  const displayDocuments = filteredDocuments.map(doc => ({
     id: doc.id,
     title: doc.title,
     type: doc.type,
@@ -96,13 +109,9 @@ export default async function DashboardPage() {
           </Link>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
-          <div className="relative hidden xl:block">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-[#6b7b59]" />
-            <Input 
-              placeholder="Cari dokumen..." 
-              className="w-48 xl:w-64 pl-9 bg-white dark:bg-[#1a2315]/50 border-[#dcdad1] dark:border-[#3f612d]/30 text-sm focus-visible:ring-[#4d7537]/50 text-neutral-900 dark:text-[#f4f3ed] placeholder:text-neutral-400 dark:placeholder:text-[#6b7b59]"
-            />
-          </div>
+          <Suspense fallback={<div className="w-48 xl:w-64 h-9 bg-neutral-100 dark:bg-[#1a2315]/50 animate-pulse rounded-md" />}>
+            <DashboardSearchBar />
+          </Suspense>
           <DashboardNavbarActions user={user} />
         </div>
       </nav>
@@ -118,12 +127,11 @@ export default async function DashboardPage() {
             </p>
           </DashboardFadeIn>
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="bg-white dark:bg-[#10140d]/80 border-[#dcdad1] dark:border-[#3f612d]/30 text-neutral-700 dark:text-[#d4e4c8] hover:bg-neutral-50 dark:hover:bg-[#1a2315] hover:text-neutral-900 dark:hover:text-white cursor-pointer">
-              <Filter className="w-4 h-4 mr-2 text-[#4d7537] dark:text-[#89b867]" />
-              Filter
-            </Button>
+            <Suspense fallback={<div className="h-10 w-24 bg-neutral-100 dark:bg-[#1a2315]/50 animate-pulse rounded-md" />}>
+              <DashboardFilter />
+            </Suspense>
             <Link href="/">
-              <Button className="bg-[#4d7537] text-white hover:bg-[#5a8b41] shadow-lg shadow-black/5 dark:shadow-[#3f612d]/20 border border-[#4d7537] dark:border-[#6b9d4f]/50 cursor-pointer">
+              <Button className="bg-[#4d7537] text-white hover:bg-[#5a8b41] shadow-lg shadow-black/5 dark:shadow-[#3f612d]/20 border border-[#4d7537] dark:border-[#6b9d4f]/50 cursor-pointer h-10 px-4">
                 <Plus className="w-4 h-4 mr-2" />
                 Generate Baru
               </Button>

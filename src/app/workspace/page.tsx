@@ -2,6 +2,9 @@
 
 import React, { useState, Suspense, useEffect, useRef, useCallback } from "react";
 import { marked } from "marked";
+
+// Configure marked synchronous mode (v18+)
+marked.use({ async: false });
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { 
@@ -336,7 +339,7 @@ function WorkspaceContent() {
             <AnimatePresence mode="wait">
               {displayedContent ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
-                  dangerouslySetInnerHTML={{ __html: displayedContent.trim().startsWith("<") ? displayedContent : marked.parse(displayedContent) }} 
+                  dangerouslySetInnerHTML={{ __html: displayedContent.trim().startsWith("<") ? displayedContent : (marked.parse(displayedContent) as string) }} 
                 />
               ) : loading ? renderProgressIndicator() : (
                 <div className="flex flex-col items-center justify-center min-h-[900px] opacity-10 py-20">

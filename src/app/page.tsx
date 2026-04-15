@@ -17,7 +17,7 @@ export default function Home() {
   const { data: session, isPending } = authClient.useSession();
   const [loading, setLoading] = useState(false);
   const [prompt, setPrompt] = useState("");
-  const [docType, setDocType] = useState("Modul Ajar");
+  const [docType, setDocType] = useState("");
   const [scrolled, setScrolled] = useState(false);
   const [wordIndex, setWordIndex] = useState(0);
 
@@ -264,7 +264,7 @@ export default function Home() {
                     onChange={(e) => setDocType(e.target.value)}
                     className="h-9 pl-3 pr-8 rounded-none text-xs font-normal border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-[#141414] text-neutral-600 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-white appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#4d7537] transition-all"
                   >
-                    <option value="Modul Ajar">Pilih Tipe Dokumen</option>
+                    <option value="" disabled>Pilih Tipe Dokumen</option>
                     <option value="Capaian Pembelajaran (CP)">Capaian Pembelajaran (CP)</option>
                     <option value="Alur Tujuan Pembelajaran (ATP)">Alur Tujuan Pembelajaran (ATP)</option>
                     <option value="Program Tahunan">Program Tahunan</option>
@@ -279,7 +279,7 @@ export default function Home() {
               <Button 
                 type="submit"
                 size="icon" 
-                disabled={!prompt.trim() || loading}
+                disabled={!prompt.trim() || !docType || loading}
                 className="h-10 w-10 rounded-none bg-neutral-900 dark:bg-neutral-800 text-white hover:bg-[#4d7537] transition-colors shrink-0 disabled:opacity-50"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
@@ -295,9 +295,20 @@ export default function Home() {
           transition={{ delay: 0.4 }}
           className="flex flex-wrap justify-center gap-3 mt-8"
         >
-          {["CP", "ATP", "Prosem (Program Semester)", "Prota (Program Tahunan)", "KKTP"].map((tag) => (
-            <button key={tag} className="px-4 py-2 rounded-none border border-[#dcdad1] dark:border-[#3f612d]/30 text-sm text-neutral-600 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-[#f4f3ed] hover:border-[#4d7537]/50 dark:hover:border-[#6b9d4f]/50 bg-white/50 dark:bg-[#10140d]/80 transition-colors font-sans">
-              {tag}
+          {[
+            { label: "CP", value: "Capaian Pembelajaran (CP)" },
+            { label: "ATP", value: "Alur Tujuan Pembelajaran (ATP)" },
+            { label: "Prosem", value: "Program Semester" },
+            { label: "Prota", value: "Program Tahunan" },
+            { label: "KKTP", value: "KKTP" },
+            { label: "LKPD", value: "LKPD" },
+          ].map((tag) => (
+            <button 
+              key={tag.label} 
+              onClick={() => setDocType(tag.value)}
+              className={`px-4 py-2 rounded-none border text-sm transition-colors font-sans ${docType === tag.value ? 'bg-[#4d7537]/10 border-[#4d7537] text-[#4d7537] dark:text-[#89b867] dark:border-[#6b9d4f] font-medium' : 'border-[#dcdad1] dark:border-[#3f612d]/30 text-neutral-600 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-[#f4f3ed] hover:border-[#4d7537]/50 dark:hover:border-[#6b9d4f]/50 bg-white/50 dark:bg-[#10140d]/80'}`}
+            >
+              {tag.label}
             </button>
           ))}
         </motion.div>

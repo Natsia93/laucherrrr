@@ -6,7 +6,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 export async function POST(req: Request) {
   let docType = "Kurikulum";
   try {
-    const body = await JSON.parse(await req.text());
+    const body = await req.json();
     docType = body.docType;
     const prompt = body.prompt;
 

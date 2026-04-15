@@ -18,8 +18,9 @@ export async function POST(req: Request) {
       .limit(1);
 
     return NextResponse.json({ exists: existingUser.length > 0 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Check email error:", error);
-    return NextResponse.json({ exists: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ exists: false, error: message }, { status: 500 });
   }
 }

@@ -2,12 +2,20 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
 
-// Gunakan DATABASE_URL dari .env (pastikan pgbouncer=true jika pakai Supabase Pooler)
 const connectionString = process.env.DATABASE_URL!;
 
-// Disable prefetch untuk kompatibilitas dengan PGBouncer/Supabase Pooler
-const client = postgres(connectionString, { 
+// Singleton pattern: prevent multiple connections during dev hot-reload
+const globalForDb = globalThis as unknown as { pgClient: ReturnType<typeof postgres> | undefined };
+
+const client = globalForDb.pgClient ?? postgres(connectionString, {
   prepare: false,
-  ssl: 'require' 
+  ssl: 'require',
+  max: 10,
+  idle_timeout: 20,
 });
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForDb.pgClient = client;
+}
+
 export const db = drizzle(client, { schema });

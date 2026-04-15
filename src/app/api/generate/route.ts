@@ -6,10 +6,8 @@ import OpenAI from "openai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-// Inisialisasi Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-// Inisialisasi DeepSeek (menggunakan format OpenAI)
 const deepseek = new OpenAI({
   baseURL: "https://api.deepseek.com",
   apiKey: process.env.DEEPSEEK_API_KEY!,
@@ -33,62 +31,59 @@ export async function POST(req: Request) {
     
     Permintaan: "${rawPrompt}"
     
-    ATURAN LAYOUT UTAMA (WAJIB DIIKUTI):
-    1. HEADER: Sertakan teks "ALUR TUJUAN PEMBELAJARAN (ATP)" di tengah, diikuti identitas: Nama Sekolah, Mata Pelajaran, Kelas/Semester, Tahun Pelajaran (Gunakan format titik-titik untuk yang belum ada data).
-    2. BAGIAN A (CP): Sertakan nomor CP (Contoh: "CP NOMOR: 046 TAHUN 2025"). Berikan narasi "Pemahaman" dan poin-poin "Keterampilan Proses".
-    3. BAGIAN B (TABEL ATP):
-       - Gunakan TABEL MARDKOWN dengan 5 kolom: No, Alur Tujuan Pembelajaran, Dimensi Profil Lulusan, Materi Pokok, Alokasi Waktu.
-       - Setiap Bab harus memiliki baris header grup yang tebal (Contoh: **BAB I : ...**).
-       - Untuk materi pokok, jangan gunakan highlight warna, cukup gunakan BOLD jika diperlukan.
-    4. SIKLUS TAHUNAN: Jika permintaan mencakup satu tahun, bagi menjadi Semester Ganjil dan Semester Genap. Ulangi Header dan Bagian A saat masuk ke Semester Genap.
-    5. PENUTUP: 
-       - Tambahkan baris "JUMLAH JAM PELAJARAN DALAM 1 TAHUN" di akhir tabel dengan total JP yang dijumlahkan secara akurat.
-       - Sertakan blok tanda tangan formal: Mengetahui, Kepala Sekolah (di kiri) dan Guru Mata Pelajaran (di kanan).
-    
-    Gaya Penulisan: Bahasa Indonesia formal, rapi, dan sistematis. Pastikan setiap poin di ATP menggunakan kata kerja operasional (C1-C6).`;
+    ATURAN:
+    1. Langsung mulai dengan HTML (<div>). JANGAN gunakan markdown code fences.
+    2. Gunakan tabel dengan border, padding, dan styling inline.
+    3. Minimal 1500 kata.
+    4. Sertakan tanda tangan Kepala Sekolah dan Guru di akhir dokumen.`;
 
     let generatedText = "";
     let providerUsed = "Gemini";
 
     try {
-      // STRATEGI 1: Gunakan DeepSeek R1 (Utama)
       const completion = await deepseek.chat.completions.create({
         messages: [{ role: "system", content: systemPrompt }],
-        model: "deepseek-reasoner",
+        model: "deepseek-chat",
+        temperature: 0.7,
+        max_tokens: 8192,
       });
       generatedText = completion.choices[0].message.content || "";
-      providerUsed = "DeepSeek R1";
+      providerUsed = "DeepSeek V3";
     } catch (deepseekError) {
-      console.warn("DeepSeek R1 Gagal, mencoba Gemini...", deepseekError);
+      console.warn("DeepSeek failed, trying Gemini...", deepseekError);
       try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const result = await model.generateContent(systemPrompt);
-        const response = await result.response;
-        generatedText = response.text();
+        generatedText = result.response.text();
         providerUsed = "Gemini 2.0 Flash";
       } catch (geminiError) {
-        console.warn("Gemini Gagal, mencoba 1.5 Flash...", geminiError);
+        console.warn("Gemini 2.0 failed, trying 1.5...", geminiError);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const result = await model.generateContent(systemPrompt);
-        const response = await result.response;
-        generatedText = response.text();
+        generatedText = result.response.text();
         providerUsed = "Gemini 1.5 Flash";
       }
     }
 
-    // Simpan ke Database
+    // Clean up markdown fences if leaked
+    let cleanedText = generatedText.trim();
+    if (cleanedText.startsWith("```html")) {
+      cleanedText = cleanedText.replace(/^```html\s*/, "").replace(/```\s*$/, "").trim();
+    }
+
     const [newDoc] = await db.insert(documents).values({
-      title: `${type} - ${rawPrompt.substring(0, 30)}...`,
+      title: `${type} - ${rawPrompt.substring(0, 40)}...`,
       type: type,
-      userId: user.id, // Link to the user
-      content: generatedText,
+      userId: user.id,
+      content: cleanedText,
       status: "Selesai",
-      size: `${(generatedText.length / 1024).toFixed(1)} KB`,
+      size: `${(cleanedText.length / 1024).toFixed(1)} KB`,
     }).returning();
 
     return NextResponse.json({ success: true, data: newDoc, provider: providerUsed });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Critical Generate Error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

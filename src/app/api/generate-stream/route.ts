@@ -12,270 +12,279 @@ const deepseek = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY!,
 });
 
+// ============================================
+// SYSTEM PROMPT FACTORY — "OTAK AI" MAKSIMAL
+// ============================================
+
+const SHARED_RULES = `
+=== STANDAR KUALITAS PEDAGOGIS (WAJIB) ===
+1. Kedalaman Materi: Pastikan konten mencakup konsep inti sesuai standar Kurikulum Merdeka (BSKAP 046/2025).
+2. Diferensiasi: Berikan variasi aktivitas atau soal yang mencakup level LOTS hingga HOTS.
+3. Kontekstual: Hubungkan materi dengan kehidupan sehari-hari siswa di Indonesia.
+4. Profil Pelajar Pancasila: Integrasikan nilai-nilai karakter (Mandiri, Kreatif, Bernalar Kritis, dll) secara implisit maupun eksplisit.
+
+=== ATURAN TEKNIS WAJIB ===
+1. DILARANG KERAS menggunakan markdown code blocks (\`\`\`html). LANGSUNG MULAI DENGAN <div>.
+2. DILARANG menyertakan teks pembuka atau penutup ("Berikut adalah...", "Semoga bermanfaat").
+3. SEMUA tabel WAJIB border "1px solid black" dengan padding yang nyaman.
+4. Gunakan Bahasa Indonesia formal, kecuali untuk konten khusus Bahasa Arab/Inggris.
+5. Gunakan font serif (Times New Roman style) untuk kesan dokumen resmi.
+6. TOTAL KONTEN MINIMAL 1500 - 2000 KATA (Jabarkan setiap elemen sedalam mungkin).
+
+=== TEMPLATE TANDA TANGAN (WAJIB DI AKHIR) ===
+<table style="width: 100%; border: none; margin-top: 50px; font-family: serif; border-collapse: collapse;">
+  <tr>
+    <td style="width: 50%; text-align: center; border:none; padding: 10px;">
+      <p>Mengetahui,</p>
+      <p style="font-weight: bold; margin-bottom: 60px;">Kepala Sekolah</p>
+      <p style="border-bottom: 1px solid black; display: inline-block; min-width: 180px;">(...................................)</p>
+      <p style="margin-top: 5px;">NIP. ................................</p>
+    </td>
+    <td style="width: 50%; text-align: center; border:none; padding: 10px;">
+      <p>.................., .................. 20....</p>
+      <p style="font-weight: bold; margin-bottom: 60px;">Guru Mata Pelajaran</p>
+      <p style="border-bottom: 1px solid black; display: inline-block; min-width: 180px;">(...................................)</p>
+      <p style="margin-top: 5px;">NIP. ................................</p>
+    </td>
+  </tr>
+</table>`;
+
+function buildSystemPrompt(type: string, rawPrompt: string): string {
+  // Check for Arabic context
+  const isArabic = /bahasa\s*arab|pondok|tasykil|harokat/i.test(rawPrompt);
+  const langRule = isArabic 
+    ? "WAJIB menggunakan Bahasa Arab ber-Harokat (Full Tasykil) pada bagian materi inti. Gunakan direction RTL (dir='rtl') dan font-family: 'Noto Naskh Arabic', serif."
+    : "Gunakan Bahasa Indonesia formal sesuai EYD V.";
+
+  const prompts: Record<string, string> = {
+    // ──────────── ATP ────────────
+    "ATP": `Anda adalah PAKAR KONSULTAN KURIKULUM SENIOR. Tugas Anda: Menyusun Alur Tujuan Pembelajaran (ATP) yang komprehensif.
+    
+KONTEKS DATA GURU:
+${rawPrompt}
+
+${langRule}
+
+=== STRUKTUR DOKUMEN ATP ===
+1. HEADER FORMAL: Identitas sekolah, Mapel, Kelas, Fase, Semester, Tahun Pelajaran.
+2. ANALISIS CP: Uraikan Capaian Pembelajaran (CP) berdasarkan BSKAP 046/2025 minimal 300 kata.
+3. PEMETAAN MATERI: Jabarkan urutan materi secara logis dari mudah ke sulit.
+4. TABEL ATP DETAIL:
+   - Kolom: No, Alur Tujuan Pembelajaran (Gunakan KKO Bloom), Materi Pokok (Warna Kuning), Dimensi P3, Alokasi JP.
+   - Jabarkan minimal 8-10 BAB untuk setahun, atau 4-5 BAB untuk satu semester.
+5. GLOSARIUM & DAFTAR PUSTAKA: Relevan dengan materi.
+
+${SHARED_RULES}`,
+
+    // ──────────── LKPD ────────────
+    "LKPD": `Anda adalah DESAINER INSTRUKSIONAL yang handal. Tugas Anda: Membuat LKPD yang interaktif dan menantang bagi siswa.
+
+KONTEKS DATA GURU:
+${rawPrompt}
+
+${langRule}
+
+=== STRUKTUR DOKUMEN LKPD ===
+1. KOP FORMAL & IDENTITAS SISWA (Nama, Kelas, No Absen).
+2. JUDUL LKPD & TUJUAN PEMBELAJARAN.
+3. PETUNJUK KERJA: Langkah-langkah eksplorasi untuk siswa.
+4. RINGKASAN MATERI: Materi singkat namun padat sebagai bekal siswa menjawab.
+5. KEGIATAN SISWA:
+   - Bagian 1: Soal Pilihan Ganda (Minimal 10-15 soal dengan opsi A, B, C, D).
+   - Bagian 2: Soal Menjodohkan / Isian Singkat.
+   - Bagian 3: Soal Esai HOTS (Analisis & Penalaran).
+6. KUNCI JAWABAN & RUBRIK: Sertakan di bagian paling bawah.
+
+${SHARED_RULES}`,
+
+    // ──────────── CP ────────────
+    "CP": `Anda adalah STAF AHLI KEMENDIKBUDRISTEK. Tugas Anda: Menjabarkan Capaian Pembelajaran (CP) menjadi instrumen siap pakai.
+
+KONTEKS DATA GURU:
+${rawPrompt}
+
+${langRule}
+
+=== STRUKTUR DOKUMEN CP ===
+1. RASIONALITAS: Mengapa mata pelajaran ini penting bagi siswa? (Uraikan panjang lebar minimal 400 kata).
+2. TUJUAN MATA PELAJARAN: Kompetensi apa yang ingin dicapai setelah belajar mapel ini?
+3. KARAKTERISTIK: Penjelasan elemen-elemen dalam mata pelajaran.
+4. TABEL CAPAIAN PER ELEMEN (DENGAN INDIKATOR): Jabarkan secara mendalam indikator ketercapaian untuk setiap elemen.
+
+${SHARED_RULES}`,
+
+    // ──────────── PROTA ────────────
+    "PROTA": `Anda adalah WAKIL KEPALA SEKOLAH BIDANG KURIKULUM. Tugas Anda: Menyusun Program Tahunan (PROTA) yang efisien.
+
+KONTEKS DATA GURU:
+${rawPrompt}
+
+=== STRUKTUR DOKUMEN PROTA ===
+1. HEADER LOGO & IDENTITAS SEKOLAH.
+2. TABEL PROTA TAHUNAN (Dikonversi ke tampilan tabel Word yang rapi):
+   - Kolom: Semester, No, BAB / Materi Pokok, Alokasi JP, Keterangan.
+   - Pisahkan antara Semester Ganjing dan Genap.
+3. ANALISIS ALOKASI WAKTU: Hitung total JP efektif dalam 1 tahun pelajaran.
+
+${SHARED_RULES}`,
+
+    // ──────────── PROSEM ────────────
+    "PROSEM": `Anda adalah PAKAR MANAJEMEN KBM. Tugas Anda: Menyusun Program Semester (PROSEM) dengan distribusi mingguan yang presisi.
+
+KONTEKS DATA GURU:
+${rawPrompt}
+
+=== STRUKTUR DOKUMEN PROSEM ===
+1. DISTRIBUSI BULAN & MINGGU: Buat tabel lebar yang mencakup 6 bulan (Juli-Des atau Jan-Jun).
+2. TANDA "V" PADA MINGGU EFEKTIF: Tentukan kapan suatu materi diajarkan di minggu ke-berapa.
+3. AGENDA KHUSUS: Masukkan STS (Sumatif Tengah Semester) dan SAS (Sumatif Akhir Semester) dalam jadwal.
+
+${SHARED_RULES}`,
+
+    // ──────────── KKTP ────────────
+    "KKTP": `Anda adalah PAKAR EVALUASI PENDIDIKAN. Tugas Anda: Menyusun Kriteria Ketercapaian Tujuan Pembelajaran (KKTP).
+
+KONTEKS DATA GURU:
+${rawPrompt}
+
+=== STRUKTUR DOKUMEN KKTP ===
+1. TABEL INTERVAL NILAI: 
+   - Deskripsikan kriteria untuk 0-40%, 41-65%, 66-85%, dan 86-100%.
+2. RUBRIK DESKRIPTIF: Penjelasan naratif tentang level kompetensi siswa untuk setiap Tujuan Pembelajaran (TP).
+3. TINDAK LANJUT: Rekomendasi apa yang harus dilakukan guru jika siswa berada di interval tertentu.
+
+${SHARED_RULES}`,
+  };
+
+  const isType = (t: string) => type.includes(t) || t.includes(type);
+
+  if (isType("Program Semester") || isType("PROSEM")) return prompts["PROSEM"];
+  if (isType("Program Tahunan") || isType("PROTA")) return prompts["PROTA"];
+  if (isType("KKTP")) return prompts["KKTP"];
+  if (isType("Capaian Pembelajaran") || type === "CP") return prompts["CP"];
+  if (isType("LKPD")) return prompts["LKPD"];
+  return prompts["ATP"];
+}
+
+function extractTitle(type: string, rawPrompt: string): string {
+  const mapelMatch = rawPrompt.match(/(?:Mapel|Mata Pelajaran)[\s:]+([^|]+)/i);
+  const kelasMatch = rawPrompt.match(/Kelas[\s:]+([^|]+)/i);
+
+  let titleStr = type;
+  if (mapelMatch) titleStr += ` - ${mapelMatch[1].trim()}`;
+  if (kelasMatch) titleStr += ` - Kelas ${kelasMatch[1].trim()}`;
+
+  if (titleStr === type) {
+    const clean = rawPrompt.replace(/\|/g, " ").replace(/\s+/g, " ").trim();
+    titleStr = `${type} - ${clean.substring(0, 40)}${clean.length > 40 ? "..." : ""}`;
+  }
+  return titleStr;
+}
+
+function cleanAIOutput(text: string): string {
+  let cleaned = text.trim();
+  cleaned = cleaned.replace(/^```html\s*/, "").replace(/```\s*$/, "");
+  cleaned = cleaned.replace(/^```\s*/, "").replace(/```\s*$/, "");
+  
+  if (!cleaned.startsWith("<")) {
+    const firstTag = cleaned.indexOf("<div");
+    if (firstTag !== -1) cleaned = cleaned.substring(firstTag);
+  }
+  return cleaned;
+}
+
 export async function POST(req: Request) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers()
-    });
-
-    if (!session) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
-      );
-    }
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
 
     const body = await req.json();
-    const { rawPrompt, type = "Dokumen Kurikulum", model: requestedModel = "deepseek" } = body;
+    const { rawPrompt, type, model: requestedModel = "deepseek" } = body;
 
-    const atpSystemPrompt = `Anda adalah PAKAR SENIOR Kurikulum Merdeka Indonesia. Tugas Anda menyusun Alur Tujuan Pembelajaran (ATP) dengan tingkat presisi tinggi berdasarkan Keputusan Kepala BSKAP Nomor 046/H/KR/2025.
-    
-    Permintaan Guru: "${rawPrompt}"
-    
-    === LOGIKA PERHITUNGAN JP & BAB (KRITIKAL) ===
-    1. JP PER BAB: Angka JP di konteks adalah ALOKASI UNTUK SETIAP BAB.
-    2. JUMLAH BAB: Jabarkan SEMUA BAB (Ganjil: 4-5 BAB, Tahunan: 8-10 BAB).
-    
-    === STRICT ENFORCEMENT (PENALTI JIKA MELANGGAR) ===
-    - DILARANG menggunakan markdown code blocks (\`\`\`html).
-    - DILARANG memberikan teks pembuka "Berikut adalah...". LANGSUNG MULAI DENGAN <div>.
-    - DILARANG menggunakan gaya/style di luar yang ditentukan.
-    - SEMUA paragraf narasi (Bagian A) WAJIB menggunakan style="text-align: justify; line-height: 1.6;".
-    
-    === ATURAN LAYOUT HTML (WAJIB CETAK PERSIS) ===
-    1. HEADER IDENTITAS (WARNA UNGU):
-       <div style="background-color: #d1c4e9; text-align: center; font-weight: bold; padding: 12px; border: 1px solid #b39ddb; margin-bottom: 20px; font-family: serif;">
-         <div style="font-size: 14pt; border-bottom: 1px solid #7e57c2; display: inline-block; margin-bottom: 5px;">ALUR TUJUAN PEMBELAJARAN (ATP)</div>
-         <div style="font-size: 12pt;">MATA PELAJARAN : [NAMA MAPEL]</div>
-       </div>
-       <table style="width: 100%; border: none; margin-bottom: 25px; font-weight: bold; font-size: 11pt; border-collapse: collapse; font-family: serif;">
-         <tr><td style="width: 160px; border: none; padding: 4px;">Nama Sekolah</td><td style="width: 20px; border: none;">:</td><td style="border: none;">...................................................</td></tr>
-         <tr><td style="border: none; padding: 4px;">Mata Pelajaran</td><td style="border: none;">:</td><td style="border: none;">[Nama Mapel]</td></tr>
-         <tr><td style="border: none; padding: 4px;">Kelas / Semester</td><td style="border: none;">:</td><td style="border: none;">[Kelas] / [Semester]</td></tr>
-         <tr><td style="border: none; padding: 4px;">Tahun Pelajaran</td><td style="border: none;">:</td><td style="border: none;">20... / 20...</td></tr>
-       </table>
-
-    2. BAGIAN A (CP 046/2025): 
-       Gunakan <div style="background-color: #e0e0e0; font-weight: bold; padding: 8px; font-size: 12pt; margin-bottom: 12px; border: 1px solid #ccc; font-family: serif;">A. PEMAHAMAN CAPAIAN PEMBELAJARAN (CP)</div>
-       Narasi Pemahaman minimal 250 kata dalam tag <p style="text-align: justify;">.
-
-    3. BAGIAN B (TABEL ATP COLORFUL):
-       Header tabel background #fae3e3. 
-       Baris Judul BAB WAJIB: <tr style="background-color: #e6f7ff; font-weight: bold; text-align: center;"><td colspan="5">BAB [X]: [JUDUL]</td></tr>
-       Kolom: No | Alur Tujuan Pembelajaran | Dimensi Profil Lulusan | Materi Pokok (Highlight Kuning) | Alokasi Waktu.
-
-    TANDA TANGAN: Tabel border none di akhir dok, text-align center.
-    TOTAL DOKUMEN MINIMAL 1500 KATA.`;
-
-    const isArabic = rawPrompt.toLowerCase().includes("bahasa arab") || rawPrompt.toLowerCase().includes("pondok") || rawPrompt.toLowerCase().includes("tasykil");
-
-    const lkpdSystemPrompt = `Tugas Anda adalah membuat Lembar Kerja Peserta Didik (LKPD) profesional dan estetik.
-    
-    KONTEKS GURU: "${rawPrompt}"
-
-    === ATURAN TEKNIS ===
-    1. Gunakan Layout Kop Surat yang rapi.
-    2. Gunakan Border Tebal untuk Judul.
-    3. MODE BAHASA: ${isArabic ? "WAJIB SERTAKAN HAROKAT/TASYKIL LENGKAP PADA SETIAP KATA ARAB." : "Bahasa Indonesia formal."}
-    4. Selesaikan soal sesuai urutan: PG, Singkat, Esai.
-    `;
-
-    const cpSystemPrompt = `Anda adalah PAKAR Kurikulum Merdeka menyusun Capaian Pembelajaran (CP) 046/H/KR/2025.
-    
-    === ATURAN LAYOUT ===
-    1. HEADER (WARNA LAVENDER): 
-       <div style="background-color: #e6e6fa; text-align: center; border: 1px solid #d1d1e0; padding: 15px; margin-bottom: 25px;">
-         <h1 style="margin: 0; font-size: 14pt;">CAPAIAN PEMBELAJARAN (NOMOR 046/H/KR/2025)</h1>
-         <h2 style="margin: 5px 0 0 0; font-size: 13pt;">[NAMA MATA PELAJARAN]</h2>
-       </div>
-    
-    2. RASIONAL & TUJUAN: Narasi panjang minimal 500 kata.
-    3. TABEL ELEMEN: Border hitam tebal, header background putih.
-    4. TOTAL KATA MINIMAL 2000.`;
-
-    const protaSystemPrompt = `Anda menyusun Program Tahunan (PROTA) Kurikulum Merdeka.
-    
-    === ATURAN LAYOUT ===
-    1. HEADER (WARNA UNGU): 
-       <div style="background-color: #ccb9db; text-align: center; border: 1.5px solid #b3a2c7; padding: 10px; margin-bottom: 20px;">
-         <h1 style="margin: 0; font-size: 14pt; font-weight: bold; text-decoration: underline;">PROGRAM TAHUNAN (PROTA)</h1>
-       </div>
-    2. TABEL IDENTITAS: Seperti format ATP.
-    3. TABEL PROTA: Header #8db4e2. Baris BAB #daeef3 (text-align: center). Materi highlight kuning.
-    4. CAKUPAN: Ganjil & Genap (7-10 BAB).`;
-
-    const prosemSystemPrompt = `Anda menyusun Program Semester (PROSEM) Kurikulum Merdeka.
-    
-    === ATURAN LAYOUT ===
-    1. HEADER (WARNA LAVENDER): 
-       <div style="background-color: #e6e6fa; text-align: center; border: 1.5 solid #d1d1e0; padding: 10px; margin-bottom: 20px;">
-         <h1 style="margin: 0; font-size: 13pt;">PROGRAM SEMESTER (PROSEM)</h1>
-       </div>
-    2. TABEL PROSEM: Header bertingkat (Bulan & Minggu 1-5). Gunakan sel-sel kecil untuk tanda "V".
-       Background header #f2f2f2. Baris BAB #e6f7ff (text-align: center).
-    3. WAJIB ADA baris STS dan SAS di akhir tabel (Abu-abu).`;
-
-    const kktpSystemPrompt = `Anda menyusun Kriteria Ketercapaian Tujuan Pembelajaran (KKTP).
-    
-    === ATURAN LAYOUT ===
-    1. HEADER (WARNA UNGU): 
-       <div style="background-color: #ccb9db; text-align: center; border: 1.5 solid #b3a2c7; padding: 10px; margin-bottom: 20px;">
-         <h1 style="margin: 0; font-size: 14pt; font-weight: bold; text-decoration: underline;">KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN (KKTP)</h1>
-       </div>
-    2. TABEL KKTP: Header #f2f2f2. Sub-header Interval #e6e6fa. Baris BAB #fbd5b5 (text-align: center).
-    3. MATERI: Highlight kuning. Interval 0-40%, 41-65%, 66-85%, 86-100%.`;
-
-    const isType = (t: string) => type.includes(t) || t.includes(type);
-
-    const systemPrompt = isType("Program Semester") || isType("PROSEM") ? prosemSystemPrompt : 
-                        (isType("Program Tahunan") || isType("PROTA") ? protaSystemPrompt : 
-                        (isType("KKTP") ? kktpSystemPrompt : 
-                        (isType("Capaian Pembelajaran") || isType("CP") ? cpSystemPrompt : 
-                        (isType("LKPD") ? lkpdSystemPrompt : atpSystemPrompt))));
+    const systemPrompt = buildSystemPrompt(type, rawPrompt);
     const encoder = new TextEncoder();
     let fullText = "";
 
     const stream = new ReadableStream({
       async start(controller) {
-        const send = (data: any) => {
-          try {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-          } catch {}
-        };
+        const send = (data: any) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 
         try {
-          send({ type: "stage", stage: 0, label: "Menganalisis konteks..." });
-
-          let providerUsed = requestedModel === "deepseek" ? "DeepSeek" : "Gemini";
-
-          const attemptGemini = async (modelName: string) => {
-            const model = genAI.getGenerativeModel({ model: modelName });
-            const result = await model.generateContentStream(systemPrompt);
-            for await (const chunk of result.stream) {
-              const text = chunk.text();
-              if (text) {
-                fullText += text;
-                send({ type: "chunk", text });
-              }
-            }
-          };
+          send({ type: "stage", stage: 0, label: "Menganalisis Konteks..." });
 
           const attemptDeepSeek = async () => {
-            const completion = await deepseek.chat.completions.create({
-              messages: [{ role: "system", content: systemPrompt }],
-              model: "deepseek-chat", 
-              stream: true,
-            });
-            for await (const chunk of completion) {
-              const text = chunk.choices[0]?.delta?.content || "";
-              if (text) {
-                fullText += text;
-                send({ type: "chunk", text });
-              }
-            }
-          };
-
-          const runFlow = async () => {
-             try {
-                if (requestedModel === "deepseek") {
-                    send({ type: "stage", stage: 1, label: "Menyusun dengan DeepSeek..." });
-                    await attemptDeepSeek();
-                    providerUsed = "DeepSeek V3";
-                } else {
-                    send({ type: "stage", stage: 1, label: "Menyusun dengan Gemini..." });
-                    await attemptGemini("gemini-2.0-flash");
-                    providerUsed = "Gemini 2.0 Flash";
-                }
-             } catch (err) {
-                console.error("Primary model failed:", err);
-                fullText = "";
-                try {
-                    send({ type: "stage", stage: 1, label: "Mencoba fallback..." });
-                    if (requestedModel === "deepseek") {
-                        await attemptGemini("gemini-2.0-flash");
-                        providerUsed = "Gemini 2.0 Flash (Fallback)";
-                    } else {
-                        await attemptGemini("gemini-1.5-flash");
-                        providerUsed = "Gemini 1.5 Flash (Fallback)";
-                    }
-                } catch (err2) {
-                   fullText = "";
-                   send({ type: "stage", stage: 1, label: "Mencoba pilihan terakhir..." });
-                   if (requestedModel === "deepseek") {
-                       await attemptGemini("gemini-1.5-flash");
-                   } else {
-                       await attemptDeepSeek();
-                       providerUsed = "DeepSeek V3 (Fallback)";
-                   }
-                }
+             const completion = await deepseek.chat.completions.create({
+                messages: [{ role: "system", content: systemPrompt }],
+                model: "deepseek-chat",
+                stream: true,
+                temperature: 0.7,
+                max_tokens: 8192,
+             });
+             for await (const chunk of completion) {
+                const text = chunk.choices[0]?.delta?.content || "";
+                if (text) { fullText += text; send({ type: "chunk", text }); }
              }
+             return true;
           };
 
-          await runFlow();
+          const attemptGemini = async (modelName: string) => {
+             const model = genAI.getGenerativeModel({ model: modelName });
+             const result = await model.generateContentStream(systemPrompt);
+             for await (const chunk of result.stream) {
+                const text = chunk.text();
+                if (text) { fullText += text; send({ type: "chunk", text }); }
+             }
+             return true;
+          };
 
-          if (fullText.length > 0) {
-            send({ type: "stage", stage: 3, label: "Menyimpan ke database..." });
-            
-            // Clean up common AI prefixes if they leaked
-            let cleanedText = fullText.trim();
-            if (cleanedText.startsWith("```html")) {
-              cleanedText = cleanedText.replace(/^```html/, "").replace(/```$/, "").trim();
-            }
-            if (cleanedText.startsWith("Berikut") || cleanedText.startsWith("\"") || cleanedText.startsWith("`")) {
-              const firstTag = cleanedText.indexOf("<div");
-              if (firstTag !== -1) {
-                cleanedText = cleanedText.substring(firstTag);
-              }
-            }
+          let finalProvider = requestedModel === "deepseek" ? "DeepSeek V3" : "Gemini 2.0 Flash";
+          
+          try {
+             send({ type: "stage", stage: 1, label: `Menyusun Konten dengan ${finalProvider}...` });
+             if (requestedModel === "deepseek") await attemptDeepSeek();
+             else await attemptGemini("gemini-2.0-flash");
+          } catch (e) {
+             console.error("Primary model failed, falling back...");
+             fullText = "";
+             try {
+                finalProvider = requestedModel === "deepseek" ? "Gemini 2.0 Flash (Fallback)" : "DeepSeek V3 (Fallback)";
+                send({ type: "stage", stage: 2, label: "Mencoba Jalur Alternatif..." });
+                if (requestedModel === "deepseek") await attemptGemini("gemini-2.0-flash");
+                else await attemptDeepSeek();
+             } catch (e2) {
+                console.error("Secondary fallback failed...");
+                fullText = "";
+                finalProvider = "Gemini 1.5 Flash (Safety Net)";
+                send({ type: "stage", stage: 2, label: "Menggunakan Model Cadangan..." });
+                await attemptGemini("gemini-1.5-flash");
+             }
+          }
 
-            // Ekstraksi Judul yang lebih rapi: [Jenis] - Kelas [X] - [Mapel]
-            let finalTitle = `${type} - ${rawPrompt.substring(0, 40)}...`;
-            
-              // Ekstraksi Judul yang tangguh: [Jenis] - Kelas [X] - Mapel [Mapel]
-              const mapelMatch = rawPrompt.match(/(?:Mapel|Mata Pelajaran)[\s:]+([^.|,|;|\|]+)/i);
-              const kelasMatch = rawPrompt.match(/Kelas[\s:]+([^.|,|;|\|]+)/i);
-              
-              if (mapelMatch || kelasMatch) {
-                const mapelStr = mapelMatch ? mapelMatch[1].trim() : "";
-                const kelasStr = kelasMatch ? kelasMatch[1].trim() : "";
-                
-                if (mapelStr && kelasStr) {
-                  finalTitle = `${type} - Kelas ${kelasStr} - Mapel ${mapelStr.replace(/^mapel\s+/i, "")}`;
-                } else if (mapelStr) {
-                  finalTitle = `${type} - Mapel ${mapelStr.replace(/^mapel\s+/i, "")}`;
-                } else if (kelasStr) {
-                  finalTitle = `${type} - Kelas ${kelasStr}`;
-                }
-              }
-
-            const [newDoc] = await db.insert(documents).values({
-              title: finalTitle,
-              type: type,
-              userId: session.user.id,
-              content: cleanedText,
-              status: "Selesai",
-              size: `${(cleanedText.length / 1024).toFixed(1)} KB`,
-            }).returning();
-            send({ type: "done", docId: newDoc.id, provider: providerUsed });
+          if (fullText) {
+             send({ type: "stage", stage: 3, label: "Finalisasi & Penyimpanan..." });
+             const cleaned = cleanAIOutput(fullText);
+             const [newDoc] = await db.insert(documents).values({
+               title: extractTitle(type, rawPrompt),
+               type: type,
+               content: cleaned,
+               userId: session.user.id,
+               status: "Selesai",
+               size: `${(cleaned.length / 1024).toFixed(1)} KB`,
+             }).returning();
+             send({ type: "done", docId: newDoc.id, provider: finalProvider });
           } else {
-            send({ type: "error", message: "Semua model AI gagal menghasilkan konten." });
+             send({ type: "error", message: "Gagal men-generate konten. Coba lagi." });
           }
           controller.close();
-        } catch (error: any) {
-          send({ type: "error", message: error.message || "Terjadi kesalahan fatal" });
+        } catch (error) {
+          send({ type: "error", message: "Sistem sibuk, silakan coba beberapa saat lagi." });
           controller.close();
         }
       }
     });
 
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-      },
-    });
-  } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return new Response(stream, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive" } });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: "Internal Error" }), { status: 500 });
   }
 }
