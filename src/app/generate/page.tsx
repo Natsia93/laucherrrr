@@ -148,7 +148,19 @@ function GenerateContent() {
            return !isJunk && !isLkpdJunk;
         });
 
-        setQuestions([...initialQuestions, ...filteredAiQuestions]);
+        const finalQuestions = [...initialQuestions, ...filteredAiQuestions];
+        
+        // Forcefully ensure the file context question is ALWAYS present at the end
+        if (!finalQuestions.some(q => q.type === "file")) {
+           finalQuestions.push({
+              id: 9999,
+              question: "Punya file referensi tambahan (Modul/PDF)? *AI akan memprioritaskan ini",
+              type: "file",
+              category: "optional"
+           });
+        }
+
+        setQuestions(finalQuestions);
       } catch (err) {
         let fallback = [...mandatoryQuestions];
         
@@ -170,6 +182,16 @@ function GenerateContent() {
             fallback.push({ id: 2003, question: "Jumlah Soal Jawaban Singkat:", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal"], category: "data" });
             fallback.push({ id: 2004, question: "Jumlah Soal Esai:", type: "chips", options: ["0 Soal", "2 Soal", "5 Soal"], category: "data" });
         }
+
+        if (!fallback.some(q => q.type === "file")) {
+           fallback.push({
+              id: 9999,
+              question: "Punya file referensi tambahan (Modul/PDF)? *AI akan memprioritaskan ini",
+              type: "file",
+              category: "optional"
+           });
+        }
+        
         setQuestions(fallback);
       } finally {
         setLoading(false);
