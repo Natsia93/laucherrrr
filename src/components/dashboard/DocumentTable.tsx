@@ -104,7 +104,7 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
         // Trigger background refresh to sync with server state
         router.refresh();
       }
-    } catch (error) {
+    } catch (_error) {
       // Rollback
       setOptimisticDocuments(previousDocs);
       alert("Terjadi kesalahan sistem");

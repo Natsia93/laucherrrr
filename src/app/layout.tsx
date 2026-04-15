@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   description: "Buat CP, ATP, Prosem, Prota, dan KKTP secara otomatis dengan AI.",
 };
 
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -36,10 +38,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <NextTopLoader color="#4d7537" showSpinner={false} shadow="0 0 10px #4d7537,0 0 5px #4d7537" />
-          <MobileBottomNav />
-          <SmoothScroll>
-            {children}
-          </SmoothScroll>
+          <NuqsAdapter>
+            <MobileBottomNav />
+            <SmoothScroll>
+              {children}
+            </SmoothScroll>
+          </NuqsAdapter>
         </ThemeProvider>
       </body>
     </html>
