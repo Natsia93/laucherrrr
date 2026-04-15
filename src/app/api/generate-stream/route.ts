@@ -206,38 +206,40 @@ function extractTitle(type: string, rawPrompt: string): string {
   let mapel = "";
   let kelas = "";
 
-  // 1. Process Mapel
+  // 1. Process Mapel (Cleaning from any instructional leftovers)
   const mapelPart = parts.find(p => p.toLowerCase().includes("mata pelajaran") || p.toLowerCase().includes("mapel"));
   if (mapelPart) {
-    // Take everything after the last colon ?
     const split = mapelPart.split(":");
     mapel = split[split.length - 1].trim();
-    // Clean common instructional junk
+    
+    // Hard cleaning for subject
     mapel = mapel
-      .replace(/^(?:apa yang ingin Anda rancang\?|rancangan|masukkan|tuliskan)\s*/i, "")
-      .replace(/^[:\s\-]+/, "");
+      .replace(/^(?:apa yang ingin Anda rancang\?|rancangan|masukkan|tuliskan|mapel|mata pelajaran)\s*/i, "")
+      .replace(/^(?:isi manual|lewati|buatkan dokumen|lengkap)\s*/i, "")
+      .replace(/[?:]/g, "")
+      .replace(/[:\s\-]+$/, "")
+      .replace(/^[:\s\-]+/, "")
+      .trim();
   }
 
-  // 2. Process Kelas
+  // 2. Process Kelas (Cleaning grade redundancy)
   const kelasPart = parts.find(p => p.toLowerCase().includes("kelas"));
   if (kelasPart) {
     const split = kelasPart.split(":");
     let val = split[split.length - 1].trim();
-    // Standardize to just the number/label (e.g. "Kelas 9" or "9")
-    val = val.replace(/^Kelas\s+/i, ""); 
+    val = val
+      .replace(/^(?:kelas|fase|lewati|isi manual)\s*/i, "")
+      .replace(/[?:]/g, "")
+      .trim();
     kelas = val;
   }
 
-  let titleStr = type;
-  if (kelas) titleStr += ` - Kelas ${kelas}`;
-  if (mapel) titleStr += ` - Mapel ${mapel}`;
+  // Final sanitization for empty or "junk" values
+  const finalMapel = (!mapel || mapel.toLowerCase().includes("lewati")) ? "Umum" : mapel;
+  const finalKelas = (!kelas || kelas.toLowerCase().includes("lewati")) ? "-" : kelas;
 
-  if (titleStr === type || titleStr.length < 10) {
-    const clean = rawPrompt.replace(/\|/g, " ").replace(/\s+/g, " ").trim();
-    titleStr = `${type} - ${clean.substring(0, 40)}${clean.length > 40 ? "..." : ""}`;
-  }
-  
-  return titleStr;
+  // Standard Template: [TIPE] - Kelas [X] - [MAPEL]
+  return `${type} - Kelas ${finalKelas} - ${finalMapel}`;
 }
 
 function cleanAIOutput(text: string): string {
