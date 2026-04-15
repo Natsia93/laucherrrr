@@ -228,8 +228,27 @@ export async function POST(req: Request) {
               }
             }
 
+            // Ekstraksi Judul yang lebih rapi: [Jenis] - Kelas [X] - [Mapel]
+            let finalTitle = `${type} - ${rawPrompt.substring(0, 40)}...`;
+            
+            const mapelMatch = rawPrompt.match(/Mapel[:\s]+([^.|,]+)/i) || rawPrompt.match(/Mata Pelajaran[:\s]+([^.|,]+)/i);
+            const kelasMatch = rawPrompt.match(/Kelas[:\s]+([^.|,]+)/i);
+            
+            if (mapelMatch || kelasMatch) {
+              const mapelStr = mapelMatch ? mapelMatch[1].trim() : "";
+              const kelasStr = kelasMatch ? kelasMatch[1].trim() : "";
+              
+              if (mapelStr && kelasStr) {
+                finalTitle = `${type} - Kelas ${kelasStr} - ${mapelStr}`;
+              } else if (mapelStr) {
+                finalTitle = `${type} - ${mapelStr}`;
+              } else if (kelasStr) {
+                finalTitle = `${type} - Kelas ${kelasStr}`;
+              }
+            }
+
             const [newDoc] = await db.insert(documents).values({
-              title: `${type} - ${rawPrompt.substring(0, 30)}`,
+              title: finalTitle,
               type: type,
               userId: session.user.id,
               content: cleanedText,
