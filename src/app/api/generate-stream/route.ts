@@ -110,9 +110,14 @@ ${rawPrompt}
 
 ${langRule}
 
-=== ATURAN PRIORITAS INPUT USER ===
-1. JUMLAH SOAL: Jika dalam KONTEKS DATA GURU tertulis jumlah soal tertentu (misal: 7 soal, 10 soal), Anda WAJIB membuat soal persis sesuai jumlah tersebut. DILARANG melebihkan.
-2. TIPE SOAL: Hanya buat tipe soal yang diminta di KONTEKS DATA GURU. Jika user hanya meminta Pilihan Ganda, JANGAN buat Isian Singkat atau Esai.
+=== ATURAN PRIORITAS INPUT USER (SANGAT KETAT) ===
+1. JUMLAH SOAL: Perhatikan jumlah soal untuk masing-masing tipe:
+   - Pilihan Ganda (PG): Jika user meminta X soal, buatlah TEPAT X soal.
+   - Jawaban Singkat: Jika user meminta Y soal, buatlah TEPAT Y soal.
+   - Esai: Jika user meminta Z soal, buatlah TEPAT Z soal.
+   (Cek KONTEKS DATA GURU untuk angka-angka ini).
+2. DILARANG KERAS melebihkan atau mengurangi jumlah soal yang diminta user. User adalah Raja.
+3. TIPE SOAL: Hanya buat tipe soal yang memiliki jumlah > 0 di input user.
 
 === STRUKTUR DOKUMEN LKPD ===
 1. KOP FORMAL & IDENTITAS SISWA (Nama, Kelas, No Absen).

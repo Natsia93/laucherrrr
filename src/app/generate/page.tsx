@@ -3,8 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
-  Sparkles, ArrowRight, ChevronLeft, 
-  CheckCircle2, Circle, Loader2, Plus, ArrowLeft, Zap, Brain
+  Sparkles, ArrowRight, Loader2, Plus, ArrowLeft, Zap, Brain
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,7 +63,6 @@ function GenerateContent() {
     }
   ];
 
-  // Fetch dynamic questions from AI based on the user's prompt
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -77,21 +75,45 @@ function GenerateContent() {
         
         let initialQuestions = [...mandatoryQuestions];
 
-        // Tambahkan kustomisasi khusus LKPD
         if (docType === "LKPD") {
-           // Hapus pertanyaan JP untuk LKPD
            initialQuestions = initialQuestions.filter(q => q.id !== 1005);
-
            initialQuestions.push({
-              id: 0,
+              id: 2000,
               question: "Pilih Bahasa untuk LKPD ini:",
               type: "chips",
               options: ["Bahasa Indonesia", "Bahasa Arab", "Bahasa Inggris"],
               category: "data"
            });
+           initialQuestions.push({
+              id: 2001,
+              question: "Apa materi spesifik yang ingin diujikan?",
+              type: "text",
+              placeholder: "Misal: Rantai Makanan, Thaharah, Persamaan Kuadrat...",
+              category: "data"
+           });
+           initialQuestions.push({
+              id: 2002,
+              question: "Jumlah Soal Pilihan Ganda (PG):",
+              type: "chips",
+              options: ["0 Soal", "5 Soal", "10 Soal", "15 Soal"],
+              category: "data"
+           });
+           initialQuestions.push({
+              id: 2003,
+              question: "Jumlah Soal Jawaban Singkat:",
+              type: "chips",
+              options: ["0 Soal", "5 Soal", "10 Soal"],
+              category: "data"
+           });
+           initialQuestions.push({
+              id: 2004,
+              question: "Jumlah Soal Esai:",
+              type: "chips",
+              options: ["0 Soal", "2 Soal", "5 Soal"],
+              category: "data"
+           });
         }
 
-        // Tambahkan pertanyaan Semester khusus ATP, CP, KKTP
         if (["Alur Tujuan Pembelajaran (ATP)", "Capaian Pembelajaran (CP)", "KKTP", "ATP", "CP"].includes(docType)) {
            initialQuestions.push({
               id: 1004,
@@ -102,7 +124,6 @@ function GenerateContent() {
            });
         }
         
-        // Filter out AI questions that might duplicate mandatory ones (Phase/Class/Mata Pelajaran)
         const filteredAiQuestions = (data.questions || []).filter((q: Question) => {
            const lowerQ = q.question.toLowerCase();
            return !lowerQ.includes("kelas") && !lowerQ.includes("fase") && !lowerQ.includes("mata pelajaran") && !lowerQ.includes("semester") && !lowerQ.includes("jp") && !lowerQ.includes("jam pelajaran");
@@ -110,7 +131,6 @@ function GenerateContent() {
 
         setQuestions([...initialQuestions, ...filteredAiQuestions]);
       } catch (err) {
-        // Fallback
         let fallback = [...mandatoryQuestions];
         
         if (["Alur Tujuan Pembelajaran (ATP)", "Capaian Pembelajaran (CP)", "KKTP", "ATP", "CP"].includes(docType)) {
@@ -125,11 +145,11 @@ function GenerateContent() {
 
         if (docType === "LKPD") {
             fallback = fallback.filter(q => q.id !== 1005);
-            fallback.push({ id: 0, question: "Pilih Bahasa untuk LKPD ini:", type: "chips", options: ["Bahasa Indonesia", "Bahasa Arab", "Bahasa Inggris"], category: "data" });
-            fallback.push({ id: 2, question: "Apa materi spesifik yang ingin diujikan?", type: "text", placeholder: "Misal: Rantai Makanan, Thaharah, Persamaan Kuadrat...", category: "data" });
-            fallback.push({ id: 3, question: "Jumlah Soal Pilihan Ganda (PG) yang Anda inginkan?", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal", "15 Soal"], category: "data" });
-            fallback.push({ id: 4, question: "Jumlah Soal Jawaban Singkat yang Anda inginkan?", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal"], category: "data" });
-            fallback.push({ id: 5, question: "Jumlah Soal Esai yang Anda inginkan?", type: "chips", options: ["0 Soal", "2 Soal", "5 Soal"], category: "data" });
+            fallback.push({ id: 2000, question: "Pilih Bahasa untuk LKPD ini:", type: "chips", options: ["Bahasa Indonesia", "Bahasa Arab", "Bahasa Inggris"], category: "data" });
+            fallback.push({ id: 2001, question: "Apa materi spesifik yang ingin diujikan?", type: "text", placeholder: "Misal: Rantai Makanan, Thaharah, Persamaan Kuadrat...", category: "data" });
+            fallback.push({ id: 2002, question: "Jumlah Soal Pilihan Ganda (PG):", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal", "15 Soal"], category: "data" });
+            fallback.push({ id: 2003, question: "Jumlah Soal Jawaban Singkat:", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal"], category: "data" });
+            fallback.push({ id: 2004, question: "Jumlah Soal Esai:", type: "chips", options: ["0 Soal", "2 Soal", "5 Soal"], category: "data" });
         }
         setQuestions(fallback);
       } finally {
@@ -142,7 +162,6 @@ function GenerateContent() {
   const handleAnswer = (id: number, val: string, multi = false) => {
     setAnswers(prev => {
         if (!multi) return { ...prev, [id]: val };
-        
         const current = prev[id] || "";
         const currentList = current ? current.split(", ") : [];
         if (currentList.includes(val)) {
@@ -158,7 +177,7 @@ function GenerateContent() {
 
   const toggleSkip = (id: number) => {
     const q = questions.find(q => q.id === id);
-    if (q?.category === "mandatory") return; // Cannot skip mandatory
+    if (q?.category === "mandatory") return;
 
     if (skipped.includes(id)) {
       setSkipped(prev => prev.filter(s => s !== id));
@@ -191,7 +210,6 @@ function GenerateContent() {
 
   return (
     <div className="min-h-screen bg-[#f4f3ed] dark:bg-[#080b06] text-neutral-900 dark:text-[#e8eedd] pb-20">
-      {/* Dynamic Header */}
       <div className="fixed top-0 left-0 w-full z-50 bg-white/80 dark:bg-[#080b06]/80 backdrop-blur-md border-b border-[#dcdad1] dark:border-[#3f612d]/20 px-4 py-4">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
            <Button variant="ghost" size="sm" onClick={() => router.back()} className="text-neutral-500 hover:bg-neutral-100 dark:hover:bg-[#1a2315] rounded-md">
@@ -212,7 +230,6 @@ function GenerateContent() {
         </header>
 
         <div className="space-y-12">
-           {/* AI Model Selection */}
            <section className="relative group">
               <div className="flex items-center justify-between mb-4">
                  <h2 className="text-lg font-bold flex gap-3 items-start">
