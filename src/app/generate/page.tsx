@@ -77,14 +77,19 @@ function GenerateContent() {
         
         let initialQuestions = [...mandatoryQuestions];
 
+        // Hilangkan JP untuk LKPD sesuai permintaan user
+        if (docType === "LKPD") {
+           initialQuestions = initialQuestions.filter(q => q.id !== 1005);
+        }
+
         // Tambahkan pertanyaan bahasa di awal khusus LKPD
         if (docType === "LKPD") {
            initialQuestions.push({
               id: 0,
               question: "Pilih Bahasa untuk LKPD ini:",
               type: "chips",
-              options: ["Bahasa Indonesia", "Bahasa Arab (Ber-Harokat/Tasykil)"],
-              category: "data"
+              options: ["Bahasa Indonesia", "Bahasa Arab", "Bahasa Inggris"],
+              category: "mandatory"
            });
         }
 
@@ -121,7 +126,8 @@ function GenerateContent() {
         }
 
         if (docType === "LKPD") {
-            fallback.push({ id: 0, question: "Pilih Bahasa untuk LKPD ini:", type: "chips", options: ["Bahasa Indonesia", "Bahasa Arab (Ber-Harokat/Tasykil)"], category: "data" });
+            fallback = fallback.filter(q => q.id !== 1005);
+            fallback.push({ id: 0, question: "Pilih Bahasa untuk LKPD ini:", type: "chips", options: ["Bahasa Indonesia", "Bahasa Arab", "Bahasa Inggris"], category: "mandatory" });
             fallback.push({ id: 2, question: "Apa materi spesifik yang ingin diujikan?", type: "text", placeholder: "Misal: Rantai Makanan, Thaharah, Persamaan Kuadrat...", category: "data" });
             fallback.push({ id: 3, question: "Jumlah Soal Pilihan Ganda (PG) yang Anda inginkan?", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal", "15 Soal"], category: "data" });
             fallback.push({ id: 4, question: "Jumlah Soal Jawaban Singkat yang Anda inginkan?", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal"], category: "data" });
