@@ -66,7 +66,7 @@ function WorkspaceContent() {
     }
   };
 
-  const streamGenerate = useCallback(async (rawPrompt: string, appendToExisting = false) => {
+  const streamGenerate = useCallback(async (rawPrompt: string, appendToExisting = false, rawContext?: string) => {
     setLoading(true);
     setProgressStage(0);
     setElapsedTime(0);
@@ -90,7 +90,7 @@ function WorkspaceContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
-        body: JSON.stringify({ rawPrompt, type: docType, model }),
+        body: JSON.stringify({ rawPrompt, type: docType, model, rawContext }),
       });
 
       if (!response.ok) throw new Error("Gagal menyambung ke AI");
@@ -171,7 +171,7 @@ function WorkspaceContent() {
       fetchDoc();
     } else if (context) {
       const prompt = `Wawancara: ${context.replace(/\|/g, ". ")}. Buatkan dokumen ${docType} LENGKAP.`;
-      streamGenerate(prompt);
+      streamGenerate(prompt, false, context);
     } else if (initialPrompt) {
       streamGenerate(initialPrompt);
     }

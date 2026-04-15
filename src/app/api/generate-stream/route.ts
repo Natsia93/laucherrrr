@@ -286,7 +286,7 @@ export async function POST(req: Request) {
     if (!session) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
 
     const body = await req.json();
-    const { rawPrompt, type, model: requestedModel = "deepseek" } = body;
+    const { rawPrompt, type, model: requestedModel = "deepseek", rawContext } = body;
 
     const systemPrompt = buildSystemPrompt(type, rawPrompt);
     const encoder = new TextEncoder();
@@ -351,7 +351,7 @@ export async function POST(req: Request) {
              send({ type: "stage", stage: 3, label: "Finalisasi & Penyimpanan..." });
              const cleaned = cleanAIOutput(fullText);
              const [newDoc] = await db.insert(documents).values({
-               title: extractTitle(type, rawPrompt),
+               title: extractTitle(type, rawContext || rawPrompt),
                type: type,
                content: cleaned,
                userId: session.user.id,
