@@ -239,9 +239,9 @@ export async function POST(req: Request) {
               const kelasStr = kelasMatch ? kelasMatch[1].trim() : "";
               
               if (mapelStr && kelasStr) {
-                finalTitle = `${type} - Kelas ${kelasStr} - ${mapelStr}`;
+                finalTitle = `${type} - Kelas ${kelasStr} - Mapel ${mapelStr.replace(/^mapel\s+/i, "")}`;
               } else if (mapelStr) {
-                finalTitle = `${type} - ${mapelStr}`;
+                finalTitle = `${type} - Mapel ${mapelStr.replace(/^mapel\s+/i, "")}`;
               } else if (kelasStr) {
                 finalTitle = `${type} - Kelas ${kelasStr}`;
               }
