@@ -75,7 +75,7 @@ function GenerateContent() {
         
         let initialQuestions = [...mandatoryQuestions];
 
-        if (["Capaian Pembelajaran (CP)", "CP"].includes(docType)) {
+        if (["Capaian Pembelajaran (CP)", "CP", "KKTP"].includes(docType)) {
            initialQuestions = initialQuestions.filter(q => q.id !== 1005);
            initialQuestions.push({
               id: 1004,
@@ -125,7 +125,7 @@ function GenerateContent() {
            });
         }
 
-        if (["Alur Tujuan Pembelajaran (ATP)", "KKTP", "ATP"].includes(docType)) {
+        if (["Alur Tujuan Pembelajaran (ATP)", "ATP"].includes(docType)) {
            initialQuestions.push({
               id: 1004,
               question: "Pilih Semester yang ingin di-generate:",
