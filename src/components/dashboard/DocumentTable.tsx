@@ -179,7 +179,7 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
             </TableRow>
           </TableHeader>
           <TableBody className="min-h-[400px]">
-            <AnimatePresence mode="popLayout" initial={false}>
+            <AnimatePresence initial={false}>
               {filteredDocuments.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-20 text-neutral-400 dark:text-[#6b7b59] font-sans">
