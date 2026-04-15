@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Folder, Trash2, CheckCircle2 } from "lucide-react";
@@ -11,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ActionModal } from "@/components/ui/ActionModal";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQueryState, parseAsString } from "nuqs";
 
 interface Document {
   id: string;
@@ -25,17 +24,51 @@ interface DocumentTableProps {
   documents: Document[];
 }
 
-export function DocumentTable({ documents }: DocumentTableProps) {
+export function DocumentTable({ documents: initialDocuments }: DocumentTableProps) {
   const router = useRouter();
+  const [search] = useQueryState("search", parseAsString.withDefault(""));
+  const [category] = useQueryState("category", parseAsString.withDefault(""));
+  
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  
+  // Local state for optimistic UI
+  const [optimisticDocuments, setOptimisticDocuments] = useState<Document[]>(initialDocuments);
+
+  // Sync with prop when server data actually changes (e.g. after a refresh or navigation)
+  useEffect(() => {
+    setOptimisticDocuments(initialDocuments);
+  }, [initialDocuments]);
+
+  const filteredDocuments = useMemo(() => {
+    return optimisticDocuments.filter(doc => {
+      const matchesSearch = search ? doc.title.toLowerCase().includes(search.toLowerCase()) : true;
+      
+      let matchesCategory = true;
+      if (category) {
+        if (category === "CP") {
+          matchesCategory = doc.type === "CP" || doc.type === "Capaian Pembelajaran (CP)";
+        } else if (category === "ATP") {
+          matchesCategory = doc.type === "ATP" || doc.type === "Alur Tujuan Pembelajaran (ATP)";
+        } else if (category === "PROTA") {
+          matchesCategory = doc.type === "PROTA" || doc.type === "Program Tahunan";
+        } else if (category === "PROSEM") {
+          matchesCategory = doc.type === "PROSEM" || doc.type === "Program Semester";
+        } else {
+          matchesCategory = doc.type === category;
+        }
+      }
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [optimisticDocuments, search, category]);
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === documents.length) {
+    if (selectedIds.length === filteredDocuments.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(documents.map((doc) => doc.id));
+      setSelectedIds(filteredDocuments.map((doc) => doc.id));
     }
   };
 
@@ -46,27 +79,42 @@ export function DocumentTable({ documents }: DocumentTableProps) {
   };
 
   const handleBulkDelete = async () => {
+    const idsToDelete = [...selectedIds];
     setIsDeleting(true);
+    
+    // Optimistic Update: Remove from UI immediately
+    const previousDocs = [...optimisticDocuments];
+    setOptimisticDocuments(prev => prev.filter(doc => !idsToDelete.includes(doc.id)));
+    setSelectedIds([]);
+    setShowBulkDeleteModal(false);
+
     try {
       const response = await fetch("/api/documents/bulk-delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: selectedIds }),
+        body: JSON.stringify({ ids: idsToDelete }),
       });
 
-      if (response.ok) {
-        setSelectedIds([]);
-        setShowBulkDeleteModal(false);
-        router.refresh();
-      } else {
+      if (!response.ok) {
+        // Rollback
+        setOptimisticDocuments(previousDocs);
         const data = await response.json();
         alert(data.error || "Gagal menghapus dokumen");
+      } else {
+        // Trigger background refresh to sync with server state
+        router.refresh();
       }
     } catch (error) {
+      // Rollback
+      setOptimisticDocuments(previousDocs);
       alert("Terjadi kesalahan sistem");
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const handleDeleteOptimistic = (id: string) => {
+    setOptimisticDocuments(prev => prev.filter(doc => doc.id !== id));
   };
 
   return (
@@ -116,7 +164,7 @@ export function DocumentTable({ documents }: DocumentTableProps) {
             <TableRow className="hover:bg-transparent border-none">
               <TableHead className="w-[50px] px-6">
                 <Checkbox 
-                  checked={selectedIds.length === documents.length && documents.length > 0}
+                  checked={selectedIds.length === filteredDocuments.length && filteredDocuments.length > 0}
                   onCheckedChange={toggleSelectAll}
                   className="border-neutral-300 dark:border-[#3f612d]/50 data-[state=checked]:bg-[#4d7537] data-[state=checked]:border-[#4d7537]"
                 />
@@ -129,44 +177,54 @@ export function DocumentTable({ documents }: DocumentTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {documents.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-20 text-neutral-400 dark:text-[#6b7b59] font-sans">
-                  <div className="flex flex-col items-center gap-2">
-                    <Folder className="w-10 h-10 opacity-20" />
-                    <p>Belum ada dokumen. Mulai buat perangkat ajar pertama Anda!</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              documents.map((doc, idx) => (
-                <DashboardTableRow key={doc.id} index={idx} className={selectedIds.includes(doc.id) ? "bg-[#4d7537]/5 dark:bg-[#4d7537]/10" : ""}>
-                  <TableCell className="px-6">
-                    <Checkbox 
-                      checked={selectedIds.includes(doc.id)}
-                      onCheckedChange={() => toggleSelect(doc.id)}
-                      className="border-neutral-300 dark:border-[#3f612d]/50 data-[state=checked]:bg-[#4d7537] data-[state=checked]:border-[#4d7537]"
-                    />
-                  </TableCell>
-                  <TableCell className="font-sans font-medium text-neutral-900 dark:text-[#e8eedd] flex items-center gap-3 py-4 px-4 max-w-[400px] xl:max-w-[600px]">
-                    <div className="shrink-0 w-8 h-8 rounded bg-neutral-100 dark:bg-[#1a2315] flex items-center justify-center border border-neutral-200 dark:border-[#3f612d]/30 group-hover:border-[#4d7537]/50 dark:group-hover:border-[#6b9d4f]/50 transition-colors">
-                      <FileText className="w-4 h-4 text-[#4d7537] dark:text-[#89b867]" />
+            <AnimatePresence mode="popLayout" initial={false}>
+              {filteredDocuments.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-20 text-neutral-400 dark:text-[#6b7b59] font-sans">
+                    <div className="flex flex-col items-center gap-2">
+                      <Folder className="w-10 h-10 opacity-20" />
+                      <p>
+                        {search || category 
+                          ? "Tidak ada dokumen yang sesuai dengan filter." 
+                          : "Belum ada dokumen. Mulai buat perangkat ajar pertama Anda!"}
+                      </p>
                     </div>
-                    <span className="translate-y-[1px] truncate">{doc.title}</span>
                   </TableCell>
-                  <TableCell className="px-4">
-                    <Badge variant="outline" className="bg-neutral-50 dark:bg-[#080b06]/50 border-neutral-200 dark:border-[#3f612d]/30 text-neutral-600 dark:text-[#a2b591] font-normal font-sans">
-                      {doc.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-neutral-500 dark:text-[#a2b591] text-sm font-sans px-4">{doc.date}</TableCell>
-                  <TableCell className="text-neutral-500 dark:text-[#a2b591] text-sm font-sans px-4">{doc.size}</TableCell>
-                  <TableCell className="text-right px-6">
-                    <DocumentActions docId={doc.id} title={doc.title} />
-                  </TableCell>
-                </DashboardTableRow>
-              ))
-            )}
+                </TableRow>
+              ) : (
+                filteredDocuments.map((doc, idx) => (
+                  <DashboardTableRow 
+                    key={doc.id} 
+                    index={idx} 
+                    className={selectedIds.includes(doc.id) ? "bg-[#4d7537]/5 dark:bg-[#4d7537]/10" : ""}
+                  >
+                    <TableCell className="px-6">
+                      <Checkbox 
+                        checked={selectedIds.includes(doc.id)}
+                        onCheckedChange={() => toggleSelect(doc.id)}
+                        className="border-neutral-300 dark:border-[#3f612d]/50 data-[state=checked]:bg-[#4d7537] data-[state=checked]:border-[#4d7537]"
+                      />
+                    </TableCell>
+                    <TableCell className="font-sans font-medium text-neutral-900 dark:text-[#e8eedd] flex items-center gap-3 py-4 px-4 max-w-[400px] xl:max-w-[600px]">
+                      <div className="shrink-0 w-8 h-8 rounded bg-neutral-100 dark:bg-[#1a2315] flex items-center justify-center border border-neutral-200 dark:border-[#3f612d]/30 group-hover:border-[#4d7537]/50 dark:group-hover:border-[#6b9d4f]/50 transition-colors">
+                        <FileText className="w-4 h-4 text-[#4d7537] dark:text-[#89b867]" />
+                      </div>
+                      <span className="translate-y-[1px] truncate">{doc.title}</span>
+                    </TableCell>
+                    <TableCell className="px-4">
+                      <Badge variant="outline" className="bg-neutral-50 dark:bg-[#080b06]/50 border-neutral-200 dark:border-[#3f612d]/30 text-neutral-600 dark:text-[#a2b591] font-normal font-sans">
+                        {doc.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-neutral-500 dark:text-[#a2b591] text-sm font-sans px-4">{doc.date}</TableCell>
+                    <TableCell className="text-neutral-500 dark:text-[#a2b591] text-sm font-sans px-4">{doc.size}</TableCell>
+                    <TableCell className="text-right px-6">
+                      <DocumentActions docId={doc.id} title={doc.title} onDeleteOptimistic={handleDeleteOptimistic} />
+                    </TableCell>
+                  </DashboardTableRow>
+                ))
+              )}
+            </AnimatePresence>
           </TableBody>
         </Table>
       </div>

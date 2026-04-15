@@ -42,31 +42,9 @@ export default async function DashboardPage(props: { searchParams: Promise<{ sea
     .where(eq(documentsTable.userId, user.id))
     .orderBy(desc(documentsTable.createdAt));
   
-  // Extract unique types present in user's documents
   const availableCategories = Array.from(new Set(realDocuments.map(d => d.type)));
   
-  const filteredDocuments = realDocuments.filter(doc => {
-    const matchesSearch = searchQuery ? doc.title.toLowerCase().includes(searchQuery.toLowerCase()) : true;
-    
-    let matchesCategory = true;
-    if (categoryQuery) {
-      if (categoryQuery === "CP") {
-        matchesCategory = doc.type === "CP" || doc.type === "Capaian Pembelajaran (CP)";
-      } else if (categoryQuery === "ATP") {
-        matchesCategory = doc.type === "ATP" || doc.type === "Alur Tujuan Pembelajaran (ATP)";
-      } else if (categoryQuery === "PROTA") {
-        matchesCategory = doc.type === "PROTA" || doc.type === "Program Tahunan";
-      } else if (categoryQuery === "PROSEM") {
-        matchesCategory = doc.type === "PROSEM" || doc.type === "Program Semester";
-      } else {
-        matchesCategory = doc.type === categoryQuery;
-      }
-    }
-
-    return matchesSearch && matchesCategory;
-  });
-  
-  const displayDocuments = filteredDocuments.map(doc => ({
+  const displayDocuments = realDocuments.map(doc => ({
     id: doc.id,
     title: doc.title,
     type: doc.type,

@@ -9,26 +9,34 @@ import { ActionModal } from "@/components/ui/ActionModal";
 interface DocumentActionsProps {
   docId: string;
   title: string;
+  onDeleteOptimistic: (id: string) => void;
 }
 
-export function DocumentActions({ docId, title }: DocumentActionsProps) {
+export function DocumentActions({ docId, title, onDeleteOptimistic }: DocumentActionsProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleDelete = async () => {
     setIsDeleting(true);
+    
+    // Save current list for potential rollback isn't easily done here since state is in parent
+    // but the parent handles refresh. For single delete, we call optimistic first.
+    onDeleteOptimistic(docId);
+    setShowDeleteModal(false);
+
     try {
       const response = await fetch(`/api/documents/${docId}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        setShowDeleteModal(false);
         router.refresh();
       } else {
         const data = await response.json();
         alert(data.error || "Gagal menghapus dokumen");
+        // For simple rollback we can just refresh to get state back
+        router.refresh();
       }
     } catch (error) {
       alert("Terjadi kesalahan sistem");

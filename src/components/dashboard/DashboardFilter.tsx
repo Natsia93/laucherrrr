@@ -3,7 +3,7 @@
 import React from "react";
 import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryState, parseAsString } from "nuqs";
 
 // Normalized sequence with fallbacks
 const SEQUENCE: { id: string | null; matches: string[] }[] = [
@@ -21,9 +21,9 @@ interface DashboardFilterProps {
 }
 
 export function DashboardFilter({ availableCategories }: DashboardFilterProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentCategory = searchParams.get("category");
+  const [currentCategory, setCurrentCategory] = useQueryState("category", parseAsString.withOptions({
+    shallow: true
+  }));
 
   const cycleToNextCategory = () => {
     // Current index based on matching the current category value
@@ -47,17 +47,7 @@ export function DashboardFilter({ availableCategories }: DashboardFilterProps) {
     }
 
     const finalNextItem = SEQUENCE[nextIndex];
-    const params = new URLSearchParams(searchParams.toString());
-    
-    // We always set the param to the "short" ID for cleaner URL, 
-    // but the DB filter in page.tsx needs to handle it.
-    if (finalNextItem.id) {
-      params.set("category", finalNextItem.id);
-    } else {
-      params.delete("category");
-    }
-    
-    router.push(`/dashboard?${params.toString()}`);
+    setCurrentCategory(finalNextItem.id);
   };
 
   // Label display logic
