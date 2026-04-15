@@ -1,0 +1,56 @@
+
+> curricula@0.1.0 build
+> next build
+
+▲ Next.js 16.2.3 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 6.1s
+  Running TypeScript ...
+  Finished TypeScript in 6.3s ...
+  Collecting page data using 7 workers ...
+[2m2026-04-15T22:39:42.535Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-04-15T22:39:42.537Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+[2m2026-04-15T22:39:42.548Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-04-15T22:39:42.550Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+[2m2026-04-15T22:39:42.550Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-04-15T22:39:42.552Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+[2m2026-04-15T22:39:42.558Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-04-15T22:39:42.561Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+[2m2026-04-15T22:39:42.572Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-04-15T22:39:42.573Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+[2m2026-04-15T22:39:42.590Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-04-15T22:39:42.594Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+[2m2026-04-15T22:39:42.730Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-04-15T22:39:42.730Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+  Generating static pages using 7 workers (0/17) ...
+  Generating static pages using 7 workers (4/17) 
+  Generating static pages using 7 workers (8/17) 
+  Generating static pages using 7 workers (12/17) 
+✓ Generating static pages using 7 workers (17/17) in 633ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/auth/[...better-auth]
+├ ƒ /api/chat-ai
+├ ƒ /api/check-email
+├ ƒ /api/documents/[id]
+├ ƒ /api/documents/bulk-delete
+├ ƒ /api/export-docx
+├ ƒ /api/extract-text
+├ ƒ /api/generate
+├ ƒ /api/generate-questions
+├ ƒ /api/generate-stream
+├ ƒ /dashboard
+├ ○ /generate
+├ ○ /login
+├ ○ /register
+└ ○ /workspace
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

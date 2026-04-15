@@ -17,14 +17,9 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
-import dynamic from "next/dynamic";
-
-const DocumentTable = dynamic(() => import("@/components/dashboard/DocumentTable").then(mod => mod.DocumentTable), {
-  ssr: false,
-  loading: () => <div className="p-10 text-center text-neutral-400">Memuat penyimpanan...</div>
-});
-const DashboardSearchBar = dynamic(() => import("@/components/dashboard/DashboardSearchBar").then(mod => mod.DashboardSearchBar), { ssr: false });
-const DashboardFilter = dynamic(() => import("@/components/dashboard/DashboardFilter").then(mod => mod.DashboardFilter), { ssr: false });
+import { DocumentTable } from "@/components/dashboard/DashboardClientWrapper";
+import { DashboardSearchBar } from "@/components/dashboard/DashboardClientWrapper";
+import { DashboardFilter } from "@/components/dashboard/DashboardClientWrapper";
 import { Suspense } from "react";
 
 export default async function DashboardPage(props: { searchParams: Promise<{ search?: string; category?: string }> }) {

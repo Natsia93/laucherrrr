@@ -1,0 +1,29 @@
+
+> curricula@0.1.0 build
+> next build
+
+▲ Next.js 16.2.3 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 3 errors:
+./src/app/dashboard/page.tsx:22:23
+`ssr: false` is not allowed with `next/dynamic` in Server Components. Please move it into a Client Component.
+Ecmascript file had an error
+
+
+./src/app/dashboard/page.tsx:26:28
+`ssr: false` is not allowed with `next/dynamic` in Server Components. Please move it into a Client Component.
+Ecmascript file had an error
+
+
+./src/app/dashboard/page.tsx:27:25
+`ssr: false` is not allowed with `next/dynamic` in Server Components. Please move it into a Client Component.
+Ecmascript file had an error
+
+
+    at <unknown> (./src/app/dashboard/page.tsx:22:23)
+    at <unknown> (./src/app/dashboard/page.tsx:26:28)
+    at <unknown> (./src/app/dashboard/page.tsx:27:25)
