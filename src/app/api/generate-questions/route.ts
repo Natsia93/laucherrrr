@@ -38,8 +38,16 @@ export async function POST(req: Request) {
          - Fokus TP: BAB atau materi apa yang ingin ditentukan kriterianya?
          - *JANGAN TANYAKAN JP.*
 
-      4. LKPD, PROSEM & PROTA:
-         - Fokus pada teknis soal atau kalender pendidikan.
+      4. PROSEM (Program Semester):
+         - Alokasi Beban: Berapa JP per minggu yang tersedia?
+         - Referensi CP: Apakah butuh nomor regulasi (No 046/2025) di kop?
+         - Distribusi Materi: Daftar BAB/ATP yang harus dipetakan per bulan.
+         - Jadwal Khusus: Waktu pelaksanaan STS (Tengah Semester) dan SAS (Akhir Semester).
+
+      5. PROTA (Program Tahunan):
+         - Fokus pada total alokasi JP dalam satu tahun pelajaran (dua semester).
+         - Pembagian materi antara Semester Ganjil dan Genap.
+         - Target kompetensi besar di akhir tahun pelajaran.
 
       Aturan Format:
       - Berikan respons HANYA dalam format JSON array of objects.
@@ -95,12 +103,13 @@ export async function POST(req: Request) {
       });
     }
 
-    if (docType === "PROSEM" || docType === "PROTA" || docType === "Program Tahunan" || docType === "Program Semester") {
+    if (docType === "PROSEM" || docType === "Program Semester") {
       return NextResponse.json({
         questions: [
-            ...(docType === "PROSEM" || docType === "Program Semester" ? [{ id: 4, question: "Pilih Semester yang ingin disusun jadwalnya:", type: "chips", options: ["Ganjil (Juli-Desember)", "Genap (Januari-Juni)"], category: "data" }] : []),
-            { id: 5, question: "Berapa alokasi JP per minggu untuk mata pelajaran ini?", type: "chips", options: ["2 JP", "3 JP", "4 JP", "5 JP"], category: "data" },
-            { id: 6, question: "Tuliskan Tahun Pelajaran Berjalan:", type: "text", placeholder: "Misal: 2024/2025", category: "data" },
+            { id: 4, question: "Berapa alokasi JP (Jam Pelajaran) per minggu?", type: "chips", options: ["2 JP", "3 JP", "4 JP", "5 JP"], category: "data" },
+            { id: 5, question: "Pilih Semester yang ingin disusun jadwalnya:", type: "chips", options: ["Ganjil (Juli-Desember)", "Genap (Januari-Juni)"], category: "data" },
+            { id: 6, question: "Sebutkan daftar BAB atau ATP yang ingin didistribusikan:", type: "text", placeholder: "Misal: BAB I Sel, BAB II Klasifikasi Makhluk Hidup...", category: "data" },
+            { id: 7, question: "Tuliskan nomor/tahun regulasi CP untuk referensi kop:", type: "text", placeholder: "Misal: 046 Tahun 2025", category: "data" }
         ]
       });
     }
@@ -112,6 +121,16 @@ export async function POST(req: Request) {
             { id: 5, question: "Tuliskan nomor/tahun regulasi CP sebagai referensi:", type: "text", placeholder: "Misal: 046 Tahun 2025", category: "data" },
             { id: 6, question: "Sebutkan Tujuan Pembelajaran (TP) atau BAB yang ingin ditentukan kriterianya:", type: "text", placeholder: "Misal: BAB I Hakikat Ilmu Sains, dsb...", category: "data" },
             { id: 7, question: "Berapa ambang batas (passing grade) ketuntasan yang ditetapkan sekolah?", type: "chips", options: ["65", "70", "75", "80"], category: "data" }
+        ]
+      });
+    }
+
+    if (docType === "PROTA" || docType === "Program Tahunan") {
+      return NextResponse.json({
+        questions: [
+            { id: 4, question: "Berapa total alokasi JP (Jam Pelajaran) selama satu tahun?", type: "chips", options: ["72 JP", "108 JP", "144 JP"], category: "data" },
+            { id: 5, question: "Tuliskan Tahun Pelajaran Berjalan:", type: "text", placeholder: "Misal: 2024/2025", category: "data" },
+            { id: 6, question: "Sebutkan daftar BAB/Materi utama untuk Semester 1 dan 2:", type: "text", placeholder: "Smt 1: BAB 1-3, Smt 2: BAB 4-6...", category: "data" }
         ]
       });
     }
