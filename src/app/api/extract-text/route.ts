@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-// @ts-ignore
-import pdf from "pdf-parse";
-import mammoth from "mammoth";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import mammoth from "mammoth";
+// @ts-ignore
+import pdf from "pdf-parse/lib/pdf-parse.js";
+
+// Force Node.js runtime for pdf-parse and mammoth
+export const runtime = "nodejs";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
