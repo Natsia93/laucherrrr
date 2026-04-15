@@ -99,7 +99,7 @@ export function DocumentTable({ documents }: DocumentTableProps) {
                 variant="destructive" 
                 size="sm" 
                 onClick={() => setShowBulkDeleteModal(true)}
-                className="bg-red-500 hover:bg-red-600 text-white border-none text-xs flex items-center gap-2"
+                className="bg-red-600 hover:bg-red-700 text-white border-none text-xs flex items-center gap-2 shadow-lg shadow-red-900/40 transition-all active:scale-95 font-bold"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 Hapus Terpilih
