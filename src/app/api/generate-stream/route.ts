@@ -167,17 +167,31 @@ ${SHARED_RULES}`,
 }
 
 function extractTitle(type: string, rawPrompt: string): string {
-  const mapelMatch = rawPrompt.match(/(?:Mapel|Mata Pelajaran)[\s:]+([^|]+)/i);
-  const kelasMatch = rawPrompt.match(/Kelas[\s:]+([^|]+)/i);
+  // Extract Mapel (Cleaning up question phrases)
+  let mapel = "";
+  const mapelMatch = rawPrompt.match(/(?:Mata Pelajaran|Mapel)(?:.*?[:])?\s*([^|]+)/i);
+  if (mapelMatch) {
+    mapel = mapelMatch[1].trim()
+      .replace(/.*?\?\s*[:]?\s*/i, "") // Remove everything up to the first question mark and optional colon
+      .replace(/^[:\s\-]+/, "");
+  }
+
+  // Extract Kelas (Removing double "Kelas")
+  let kelas = "";
+  const kelasMatch = rawPrompt.match(/Kelas\s*[:]?\s*([^|]+)/i);
+  if (kelasMatch) {
+    kelas = kelasMatch[1].trim().replace(/^Kelas\s+/i, "");
+  }
 
   let titleStr = type;
-  if (mapelMatch) titleStr += ` - ${mapelMatch[1].trim()}`;
-  if (kelasMatch) titleStr += ` - Kelas ${kelasMatch[1].trim()}`;
+  if (kelas) titleStr += ` - Kelas ${kelas}`;
+  if (mapel) titleStr += ` - Mapel ${mapel}`;
 
   if (titleStr === type) {
     const clean = rawPrompt.replace(/\|/g, " ").replace(/\s+/g, " ").trim();
     titleStr = `${type} - ${clean.substring(0, 40)}${clean.length > 40 ? "..." : ""}`;
   }
+  
   return titleStr;
 }
 
