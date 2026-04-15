@@ -5,15 +5,15 @@ import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
 
-// The fixed sequence requested by the USER
+// Normalized sequence with fallbacks
 const SEQUENCE = [
-  "LKPD",
-  "ATP",
-  "CP",
-  "KKTP",
-  "PROSEM",
-  "PROTA",
-  null // null represents "Semua / All"
+  { id: "LKPD", matches: ["LKPD"] },
+  { id: "ATP", matches: ["ATP", "Alur Tujuan Pembelajaran (ATP)"] },
+  { id: "CP", matches: ["CP", "Capaian Pembelajaran (CP)"] },
+  { id: "KKTP", matches: ["KKTP"] },
+  { id: "PROSEM", matches: ["PROSEM", "Program Semester"] },
+  { id: "PROTA", matches: ["PROTA", "Program Tahunan"] },
+  { id: null, matches: [] } // null represents "Semua / All"
 ];
 
 interface DashboardFilterProps {
@@ -26,32 +26,33 @@ export function DashboardFilter({ availableCategories }: DashboardFilterProps) {
   const currentCategory = searchParams.get("category");
 
   const cycleToNextCategory = () => {
-    // Current index in our sequence
-    const currentIndex = SEQUENCE.indexOf(currentCategory as any);
+    // Current index based on matching the current category value
+    const currentIndex = SEQUENCE.findIndex(s => s.matches.includes(currentCategory as string) || (s.id === null && currentCategory === null));
     let nextIndex = (currentIndex + 1) % SEQUENCE.length;
 
-    // Smart Skip Logic: Cycle until we find an available category or reach "All"
-    // We try at most SEQUENCE.length times to avoid infinite loop
     let attempts = 0;
     while (attempts < SEQUENCE.length) {
-      const nextCat = SEQUENCE[nextIndex];
+      const nextItem = SEQUENCE[nextIndex];
       
       // If next is "All" (null), it's always available
-      if (nextCat === null) break;
+      if (nextItem.id === null) break;
       
-      // If nextCat is in our available list, we found it
-      if (availableCategories.includes(nextCat)) break;
+      // Smart Check: Does user have any document that matches any of the item's labels?
+      const isAvailable = nextItem.matches.some(m => availableCategories.includes(m));
+      if (isAvailable) break;
       
       // Otherwise, move to next and try again
       nextIndex = (nextIndex + 1) % SEQUENCE.length;
       attempts++;
     }
 
-    const finalNextCat = SEQUENCE[nextIndex];
+    const finalNextItem = SEQUENCE[nextIndex];
     const params = new URLSearchParams(searchParams.toString());
     
-    if (finalNextCat) {
-      params.set("category", finalNextCat);
+    // We always set the param to the "short" ID for cleaner URL, 
+    // but the DB filter in page.tsx needs to handle it.
+    if (finalNextItem.id) {
+      params.set("category", finalNextItem.id);
     } else {
       params.delete("category");
     }
@@ -59,8 +60,8 @@ export function DashboardFilter({ availableCategories }: DashboardFilterProps) {
     router.push(`/dashboard?${params.toString()}`);
   };
 
-  // Label display
-  const labelText = currentCategory ? currentCategory : "Semua";
+  // Label display logic
+  const labelText = currentCategory || "Semua";
 
   return (
     <Button 

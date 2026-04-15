@@ -47,7 +47,22 @@ export default async function DashboardPage(props: { searchParams: Promise<{ sea
   
   const filteredDocuments = realDocuments.filter(doc => {
     const matchesSearch = searchQuery ? doc.title.toLowerCase().includes(searchQuery.toLowerCase()) : true;
-    const matchesCategory = categoryQuery ? doc.type === categoryQuery : true;
+    
+    let matchesCategory = true;
+    if (categoryQuery) {
+      if (categoryQuery === "CP") {
+        matchesCategory = doc.type === "CP" || doc.type === "Capaian Pembelajaran (CP)";
+      } else if (categoryQuery === "ATP") {
+        matchesCategory = doc.type === "ATP" || doc.type === "Alur Tujuan Pembelajaran (ATP)";
+      } else if (categoryQuery === "PROTA") {
+        matchesCategory = doc.type === "PROTA" || doc.type === "Program Tahunan";
+      } else if (categoryQuery === "PROSEM") {
+        matchesCategory = doc.type === "PROSEM" || doc.type === "Program Semester";
+      } else {
+        matchesCategory = doc.type === categoryQuery;
+      }
+    }
+
     return matchesSearch && matchesCategory;
   });
   
