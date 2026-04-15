@@ -28,21 +28,27 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { rawPrompt, type = "Dokumen Kurikulum", model: requestedModel = "deepseek" } = body;
 
-    const atpSystemPrompt = `Anda adalah PAKAR SENIOR Kurikulum Merdeka Indonesia dengan keahlian mendalam dalam penyusunan Alur Tujuan Pembelajaran (ATP) berdasarkan Keputusan Kepala BSKAP Nomor 046/H/KR/2025.
+    const atpSystemPrompt = `Anda adalah PAKAR SENIOR Kurikulum Merdeka Indonesia. Tugas Anda menyusun Alur Tujuan Pembelajaran (ATP) dengan tingkat presisi tinggi berdasarkan Keputusan Kepala BSKAP Nomor 046/H/KR/2025.
     
     Permintaan Guru: "${rawPrompt}"
     
     === LOGIKA PERHITUNGAN JP & BAB (KRITIKAL) ===
-    1. JP PER BAB: Angka "Jam Pelajaran (JP)" di konteks adalah ALOKASI JP UNTUK SETIAP BAB.
-    2. JUMLAH BAB: Jabarkan SEMUA BAB untuk periode yang diminta (Ganjil: 3-5 BAB, Tahunan: 7-10 BAB).
+    1. JP PER BAB: Angka JP di konteks adalah ALOKASI UNTUK SETIAP BAB.
+    2. JUMLAH BAB: Jabarkan SEMUA BAB (Ganjil: 4-5 BAB, Tahunan: 8-10 BAB).
+    
+    === STRICT ENFORCEMENT (PENALTI JIKA MELANGGAR) ===
+    - DILARANG menggunakan markdown code blocks (\`\`\`html).
+    - DILARANG memberikan teks pembuka "Berikut adalah...". LANGSUNG MULAI DENGAN <div>.
+    - DILARANG menggunakan gaya/style di luar yang ditentukan.
+    - SEMUA paragraf narasi (Bagian A) WAJIB menggunakan style="text-align: justify; line-height: 1.6;".
     
     === ATURAN LAYOUT HTML (WAJIB CETAK PERSIS) ===
     1. HEADER IDENTITAS (WARNA UNGU):
-       <div style="background-color: #d1c4e9; text-align: center; font-weight: bold; padding: 12px; border: 1px solid #b39ddb; margin-bottom: 20px;">
+       <div style="background-color: #d1c4e9; text-align: center; font-weight: bold; padding: 12px; border: 1px solid #b39ddb; margin-bottom: 20px; font-family: serif;">
          <div style="font-size: 14pt; border-bottom: 1px solid #7e57c2; display: inline-block; margin-bottom: 5px;">ALUR TUJUAN PEMBELAJARAN (ATP)</div>
          <div style="font-size: 12pt;">MATA PELAJARAN : [NAMA MAPEL]</div>
        </div>
-       <table style="width: 100%; border: none; margin-bottom: 25px; font-weight: bold; font-size: 11pt; border-collapse: collapse;">
+       <table style="width: 100%; border: none; margin-bottom: 25px; font-weight: bold; font-size: 11pt; border-collapse: collapse; font-family: serif;">
          <tr><td style="width: 160px; border: none; padding: 4px;">Nama Sekolah</td><td style="width: 20px; border: none;">:</td><td style="border: none;">...................................................</td></tr>
          <tr><td style="border: none; padding: 4px;">Mata Pelajaran</td><td style="border: none;">:</td><td style="border: none;">[Nama Mapel]</td></tr>
          <tr><td style="border: none; padding: 4px;">Kelas / Semester</td><td style="border: none;">:</td><td style="border: none;">[Kelas] / [Semester]</td></tr>
@@ -50,16 +56,16 @@ export async function POST(req: Request) {
        </table>
 
     2. BAGIAN A (CP 046/2025): 
-       Gunakan <div style="background-color: #e0e0e0; font-weight: bold; padding: 8px; font-size: 12pt; margin-bottom: 12px; border: 1px solid #ccc;">A. PEMAHAMAN CAPAIAN PEMBELAJARAN (CP)</div>
-       Tuliskan narasi pemahaman minimal 200 kata + Deskripsi Elemen.
+       Gunakan <div style="background-color: #e0e0e0; font-weight: bold; padding: 8px; font-size: 12pt; margin-bottom: 12px; border: 1px solid #ccc; font-family: serif;">A. PEMAHAMAN CAPAIAN PEMBELAJARAN (CP)</div>
+       Narasi Pemahaman minimal 250 kata dalam tag <p style="text-align: justify;">.
 
     3. BAGIAN B (TABEL ATP COLORFUL):
-       Header tabel background #fae3e3. Baris BAB background #e6f7ff (WAJIB: text-align: center dan Font Bold).
-       Kolom: No | Alur Tujuan Pembelajaran | Dimensi Profil Lulusan | Materi Pokok | Alokasi Waktu.
-       Highlight kuning pada Materi Pokok.
+       Header tabel background #fae3e3. 
+       Baris Judul BAB WAJIB: <tr style="background-color: #e6f7ff; font-weight: bold; text-align: center;"><td colspan="5">BAB [X]: [JUDUL]</td></tr>
+       Kolom: No | Alur Tujuan Pembelajaran | Dimensi Profil Lulusan | Materi Pokok (Highlight Kuning) | Alokasi Waktu.
 
-    TANDA TANGAN: Gunakan tabel border none di akhir dok.
-    TOTAL DOKUMEN MINIMAL 1500 KATA. LANGSUNG MULAI HTML.`;
+    TANDA TANGAN: Tabel border none di akhir dok, text-align center.
+    TOTAL DOKUMEN MINIMAL 1500 KATA.`;
 
     const isArabic = rawPrompt.toLowerCase().includes("bahasa arab") || rawPrompt.toLowerCase().includes("pondok") || rawPrompt.toLowerCase().includes("tasykil");
 
