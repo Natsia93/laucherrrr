@@ -423,7 +423,7 @@ function GenerateContent() {
                                  </div>
                                  <div className="text-center">
                                     <p className="text-sm font-bold">Klik untuk unggah file</p>
-                                    <p className="text-[10px] text-neutral-500 mt-1">PDF, DOCX, atau Gambar Modul</p>
+                                    <p className="text-[10px] text-neutral-500 mt-1">PDF, DOCX, atau Gambar Modul (Maks. 5MB)</p>
                                  </div>
                                  <input 
                                     type="file" 
