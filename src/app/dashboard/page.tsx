@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Folder, Search, BookOpen, Plus, Clock, Filter } from "lucide-react";
+import { Folder, Search, BookOpen, Plus, Clock, Filter, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -74,22 +74,27 @@ export default async function DashboardPage() {
         </div>
 
         <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-white dark:bg-[#10140d]/80 rounded-lg p-1 border border-[#dcdad1] dark:border-[#3f612d]/30 backdrop-blur-md">
-            <Link href="/dashboard" passHref>
-              <Button variant="ghost" size="sm" className="bg-neutral-100 dark:bg-[#1a2315] text-neutral-900 dark:text-[#f4f3ed] hover:bg-neutral-200 dark:hover:bg-[#2c471c] hover:text-neutral-900 dark:hover:text-white rounded-md">
-                <Folder className="w-4 h-4 mr-2" />
-                Penyimpanan File
-              </Button>
-            </Link>
-            <Link href="/" passHref>
-              <Button variant="ghost" size="sm" className="text-neutral-500 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-[#f4f3ed] hover:bg-neutral-100 dark:hover:bg-[#1a2315] rounded-md">
-                <Folder className="w-4 h-4 mr-2 opacity-0 -ml-6" /> {/* Spacer */}
-                <span className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
-                  <span className="w-4 h-4 flex items-center justify-center">✨</span>
-                  AI Generate
-                </span>
-              </Button>
-            </Link>
-          </div>
+          <Link href="/dashboard">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="bg-neutral-100 dark:bg-[#1a2315] text-neutral-900 dark:text-[#f4f3ed] hover:bg-neutral-200 dark:hover:bg-[#2c471c] hover:text-neutral-900 dark:hover:text-white rounded-md"
+            >
+              <Folder className="w-4 h-4 mr-2" />
+              Penyimpanan File
+            </Button>
+          </Link>
+          <Link href="/">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-neutral-500 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-[#f4f3ed] hover:bg-neutral-100 dark:hover:bg-[#1a2315] rounded-md"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI Generate
+            </Button>
+          </Link>
+        </div>
         <div className="flex items-center gap-2 md:gap-4">
           <div className="relative hidden xl:block">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-[#6b7b59]" />
