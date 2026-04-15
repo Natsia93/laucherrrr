@@ -235,27 +235,34 @@ function extractTitle(type: string, rawPrompt: string): string {
     if (kp) kelas = kp.split(":").pop()?.trim() || "";
   }
 
-  // 3. AGGRESSIVE CLEANING
+  // 3. EXTREMELY AGGRESSIVE CLEANING
   const clean = (text: string) => {
     return text
-      .replace(/^(?:apa yang ingin Anda rancang\?|rancangan|masukkan|tuliskan|mapel|mata pelajaran)\s*/i, "")
-      .replace(/^(?:isi manual|lewati|buatkan dokumen|lengkap)\s*/i, "")
       .replace(/\(isi manual\)/gi, "")
       .replace(/Buatkan dokumen LKPD LENGKAP/gi, "")
+      .replace(/^(?:apa yang ingin Anda rancang\?|rancangan|masukkan|tuliskan|mapel|mata pelajaran|kelas|fase|lewati|isi manual|buatkan|dokumen|lengkap)\s*/i, "")
       .replace(/[?:]/g, "")
-      .replace(/[:\s\-]+$/, "")
-      .replace(/^[:\s\-]+/, "")
+      // Remove all leading/trailing non-alphanumeric junk characters (like dots, dashes, spaces)
+      .replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "")
       .trim();
   };
 
   mapel = clean(mapel);
-  kelas = clean(kelas).replace(/^(?:kelas|fase)\s*/i, "");
+  kelas = clean(kelas);
 
-  // Final sanitization with junk detection
-  const isJunkValue = (v: string) => !v || v === "." || v === "-" || v.toLowerCase().includes("lewati") || v.toLowerCase().includes("manual");
+  // Final sanitization with rigorous junk detection
+  const isMeaningless = (v: string) => {
+    const t = v.trim();
+    if (!t) return true;
+    if (t.length < 2 && !/^\d+$/.test(t)) return true; // Single char junk (except if it's a number like class "9")
+    const lower = t.toLowerCase();
+    if (lower.includes("lewati") || lower.includes("manual") || lower.includes("rancangan")) return true;
+    if (/^[.\-\s]+$/.test(t)) return true; // Only dots, dashes or spaces
+    return false;
+  };
 
-  const finalMapel = isJunkValue(mapel) ? "Umum" : mapel;
-  const finalKelas = isJunkValue(kelas) ? "-" : kelas;
+  const finalMapel = isMeaningless(mapel) ? "Umum" : mapel;
+  const finalKelas = isMeaningless(kelas) ? "-" : kelas;
 
   // Standard Template: [TIPE] - Kelas [X] - [MAPEL]
   return `${type} - Kelas ${finalKelas} - ${finalMapel}`;
