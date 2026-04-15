@@ -167,27 +167,38 @@ ${SHARED_RULES}`,
 }
 
 function extractTitle(type: string, rawPrompt: string): string {
-  // Extract Mapel (Cleaning up question phrases)
+  const parts = rawPrompt.split("|").map(p => p.trim());
+  
   let mapel = "";
-  const mapelMatch = rawPrompt.match(/(?:Mata Pelajaran|Mapel)(?:.*?[:])?\s*([^|]+)/i);
-  if (mapelMatch) {
-    mapel = mapelMatch[1].trim()
-      .replace(/.*?\?\s*[:]?\s*/i, "") // Remove everything up to the first question mark and optional colon
+  let kelas = "";
+
+  // 1. Process Mapel
+  const mapelPart = parts.find(p => p.toLowerCase().includes("mata pelajaran") || p.toLowerCase().includes("mapel"));
+  if (mapelPart) {
+    // Take everything after the last colon ?
+    const split = mapelPart.split(":");
+    mapel = split[split.length - 1].trim();
+    // Clean common instructional junk
+    mapel = mapel
+      .replace(/^(?:apa yang ingin Anda rancang\?|rancangan|masukkan|tuliskan)\s*/i, "")
       .replace(/^[:\s\-]+/, "");
   }
 
-  // Extract Kelas (Removing double "Kelas")
-  let kelas = "";
-  const kelasMatch = rawPrompt.match(/Kelas\s*[:]?\s*([^|]+)/i);
-  if (kelasMatch) {
-    kelas = kelasMatch[1].trim().replace(/^Kelas\s+/i, "");
+  // 2. Process Kelas
+  const kelasPart = parts.find(p => p.toLowerCase().includes("kelas"));
+  if (kelasPart) {
+    const split = kelasPart.split(":");
+    let val = split[split.length - 1].trim();
+    // Standardize to just the number/label (e.g. "Kelas 9" or "9")
+    val = val.replace(/^Kelas\s+/i, ""); 
+    kelas = val;
   }
 
   let titleStr = type;
   if (kelas) titleStr += ` - Kelas ${kelas}`;
   if (mapel) titleStr += ` - Mapel ${mapel}`;
 
-  if (titleStr === type) {
+  if (titleStr === type || titleStr.length < 10) {
     const clean = rawPrompt.replace(/\|/g, " ").replace(/\s+/g, " ").trim();
     titleStr = `${type} - ${clean.substring(0, 40)}${clean.length > 40 ? "..." : ""}`;
   }
