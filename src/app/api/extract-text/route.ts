@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import mammoth from "mammoth";
 // @ts-ignore
-import { PDFParse } from "pdf-parse";
-
-// Force Node.js runtime for pdf-parse and mammoth
+import pdfParse from "pdf-parse";
+// Force Node.js runtime for mammoth and pdf-parse
 export const runtime = "nodejs";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
@@ -30,16 +29,12 @@ export async function POST(req: Request) {
     let extractedText = "";
 
     if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
-      // PDFParse version 2.4.5 usage
       try {
-        // @ts-ignore
-        const parser = new PDFParse({ data: buffer });
-        const result = await parser.getText();
+        const result = await pdfParse(buffer);
         extractedText = result.text;
-        await parser.destroy();
-      } catch (pdfErr) {
-        console.error("PDF Parsing error details:", pdfErr);
-        throw pdfErr;
+      } catch (err) {
+        console.error("PDF Parsing error:", err);
+        throw err;
       }
     } 
     else if (
