@@ -110,7 +110,7 @@ export function DocumentTable({ documents }: DocumentTableProps) {
         )}
       </AnimatePresence>
 
-      <div className="overflow-x-auto scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="overflow-x-auto scrollbar-hide">
         <Table>
           <TableHeader className="bg-neutral-50 dark:bg-[#1a2315]/50 border-b border-[#dcdad1] dark:border-[#3f612d]/30">
             <TableRow className="hover:bg-transparent border-none">
@@ -148,11 +148,11 @@ export function DocumentTable({ documents }: DocumentTableProps) {
                       className="border-neutral-300 dark:border-[#3f612d]/50 data-[state=checked]:bg-[#4d7537] data-[state=checked]:border-[#4d7537]"
                     />
                   </TableCell>
-                  <TableCell className="font-sans font-medium text-neutral-900 dark:text-[#e8eedd] flex items-center gap-3 py-4 px-4">
-                    <div className="w-8 h-8 rounded bg-neutral-100 dark:bg-[#1a2315] flex items-center justify-center border border-neutral-200 dark:border-[#3f612d]/30 group-hover:border-[#4d7537]/50 dark:group-hover:border-[#6b9d4f]/50 transition-colors">
+                  <TableCell className="font-sans font-medium text-neutral-900 dark:text-[#e8eedd] flex items-center gap-3 py-4 px-4 max-w-[400px] xl:max-w-[600px]">
+                    <div className="shrink-0 w-8 h-8 rounded bg-neutral-100 dark:bg-[#1a2315] flex items-center justify-center border border-neutral-200 dark:border-[#3f612d]/30 group-hover:border-[#4d7537]/50 dark:group-hover:border-[#6b9d4f]/50 transition-colors">
                       <FileText className="w-4 h-4 text-[#4d7537] dark:text-[#89b867]" />
                     </div>
-                    <span className="translate-y-[1px]">{doc.title}</span>
+                    <span className="translate-y-[1px] truncate">{doc.title}</span>
                   </TableCell>
                   <TableCell className="px-4">
                     <Badge variant="outline" className="bg-neutral-50 dark:bg-[#080b06]/50 border-neutral-200 dark:border-[#3f612d]/30 text-neutral-600 dark:text-[#a2b591] font-normal font-sans">
