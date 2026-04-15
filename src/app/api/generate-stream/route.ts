@@ -153,26 +153,27 @@ ${SHARED_RULES}`,
 KONTEKS DATA GURU:
 ${rawPrompt}
 
-=== STRUKTUR DOKUMEN PROTA (WAJIB SESUAI URUTAN) ===
+=== STRUKTUR DOKUMEN PROTA (WAJIB SESUAI GAMBAR STANDAR) ===
 1. JUDUL UTAMA: "PROGRAM TAHUNAN (PROTA)" (Centered, Bold, Font Size 14pt, Background light gray jika memungkinkan).
 2. SUB-JUDUL: "MATA PELAJARAN : [NAMA MAPEL]" (Centered, Bold, Underlined, Font Size 12pt).
-3. IDENTITAS (Rata Kiri, Margin Atas 20px):
-   - Nama Sekolah : ...................................
+3. IDENTITAS (Rata Kiri, Margin Atas 20px, Gunakan Tabel Tanpa Border untuk layout):
+   - Nama Sekolah : [Isi dari Nama Sekolah yang diberikan user]
    - Mata Pelajaran : [Isi Mapel]
    - Kelas / Semester : [Isi Kelas] / Ganjil & Genap
-   - Tahun Pelajaran : [Isi Tahun]
-4. BAGIAN A: "CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025" (Background light gray, Bold).
+   - Tahun Pelajaran : [Tahun Pelajaran Berjalan]
+4. BAGIAN A: "CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025" (Background light gray, Bold, Margin Atas 20px).
    - Teks Pengantar: "Pada akhir Fase [Fase], murid memiliki kemampuan sebagai berikut:"
-   - Jabarkan CP berdasarkan elemen secara mendalam: 
-     a. Pemahaman [Mapel] (Uraikan kompetensi sesuai regulasi 046/2025 untuk Mapel tersebut).
-     b. Keterampilan Proses (Wajib mencakup: Mengamati, Mempertanyakan dan Memprediksi, Merencanakan dan Melakukan Penyelidikan, Memproses, Menganalisis Data dan Informasi, Mengevaluasi dan Refleksi, Mengomunikasikan Hasil).
-5. BAGIAN B: "PROGRAM TAHUNAN" (Background light gray, Bold).
-   - Buat TABEL dengan kolom: No, Alur Tujuan Pembelajaran, Materi, Alokasi Waktu, Semester.
-   - Kelompokkan baris berdasarkan BAB (Misal: "BAB I : [JUDUL BAB]"). 
+   - PEMBAGIAN ELEMEN (DIBUAT POIN NOMOR): 
+     1. Pemahaman [Mapel]: Jabarkan narasi CP elemen pemahaman secara mendalam sesuai regulasi.
+     2. Keterampilan Proses: Wajib jabarkan poin-poin (Mengamati, Mempertanyakan, dll) secara lengkap seperti standar 046/2025.
+5. BAGIAN B: "PROGRAM TAHUNAN" (Background light gray, Bold, Margin Atas 20px).
+   - Buat TABEL dengan kolom: No, Alur Tujuan Pembelajaran (ATP), Materi, Alokasi Waktu, Semester.
+   - Kolom ATP wajib berisi kalimat aksi (Misal: "Melalui diskusi, siswa dapat menganalisis...").
    - Materi pokok WAJIB diberi highlight warna kuning (<span style="background-color: yellow;">Materi</span>).
-   - Alokasi Waktu ditulis dengan satuan "2 JP" atau sesuai distribusi yang logis.
-   - Kolom Semester diisi "I (Ganjil)" atau "II (Genap)".
-6. TOTAL JAM: Di akhir tabel, tambahkan baris footer yang menggabungkan kolom No hingga Materi, lalu isi "Total Jam Pelajaran" dan total JP di kolom Alokasi Waktu.
+   - Alokasi Waktu harus logis (Misal: 2 JP, 4 JP, dst).
+   - Semester diisi "I (Ganjil)" atau "II (Genap)".
+   - TOTAL JP: Tambahkan baris paling bawah di tabel yang menggabungkan kolom 1-3 untuk teks "Total Jam Pelajaran" dan isi total JP di kolom 4.
+6. FOOTER (Tabel Tanda Tangan): Gunakan template SHARED_RULES untuk menyisipkan Nama Guru yang diberikan user.
 
 ${SHARED_RULES}`,
 

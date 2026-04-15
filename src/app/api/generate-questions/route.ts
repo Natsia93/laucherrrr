@@ -128,10 +128,10 @@ export async function POST(req: Request) {
     if (docType === "PROTA" || docType === "Program Tahunan") {
       return NextResponse.json({
         questions: [
-            { id: 4, question: "Berapa total alokasi JP (Jam Pelajaran) selama satu tahun?", type: "chips", options: ["72 JP", "108 JP", "144 JP", "180 JP"], category: "data" },
-            { id: 5, question: "Tuliskan Tahun Pelajaran Berjalan:", type: "text", placeholder: "Misal: 2024/2025", category: "data" },
-            { id: 6, question: "Sebutkan daftar BAB/Materi utama untuk Semester 1 (Ganjil) dan 2 (Genap):", type: "text", placeholder: "Smt 1: BAB 1-3, Smt 2: BAB 4-6...", category: "data" },
-            { id: 7, question: "Apakah ingin menyertakan rincian Capaian Pembelajaran (CP) sesuai Regulasi 046/2025?", type: "chips", options: ["Ya, Sertakan Lengkap", "Tidak, Hanya Tabel"], category: "data" }
+            { id: 4, question: "Tuliskan Nama Sekolah dan Nama Guru (untuk kolom tanda tangan):", type: "text", placeholder: "Misal: SMP Negeri 1 Jakarta / Budi Santoso, S.Pd", category: "data" },
+            { id: 5, question: "Berapa total alokasi JP (Jam Pelajaran) selama satu tahun?", type: "chips", options: ["72 JP", "108 JP", "144 JP", "180 JP"], category: "data" },
+            { id: 6, question: "Sebutkan daftar BAB atau materi utama yang akan dipetakan:", type: "text", placeholder: "Smt 1: BAB 1-3, Smt 2: BAB 4-6...", category: "data" },
+            { id: 7, question: "Ingin rincian CP (046/2025) dipisah per elemen (Pemahaman & Keterampilan Proses)?", type: "chips", options: ["Ya, Pisah per Elemen", "Gabungkan Saja", "Hanya Tabel Prota"], category: "data" }
         ]
       });
     }
