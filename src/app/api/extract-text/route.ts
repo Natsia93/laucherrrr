@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import mammoth from "mammoth";
 // @ts-ignore
-import pdf from "pdf-parse/lib/pdf-parse.js";
+import { PDFParse } from "pdf-parse";
 
 // Force Node.js runtime for pdf-parse and mammoth
 export const runtime = "nodejs";
@@ -30,8 +30,17 @@ export async function POST(req: Request) {
     let extractedText = "";
 
     if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
-      const data = await pdf(buffer);
-      extractedText = data.text;
+      // PDFParse version 2.4.5 usage
+      try {
+        // @ts-ignore
+        const parser = new PDFParse({ data: buffer });
+        const result = await parser.getText();
+        extractedText = result.text;
+        await parser.destroy();
+      } catch (pdfErr) {
+        console.error("PDF Parsing error details:", pdfErr);
+        throw pdfErr;
+      }
     } 
     else if (
       fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || 
@@ -70,6 +79,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ text: extractedText });
   } catch (error) {
     console.error("Extraction error:", error);
-    return NextResponse.json({ error: "Failed to extract text from file" }, { status: 500 });
+    return NextResponse.json({ error: "Gagal mengekstrak teks. Pastikan format file benar." }, { status: 500 });
   }
 }
