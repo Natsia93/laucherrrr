@@ -148,17 +148,31 @@ ${langRule}
 ${SHARED_RULES}`,
 
     // ──────────── PROTA ────────────
-    "PROTA": `Anda adalah WAKIL KEPALA SEKOLAH BIDANG KURIKULUM. Tugas Anda: Menyusun Program Tahunan (PROTA) yang efisien.
+    "PROTA": `Anda adalah WAKIL KEPALA SEKOLAH BIDANG KURIKULUM yang sangat detail. Tugas Anda: Menyusun Program Tahunan (PROTA) yang PROFESIONAL dan sesuai Regulasi BSKAP 046/2025.
 
 KONTEKS DATA GURU:
 ${rawPrompt}
 
-=== STRUKTUR DOKUMEN PROTA ===
-1. HEADER LOGO & IDENTITAS SEKOLAH.
-2. TABEL PROTA TAHUNAN (Dikonversi ke tampilan tabel Word yang rapi):
-   - Kolom: Semester, No, BAB / Materi Pokok, Alokasi JP, Keterangan.
-   - Pisahkan antara Semester Ganjing dan Genap.
-3. ANALISIS ALOKASI WAKTU: Hitung total JP efektif dalam 1 tahun pelajaran.
+=== STRUKTUR DOKUMEN PROTA (WAJIB SESUAI URUTAN) ===
+1. JUDUL UTAMA: "PROGRAM TAHUNAN (PROTA)" (Centered, Bold, Font Size 14pt, Background light gray jika memungkinkan).
+2. SUB-JUDUL: "MATA PELAJARAN : [NAMA MAPEL]" (Centered, Bold, Underlined, Font Size 12pt).
+3. IDENTITAS (Rata Kiri, Margin Atas 20px):
+   - Nama Sekolah : ...................................
+   - Mata Pelajaran : [Isi Mapel]
+   - Kelas / Semester : [Isi Kelas] / Ganjil & Genap
+   - Tahun Pelajaran : [Isi Tahun]
+4. BAGIAN A: "CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025" (Background light gray, Bold).
+   - Teks Pengantar: "Pada akhir Fase [Fase], murid memiliki kemampuan sebagai berikut:"
+   - Jabarkan CP berdasarkan elemen secara mendalam: 
+     a. Pemahaman [Mapel] (Uraikan kompetensi sesuai regulasi 046/2025 untuk Mapel tersebut).
+     b. Keterampilan Proses (Wajib mencakup: Mengamati, Mempertanyakan dan Memprediksi, Merencanakan dan Melakukan Penyelidikan, Memproses, Menganalisis Data dan Informasi, Mengevaluasi dan Refleksi, Mengomunikasikan Hasil).
+5. BAGIAN B: "PROGRAM TAHUNAN" (Background light gray, Bold).
+   - Buat TABEL dengan kolom: No, Alur Tujuan Pembelajaran, Materi, Alokasi Waktu, Semester.
+   - Kelompokkan baris berdasarkan BAB (Misal: "BAB I : [JUDUL BAB]"). 
+   - Materi pokok WAJIB diberi highlight warna kuning (<span style="background-color: yellow;">Materi</span>).
+   - Alokasi Waktu ditulis dengan satuan "2 JP" atau sesuai distribusi yang logis.
+   - Kolom Semester diisi "I (Ganjil)" atau "II (Genap)".
+6. TOTAL JAM: Di akhir tabel, tambahkan baris footer yang menggabungkan kolom No hingga Materi, lalu isi "Total Jam Pelajaran" dan total JP di kolom Alokasi Waktu.
 
 ${SHARED_RULES}`,
 

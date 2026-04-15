@@ -128,9 +128,10 @@ export async function POST(req: Request) {
     if (docType === "PROTA" || docType === "Program Tahunan") {
       return NextResponse.json({
         questions: [
-            { id: 4, question: "Berapa total alokasi JP (Jam Pelajaran) selama satu tahun?", type: "chips", options: ["72 JP", "108 JP", "144 JP"], category: "data" },
+            { id: 4, question: "Berapa total alokasi JP (Jam Pelajaran) selama satu tahun?", type: "chips", options: ["72 JP", "108 JP", "144 JP", "180 JP"], category: "data" },
             { id: 5, question: "Tuliskan Tahun Pelajaran Berjalan:", type: "text", placeholder: "Misal: 2024/2025", category: "data" },
-            { id: 6, question: "Sebutkan daftar BAB/Materi utama untuk Semester 1 dan 2:", type: "text", placeholder: "Smt 1: BAB 1-3, Smt 2: BAB 4-6...", category: "data" }
+            { id: 6, question: "Sebutkan daftar BAB/Materi utama untuk Semester 1 (Ganjil) dan 2 (Genap):", type: "text", placeholder: "Smt 1: BAB 1-3, Smt 2: BAB 4-6...", category: "data" },
+            { id: 7, question: "Apakah ingin menyertakan rincian Capaian Pembelajaran (CP) sesuai Regulasi 046/2025?", type: "chips", options: ["Ya, Sertakan Lengkap", "Tidak, Hanya Tabel"], category: "data" }
         ]
       });
     }
