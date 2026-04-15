@@ -49,6 +49,32 @@ const SHARED_RULES = `
   </tr>
 </table>`;
 
+const MATH_RULES = `
+=== ATURAN KHUSUS MATEMATIKA (WAJIB) ===
+1. FORMAT PANGKAT: DILARANG menggunakan tanda "^". Gunakan tag HTML <sup> (contoh: x<sup>2</sup>).
+2. FORMAT SIMBOL: 
+   - Gunakan simbol "≤" untuk kurang dari sama dengan, bukan "\\leq".
+   - Gunakan simbol "≥" untuk lebih dari sama dengan, bukan "\\geq".
+   - Gunakan simbol "√" untuk akar, jangan gunakan kode "sqrt".
+3. DILARANG KERAS menggunakan format LaTeX seperti \\( ... \\) atau \\[ ... \\]. Gunakan teks biasa dan tag HTML.
+4. PILIHAN GANDA (A, B, C, D): Setiap soal pilihan ganda WAJIB memiliki opsi yang jelas dengan format:
+   A. [Opsi]
+   B. [Opsi]
+   C. [Opsi]
+   D. [Opsi]
+   (Jangan hanya menuliskan angkanya saja, harus ada huruf A, B, C, D).
+5. DILARANG menyertakan tanda backslash (\\) atau delimiters LaTeX di akhir kalimat atau rumus.
+6. FORMAT PECAHAN: Gunakan format mendatar (contoh: 3/4).
+
+=== DAFTAR KESALAHAN YANG HARUS DIHINDARI (REFLEKSI DIRI) ===
+- JANGAN menuliskan \\( x^2 \\) -> SALAH. 
+- TULISKAN x<sup>2</sup> -> BENAR.
+- JANGAN menuliskan \\leq atau \\geq -> SALAH.
+- TULISKAN ≤ atau ≥ -> BENAR.
+- JANGAN membiarkan soal matematika tanpa label A, B, C, D -> SALAH.
+`;
+
+
 function buildSystemPrompt(type: string, rawPrompt: string): string {
   // Check for Arabic context
   const isArabic = /bahasa\s*arab|pondok|tasykil|harokat/i.test(rawPrompt);
@@ -157,13 +183,21 @@ ${SHARED_RULES}`,
   };
 
   const isType = (t: string) => type.includes(t) || t.includes(type);
+  const isMath = /matematika|math|hitung|angka/i.test(rawPrompt) || /matematika|math/i.test(type);
 
-  if (isType("Program Semester") || isType("PROSEM")) return prompts["PROSEM"];
-  if (isType("Program Tahunan") || isType("PROTA")) return prompts["PROTA"];
-  if (isType("KKTP")) return prompts["KKTP"];
-  if (isType("Capaian Pembelajaran") || type === "CP") return prompts["CP"];
-  if (isType("LKPD")) return prompts["LKPD"];
-  return prompts["ATP"];
+  let finalPrompt = "";
+  if (isType("Program Semester") || isType("PROSEM")) finalPrompt = prompts["PROSEM"];
+  else if (isType("Program Tahunan") || isType("PROTA")) finalPrompt = prompts["PROTA"];
+  else if (isType("KKTP")) finalPrompt = prompts["KKTP"];
+  else if (isType("Capaian Pembelajaran") || type === "CP") finalPrompt = prompts["CP"];
+  else if (isType("LKPD")) finalPrompt = prompts["LKPD"];
+  else finalPrompt = prompts["ATP"];
+
+  if (isMath) {
+    finalPrompt = finalPrompt.replace("${SHARED_RULES}", `${MATH_RULES}\n\n\${SHARED_RULES}`);
+  }
+
+  return finalPrompt;
 }
 
 function extractTitle(type: string, rawPrompt: string): string {
