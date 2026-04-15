@@ -251,9 +251,11 @@ function extractTitle(type: string, rawPrompt: string): string {
   mapel = clean(mapel);
   kelas = clean(kelas).replace(/^(?:kelas|fase)\s*/i, "");
 
-  // Final sanitization
-  const finalMapel = (!mapel || mapel.toLowerCase().includes("lewati")) ? "Umum" : mapel;
-  const finalKelas = (!kelas || kelas.toLowerCase().includes("lewati")) ? "-" : kelas;
+  // Final sanitization with junk detection
+  const isJunkValue = (v: string) => !v || v === "." || v === "-" || v.toLowerCase().includes("lewati") || v.toLowerCase().includes("manual");
+
+  const finalMapel = isJunkValue(mapel) ? "Umum" : mapel;
+  const finalKelas = isJunkValue(kelas) ? "-" : kelas;
 
   // Standard Template: [TIPE] - Kelas [X] - [MAPEL]
   return `${type} - Kelas ${finalKelas} - ${finalMapel}`;
