@@ -22,6 +22,7 @@ const SHARED_RULES = `
 2. Diferensiasi: Berikan variasi aktivitas atau soal yang mencakup level LOTS hingga HOTS.
 3. Kontekstual: Hubungkan materi dengan kehidupan sehari-hari siswa di Indonesia.
 4. Profil Pelajar Pancasila: Integrasikan nilai-nilai karakter (Mandiri, Kreatif, Bernalar Kritis, dll) secara implisit maupun eksplisit.
+5. PRIORITAS REFERENSI USER: Jika dalam KONTEKS DATA GURU terdapat penanda "[FILE REFERENCE: ...]", Anda WAJIB memprioritaskan seluruh informasi, materi, dan BAB yang ada di dalam file tersebut sebagai sumber utama (source of truth). Ikuti gaya, istilah, dan struktur materi dari file tersebut untuk memuaskan kebutuhan spesifik user.
 
 === ATURAN TEKNIS WAJIB ===
 1. DILARANG KERAS menggunakan markdown code blocks (\`\`\`html). LANGSUNG MULAI DENGAN <div>.

@@ -52,13 +52,15 @@ export async function POST(req: Request) {
       Aturan Format:
       - Berikan respons HANYA dalam format JSON array of objects.
       - Gunakan bahasa Indonesia yang santun, profesional, dan berwibawa.
-      - "type" bisa berupa "chips", "multi-chips", atau "text".
+      - "type" bisa berupa "chips", "multi-chips", "text", atau "file".
+      - WAJIB Sertakan satu pertanyaan terakhir (id: 5000) yang menanyakan apakah user memiliki file referensi tambahan (PDF/Word/Gambar) dengan type: "file". Pertanyaan ini bersifat opsional.
 
       CONTOH FORMAT AI:
       {
         "questions": [
           { "id": 4, "question": "Metode kriteria apa yang ingin digunakan?", "type": "chips", "options": ["Interval Nilai", "Rubrik Deskripsi"] },
-          { "id": 5, "question": "Apa visi sekolah yang ingin diintegrasikan?", "type": "text" }
+          { "id": 5, "question": "Apa visi sekolah yang ingin diintegrasikan?", "type": "text" },
+          { "id": 5000, "question": "Punya file referensi tambahan (Modul/PDF)?", "type": "file" }
         ]
       }
     `;

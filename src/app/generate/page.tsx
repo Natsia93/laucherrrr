@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 interface Question {
   id: number;
   question: string;
-  type: "chips" | "multi-chips" | "text";
+  type: "chips" | "multi-chips" | "text" | "file";
   options?: string[];
   placeholder?: string;
   category: string;
@@ -31,6 +31,7 @@ function GenerateContent() {
   const [skipped, setSkipped] = useState<number[]>([]);
   const [showOther, setShowOther] = useState<Record<number, boolean>>({});
   const [selectedModel, setSelectedModel] = useState("deepseek");
+  const [fileExtracting, setFileExtracting] = useState<Record<number, boolean>>({});
 
   const mandatoryQuestions: Question[] = [
     { 
@@ -193,6 +194,37 @@ function GenerateContent() {
     setSkipped(prev => prev.filter(s => s !== id));
   };
 
+  const handleFileUpload = async (id: number, file: File) => {
+    if (!file) return;
+    
+    // Client-side guard for immediate feedback
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Format file terlalu besar. Maksimal 5MB untuk keamanan.");
+      return;
+    }
+
+    setFileExtracting(prev => ({ ...prev, [id]: true }));
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/extract-text", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.text) {
+        handleAnswer(id, `[FILE REFERENCE: ${file.name}] Content: ${data.text}`);
+      } else if (data.error) {
+        alert(data.error);
+      }
+    } catch (err) {
+      console.error("File upload failed:", err);
+      alert("Gagal membaca file. Pastikan format file benar.");
+    } finally {
+      setFileExtracting(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
   const toggleSkip = (id: number) => {
     const q = questions.find(q => q.id === id);
     if (q?.category === "mandatory") return;
@@ -337,6 +369,52 @@ function GenerateContent() {
                              />
                           </motion.div>
                         )}
+                     </div>
+                   ) : q.type === "file" ? (
+                     <div className="space-y-4">
+                        <div className={`p-8 border-2 border-dashed rounded-xl transition-all flex flex-col items-center justify-center gap-4 relative ${answers[q.id] ? 'bg-[#4d7537]/5 border-[#4d7537]' : 'bg-white dark:bg-[#1a2315] border-neutral-200 dark:border-[#3f612d]/30 hover:border-[#4d7537]'}`}>
+                           {fileExtracting[q.id] ? (
+                              <div className="flex flex-col items-center gap-2">
+                                 <Loader2 className="w-8 h-8 text-[#4d7537] animate-spin" />
+                                 <p className="text-sm font-medium">Mengekstrak teks...</p>
+                              </div>
+                           ) : answers[q.id] ? (
+                              <div className="flex flex-col items-center gap-2">
+                                 <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                                    <Sparkles className="w-6 h-6 text-emerald-500" />
+                                 </div>
+                                 <div className="text-center">
+                                    <p className="text-sm font-bold text-emerald-600">File Berhasil Dibaca!</p>
+                                    <p className="text-[10px] text-neutral-400 mt-1">{answers[q.id].split("]")[0].replace("[FILE REFERENCE: ", "")}</p>
+                                 </div>
+                                 <button 
+                                    onClick={() => handleAnswer(q.id, "")}
+                                    className="text-xs text-red-500 hover:text-red-600 font-bold mt-2 z-10"
+                                 >
+                                    Hapus File
+                                 </button>
+                              </div>
+                           ) : (
+                              <>
+                                 <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-white/5 flex items-center justify-center">
+                                    <Plus className="w-6 h-6 text-neutral-400" />
+                                 </div>
+                                 <div className="text-center">
+                                    <p className="text-sm font-bold">Klik untuk unggah file</p>
+                                    <p className="text-[10px] text-neutral-500 mt-1">PDF, DOCX, atau Gambar Modul</p>
+                                 </div>
+                                 <Input 
+                                    type="file" 
+                                    className="absolute inset-0 opacity-0 cursor-pointer" 
+                                    onChange={(e) => {
+                                       const file = e.target.files?.[0];
+                                       if (file) handleFileUpload(q.id, file);
+                                    }}
+                                    accept=".pdf,.docx,image/*"
+                                 />
+                              </>
+                           )}
+                        </div>
                      </div>
                    ) : (
                      <div className="relative">
