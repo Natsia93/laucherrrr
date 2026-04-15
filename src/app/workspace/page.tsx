@@ -273,12 +273,36 @@ function WorkspaceContent() {
         .curriculum-content [dir="rtl"] { direction: rtl; text-align: right; }
       `}</style>
 
-      <nav className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#0a0a0a] z-50 shrink-0">
+      <nav className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#0a0a0a] z-50 shrink-0 relative">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-neutral-400 hover:bg-white/5"><ChevronLeft className="w-5 h-5" /></Button>
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center shadow-lg"><BookOpen className="text-white w-4.5 h-4.5" /></div>
-            <span className="font-bricolage font-bold text-xl text-white">Dekstorio</span>
+            <span className="font-bricolage font-bold text-xl text-white hidden md:inline-block">Dekstorio</span>
+          </Link>
+        </div>
+
+        {/* Center Toggle Navigation */}
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-white/5 backdrop-blur-md rounded-lg p-1 border border-white/10">
+          <Link href="/dashboard">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-neutral-400 hover:text-white hover:bg-white/5 rounded-md h-8 text-[11px] font-medium transition-all"
+            >
+              <Folder className="w-3.5 h-3.5 mr-2" />
+              Penyimpanan File
+            </Button>
+          </Link>
+          <Link href="/">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-md h-8 text-[11px] font-medium transition-all shadow-lg shadow-[#4d7537]/20"
+            >
+              <Sparkles className="w-3.5 h-3.5 mr-2" />
+              AI Generate
+            </Button>
           </Link>
         </div>
         <div className="flex items-center gap-3">
