@@ -1,83 +1,82 @@
 "use client";
 
 import React from "react";
-import { Filter, Check } from "lucide-react";
+import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const CATEGORIES = [
-  { label: "Alur Tujuan Pembelajaran (ATP)", value: "ATP" },
-  { label: "Capaian Pembelajaran (CP)", value: "CP" },
-  { label: "Program Tahunan (PROTA)", value: "PROTA" },
-  { label: "Program Semester (PROSEM)", value: "PROSEM" },
-  { label: "LKPD", value: "LKPD" },
-  { label: "KKTP", value: "KKTP" },
+// The fixed sequence requested by the USER
+const SEQUENCE = [
+  "LKPD",
+  "ATP",
+  "CP",
+  "KKTP",
+  "PROSEM",
+  "PROTA",
+  null // null represents "Semua / All"
 ];
 
-export function DashboardFilter() {
+interface DashboardFilterProps {
+  availableCategories: string[];
+}
+
+export function DashboardFilter({ availableCategories }: DashboardFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get("category");
 
-  const setCategory = (category: string | null) => {
+  const cycleToNextCategory = () => {
+    // Current index in our sequence
+    const currentIndex = SEQUENCE.indexOf(currentCategory as any);
+    let nextIndex = (currentIndex + 1) % SEQUENCE.length;
+
+    // Smart Skip Logic: Cycle until we find an available category or reach "All"
+    // We try at most SEQUENCE.length times to avoid infinite loop
+    let attempts = 0;
+    while (attempts < SEQUENCE.length) {
+      const nextCat = SEQUENCE[nextIndex];
+      
+      // If next is "All" (null), it's always available
+      if (nextCat === null) break;
+      
+      // If nextCat is in our available list, we found it
+      if (availableCategories.includes(nextCat)) break;
+      
+      // Otherwise, move to next and try again
+      nextIndex = (nextIndex + 1) % SEQUENCE.length;
+      attempts++;
+    }
+
+    const finalNextCat = SEQUENCE[nextIndex];
     const params = new URLSearchParams(searchParams.toString());
-    if (category) {
-      params.set("category", category);
+    
+    if (finalNextCat) {
+      params.set("category", finalNextCat);
     } else {
       params.delete("category");
     }
+    
     router.push(`/dashboard?${params.toString()}`);
   };
 
-  const currentLabel = CATEGORIES.find(c => (typeof c === 'string' ? c : c.value) === currentCategory);
-  const labelText = currentLabel 
-    ? (typeof currentLabel === 'string' ? currentLabel : currentLabel.value) 
-    : "Filter";
+  // Label display
+  const labelText = currentCategory ? currentCategory : "Semua";
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-white dark:bg-[#10140d]/80 border border-[#dcdad1] dark:border-[#3f612d]/30 text-neutral-700 dark:text-[#d4e4c8] hover:bg-neutral-50 dark:hover:bg-[#1a2315] hover:text-neutral-900 dark:hover:text-white cursor-pointer h-10 px-4">
-        <Filter className="w-4 h-4 mr-2 text-[#4d7537] dark:text-[#89b867]" />
-        {currentCategory ? labelText : "Filter"}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64 bg-white dark:bg-[#10140d] border-[#dcdad1] dark:border-[#3f612d]/30 text-neutral-900 dark:text-[#f4f3ed]">
-        <DropdownMenuLabel className="font-sans text-xs text-neutral-500 uppercase tracking-widest">Kategori Dokumen</DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-neutral-100 dark:bg-[#3f612d]/10" />
-        <DropdownMenuItem 
-          onClick={() => setCategory(null)}
-          className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-[#1a2315]"
-        >
-          <div className="flex items-center justify-between w-full font-sans">
-            Semua Dokumen
-            {!currentCategory && <Check className="w-4 h-4 text-[#4d7537]" />}
-          </div>
-        </DropdownMenuItem>
-        {CATEGORIES.map((cat) => {
-          const label = typeof cat === 'string' ? cat : cat.label;
-          const value = typeof cat === 'string' ? cat : cat.value;
-          
-          return (
-            <DropdownMenuItem 
-              key={value} 
-              onClick={() => setCategory(value)}
-              className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-[#1a2315]"
-            >
-              <div className="flex items-center justify-between w-full font-sans">
-                {label}
-                {currentCategory === value && <Check className="w-4 h-4 text-[#4d7537]" />}
-              </div>
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Button 
+      onClick={cycleToNextCategory}
+      variant="outline" 
+      className="bg-white dark:bg-[#10140d]/80 border-[#dcdad1] dark:border-[#3f612d]/30 text-neutral-700 dark:text-[#d4e4c8] hover:bg-neutral-50 dark:hover:bg-[#1a2315] hover:text-neutral-900 dark:hover:text-white cursor-pointer h-10 px-4 transition-all active:scale-95 flex items-center gap-2 group"
+    >
+      <div className="relative">
+        <Filter className="w-4 h-4 text-[#4d7537] dark:text-[#89b867] group-hover:rotate-12 transition-transform" />
+        {currentCategory && (
+           <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#4d7537] rounded-full" />
+        )}
+      </div>
+      <span className="font-sans text-sm">
+        Filter: <span className="font-bold text-[#4d7537] dark:text-[#89b867]">{labelText}</span>
+      </span>
+    </Button>
   );
 }

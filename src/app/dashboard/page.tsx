@@ -42,6 +42,9 @@ export default async function DashboardPage(props: { searchParams: Promise<{ sea
     .where(eq(documentsTable.userId, user.id))
     .orderBy(desc(documentsTable.createdAt));
   
+  // Extract unique types present in user's documents
+  const availableCategories = Array.from(new Set(realDocuments.map(d => d.type)));
+  
   const filteredDocuments = realDocuments.filter(doc => {
     const matchesSearch = searchQuery ? doc.title.toLowerCase().includes(searchQuery.toLowerCase()) : true;
     const matchesCategory = categoryQuery ? doc.type === categoryQuery : true;
@@ -128,7 +131,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ sea
           </DashboardFadeIn>
           <div className="flex items-center gap-3">
             <Suspense fallback={<div className="h-10 w-24 bg-neutral-100 dark:bg-[#1a2315]/50 animate-pulse rounded-md" />}>
-              <DashboardFilter />
+              <DashboardFilter availableCategories={availableCategories} />
             </Suspense>
             <Link href="/">
               <Button className="bg-[#4d7537] text-white hover:bg-[#5a8b41] shadow-lg shadow-black/5 dark:shadow-[#3f612d]/20 border border-[#4d7537] dark:border-[#6b9d4f]/50 cursor-pointer h-10 px-4">
