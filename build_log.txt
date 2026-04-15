@@ -1,0 +1,47 @@
+
+> curricula@0.1.0 build
+> next build
+
+▲ Next.js 16.2.3 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 3 errors:
+./src/components/dashboard/DocumentTable.tsx:1:27
+You're importing a module that depends on `useEffect` into a React Server Component module. This API is only available in Client Components. To fix, mark the file (or its parent) with the `"use client"` directive.
+    Learn more: https://nextjs.org/docs/app/api-reference/directives/use-client
+Ecmascript file had an error
+
+Import trace:
+  Server Component:
+    ./src/components/dashboard/DocumentTable.tsx
+    ./src/app/dashboard/page.tsx
+
+
+./src/components/dashboard/DocumentTable.tsx:10:10
+You're importing a module that depends on `useRouter` into a React Server Component module. This API is only available in Client Components. To fix, mark the file (or its parent) with the `"use client"` directive.
+    Learn more: https://nextjs.org/docs/app/api-reference/directives/use-client
+Ecmascript file had an error
+
+Import trace:
+  Server Component:
+    ./src/components/dashboard/DocumentTable.tsx
+    ./src/app/dashboard/page.tsx
+
+
+./src/components/dashboard/DocumentTable.tsx:1:17
+You're importing a module that depends on `useState` into a React Server Component module. This API is only available in Client Components. To fix, mark the file (or its parent) with the `"use client"` directive.
+    Learn more: https://nextjs.org/docs/app/api-reference/directives/use-client
+Ecmascript file had an error
+
+Import trace:
+  Server Component:
+    ./src/components/dashboard/DocumentTable.tsx
+    ./src/app/dashboard/page.tsx
+
+
+    at <unknown> (./src/components/dashboard/DocumentTable.tsx:1:27)
+    at <unknown> (./src/components/dashboard/DocumentTable.tsx:10:10)
+    at <unknown> (./src/components/dashboard/DocumentTable.tsx:1:17)
