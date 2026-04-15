@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
 
 // Normalized sequence with fallbacks
-const SEQUENCE = [
+const SEQUENCE: { id: string | null; matches: string[] }[] = [
   { id: "LKPD", matches: ["LKPD"] },
   { id: "ATP", matches: ["ATP", "Alur Tujuan Pembelajaran (ATP)"] },
   { id: "CP", matches: ["CP", "Capaian Pembelajaran (CP)"] },
