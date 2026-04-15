@@ -44,11 +44,9 @@ export function DashboardFilter() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="bg-white dark:bg-[#10140d]/80 border-[#dcdad1] dark:border-[#3f612d]/30 text-neutral-700 dark:text-[#d4e4c8] hover:bg-neutral-50 dark:hover:bg-[#1a2315] hover:text-neutral-900 dark:hover:text-white cursor-pointer h-10 px-4">
-          <Filter className="w-4 h-4 mr-2 text-[#4d7537] dark:text-[#89b867]" />
-          {currentCategory ? labelText : "Filter"}
-        </Button>
+      <DropdownMenuTrigger className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-white dark:bg-[#10140d]/80 border border-[#dcdad1] dark:border-[#3f612d]/30 text-neutral-700 dark:text-[#d4e4c8] hover:bg-neutral-50 dark:hover:bg-[#1a2315] hover:text-neutral-900 dark:hover:text-white cursor-pointer h-10 px-4">
+        <Filter className="w-4 h-4 mr-2 text-[#4d7537] dark:text-[#89b867]" />
+        {currentCategory ? labelText : "Filter"}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 bg-white dark:bg-[#10140d] border-[#dcdad1] dark:border-[#3f612d]/30 text-neutral-900 dark:text-[#f4f3ed]">
         <DropdownMenuLabel className="font-sans text-xs text-neutral-500 uppercase tracking-widest">Kategori Dokumen</DropdownMenuLabel>
