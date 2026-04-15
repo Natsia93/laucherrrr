@@ -127,7 +127,8 @@ function GenerateContent() {
         const filteredAiQuestions = (data.questions || []).filter((q: Question) => {
            const lowerQ = q.question.toLowerCase();
            const isJunk = lowerQ.includes("kelas") || lowerQ.includes("fase") || lowerQ.includes("mata pelajaran") || 
-                          lowerQ.includes("semester") || lowerQ.includes("jp") || lowerQ.includes("jam pelajaran");
+                          lowerQ.includes("semester") || lowerQ.includes("jp") || lowerQ.includes("jam pelajaran") ||
+                          lowerQ.includes("materi spesifik") || lowerQ.includes("topik");
            
            // Extra junk for LKPD since we have dedicated fields now
            const isLkpdJunk = docType === "LKPD" && (lowerQ.includes("total soal") || lowerQ.includes("jumlah soal") || lowerQ.includes("jenis soal") || lowerQ.includes("bentuk soal"));

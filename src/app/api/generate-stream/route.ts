@@ -249,23 +249,28 @@ function extractTitle(type: string, rawPrompt: string): string {
 
   mapel = clean(mapel);
   kelas = clean(kelas);
+  const materi = clean(getAnswerById("2001"));
 
   // Final sanitization with rigorous junk detection
   const isMeaningless = (v: string) => {
     const t = v.trim();
     if (!t) return true;
-    if (t.length < 2 && !/^\d+$/.test(t)) return true; // Single char junk (except if it's a number like class "9")
+    if (t.length < 2 && !/^\d+$/.test(t)) return true;
     const lower = t.toLowerCase();
     if (lower.includes("lewati") || lower.includes("manual") || lower.includes("rancangan")) return true;
-    if (/^[.\-\s]+$/.test(t)) return true; // Only dots, dashes or spaces
+    if (/^[.\-\s]+$/.test(t)) return true;
     return false;
   };
 
   const finalMapel = isMeaningless(mapel) ? "Umum" : mapel;
   const finalKelas = isMeaningless(kelas) ? "-" : kelas;
+  const finalMateri = isMeaningless(materi) ? "" : materi;
 
-  // Standard Template: [TIPE] - Kelas [X] - [MAPEL]
-  return `${type} - Kelas ${finalKelas} - ${finalMapel}`;
+  // New Detailed Template: [TIPE] - Kelas [X] - Mapel [MAPEL] - [MATERI]
+  let title = `${type} - Kelas ${finalKelas} - Mapel ${finalMapel}`;
+  if (finalMateri) title += ` - ${finalMateri}`;
+  
+  return title;
 }
 
 function cleanAIOutput(text: string): string {
