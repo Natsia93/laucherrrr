@@ -346,7 +346,7 @@ function WorkspaceContent() {
               )}
             </AnimatePresence>
           </div>
-          {isGenerated && !loading && (
+          {isGenerated && !loading && !docId && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-12 mb-32 pb-10">
               <Button onClick={() => handleSendMessage(true)} className="bg-transparent border-2 border-[#4d7537] text-[#4d7537] hover:bg-[#4d7537] hover:text-white rounded-full px-14 h-16 font-bold text-lg shadow-2xl shadow-[#4d7537]/20 transition-all hover:scale-105 active:scale-95">
                 <Sparkles className="w-6 h-6 mr-3" /> Lanjutkan Penulisan
