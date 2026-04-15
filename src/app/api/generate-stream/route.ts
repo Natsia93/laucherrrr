@@ -214,35 +214,44 @@ function extractTitle(type: string, rawPrompt: string): string {
   let mapel = "";
   let kelas = "";
 
-  // 1. Process Mapel (Cleaning from any instructional leftovers)
-  const mapelPart = parts.find(p => p.toLowerCase().includes("mata pelajaran") || p.toLowerCase().includes("mapel"));
-  if (mapelPart) {
-    const split = mapelPart.split(":");
-    mapel = split[split.length - 1].trim();
-    
-    // Hard cleaning for subject
-    mapel = mapel
+  // 1. Parsing by Precise IDs from questionnaire (1001: Subject, 1002: Grade, 2001: Specific Material)
+  const getAnswerById = (id: string) => {
+    const part = parts.find(p => p.startsWith(`${id}.`));
+    if (!part) return "";
+    const split = part.split(":");
+    return split[split.length - 1].trim();
+  };
+
+  mapel = getAnswerById("1001") || getAnswerById("2001");
+  kelas = getAnswerById("1002");
+
+  // 2. Fallback to substring search if IDs are not found
+  if (!mapel) {
+    const mp = parts.find(p => p.toLowerCase().includes("mata pelajaran") || p.toLowerCase().includes("mapel"));
+    if (mp) mapel = mp.split(":").pop()?.trim() || "";
+  }
+  if (!kelas) {
+    const kp = parts.find(p => p.toLowerCase().includes("kelas"));
+    if (kp) kelas = kp.split(":").pop()?.trim() || "";
+  }
+
+  // 3. AGGRESSIVE CLEANING
+  const clean = (text: string) => {
+    return text
       .replace(/^(?:apa yang ingin Anda rancang\?|rancangan|masukkan|tuliskan|mapel|mata pelajaran)\s*/i, "")
       .replace(/^(?:isi manual|lewati|buatkan dokumen|lengkap)\s*/i, "")
+      .replace(/\(isi manual\)/gi, "")
+      .replace(/Buatkan dokumen LKPD LENGKAP/gi, "")
       .replace(/[?:]/g, "")
       .replace(/[:\s\-]+$/, "")
       .replace(/^[:\s\-]+/, "")
       .trim();
-  }
+  };
 
-  // 2. Process Kelas (Cleaning grade redundancy)
-  const kelasPart = parts.find(p => p.toLowerCase().includes("kelas"));
-  if (kelasPart) {
-    const split = kelasPart.split(":");
-    let val = split[split.length - 1].trim();
-    val = val
-      .replace(/^(?:kelas|fase|lewati|isi manual)\s*/i, "")
-      .replace(/[?:]/g, "")
-      .trim();
-    kelas = val;
-  }
+  mapel = clean(mapel);
+  kelas = clean(kelas).replace(/^(?:kelas|fase)\s*/i, "");
 
-  // Final sanitization for empty or "junk" values
+  // Final sanitization
   const finalMapel = (!mapel || mapel.toLowerCase().includes("lewati")) ? "Umum" : mapel;
   const finalKelas = (!kelas || kelas.toLowerCase().includes("lewati")) ? "-" : kelas;
 
