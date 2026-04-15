@@ -191,7 +191,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ sea
         </div>
 
         <DashboardFadeIn delay={0.5}>
-          <Card className="bg-white dark:bg-[#10140d]/80 border-[#dcdad1] dark:border-[#3f612d]/30 overflow-hidden relative backdrop-blur-sm shadow-sm transition-colors">
+          <Card className="bg-white dark:bg-[#10140d]/80 border-[#dcdad1] dark:border-[#3f612d]/30 overflow-hidden relative backdrop-blur-sm shadow-sm transition-colors scrollbar-hide">
             <DocumentTable documents={displayDocuments} />
           </Card>
         </DashboardFadeIn>

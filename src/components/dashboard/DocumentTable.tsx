@@ -160,7 +160,7 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
         )}
       </AnimatePresence>
 
-      <div className="overflow-x-auto scrollbar-hide">
+      <div className="overflow-x-auto overflow-y-hidden scrollbar-hide">
         <Table>
           <TableHeader className="bg-neutral-50 dark:bg-[#1a2315]/50 border-b border-[#dcdad1] dark:border-[#3f612d]/30">
             <TableRow className="hover:bg-transparent border-none">
@@ -178,7 +178,7 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
               <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans text-right px-6">Aksi</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="min-h-[400px]">
             <AnimatePresence mode="popLayout" initial={false}>
               {filteredDocuments.length === 0 ? (
                 <TableRow>
