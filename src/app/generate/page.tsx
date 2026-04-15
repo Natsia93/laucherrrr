@@ -425,12 +425,13 @@ function GenerateContent() {
                                     <p className="text-sm font-bold">Klik untuk unggah file</p>
                                     <p className="text-[10px] text-neutral-500 mt-1">PDF, DOCX, atau Gambar Modul</p>
                                  </div>
-                                 <Input 
+                                 <input 
                                     type="file" 
-                                    className="absolute inset-0 opacity-0 cursor-pointer" 
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
                                     onChange={(e) => {
                                        const file = e.target.files?.[0];
                                        if (file) handleFileUpload(q.id, file);
+                                       e.target.value = ''; // Reset to allow same file re-upload
                                     }}
                                     accept=".pdf,.docx,image/*"
                                  />
