@@ -14,12 +14,12 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 
 const CATEGORIES = [
-  "Alur Tujuan Pembelajaran (ATP)",
-  "Capaian Pembelajaran (CP)",
-  "Program Tahunan",
-  "Program Semester",
-  "LKPD",
-  "KKTP",
+  { label: "Alur Tujuan Pembelajaran (ATP)", value: "ATP" },
+  { label: "Capaian Pembelajaran (CP)", value: "CP" },
+  { label: "Program Tahunan (PROTA)", value: "PROTA" },
+  { label: "Program Semester (PROSEM)", value: "PROSEM" },
+  { label: "LKPD", value: "LKPD" },
+  { label: "KKTP", value: "KKTP" },
 ];
 
 export function DashboardFilter() {
@@ -37,15 +37,20 @@ export function DashboardFilter() {
     router.push(`/dashboard?${params.toString()}`);
   };
 
+  const currentLabel = CATEGORIES.find(c => (typeof c === 'string' ? c : c.value) === currentCategory);
+  const labelText = currentLabel 
+    ? (typeof currentLabel === 'string' ? currentLabel : currentLabel.value) 
+    : "Filter";
+
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>
         <Button variant="outline" className="bg-white dark:bg-[#10140d]/80 border-[#dcdad1] dark:border-[#3f612d]/30 text-neutral-700 dark:text-[#d4e4c8] hover:bg-neutral-50 dark:hover:bg-[#1a2315] hover:text-neutral-900 dark:hover:text-white cursor-pointer h-10 px-4">
           <Filter className="w-4 h-4 mr-2 text-[#4d7537] dark:text-[#89b867]" />
-          {currentCategory ? "Terfilter" : "Filter"}
+          {currentCategory ? labelText : "Filter"}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-[#10140d] border-[#dcdad1] dark:border-[#3f612d]/30 text-neutral-900 dark:text-[#f4f3ed]">
+      <DropdownMenuContent align="end" className="w-64 bg-white dark:bg-[#10140d] border-[#dcdad1] dark:border-[#3f612d]/30 text-neutral-900 dark:text-[#f4f3ed]">
         <DropdownMenuLabel className="font-sans text-xs text-neutral-500 uppercase tracking-widest">Kategori Dokumen</DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-neutral-100 dark:bg-[#3f612d]/10" />
         <DropdownMenuItem 
@@ -57,18 +62,23 @@ export function DashboardFilter() {
             {!currentCategory && <Check className="w-4 h-4 text-[#4d7537]" />}
           </div>
         </DropdownMenuItem>
-        {CATEGORIES.map((cat) => (
-          <DropdownMenuItem 
-            key={cat} 
-            onClick={() => setCategory(cat)}
-            className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-[#1a2315]"
-          >
-            <div className="flex items-center justify-between w-full font-sans">
-              {cat}
-              {currentCategory === cat && <Check className="w-4 h-4 text-[#4d7537]" />}
-            </div>
-          </DropdownMenuItem>
-        ))}
+        {CATEGORIES.map((cat) => {
+          const label = typeof cat === 'string' ? cat : cat.label;
+          const value = typeof cat === 'string' ? cat : cat.value;
+          
+          return (
+            <DropdownMenuItem 
+              key={value} 
+              onClick={() => setCategory(value)}
+              className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-[#1a2315]"
+            >
+              <div className="flex items-center justify-between w-full font-sans">
+                {label}
+                {currentCategory === value && <Check className="w-4 h-4 text-[#4d7537]" />}
+              </div>
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );

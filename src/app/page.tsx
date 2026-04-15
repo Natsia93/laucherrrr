@@ -265,10 +265,10 @@ export default function Home() {
                     className="h-9 pl-3 pr-8 rounded-none text-xs font-normal border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-[#141414] text-neutral-600 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-white appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#4d7537] transition-all"
                   >
                     <option value="" disabled>Pilih Tipe Dokumen</option>
-                    <option value="Capaian Pembelajaran (CP)">Capaian Pembelajaran (CP)</option>
-                    <option value="Alur Tujuan Pembelajaran (ATP)">Alur Tujuan Pembelajaran (ATP)</option>
-                    <option value="Program Tahunan">Program Tahunan</option>
-                    <option value="Program Semester">Program Semester</option>
+                    <option value="CP">Capaian Pembelajaran (CP)</option>
+                    <option value="ATP">Alur Tujuan Pembelajaran (ATP)</option>
+                    <option value="PROTA">Program Tahunan (PROTA)</option>
+                    <option value="PROSEM">Program Semester (PROSEM)</option>
                     <option value="LKPD">LKPD</option>
                     <option value="KKTP">KKTP</option>
                   </select>
@@ -296,10 +296,10 @@ export default function Home() {
           className="flex flex-wrap justify-center gap-3 mt-8"
         >
           {[
-            { label: "CP", value: "Capaian Pembelajaran (CP)" },
-            { label: "ATP", value: "Alur Tujuan Pembelajaran (ATP)" },
-            { label: "Prosem", value: "Program Semester" },
-            { label: "Prota", value: "Program Tahunan" },
+            { label: "CP", value: "CP" },
+            { label: "ATP", value: "ATP" },
+            { label: "Prosem", value: "PROSEM" },
+            { label: "Prota", value: "PROTA" },
             { label: "KKTP", value: "KKTP" },
             { label: "LKPD", value: "LKPD" },
           ].map((tag) => (
