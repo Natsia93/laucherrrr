@@ -75,6 +75,17 @@ function GenerateContent() {
         
         let initialQuestions = [...mandatoryQuestions];
 
+        if (["Capaian Pembelajaran (CP)", "CP"].includes(docType)) {
+           initialQuestions = initialQuestions.filter(q => q.id !== 1005);
+           initialQuestions.push({
+              id: 1004,
+              question: "Pilih Semester yang ingin di-generate:",
+              type: "chips",
+              options: ["Semester Ganjil", "Semester Genap", "Ganjil & Genap"],
+              category: "mandatory"
+           });
+        }
+
         if (docType === "LKPD") {
            initialQuestions = initialQuestions.filter(q => q.id !== 1005);
            initialQuestions.push({
@@ -114,7 +125,7 @@ function GenerateContent() {
            });
         }
 
-        if (["Alur Tujuan Pembelajaran (ATP)", "Capaian Pembelajaran (CP)", "KKTP", "ATP", "CP"].includes(docType)) {
+        if (["Alur Tujuan Pembelajaran (ATP)", "KKTP", "ATP"].includes(docType)) {
            initialQuestions.push({
               id: 1004,
               question: "Pilih Semester yang ingin di-generate:",
