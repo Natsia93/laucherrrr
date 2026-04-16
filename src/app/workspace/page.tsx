@@ -10,7 +10,8 @@ import Link from "next/link";
 import { 
   BookOpen, ChevronLeft, Send, Sparkles, Download, 
   History, Loader2, CheckCircle2, Brain, FileText, 
-  PenTool, Save, Clock, Zap, Folder, XCircle
+  PenTool, Save, Clock, Zap, Folder, XCircle,
+  ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,14 +44,23 @@ function WorkspaceContent() {
   const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
   const hasStarted = useRef(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const contentRef = useRef("");
   const docAreaRef = useRef<HTMLDivElement>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [zoomLevel, setZoomLevel] = useState(100);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return mins > 0 ? `${mins}m ${secs < 10 ? '0' : ''}${secs}s` : `${secs}s`;
+  };
+
+  const handleZoom = (direction: 'in' | 'out') => {
+    setZoomLevel(prev => {
+      if (direction === 'in') return Math.min(prev + 10, 150);
+      return Math.max(prev - 10, 50);
+    });
   };
 
   const stopGeneration = () => {
@@ -208,9 +218,7 @@ function WorkspaceContent() {
     if (!isContinue) setMessages(prev => [...prev, { role: "user", text: textToSend }]);
     setChatInput("");
     
-    // Jangan tambah enter jika sedang di tengah tag HTML
     if (isContinue) {
-      // Hilangkan tag penutup yang mungkin terpotong agar nyambung
       contentRef.current = docContent.replace(/(<\/td>|<\/tr>|<\/tbody>|<\/table>|<\/div>|<\/body>|<\/html>|\s+)$/gi, " ");
     }
     await streamGenerate(contextPrompt, isContinue);
@@ -326,6 +334,28 @@ function WorkspaceContent() {
           </Link>
         </div>
         <div className="flex items-center gap-3">
+          {/* Zoom Controls */}
+          <div className="hidden md:flex items-center gap-1 bg-secondary rounded-lg p-1 border border-border">
+            <Button variant="ghost" size="icon" onClick={() => handleZoom('out')} className="h-7 w-7 text-muted-foreground hover:text-foreground">
+              <ZoomOut className="w-3.5 h-3.5" />
+            </Button>
+            <span className="text-[10px] font-bold text-muted-foreground w-8 text-center">{zoomLevel}%</span>
+            <Button variant="ghost" size="icon" onClick={() => handleZoom('in')} className="h-7 w-7 text-muted-foreground hover:text-foreground">
+              <ZoomIn className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+
+          {/* Sidebar Toggle (Desktop) */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+            className="hidden md:flex h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary"
+            title={isSidebarCollapsed ? "Tampilkan Sidebar" : "Sembunyikan Sidebar"}
+          >
+            {isSidebarCollapsed ? <PanelRightOpen className="w-4 h-4" /> : <PanelRightClose className="w-4 h-4" />}
+          </Button>
+
           <ThemeToggle />
           <Button onClick={exportToWord} size="sm" className="bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-lg shadow-xl shadow-[#4d7537]/20 border-none transition-all active:scale-95">
              <Download className="w-4 h-4 mr-2" /> Export .doc
@@ -335,7 +365,10 @@ function WorkspaceContent() {
 
       <main className="flex-1 flex overflow-hidden min-h-0 relative">
         <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto p-8 md:p-12 text-center bg-background scroll-hide">
-          <div className="a4-paper curriculum-content relative inline-block text-left w-full max-w-[210mm]">
+          <div 
+            className="a4-paper curriculum-content relative inline-block text-left w-full max-w-[210mm] origin-top transition-transform duration-200"
+            style={{ transform: `scale(${zoomLevel / 100})` }}
+          >
             <AnimatePresence mode="wait">
               {displayedContent ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
@@ -349,16 +382,14 @@ function WorkspaceContent() {
               )}
             </AnimatePresence>
           </div>
-          {isGenerated && !loading && !docId && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-12 mb-32 pb-10">
-              <Button onClick={() => handleSendMessage(true)} className="bg-transparent border-2 border-[#4d7537] text-[#4d7537] hover:bg-[#4d7537] hover:text-white rounded-full px-14 h-16 font-bold text-lg shadow-2xl shadow-[#4d7537]/20 transition-all hover:scale-105 active:scale-95">
-                <Sparkles className="w-6 h-6 mr-3" /> Lanjutkan Penulisan
-              </Button>
-            </motion.div>
-          )}
+          {/* Extra bottom space for scrolling */}
+          {displayedContent && <div className="h-32" />}
         </div>
 
-        <div className={`fixed inset-0 z-[100] md:relative md:inset-auto md:z-10 w-full md:w-[420px] border-l border-border bg-card flex flex-col transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
+        {/* Sidebar */}
+        <div className={`fixed inset-0 z-[100] md:relative md:inset-auto md:z-10 border-l border-border bg-card flex flex-col transition-all duration-300 ${
+          isSidebarOpen ? 'translate-x-0 w-full' : 'translate-x-full w-full md:translate-x-0'
+        } ${isSidebarCollapsed ? 'md:w-0 md:border-l-0 md:overflow-hidden' : 'md:w-[420px]'}`}>
           <div className="p-5 border-b border-border bg-secondary/50 flex items-center justify-between">
             <h2 className="font-bold text-lg text-foreground font-bricolage flex items-center gap-2"><Sparkles className="w-5 h-5 text-[#4d7537]" /> AI Assistant</h2>
             <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground" onClick={() => setIsSidebarOpen(false)}><XCircle className="w-5 h-5" /></Button>
@@ -371,6 +402,18 @@ function WorkspaceContent() {
                 <div className={`p-4 rounded-xl text-[13px] leading-relaxed max-w-[85%] border shadow-xl ${m.role === 'user' ? 'bg-[#4d7537]/70 backdrop-blur-md border-border text-white' : 'bg-secondary/50 border-border text-foreground'}`}>{m.text}</div>
               </motion.div>
             ))}
+
+            {/* Continue Button inside sidebar */}
+            {isGenerated && !loading && !docId && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pt-2">
+                <Button 
+                  onClick={() => handleSendMessage(true)} 
+                  className="w-full bg-transparent border-2 border-[#4d7537] text-[#4d7537] hover:bg-[#4d7537] hover:text-white rounded-xl h-12 font-bold shadow-lg shadow-[#4d7537]/10 transition-all active:scale-95"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" /> Lanjutkan Penulisan
+                </Button>
+              </motion.div>
+            )}
           </div>
           
           <div className="p-6 bg-card border-t border-border">
@@ -382,6 +425,7 @@ function WorkspaceContent() {
         </div>
       </main>
       
+      {/* Mobile FAB for sidebar */}
       {!isSidebarOpen && <Button onClick={() => setIsSidebarOpen(true)} className="fixed bottom-6 right-6 z-50 md:hidden w-16 h-16 rounded-full bg-[#4d7537] text-white shadow-2xl flex items-center justify-center p-0"><Sparkles className="w-8 h-8" /></Button>}
     </div>
   );
