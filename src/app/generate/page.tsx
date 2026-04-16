@@ -302,35 +302,7 @@ function GenerateContent() {
         </header>
 
         <div className="space-y-12">
-           <section className="relative group">
-              <div className="flex items-center justify-between mb-4">
-                 <h2 className="text-lg font-bold flex gap-3 items-start">
-                   <span className="text-[#4d7537]">A.</span> 
-                   Pilih Otak AI Perancang
-                 </h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                 {[
-                   { id: "gemini", name: "Gemini 2.0 Flash", desc: "Super cepat & kreatif", icon: Zap },
-                   { id: "deepseek", name: "DeepSeek V3", desc: "Logika kuat & rapi", icon: Brain }
-                 ].map(m => (
-                   <button
-                     key={m.id}
-                     onClick={() => setSelectedModel(m.id)}
-                     className={`p-4 rounded-xl border text-left transition-all flex items-start gap-3 ${selectedModel === m.id ? 'bg-[#4d7537]/5 border-[#4d7537] ring-1 ring-[#4d7537]' : 'bg-white dark:bg-[#1a2315] border-neutral-200 dark:border-[#3f612d]/30 hover:border-[#4d7537]'}`}
-                   >
-                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${selectedModel === m.id ? 'bg-[#4d7537] text-white' : 'bg-neutral-100 dark:bg-[#080b06] text-neutral-400'}`}>
-                       <m.icon className="w-5 h-5" />
-                     </div>
-                     <div>
-                       <div className={`font-bold text-sm ${selectedModel === m.id ? 'text-[#4d7537]' : ''}`}>{m.name}</div>
-                       <div className="text-[11px] text-neutral-500">{m.desc}</div>
-                     </div>
-                   </button>
-                 ))}
-              </div>
-              <div className="absolute -bottom-6 left-0 w-full h-[1px] bg-neutral-100 dark:bg-[#3f612d]/10" />
-           </section>
+
 
            {questions.map((q, idx) => (
              <section key={q.id} className="relative group">
