@@ -241,20 +241,20 @@ function WorkspaceContent() {
           <Zap className="w-8 h-8 text-white" />
         </div>
       </div>
-      <h3 className="text-xl font-bold text-white mb-2 font-bricolage tracking-tight">AI Sedang Menyusun Dokumen</h3>
-      <p className="text-sm text-neutral-400 mb-10 flex items-center gap-2">
+      <h3 className="text-xl font-bold text-foreground mb-2 font-bricolage tracking-tight">AI Sedang Menyusun Dokumen</h3>
+      <p className="text-sm text-muted-foreground mb-10 flex items-center gap-2">
         <Clock className="w-4 h-4" /> {formatTime(elapsedTime)}
       </p>
       
       <div className="w-full max-w-sm space-y-3 mb-12">
         {PROGRESS_STAGES.map((s, i) => (
-          <div key={i} className={`flex items-center gap-3 p-4 rounded-xl border transition-all duration-500 ${i <= progressStage ? 'bg-[#4d7537]/10 border-[#4d7537]/30 shadow-md' : 'opacity-20 border-white/5'}`}>
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center ${i <= progressStage ? 'bg-[#4d7537] text-white shadow-lg' : 'bg-white/5'}`}>
+          <div key={i} className={`flex items-center gap-3 p-4 rounded-xl border transition-all duration-500 ${i <= progressStage ? 'bg-[#4d7537]/10 border-[#4d7537]/30 shadow-md' : 'opacity-20 border-border'}`}>
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center ${i <= progressStage ? 'bg-[#4d7537] text-white shadow-lg' : 'bg-secondary'}`}>
               {i < progressStage ? <CheckCircle2 className="w-5 h-5" /> : <s.icon className="w-4.5 h-4.5" />}
             </div>
             <div>
-              <p className="text-sm font-bold text-white leading-none">{s.label}</p>
-              {i === progressStage && <p className="text-[10px] text-neutral-400 mt-1">{s.description}</p>}
+              <p className="text-sm font-bold text-foreground leading-none">{s.label}</p>
+              {i === progressStage && <p className="text-[10px] text-muted-foreground mt-1">{s.description}</p>}
             </div>
           </div>
         ))}
@@ -271,7 +271,7 @@ function WorkspaceContent() {
   );
 
   return (
-    <div className="min-h-screen bg-[#050505] flex flex-col h-screen overflow-hidden text-neutral-200">
+    <div className="min-h-screen bg-background flex flex-col h-screen overflow-hidden text-foreground">
       <style>{`
         .scroll-hide { scrollbar-width: none; -ms-overflow-style: none; }
         .scroll-hide::-webkit-scrollbar { display: none; }
@@ -280,7 +280,7 @@ function WorkspaceContent() {
           min-height: 297mm;
           background: white !important;
           color: black !important;
-          box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+          box-shadow: 0 40px 100px rgba(0,0,0,0.1);
           padding: 25mm 20mm;
           margin: 40px auto;
           font-family: 'Times New Roman', serif;
@@ -293,22 +293,22 @@ function WorkspaceContent() {
         .curriculum-content [dir="rtl"] { direction: rtl; text-align: right; }
       `}</style>
 
-      <nav className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#0a0a0a] z-50 shrink-0 relative">
+      <nav className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/50 backdrop-blur-md z-50 shrink-0 relative">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-neutral-400 hover:bg-white/5"><ChevronLeft className="w-5 h-5" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground hover:bg-secondary"><ChevronLeft className="w-5 h-5" /></Button>
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center shadow-lg"><BookOpen className="text-white w-4.5 h-4.5" /></div>
-            <span className="font-bricolage font-bold text-xl text-white hidden md:inline-block">Dekstorio</span>
+            <span className="font-bricolage font-bold text-xl text-foreground hidden md:inline-block">Dekstorio</span>
           </Link>
         </div>
 
         {/* Center Toggle Navigation */}
-        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-white/5 backdrop-blur-md rounded-lg p-1 border border-white/10">
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-secondary backdrop-blur-md rounded-lg p-1 border border-border">
           <Link href="/dashboard">
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-neutral-400 hover:text-white hover:bg-white/5 rounded-md h-8 text-[11px] font-medium transition-all"
+              className="text-muted-foreground hover:text-foreground hover:bg-background/50 rounded-md h-8 text-[11px] font-medium transition-all"
             >
               <Folder className="w-3.5 h-3.5 mr-2" />
               Penyimpanan File
@@ -334,7 +334,7 @@ function WorkspaceContent() {
       </nav>
 
       <main className="flex-1 flex overflow-hidden min-h-0 relative">
-        <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto p-8 md:p-12 text-center bg-[#050505] scroll-hide">
+        <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto p-8 md:p-12 text-center bg-background scroll-hide">
           <div className="a4-paper curriculum-content relative inline-block text-left w-full max-w-[210mm]">
             <AnimatePresence mode="wait">
               {displayedContent ? (
@@ -343,7 +343,7 @@ function WorkspaceContent() {
                 />
               ) : loading ? renderProgressIndicator() : (
                 <div className="flex flex-col items-center justify-center min-h-[900px] opacity-10 py-20">
-                   <BookOpen className="w-16 h-16 text-white mb-4" />
+                   <BookOpen className="w-16 h-16 text-foreground mb-4" />
                    <p className="text-xl font-bold">Menunggu Konteks...</p>
                 </div>
               )}
@@ -358,24 +358,24 @@ function WorkspaceContent() {
           )}
         </div>
 
-        <div className={`fixed inset-0 z-[100] md:relative md:inset-auto md:z-10 w-full md:w-[420px] border-l border-white/5 bg-[#0a0a0a] flex flex-col transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
-          <div className="p-5 border-b border-white/5 bg-white/5 flex items-center justify-between">
-            <h2 className="font-bold text-lg text-white font-bricolage flex items-center gap-2"><Sparkles className="w-5 h-5 text-[#4d7537]" /> AI Assistant</h2>
-            <Button variant="ghost" size="icon" className="md:hidden text-neutral-400" onClick={() => setIsSidebarOpen(false)}><XCircle className="w-5 h-5" /></Button>
+        <div className={`fixed inset-0 z-[100] md:relative md:inset-auto md:z-10 w-full md:w-[420px] border-l border-border bg-card flex flex-col transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
+          <div className="p-5 border-b border-border bg-secondary/50 flex items-center justify-between">
+            <h2 className="font-bold text-lg text-foreground font-bricolage flex items-center gap-2"><Sparkles className="w-5 h-5 text-[#4d7537]" /> AI Assistant</h2>
+            <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground" onClick={() => setIsSidebarOpen(false)}><XCircle className="w-5 h-5" /></Button>
           </div>
           
           <div className="flex-1 overflow-y-auto p-6 space-y-6 scroll-hide">
             {messages.map((m, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-lg ${m.role === 'user' ? 'bg-white/5 text-white border border-white/10' : 'bg-[#4d7537] text-white'}`}>{m.role === 'user' ? 'U' : <Sparkles className="w-5 h-5" />}</div>
-                <div className={`p-4 rounded-xl text-[13px] leading-relaxed max-w-[85%] border shadow-xl ${m.role === 'user' ? 'bg-[#4d7537]/70 backdrop-blur-md border-white/10 text-white' : 'bg-white/5 border-white/5 text-neutral-300'}`}>{m.text}</div>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-lg ${m.role === 'user' ? 'bg-secondary text-foreground border border-border' : 'bg-[#4d7537] text-white'}`}>{m.role === 'user' ? 'U' : <Sparkles className="w-5 h-5" />}</div>
+                <div className={`p-4 rounded-xl text-[13px] leading-relaxed max-w-[85%] border shadow-xl ${m.role === 'user' ? 'bg-[#4d7537]/70 backdrop-blur-md border-border text-white' : 'bg-secondary/50 border-border text-foreground'}`}>{m.text}</div>
               </motion.div>
             ))}
           </div>
           
-          <div className="p-6 bg-[#0a0a0a] border-t border-white/5">
-            <div className="relative flex items-center bg-white/5 border border-white/10 rounded-xl p-2 shadow-inner">
-              <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Tulis instruksi revisi..." className="border-none focus-visible:ring-0 text-sm bg-transparent text-white" />
+          <div className="p-6 bg-card border-t border-border">
+            <div className="relative flex items-center bg-background border border-border rounded-xl p-2 shadow-inner">
+              <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Tulis instruksi revisi..." className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground" />
               <Button onClick={() => handleSendMessage()} disabled={loading} className="h-11 w-11 bg-[#4d7537] rounded-lg shadow-lg transition-transform hover:scale-105"><Send className="w-5 h-5" /></Button>
             </div>
           </div>
@@ -389,7 +389,7 @@ function WorkspaceContent() {
 
 export default function WorkspacePage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#050505]"><Loader2 className="w-12 h-12 animate-spin text-[#4d7537]" /></div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-background"><Loader2 className="w-12 h-12 animate-spin text-[#4d7537]" /></div>}>
       <WorkspaceContent />
     </Suspense>
   );
