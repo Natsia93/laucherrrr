@@ -617,28 +617,22 @@ Konten: ${rawContext || "Kosong"}
 
 ${isMajorMismatch ? `
 === PERINGATAN: MISMATCH KONTEKS (PENTING) ===
-User meminta revisi yang sangat berbeda dengan dokumen saat ini (misal: ganti mapel atau ganti jenis dokumen).
-TUGAS ANDA:
-1. JANGAN lakukan revisi dulu. 
-2. Berikan PERINGATAN kepada user di Chat Sidebar bahwa ini akan menghapus data lama mereka.
-3. Jelaskan apa perbedaannya (Contoh: "Anda meminta LKPD, tapi dokumen ini adalah Prosem").
-4. Tanya konfirmasi: "Apakah Anda yakin ingin merombak total dokumen ini?"
+TUGAS ANDA: Peringatkan user di sidebar bahwa materi/tipe berbeda. JANGAN edit dokumen. 
 ` : willEditDocument ? `
-=== MODE: REVISI DOKUMEN (AKTIF) ===
-User meminta Anda untuk MEMPERBAIKI/MENGUBAH dokumen yang sedang terbuka.
+=== MODE: REVISI DOKUMEN (SANGAT KETAT) ===
+INSTRUKSI REVISI: "${rawPrompt}"
 TUGAS ANDA:
-1. Identifikasi bagian mana yang harus diubah berdasarkan instruksi: "${rawPrompt}".
-2. HASILKAN ULANG KESELURUHAN DOKUMEN HTML (Full Document) yang sudah diperbaiki.
-3. Tetap gunakan struktur KOP SURAT dan TANDA TANGAN yang resmi jika ada.
-4. JANGAN menyertakan penjelasan "Ini adalah perbaikan..." di dalam output HTML.
-5. LANGSUNG MULAI DENGAN <div>. JANGAN gunakan markdown code blocks.
+1. HASILKAN ULANG SELURUH KODE HTML DOKUMEN (Full Document).
+2. Terapkan semua perubahan yang diminta dalam kode HTML tersebut.
+3. JANGAN memberikan teks penjelasan panjang di sidebar. Fokus pada edit konten.
+4. JANGAN gunakan markdown code blocks. LANGSUNG MULAI DENGAN <div>.
+5. Pastikan format tabel dan struktur resmi tetap terjaga.
 ` : `
 === MODE: CHAT ASISTEN (AKTIF) ===
-User bertanya tentang sesuatu atau ingin berdiskusi.
 TUGAS ANDA:
-1. Jawab dengan ramah menggunakan Markdown.
-2. Gunakan konteks dokumen jika relevan untuk menjawab.
-3. JANGAN menghasilkan kode HTML dokumen lengkap di sini.
+1. Jawab dengan ramah menggunakan Markdown di sidebar.
+2. Gunakan konteks dokumen hanya sebagai referensi jawaban.
+3. DILARANG menghasilkan kode HTML dokumen lengkap di sini.
 `}
 
 === ATURAN OTAK AI ===

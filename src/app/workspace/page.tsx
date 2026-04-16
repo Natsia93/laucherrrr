@@ -84,11 +84,12 @@ function WorkspaceContent() {
     }
   };
 
-  const streamGenerate = useCallback(async (rawPrompt: string, appendToExisting = false, rawContext?: string, isAssistantMode = false) => {
+  const streamGenerate = useCallback(async (rawPrompt: string, appendToExisting = false, rawContext?: string, isAssistantMode = false, forcedMode?: 'chat' | 'edit') => {
     setLoading(true);
     
-    // DETECT REVISION: Now based on manual assistantMode toggle
-    const isAssistantRevision = isAssistantMode && assistantMode === 'edit';
+    // DETECT REVISION: Now based on manual forcedMode OR assistantMode
+    const currentMode = forcedMode || assistantMode;
+    const isAssistantRevision = isAssistantMode && currentMode === 'edit';
 
     if (!isAssistantMode) setProgressStage(0);
     setElapsedTime(0);
@@ -123,7 +124,7 @@ function WorkspaceContent() {
           rawContext, 
           messages: messages.slice(-6), 
           isAssistant: isAssistantMode,
-          mode: isAssistantMode ? assistantMode : 'doc'
+          mode: isAssistantMode ? currentMode : 'doc'
         }),
       });
 
