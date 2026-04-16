@@ -437,17 +437,27 @@ function WorkspaceContent() {
     const isArabic = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
     const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head><meta charset='utf-8'><style>
-        body { font-family: 'Times New Roman', serif; }
+        body { font-family: 'Times New Roman', serif; padding: 20px; }
         table { width: 100%; border-collapse: collapse; border: 1px solid black; }
-        th, td { border: 1px solid black; padding: 6px; }
+        th, td { border: 1px solid black; padding: 6px; vertical-align: top; }
         [dir="rtl"] { direction: rtl; text-align: right; font-family: 'Amiri', serif; }
       </style></head><body><div ${isArabic ? 'dir="rtl"' : 'dir="ltr"'}>`;
-    const sourceHTML = header + docContent + "</div></body></html>";
-    const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+    const footer = "</div></body></html>";
+    const sourceHTML = header + docContent + footer;
+    
+    // Create blob with BOM for UTF-8 to ensure Word renders it correctly
+    const blob = new Blob(['\ufeff', sourceHTML], {
+      type: 'application/msword'
+    });
+    
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = source;
+    link.href = url;
     link.download = `Dekstorio_${docType.replace(/ /g,'_')}.doc`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const renderProgressIndicator = () => (
