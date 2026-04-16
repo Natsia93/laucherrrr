@@ -12,7 +12,8 @@ import {
   History, Loader2, CheckCircle2, Brain, FileText, 
   PenTool, Save, Clock, Zap, Folder, XCircle,
   ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen,
-  Plus, ArrowRight, Send, X, Paperclip, FileText as FileIcon
+  Plus, ArrowRight, Send, X, Paperclip, FileText as FileIcon,
+  MessageSquare, FileEdit
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ function WorkspaceContent() {
   const docId = searchParams.get("id");
 
   const [chatInput, setChatInput] = useState("");
+  const [assistantMode, setAssistantMode] = useState<'chat' | 'edit'>('chat');
   const [loading, setLoading] = useState(false);
   const [docContent, setDocContent] = useState("");
   const [displayedContent, setDisplayedContent] = useState("");
@@ -85,9 +87,8 @@ function WorkspaceContent() {
   const streamGenerate = useCallback(async (rawPrompt: string, appendToExisting = false, rawContext?: string, isAssistantMode = false) => {
     setLoading(true);
     
-    // DETECT REVISION: If in assistant mode AND prompt contains edit keywords, clear editor
-    const editKeywords = ["perbaiki", "ubah", "ganti", "tulis ulang", "revisi", "tambahkan", "kurangi", "rapikan", "format", "lanjutkan", "susun ulang"];
-    const isAssistantRevision = isAssistantMode && editKeywords.some(kw => rawPrompt.toLowerCase().includes(kw));
+    // DETECT REVISION: Now based on manual assistantMode toggle
+    const isAssistantRevision = isAssistantMode && assistantMode === 'edit';
 
     if (!isAssistantMode) setProgressStage(0);
     setElapsedTime(0);
@@ -120,8 +121,9 @@ function WorkspaceContent() {
           type: docType, 
           model, 
           rawContext, 
-          messages: messages.slice(-6), // Send last 6 messages for context
-          isAssistant: isAssistantMode 
+          messages: messages.slice(-6), 
+          isAssistant: isAssistantMode,
+          mode: isAssistantMode ? assistantMode : 'doc'
         }),
       });
 
@@ -287,12 +289,9 @@ function WorkspaceContent() {
       
     if (!textToSend.trim() && attachments.length === 0) return;
     
-    // Assistant Mode is ALWAYS used for sidebar chats to maintain conversation history
+    // Manual toggle mode
     const isAssistantMode = true;
-    
-    // Check if user specifically wants a revision for UI feedback
-    const editKeywords = ["perbaiki", "ubah", "ganti", "tulis ulang", "revisi", "tambahkan", "kurangi", "rapikan", "format", "lanjutkan", "susun ulang"];
-    const isEditInstruction = isContinue || editKeywords.some(kw => textToSend.toLowerCase().includes(kw));
+    const isEditInstruction = assistantMode === 'edit';
 
     // Add attachments context if present
     let finalPrompt = textToSend;
@@ -560,6 +559,24 @@ function WorkspaceContent() {
               )}
             </AnimatePresence>
 
+            {/* Mode Toggle */}
+            <div className="flex justify-center mb-3">
+              <div className="bg-secondary/80 backdrop-blur-md p-1 rounded-xl border border-border flex items-center gap-1 shadow-sm">
+                <button 
+                  onClick={() => setAssistantMode('chat')}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${assistantMode === 'chat' ? 'bg-[#4d7537] text-white shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-background/50'}`}
+                >
+                  <MessageSquare className="w-3.5 h-3.5" /> Tanya AI
+                </button>
+                <button 
+                  onClick={() => setAssistantMode('edit')}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${assistantMode === 'edit' ? 'bg-[#4d7537] text-white shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-background/50'}`}
+                >
+                  <FileEdit className="w-3.5 h-3.5" /> Edit Dokumen
+                </button>
+              </div>
+            </div>
+
             <div className="relative group transition-all">
               <div className="absolute inset-0 bg-[#4d7537]/5 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
               <div className="relative flex flex-col bg-[#f4f4f5] dark:bg-[#121212] border border-black/5 dark:border-white/5 rounded-lg p-1.5 transition-all focus-within:ring-1 focus-within:ring-[#4d7537]/20 shadow-sm dark:shadow-none">
@@ -572,7 +589,7 @@ function WorkspaceContent() {
                       handleSendMessage();
                     }
                   }} 
-                  placeholder="Ask anything, upload PDF or Word documents..." 
+                  placeholder={assistantMode === 'edit' ? "Tulis instruksi revisi dokumen..." : "Tanya apa saja ke AI..."} 
                   className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground min-h-[40px] px-3 py-2 resize-none shadow-none" 
                 />
                 

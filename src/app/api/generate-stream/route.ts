@@ -585,31 +585,18 @@ export async function POST(req: Request) {
           if (isAssistant) {
             const currentDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
             
-            // === INTELLIGENT INTENT DETECTION ===
-            const editKeywords = ["perbaiki", "ubah", "ganti", "tulis ulang", "revisi", "tambahkan", "kurangi", "rapikan", "format", "lanjutkan", "susun ulang", "buatkan", "tuliskan", "rancang", "create"];
-            willEditDocument = editKeywords.some(kw => rawPrompt.toLowerCase().includes(kw));
+            // === INTELLIGENT INTENT DETECTION (Manual Override) ===
+            const mode = body.mode || 'chat';
+            willEditDocument = mode === 'edit';
+            isMajorMismatch = false; // Mismatch protection handled by manual mode choice now
 
-            // === SAFETY CHECK: Drastic Context Mismatch ===
-            const lowerPrompt = rawPrompt.toLowerCase();
-            const lowerContext = (rawContext || "").toLowerCase();
-            
-            const subjects = ["ipa", "ips", "matematika", "bahasa indonesia", "bahasa inggris", "pai", "pendidikan agama islam", "pkn", "pjok", "seni", "fisika", "biologi", "ekonomi", "sejarah", "geografi"];
-            const currentSubject = subjects.find(s => lowerContext.includes(s));
-            const requestedSubject = subjects.find(s => lowerPrompt.includes(s));
-            
-            const docTypes = ["lkpd", "atp", "prota", "prosem", "kktp", "cp", "modul ajar", "rpp"];
-            const currentType = type.toLowerCase();
-            const requestedType = docTypes.find(t => lowerPrompt.includes(t));
-
-            isMajorMismatch = willEditDocument && (
-               (requestedSubject && currentSubject && requestedSubject !== currentSubject) ||
-               (requestedType && currentType && !currentType.includes(requestedType) && !requestedType.includes(currentType))
-            );
+            // If user is in EDIT mode but didn't provide enough context, 
+            // the system prompt will guide the AI to handle it.
 
             // === WEB SEARCH GROUNDING ===
             let webSearchContext = "";
-            // Don't search if it's a direct document command OR if there's a safety mismatch
-            if (needsWebSearch(rawPrompt) && !willEditDocument && !isMajorMismatch) {
+            // Only search in CHAT mode
+            if (needsWebSearch(rawPrompt) && mode === 'chat') {
               send({ type: "chat", text: "🔍 *Mencari informasi terbaru untuk menjawab pertanyaan Anda...*\n\n" });
               try {
                 const searchResults = await performWebSearch(rawPrompt);
