@@ -119,6 +119,7 @@ function WorkspaceContent() {
     let isPatchMode = false;
     let patchBuffer = "";
     let hasDecidedMode = false;
+    let decisionBuffer = "";
 
     try {
       const response = await fetch("/api/generate-stream", {
@@ -161,15 +162,27 @@ function WorkspaceContent() {
             }
             if (data.type === "chunk") {
               if (!hasDecidedMode && isAssistantRevision) {
-                if (data.text.includes("[SMART_PATCH")) {
+                decisionBuffer += data.text;
+                // Wait for enough content to decide mode
+                if (decisionBuffer.length < 100 && !decisionBuffer.includes("[SMART_PATCH") && !decisionBuffer.trim().startsWith("<div")) {
+                  return;
+                }
+
+                if (decisionBuffer.includes("[SMART_PATCH")) {
                   isPatchMode = true;
-                } else if (data.text.trim().startsWith("<div")) {
-                  // Major edit - clear content for full regeneration
-                  contentRef.current = "";
-                  setDocContent("");
-                  setDisplayedContent("");
+                  patchBuffer = decisionBuffer;
+                } else {
+                  if (decisionBuffer.trim().startsWith("<div")) {
+                    contentRef.current = "";
+                    setDocContent("");
+                    setDisplayedContent("");
+                  }
+                  contentRef.current += decisionBuffer;
+                  setDocContent(contentRef.current);
+                  setDisplayedContent(contentRef.current);
                 }
                 hasDecidedMode = true;
+                return;
               }
 
               if (isPatchMode) {

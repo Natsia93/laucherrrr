@@ -650,7 +650,10 @@ Pilih salah satu metode output berdasarkan kerumitan revisi:
    - Langsung mulai dengan <div>.
    - Tanpa markdown code blocks.
 
-PENTING: SEARCH harus cocok persis dengan kode HTML yang ada di konteks DOKUMEN SAAT INI agar sistem bisa menerapkannya.
+PENTING: 
+- SEARCH harus cocok persis dengan kode HTML yang ada di konteks DOKUMEN SAAT INI agar sistem bisa menerapkannya.
+- Jika ingin menambahkan KOP, gunakan bagian paling atas dokumen (seperti judul utama) sebagai SEARCH agar KOP bisa diletakkan di atasnya.
+- JANGAN membiarkan tag [SMART_PATCH] terlihat di hasil akhir.
 ` : `
 === MODE: CHAT ASISTEN (AKTIF) ===
 TUGAS ANDA:
