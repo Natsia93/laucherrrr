@@ -588,22 +588,19 @@ export async function POST(req: Request) {
             // === INTELLIGENT INTENT DETECTION (Manual Override) ===
             const mode = body.mode || 'chat';
             willEditDocument = mode === 'edit';
-            isMajorMismatch = false; // Mismatch protection handled by manual mode choice now
-
-            // If user is in EDIT mode but didn't provide enough context, 
-            // the system prompt will guide the AI to handle it.
+            isMajorMismatch = false;
 
             // === WEB SEARCH GROUNDING ===
             let webSearchContext = "";
-            // Only search in CHAT mode
-            if (needsWebSearch(rawPrompt) && mode === 'chat') {
+            // FORCE: Skip search entirely if mode is 'edit'
+            if (mode === 'chat' && needsWebSearch(rawPrompt)) {
               send({ type: "chat", text: "🔍 *Mencari informasi terbaru untuk menjawab pertanyaan Anda...*\n\n" });
               try {
                 const searchResults = await performWebSearch(rawPrompt);
                 webSearchContext = formatSearchContext(searchResults);
               } catch (err) {
                 console.error("[Web Search] Failed:", err);
-                webSearchContext = "[Web Search gagal. Jawab berdasarkan pengetahuan terbaik Anda.]";
+                webSearchContext = "[Web Search gagal.]";
               }
             }
 

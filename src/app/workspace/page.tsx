@@ -318,7 +318,7 @@ function WorkspaceContent() {
       contentRef.current = docContent.replace(/(<\/td>|<\/tr>|<\/tbody>|<\/table>|<\/div>|<\/body>|<\/html>|\s+)$/gi, " ");
     }
     
-    await streamGenerate(contextPrompt, isContinue, contentRef.current, isAssistantMode);
+    await streamGenerate(contextPrompt, isContinue, contentRef.current, isAssistantMode, assistantMode);
   };
 
   const exportToWord = () => {
