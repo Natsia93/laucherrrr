@@ -339,7 +339,7 @@ export default function Home() {
               transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
               className="font-sans text-neutral-600 dark:text-[#a2b591] text-lg md:text-xl font-light leading-relaxed max-w-xl"
             >
-              Dekstorio adalah platform yang dirancang khusus untuk membantu pendidik dan tenaga ajar dalam menyusun administrasi sekolah with presisi tinggi. Menggabungkan fitur AI canggih dengan regulasi kurikulum terbaru untuk hasil yang profesional.
+              Dekstorio merupakan platform inovatif yang dirancang khusus untuk mendukung para pendidik dalam menyusun perangkat ajar secara sistematis, akurat, dan berstandar tinggi, baik di lingkungan sekolah maupun instansi pendidikan. Dengan mengintegrasikan teknologi kecerdasan buatan (AI) yang canggih serta mengacu pada regulasi kurikulum terbaru, Dekstorio mampu menghasilkan perangkat pembelajaran yang lebih profesional, relevan, dan sesuai kebutuhan pendidikan masa kini.
             </motion.p>
             <motion.div 
               initial={{ opacity: 0, y: 15 }}
