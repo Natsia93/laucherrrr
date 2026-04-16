@@ -337,9 +337,9 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
-              className="font-sans text-neutral-600 dark:text-[#a2b591] text-lg md:text-xl font-light leading-relaxed max-w-xl"
+              className="font-sans text-neutral-600 dark:text-[#a2b591] text-lg md:text-xl font-light leading-relaxed max-w-xl text-justify"
             >
-              Dekstorio merupakan platform inovatif yang dirancang khusus untuk mendukung para pendidik dalam menyusun perangkat ajar secara sistematis, akurat, dan berstandar tinggi, baik di lingkungan sekolah maupun instansi pendidikan. Dengan mengintegrasikan teknologi kecerdasan buatan (AI) yang canggih serta mengacu pada regulasi kurikulum terbaru, Dekstorio mampu menghasilkan perangkat pembelajaran yang lebih profesional, relevan, dan sesuai kebutuhan pendidikan masa kini.
+              Dekstorio merupakan platform inovatif yang dirancang khusus untuk mendukung para pendidik dalam menyusun perangkat ajar secara sistematis, akurat, dan berstandar tinggi, baik di lingkungan sekolah maupun instansi pendidikan. Dengan mengintegrasikan teknologi kecerdasan buatan (AI) yang canggih serta mengacu pada regulasi kurikulum terbaru.
             </motion.p>
             <motion.div 
               initial={{ opacity: 0, y: 15 }}
