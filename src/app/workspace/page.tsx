@@ -554,7 +554,7 @@ function WorkspaceContent() {
 
             <div className="relative group transition-all">
               <div className="absolute inset-0 bg-[#4d7537]/5 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
-              <div className="relative flex flex-col bg-transparent border border-border/40 rounded-lg p-1 transition-all focus-within:ring-1 focus-within:ring-[#4d7537]/20 focus-within:border-[#4d7537]/30">
+              <div className="relative flex flex-col bg-[#121212] border border-white/5 rounded-lg p-1.5 transition-all focus-within:ring-1 focus-within:ring-[#4d7537]/20">
                 <Input 
                   value={chatInput} 
                   onChange={(e) => setChatInput(e.target.value)} 
