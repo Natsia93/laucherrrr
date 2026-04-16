@@ -660,6 +660,7 @@ PENTING (STRUKTURAL AWARENESS):
 - DILARANG menulis ulang header dokumen atau teks apapun di luar tag tersebut.
 - SEARCH: Ambil potongan teks unik (seperti judul).
 - REPLACE: Konten baru (termasuk KOP jika diminta).
+- PILIHAN GANDA: Selalu gunakan <ul> atau <ol> untuk opsi A, B, C, D agar perataan teks di Word tetap rapi (rata kiri).
 ` : `
 === MODE: CHAT ASISTEN (AKTIF) ===
 TUGAS ANDA:

@@ -446,12 +446,17 @@ function WorkspaceContent() {
         font-family: 'Times New Roman', serif;
         font-size: 12pt;
         line-height: 1.5;
-        text-align: justify;
         margin: 0;
         padding: 0;
       }
       .doc-wrapper {
         width: 100%;
+        text-align: left;
+      }
+      p {
+        text-align: justify;
+        text-align-last: left;
+        margin-bottom: 10pt;
       }
       table {
         width: 100%;
@@ -466,13 +471,19 @@ function WorkspaceContent() {
         text-align: left;
         word-wrap: break-word;
       }
+      ul, ol {
+        text-align: left;
+        margin-bottom: 10pt;
+      }
+      li {
+        text-align: left;
+        margin-bottom: 5pt;
+      }
       h1, h2, h3, h4 {
         margin-top: 15pt;
         margin-bottom: 10pt;
         line-height: 1.2;
-      }
-      p {
-        margin-bottom: 10pt;
+        text-align: center;
       }
       [dir="rtl"] {
         direction: rtl;
