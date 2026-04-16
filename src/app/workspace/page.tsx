@@ -498,7 +498,7 @@ function WorkspaceContent() {
             {messages.map((m, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col gap-2 ${m.role === 'user' ? 'items-end text-right' : 'items-start text-left'}`}>
                 {m.role === 'user' ? (
-                  <div className="bg-[#4d7537] text-white px-4 py-2.5 rounded-2xl rounded-tr-none text-[13px] max-w-[85%] shadow-md">
+                  <div className="bg-[#4d7537]/80 backdrop-blur-md text-white px-4 py-2 rounded-xl rounded-tr-sm text-[14px] max-w-[85%] shadow-sm border border-white/10 leading-relaxed font-medium">
                     {m.text}
                   </div>
                 ) : (
@@ -531,7 +531,7 @@ function WorkspaceContent() {
             )}
           </div>
           
-          <div className="p-6 bg-card border-t border-border">
+          <div className="p-6 bg-transparent border-t border-border/50">
             {/* Attachment Preview */}
             <AnimatePresence>
               {attachments.length > 0 && (

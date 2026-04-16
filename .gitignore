@@ -44,3 +44,4 @@ next-env.d.ts
 test-*.ts
 list-*.ts
 prisma.config.ts
+.env*.local
