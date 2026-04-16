@@ -593,7 +593,7 @@ export async function POST(req: Request) {
               ...messages.map((m: any) => ({
                 role: m.role === "ai" ? "assistant" as const : "user" as const,
                 content: m.text
-              })).filter(m => m.content && m.content.trim().length > 0),
+              })).filter((m: any) => m.content && m.content.trim().length > 0),
               { role: "user", content: rawPrompt }
             ];
           } else {
