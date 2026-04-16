@@ -344,16 +344,12 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="flex-1 w-full max-w-2xl">
-            <div className="relative group">
-              {/* Subtle ambient glow behind image */}
-              <div className="absolute -inset-10 bg-[#4d7537]/10 dark:bg-[#3f612d]/20 rounded-full blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
-              <img 
-                src="/mockuper.png" 
-                alt="Dekstorio Interface" 
-                className="relative rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-[#dcdad1] dark:border-[#3f612d]/30 w-full object-cover transform transition-all duration-700 group-hover:scale-[1.01]"
-              />
-            </div>
+          <div className="flex-1 w-full max-w-xl">
+            <img 
+              src="/mockuper.png" 
+              alt="Dekstorio Interface" 
+              className="w-full h-auto object-cover"
+            />
           </div>
         </motion.section>
 
