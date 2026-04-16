@@ -587,13 +587,14 @@ export async function POST(req: Request) {
             
             // === INTELLIGENT INTENT DETECTION (Manual Override) ===
             const mode = body.mode || 'chat';
+            const isContinue = body.isContinue || false;
             willEditDocument = mode === 'edit';
             isMajorMismatch = false;
 
             // === WEB SEARCH GROUNDING ===
             let webSearchContext = "";
-            // FORCE: Skip search entirely if mode is 'edit'
-            if (mode === 'chat' && needsWebSearch(rawPrompt)) {
+            // FORCE: Skip search entirely if mode is 'edit' or it's a continuation
+            if (mode === 'chat' && needsWebSearch(rawPrompt) && !isContinue) {
               send({ type: "chat", text: "🔍 *Mencari informasi terbaru untuk menjawab pertanyaan Anda...*\n\n" });
               try {
                 const searchResults = await performWebSearch(rawPrompt);
@@ -612,7 +613,18 @@ DOKUMEN SAAT INI DI EDITOR:
 Jenis: ${type}
 Konten: ${rawContext || "Kosong"}
 
-${isMajorMismatch ? `
+${isContinue ? `
+=== MODE: LANJUTKAN PENULISAN (SANGAT KETAT) ===
+TUGAS ANDA: LANJUTKAN isi dokumen HTML yang terpotong.
+KONTEKS TERAKHIR: "...${rawPrompt.slice(-500)}"
+
+ATURAN MATI:
+1. JANGAN tulis ulang dari awal. JANGAN buat Kop Surat lagi.
+2. JANGAN tulis tag <html>, <body>, atau <div> pembuka.
+3. LANGSUNG MULAI dari kata/tag tepat setelah konteks terakhir tersebut.
+4. Jika terpotong di tengah tabel <tr> atau <td>, langsung lanjutkan isi baris tersebut.
+5. JANGAN berikan penjelasan di sidebar. HANYA LANJUTAN KODE.
+` : isMajorMismatch ? `
 === PERINGATAN: MISMATCH KONTEKS (PENTING) ===
 TUGAS ANDA: Peringatkan user di sidebar bahwa materi/tipe berbeda. JANGAN edit dokumen. 
 ` : willEditDocument ? `

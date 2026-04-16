@@ -84,7 +84,7 @@ function WorkspaceContent() {
     }
   };
 
-  const streamGenerate = useCallback(async (rawPrompt: string, appendToExisting = false, rawContext?: string, isAssistantMode = false, forcedMode?: 'chat' | 'edit') => {
+  const streamGenerate = useCallback(async (rawPrompt: string, appendToExisting = false, rawContext?: string, isAssistantMode = false, forcedMode?: 'chat' | 'edit', isContinue = false) => {
     setLoading(true);
     
     // DETECT REVISION: Now based on manual forcedMode OR assistantMode
@@ -124,7 +124,8 @@ function WorkspaceContent() {
           rawContext, 
           messages: messages.slice(-6), 
           isAssistant: isAssistantMode,
-          mode: isAssistantMode ? currentMode : 'doc'
+          mode: isAssistantMode ? currentMode : 'doc',
+          isContinue
         }),
       });
 
@@ -318,7 +319,7 @@ function WorkspaceContent() {
       contentRef.current = docContent.replace(/(<\/td>|<\/tr>|<\/tbody>|<\/table>|<\/div>|<\/body>|<\/html>|\s+)$/gi, " ");
     }
     
-    await streamGenerate(contextPrompt, isContinue, contentRef.current, isAssistantMode, assistantMode);
+    await streamGenerate(contextPrompt, isContinue, contentRef.current, isAssistantMode, assistantMode, isContinue);
   };
 
   const exportToWord = () => {
@@ -527,11 +528,11 @@ function WorkspaceContent() {
             ))}
 
             {/* Continue Button inside sidebar */}
-            {isGenerated && !loading && !docId && (
+            {(isGenerated || docId) && assistantMode === 'edit' && !loading && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pt-2">
                 <Button 
                   onClick={() => handleSendMessage(true)} 
-                  className="w-full bg-transparent border-2 border-[#4d7537] text-[#4d7537] hover:bg-[#4d7537] hover:text-white rounded-xl h-12 font-bold shadow-lg shadow-[#4d7537]/10 transition-all active:scale-95"
+                  className="w-full bg-transparent border-2 border-[#4d7537] text-[#4d7537] hover:bg-[#4d7537] hover:text-white rounded-md h-12 font-bold shadow-lg shadow-[#4d7537]/10 transition-all active:scale-95"
                 >
                   <Sparkles className="w-4 h-4 mr-2" /> Lanjutkan Penulisan
                 </Button>
