@@ -492,7 +492,8 @@ function WorkspaceContent() {
           <div 
             ref={chatScrollRef} 
             data-lenis-prevent="true"
-            className="flex-1 min-h-0 overflow-y-auto p-6 space-y-8 scroll-hide"
+            className="flex-1 min-h-0 overflow-y-auto p-6 space-y-8 overflow-x-hidden"
+            style={{ touchAction: 'pan-y', overscrollBehavior: 'contain' }}
           >
             {messages.map((m, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col gap-2 ${m.role === 'user' ? 'items-end text-right' : 'items-start text-left'}`}>
