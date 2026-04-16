@@ -555,7 +555,7 @@ function WorkspaceContent() {
 
             <div className="relative group transition-all">
               <div className="absolute inset-0 bg-[#4d7537]/5 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
-              <div className="relative flex flex-col bg-[#121212] border border-white/5 rounded-lg p-1.5 transition-all focus-within:ring-1 focus-within:ring-[#4d7537]/20">
+              <div className="relative flex flex-col bg-[#f4f4f5] dark:bg-[#121212] border border-black/5 dark:border-white/5 rounded-lg p-1.5 transition-all focus-within:ring-1 focus-within:ring-[#4d7537]/20 shadow-sm dark:shadow-none">
                 <Textarea 
                   value={chatInput} 
                   onChange={(e) => setChatInput(e.target.value)} 
