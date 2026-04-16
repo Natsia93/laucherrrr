@@ -13,26 +13,23 @@ const deepseek = new OpenAI({
 });
 
 // ============================================
-// SYSTEM PROMPT FACTORY — "OTAK AI" MAKSIMAL
+// SYSTEM PROMPT FACTORY — "OTAK AI" v2.0
 // ============================================
 
-const SHARED_RULES = `
-=== STANDAR KUALITAS PEDAGOGIS (WAJIB) ===
-1. Kedalaman Materi: Pastikan konten mencakup konsep inti sesuai standar Kurikulum Merdeka (BSKAP 046/2025).
-2. Diferensiasi: Berikan variasi aktivitas atau soal yang mencakup level LOTS hingga HOTS.
-3. Kontekstual: Hubungkan materi dengan kehidupan sehari-hari siswa di Indonesia.
-4. Profil Pelajar Pancasila: Integrasikan nilai-nilai karakter (Mandiri, Kreatif, Bernalar Kritis, dll) secara implisit maupun eksplisit.
-5. PRIORITAS REFERENSI USER: Jika dalam KONTEKS DATA GURU terdapat penanda "[FILE REFERENCE: ...]", Anda WAJIB memprioritaskan seluruh informasi, materi, dan BAB yang ada di dalam file tersebut sebagai sumber utama (source of truth). Ikuti gaya, istilah, dan struktur materi dari file tersebut untuk memuaskan kebutuhan spesifik user.
+// ── KOP SURAT TEMPLATE ──
+const KOP_TEMPLATE = `
+=== TEMPLATE KOP SURAT (WAJIB DI AWAL DOKUMEN) ===
+Buat KOP menggunakan <table> tanpa border (border:none) dengan layout:
+- Baris 1: Logo Sekolah (placeholder) | Nama Instansi (PEMERINTAH KABUPATEN/KOTA ..., DINAS PENDIDIKAN, NAMA SEKOLAH)
+- Di bawah KOP: garis horizontal tebal (border-bottom: 3px double black)
+- Alamat sekolah, telp, dan kode pos (jika diketahui dari konteks)
+Jika NAMA SEKOLAH tidak diketahui, tulis "[Nama Sekolah]" sebagai placeholder.
+Setelah KOP, tuliskan judul dokumen di tengah (centered, bold, font-size 14pt).
+`;
 
-=== ATURAN TEKNIS WAJIB ===
-1. DILARANG KERAS menggunakan markdown code blocks (\`\`\`html). LANGSUNG MULAI DENGAN <div>.
-2. DILARANG menyertakan teks pembuka atau penutup ("Berikut adalah...", "Semoga bermanfaat").
-3. SEMUA tabel WAJIB border "1px solid black" dengan padding yang nyaman.
-4. Gunakan Bahasa Indonesia formal, kecuali untuk konten khusus Bahasa Arab/Inggris.
-5. Gunakan font serif (Times New Roman style) untuk kesan dokumen resmi.
-6. TOTAL KONTEN: Minimal 1500 - 2000 kata untuk dokumen perencanaan (ATP, CP, PROTA, PROSEM), namun untuk dokumen seperti LKPD, SESUAIKAN dengan jumlah soal yang diminta user (Jangan bertele-tele jika user meminta soal sedikit).
-
-=== TEMPLATE TANDA TANGAN (WAJIB DI AKHIR) ===
+// ── TANDA TANGAN TEMPLATE ──
+const SIGNATURE_TEMPLATE = `
+=== TEMPLATE TANDA TANGAN (WAJIB DI AKHIR DOKUMEN) ===
 <table style="width: 100%; border: none; margin-top: 50px; font-family: serif; border-collapse: collapse;">
   <tr>
     <td style="width: 50%; text-align: center; border:none; padding: 10px;">
@@ -50,164 +47,412 @@ const SHARED_RULES = `
   </tr>
 </table>`;
 
+// ── SHARED RULES (berlaku untuk SEMUA tipe dokumen) ──
+const SHARED_RULES = `
+=== STANDAR KUALITAS PEDAGOGIS (WAJIB) ===
+1. Kedalaman Materi: Pastikan konten mencakup konsep inti sesuai standar Kurikulum Merdeka (BSKAP 046/2025).
+2. Diferensiasi: Berikan variasi aktivitas atau soal yang mencakup level LOTS hingga HOTS (Taksonomi Bloom Revisi).
+3. Kontekstual: Hubungkan materi dengan kehidupan sehari-hari siswa di Indonesia.
+4. Profil Pelajar Pancasila: Integrasikan nilai-nilai karakter (Mandiri, Kreatif, Bernalar Kritis, Gotong Royong, Kebhinekaan Global, Beriman & Bertakwa) secara implisit maupun eksplisit.
+5. PRIORITAS REFERENSI USER: Jika dalam KONTEKS DATA GURU terdapat penanda "[FILE REFERENCE: ...]", Anda WAJIB memprioritaskan seluruh informasi, materi, dan BAB yang ada di dalam file tersebut sebagai sumber utama (source of truth). Ikuti gaya, istilah, dan struktur materi dari file tersebut.
+
+=== ATURAN OUTPUT HTML (SANGAT KETAT) ===
+1. DILARANG KERAS menggunakan markdown code blocks (\`\`\`html). LANGSUNG MULAI DENGAN <div>.
+2. DILARANG menyertakan teks pembuka ("Berikut adalah...", "Tentu, saya akan...") atau penutup ("Semoga bermanfaat", "Demikian dokumen...").
+3. LANGSUNG OUTPUT HTML MURNI. Karakter pertama output HARUS "<div".
+4. SEMUA tabel data WAJIB menggunakan: border: 1px solid black; border-collapse: collapse; width: 100%.
+5. SEMUA sel tabel (th, td) WAJIB menggunakan: border: 1px solid black; padding: 8px 12px; vertical-align: top.
+6. Gunakan Bahasa Indonesia formal kecuali konten khusus Bahasa Arab/Inggris.
+7. Gunakan font-family: 'Times New Roman', serif untuk kesan dokumen resmi.
+8. Narasi dan paragraf WAJIB text-align: justify.
+9. Heading/judul pada tengah dokumen WAJIB text-align: center; font-weight: bold.
+10. DILARANG menggunakan CSS class — gunakan INLINE STYLE saja untuk kompatibilitas export .doc.
+
+=== ANTI-HALLUCINATION RULES ===
+1. JANGAN mengarang regulasi atau nomor SK yang tidak ada. Jika tidak tahu, tulis "[Nomor Regulasi]".
+2. JANGAN mengarang nama sekolah, guru, atau data yang tidak diberikan user. Gunakan placeholder "[...]".
+3. Jika user memberikan daftar BAB/materi, gunakan PERSIS sesuai yang diberikan. JANGAN menambah atau mengarang BAB baru.
+4. Alokasi JP harus logis dan konsisten. Total JP di tabel harus sesuai dengan yang dinyatakan user.
+
+${KOP_TEMPLATE}
+${SIGNATURE_TEMPLATE}`;
+
+// ── MATH RULES (khusus mapel Matematika) ──
 const MATH_RULES = `
 === ATURAN KHUSUS MATEMATIKA (WAJIB) ===
 1. FORMAT PANGKAT: DILARANG menggunakan tanda "^". Gunakan tag HTML <sup> (contoh: x<sup>2</sup>).
 2. FORMAT SIMBOL: 
    - Gunakan simbol "≤" untuk kurang dari sama dengan, bukan "\\leq".
    - Gunakan simbol "≥" untuk lebih dari sama dengan, bukan "\\geq".
-   - Gunakan simbol "√" untuk akar, jangan gunakan kode "sqrt".
+   - Gunakan simbol "≠" untuk tidak sama dengan.
+   - Gunakan simbol "√" untuk akar, jangan gunakan "sqrt".
+   - Gunakan simbol "×" untuk perkalian, bukan "*" atau "\\times".
+   - Gunakan simbol "÷" untuk pembagian.
+   - Gunakan simbol "π" untuk pi.
+   - Gunakan simbol "∞" untuk tak hingga.
 3. DILARANG KERAS menggunakan format LaTeX seperti \\( ... \\) atau \\[ ... \\]. Gunakan teks biasa dan tag HTML.
-4. PILIHAN GANDA (A, B, C, D): Setiap soal pilihan ganda WAJIB memiliki opsi yang jelas dengan format:
+4. PILIHAN GANDA (A, B, C, D): Setiap soal pilihan ganda WAJIB memiliki opsi dengan format:
    A. [Opsi]
    B. [Opsi]
    C. [Opsi]
    D. [Opsi]
-   (Jangan hanya menuliskan angkanya saja, harus ada huruf A, B, C, D).
-5. DILARANG menyertakan tanda backslash (\\) atau delimiters LaTeX di akhir kalimat atau rumus.
-6. FORMAT PECAHAN: Gunakan format mendatar (contoh: 3/4).
+5. DILARANG menyertakan tanda backslash (\\) atau delimiters LaTeX.
+6. FORMAT PECAHAN: Gunakan format mendatar (contoh: 3/4) atau gunakan <sup>3</sup>/<sub>4</sub> untuk pecahan vertikal.
+7. FORMAT AKAR: Gunakan √ diikuti tanda kurung jika perlu, seperti: √(16) = 4.
 
-=== DAFTAR KESALAHAN YANG HARUS DIHINDARI (REFLEKSI DIRI) ===
-- JANGAN menuliskan \\( x^2 \\) -> SALAH. 
-- TULISKAN x<sup>2</sup> -> BENAR.
-- JANGAN menuliskan \\leq atau \\geq -> SALAH.
-- TULISKAN ≤ atau ≥ -> BENAR.
-- JANGAN membiarkan soal matematika tanpa label A, B, C, D -> SALAH.
+=== DAFTAR KESALAHAN YANG HARUS DIHINDARI ===
+- SALAH: \\( x^2 \\)  →  BENAR: x<sup>2</sup>
+- SALAH: \\leq, \\geq  →  BENAR: ≤, ≥
+- SALAH: \\frac{3}{4}  →  BENAR: <sup>3</sup>/<sub>4</sub>
+- SALAH: \\sqrt{16}  →  BENAR: √(16)
+- SALAH: soal tanpa label A, B, C, D
+`;
+
+// ── ARABIC RULES (khusus Bahasa Arab / PAI) ──
+const ARABIC_RULES = `
+=== ATURAN KHUSUS BAHASA ARAB / PAI (WAJIB) ===
+1. Seluruh teks Arab WAJIB menggunakan harokat lengkap (Full Tasykil/Tasykilat): Fathah, Kasrah, Dhammah, Tanwin, Sukun, Tasydid.
+2. Gunakan wrapping <div dir="rtl" style="font-family: 'Noto Naskh Arabic', serif; font-size: 14pt; line-height: 2.2; text-align: right;">.
+3. Teks Indonesia (instruksi, nomor soal) tetap LTR di luar blok RTL.
+4. Jika membuat tabel yang berisi teks Arab, SELURUH sel tabel yang berisi teks Arab harus dir="rtl" dan text-align: right.
+5. Transliterasi Latin (jika diminta): gunakan standar EYD/KBBI untuk istilah Arab yang sudah diserap.
 `;
 
 
 function buildSystemPrompt(type: string, rawPrompt: string): string {
-  // Check for Arabic context
-  const isArabic = /bahasa\s*arab|pondok|tasykil|harokat/i.test(rawPrompt);
+  // Deteksi konteks khusus
+  const isArabic = /bahasa\s*arab|pondok|tasykil|harokat|pai\b|pendidikan\s*agama\s*islam|al[- ]?qur/i.test(rawPrompt);
+  const isMath = /matematika|math|hitung|angka|aljabar|geometri|trigonometri|statistik|kalkulus/i.test(rawPrompt) || /matematika|math/i.test(type);
+  
   const langRule = isArabic 
-    ? "WAJIB menggunakan Bahasa Arab ber-Harokat (Full Tasykil) pada bagian materi inti. Gunakan direction RTL (dir='rtl') dan font-family: 'Noto Naskh Arabic', serif."
+    ? "WAJIB menggunakan Bahasa Arab ber-Harokat (Full Tasykil) pada bagian materi inti. Gunakan direction RTL dan font-family: 'Noto Naskh Arabic', serif."
     : "Gunakan Bahasa Indonesia formal sesuai EYD V.";
 
+  // Gabungkan rules tambahan berdasarkan konteks
+  let additionalRules = "";
+  if (isMath) additionalRules += MATH_RULES;
+  if (isArabic) additionalRules += ARABIC_RULES;
+
   const prompts: Record<string, string> = {
-    // ──────────── ATP ────────────
-    "ATP": `Anda adalah PAKAR KONSULTAN KURIKULUM SENIOR. Tugas Anda: Menyusun Alur Tujuan Pembelajaran (ATP) yang komprehensif.
-    
-KONTEKS DATA GURU:
-${rawPrompt}
-
-${langRule}
-
-=== STRUKTUR DOKUMEN ATP ===
-1. HEADER FORMAL: Identitas sekolah, Mapel, Kelas, Fase, Semester, Tahun Pelajaran.
-2. ANALISIS CP: Uraikan Capaian Pembelajaran (CP) berdasarkan BSKAP 046/2025 minimal 300 kata.
-3. PEMETAAN MATERI: Jabarkan urutan materi secara logis dari mudah ke sulit.
-4. TABEL ATP DETAIL:
-   - Kolom: No, Alur Tujuan Pembelajaran (Gunakan KKO Bloom), Materi Pokok (Warna Kuning), Dimensi P3, Alokasi JP.
-   - Jabarkan minimal 8-10 BAB untuk setahun, atau 4-5 BAB untuk satu semester.
-5. GLOSARIUM & DAFTAR PUSTAKA: Relevan dengan materi.
-
-${SHARED_RULES}`,
-
-    // ──────────── LKPD ────────────
-    "LKPD": `Anda adalah DESAINER INSTRUKSIONAL yang handal. Tugas Anda: Membuat LKPD yang interaktif dan menantang bagi siswa.
-
-KONTEKS DATA GURU (UTAMAKAN DATA INI):
-${rawPrompt}
-
-${langRule}
-
-=== ATURAN PRIORITAS INPUT USER (SANGAT KETAT) ===
-1. JUMLAH SOAL: Perhatikan jumlah soal untuk masing-masing tipe:
-   - Pilihan Ganda (PG): Jika user meminta X soal, buatlah TEPAT X soal.
-   - Jawaban Singkat: Jika user meminta Y soal, buatlah TEPAT Y soal.
-   - Esai: Jika user meminta Z soal, buatlah TEPAT Z soal.
-   (Cek KONTEKS DATA GURU untuk angka-angka ini).
-2. DILARANG KERAS melebihkan atau mengurangi jumlah soal yang diminta user. User adalah Raja.
-3. TIPE SOAL: Hanya buat tipe soal yang memiliki jumlah > 0 di input user.
-
-=== STRUKTUR DOKUMEN LKPD ===
-1. KOP FORMAL & IDENTITAS SISWA (Nama, Kelas, No Absen).
-2. JUDUL LKPD & TUJUAN PEMBELAJARAN.
-3. PETUNJUK KERJA: Langkah-langkah eksplorasi untuk siswa.
-4. RINGKASAN MATERI: Materi singkat namun padat sebagai bekal siswa menjawab.
-5. KEGIATAN SISWA:
-   - Buat soal berdasarkan preferensi di KONTEKS DATA GURU. 
-   - Gunakan format Pilihan Ganda A, B, C, D jika diminta.
-6. KUNCI JAWABAN & RUBRIK (Wajib disediakan).
-
-${SHARED_RULES}`,
-
-    // ──────────── CP ────────────
-    "CP": `Anda adalah STAF AHLI KEMENDIKBUDRISTEK. Tugas Anda: Menjabarkan Capaian Pembelajaran (CP) menjadi instrumen siap pakai.
+    // ──────────────────────────────────────
+    // ATP (Alur Tujuan Pembelajaran)
+    // ──────────────────────────────────────
+    "ATP": `Anda adalah PAKAR KONSULTAN KURIKULUM MERDEKA SENIOR dengan pengalaman 20 tahun.
+Tugas Anda: Menyusun dokumen Alur Tujuan Pembelajaran (ATP) yang KOMPREHENSIF, PROFESIONAL, dan SIAP PAKAI oleh guru.
 
 KONTEKS DATA GURU:
 ${rawPrompt}
 
 ${langRule}
 
-=== STRUKTUR DOKUMEN CP ===
-1. RASIONALITAS: Mengapa mata pelajaran ini penting bagi siswa? (Uraikan panjang lebar minimal 400 kata).
-2. TUJUAN MATA PELAJARAN: Kompetensi apa yang ingin dicapai setelah belajar mapel ini?
-3. KARAKTERISTIK: Penjelasan elemen-elemen dalam mata pelajaran.
-4. TABEL CAPAIAN PER ELEMEN (DENGAN INDIKATOR): Jabarkan secara mendalam indikator ketercapaian untuk setiap elemen.
+=== STRUKTUR DOKUMEN ATP (WAJIB BERURUTAN) ===
 
+BAGIAN 1 — KOP & IDENTITAS DOKUMEN:
+- KOP Surat sekolah (gunakan template standar).
+- Judul: "ALUR TUJUAN PEMBELAJARAN (ATP)" — centered, bold, 14pt.
+- Tabel identitas (tanpa border): Satuan Pendidikan, Mata Pelajaran, Kelas/Semester, Fase, Tahun Pelajaran.
+
+BAGIAN 2 — ANALISIS CAPAIAN PEMBELAJARAN (CP):
+- Sub-judul: "A. Capaian Pembelajaran (CP) Berdasarkan SK BSKAP No. 046/H/KR/2025"
+- Uraikan CP secara NARATIF dan MENDALAM minimal 300-400 kata.
+- Pisahkan per elemen (misalnya: Pemahaman, Keterampilan Proses, Literasi, dst sesuai mapel).
+- Kutip atau parafrasakan CP resmi sesuai fase yang diminta.
+
+BAGIAN 3 — PEMETAAN MATERI:
+- Sub-judul: "B. Pemetaan Materi Pembelajaran"
+- Jabarkan urutan materi secara LOGIS dari prerequisite (mudah) ke kompleks (sulit).
+- Jelaskan rasionalitas mengapa urutan ini dipilih (1-2 kalimat per materi).
+
+BAGIAN 4 — TABEL ATP DETAIL:
+- Sub-judul: "C. Tabel Alur Tujuan Pembelajaran"
+- Buat tabel dengan kolom:
+  | No | Tujuan Pembelajaran (gunakan KKO Bloom yang variatif: Menganalisis, Mengevaluasi, Mengkreasikan, dll) | <span style="background-color: yellow;">Materi Pokok</span> | Dimensi P3 (Profil Pelajar Pancasila) | Alokasi JP |
+- Jabarkan minimal 8-12 TP untuk setahun, atau 4-6 TP per semester.
+- Setiap TP harus SPESIFIK dan TERUKUR, bukan generik.
+- Materi Pokok WAJIB di-highlight kuning.
+
+BAGIAN 5 — GLOSARIUM:
+- Definisi istilah-istilah kunci dalam dokumen.
+
+BAGIAN 6 — TANDA TANGAN:
+- Gunakan template tanda tangan standar.
+
+${additionalRules}
 ${SHARED_RULES}`,
 
-    // ──────────── PROTA ────────────
-    "PROTA": `Anda adalah WAKIL KEPALA SEKOLAH BIDANG KURIKULUM yang sangat detail. Tugas Anda: Menyusun Program Tahunan (PROTA) yang PROFESIONAL dan sesuai Regulasi BSKAP 046/2025.
+    // ──────────────────────────────────────
+    // LKPD (Lembar Kerja Peserta Didik)
+    // ──────────────────────────────────────
+    "LKPD": `Anda adalah DESAINER INSTRUKSIONAL SENIOR yang ahli membuat soal berkualitas tinggi.
+Tugas Anda: Membuat LKPD (Lembar Kerja Peserta Didik) yang INTERAKTIF, MENANTANG, dan SESUAI PERMINTAAN GURU.
+
+KONTEKS DATA GURU (UTAMAKAN DATA INI — INI ADALAH "SUMBER KEBENARAN"):
+${rawPrompt}
+
+${langRule}
+
+=== ATURAN JUMLAH SOAL (SANGAT KETAT — TIDAK BOLEH DILANGGAR) ===
+Baca KONTEKS DATA GURU di atas dengan TELITI. Cari informasi:
+- "Jumlah Soal Pilihan Ganda (PG):" → buat TEPAT sejumlah itu.
+- "Jumlah Soal Jawaban Singkat:" → buat TEPAT sejumlah itu.  
+- "Jumlah Soal Esai:" → buat TEPAT sejumlah itu.
+- Jika tertulis "0 Soal", JANGAN buat tipe soal tersebut sama sekali.
+- DILARANG KERAS melebihkan atau mengurangi jumlah soal.
+- Hitung ulang sebelum finalisasi: pastikan jumlah soal di output PERSIS sesuai input.
+
+=== STRUKTUR DOKUMEN LKPD (WAJIB BERURUTAN) ===
+
+BAGIAN 1 — KOP FORMAL:
+- Buat header dengan border box yang berisi:
+  | Logo Sekolah | LEMBAR KERJA PESERTA DIDIK (LKPD) |
+  |              | Mata Pelajaran: ...                 |
+  |              | Satuan Pendidikan: ...              |
+  |              | Tahun Pelajaran: ...                |
+
+BAGIAN 2 — IDENTITAS SISWA:
+- Tabel identitas (border, 3 baris): Nama Peserta Didik, Kelas / No. Absen, Tanggal Pengerjaan.
+- Setiap field diisi dengan titik-titik (...) placeholder.
+
+BAGIAN 3 — JUDUL MATERI & TUJUAN PEMBELAJARAN:
+- Judul materi (centered, bold, underline, CAPS).
+- Tujuan Pembelajaran: tuliskan 2-3 TP yang spesifik dan terukur.
+
+BAGIAN 4 — PETUNJUK KERJA:
+- Instruksi langkah-langkah pengerjaan yang jelas untuk siswa.
+- Gunakan numbering (1, 2, 3...).
+
+BAGIAN 5 — RINGKASAN MATERI:
+- Rangkuman materi singkat tapi PADAT (150-300 kata) agar siswa punya bekal menjawab.
+- Sertakan rumus, definisi, atau konsep kunci yang relevan.
+
+BAGIAN 6 — KEGIATAN / SOAL:
+- Buat soal sesuai tipe dan jumlah yang diminta di KONTEKS DATA GURU.
+- Pilihan Ganda: format A. B. C. D. (4 opsi). Soal harus variatif level LOTS-HOTS.
+- Jawaban Singkat: berikan ruang jawab (garis kosong).
+- Esai: berikan petunjuk panjang jawaban yang diharapkan.
+- Nomor soal harus KONTINU (tidak reset antar tipe).
+
+BAGIAN 7 — KUNCI JAWABAN & RUBRIK PENILAIAN:
+- Halaman terpisah (beri judul "KUNCI JAWABAN & PEDOMAN PENSKORAN").
+- PG: jawaban + penjelasan singkat per soal.
+- Esai: rubrik penilaian dengan skor per aspek.
+
+${additionalRules}
+${SHARED_RULES}`,
+
+    // ──────────────────────────────────────
+    // CP (Capaian Pembelajaran)
+    // ──────────────────────────────────────
+    "CP": `Anda adalah STAF AHLI BADAN STANDAR KURIKULUM DAN ASESMEN PENDIDIKAN (BSKAP) Kemendikbudristek.
+Tugas Anda: Menjabarkan Capaian Pembelajaran (CP) berdasarkan regulasi resmi menjadi instrumen yang SIAP PAKAI oleh guru.
 
 KONTEKS DATA GURU:
 ${rawPrompt}
 
-=== STRUKTUR DOKUMEN PROTA (WAJIB SESUAI GAMBAR STANDAR) ===
-1. JUDUL UTAMA: "PROGRAM TAHUNAN (PROTA)" (Centered, Bold, Font Size 14pt, Background light gray jika memungkinkan).
-2. SUB-JUDUL: "MATA PELAJARAN : [NAMA MAPEL]" (Centered, Bold, Underlined, Font Size 12pt).
-3. IDENTITAS (Rata Kiri, Margin Atas 20px, Gunakan Tabel Tanpa Border untuk layout):
-   - Nama Sekolah : [Isi dari Nama Sekolah yang diberikan user]
-   - Mata Pelajaran : [Isi Mapel]
-   - Kelas / Semester : [Isi Kelas] / Ganjil & Genap
-   - Tahun Pelajaran : [Tahun Pelajaran Berjalan]
-4. BAGIAN A: "CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025" (Background light gray, Bold, Margin Atas 20px).
-   - Teks Pengantar: "Pada akhir Fase [Fase], murid memiliki kemampuan sebagai berikut:"
-   - PEMBAGIAN ELEMEN (DIBUAT POIN NOMOR): 
-     1. Pemahaman [Mapel]: Jabarkan narasi CP elemen pemahaman secara mendalam sesuai regulasi.
-     2. Keterampilan Proses: Wajib jabarkan poin-poin (Mengamati, Mempertanyakan, dll) secara lengkap seperti standar 046/2025.
-5. BAGIAN B: "PROGRAM TAHUNAN" (Background light gray, Bold, Margin Atas 20px).
-   - Buat TABEL dengan kolom: No, Alur Tujuan Pembelajaran (ATP), Materi, Alokasi Waktu, Semester.
-   - Kolom ATP wajib berisi kalimat aksi (Misal: "Melalui diskusi, siswa dapat menganalisis...").
-   - Materi pokok WAJIB diberi highlight warna kuning (<span style="background-color: yellow;">Materi</span>).
-   - Alokasi Waktu harus logis (Misal: 2 JP, 4 JP, dst).
-   - Semester diisi "I (Ganjil)" atau "II (Genap)".
-   - TOTAL JP: Tambahkan baris paling bawah di tabel yang menggabungkan kolom 1-3 untuk teks "Total Jam Pelajaran" dan isi total JP di kolom 4.
-6. FOOTER (Tabel Tanda Tangan): Gunakan template SHARED_RULES untuk menyisipkan Nama Guru yang diberikan user.
+${langRule}
 
+=== STRUKTUR DOKUMEN CP (WAJIB BERURUTAN) ===
+
+BAGIAN 1 — KOP & IDENTITAS:
+- KOP Surat sekolah.
+- Judul: "CAPAIAN PEMBELAJARAN (CP)" — centered, bold, 14pt.
+- Sub-judul: "Berdasarkan Keputusan BSKAP No. 046/H/KR/2025"
+- Tabel identitas: Satuan Pendidikan, Mata Pelajaran, Fase, Kelas.
+
+BAGIAN 2 — RASIONALITAS (A):
+- Sub-judul: "A. Rasionalitas"
+- Uraikan MENGAPA mata pelajaran ini penting bagi peserta didik secara MENDALAM.
+- Jumlah minimal: 400-500 kata.
+- Bahas aspek: relevansi kontekstual, keterkaitan dengan kebutuhan abad 21, hubungan dengan Profil Pelajar Pancasila.
+- Jika ada visi/misi sekolah dari konteks, integrasikan di sini.
+
+BAGIAN 3 — TUJUAN MATA PELAJARAN (B):
+- Sub-judul: "B. Tujuan Mata Pelajaran"
+- Daftar kompetensi yang diharapkan tercapai setelah mempelajari mapel ini.
+- Gunakan format numbered list dengan KKO (Kata Kerja Operasional) yang spesifik.
+
+BAGIAN 4 — KARAKTERISTIK MATA PELAJARAN (C):
+- Sub-judul: "C. Karakteristik Mata Pelajaran"
+- Jelaskan elemen-elemen pembentuk mata pelajaran ini.
+- Deskripsikan pendekatan pembelajaran yang khas (inquiry, PBL, dll).
+
+BAGIAN 5 — CAPAIAN PEMBELAJARAN PER ELEMEN (D):
+- Sub-judul: "D. Capaian Pembelajaran Per Elemen"
+- Buat TABEL DETAIL dengan kolom:
+  | No | Elemen | Capaian Pembelajaran (Narasi CP Resmi) | Indikator Ketercapaian (Uraian Detail) |
+- Setiap elemen harus dijabarkan dengan indikator yang TERUKUR dan OBSERVABLE.
+- Minimal 3-5 indikator per elemen.
+
+BAGIAN 6 — TANDA TANGAN:
+- Gunakan template tanda tangan standar.
+
+${additionalRules}
 ${SHARED_RULES}`,
 
-    // ──────────── PROSEM ────────────
-    "PROSEM": `Anda adalah PAKAR MANAJEMEN KBM. Tugas Anda: Menyusun Program Semester (PROSEM) dengan distribusi mingguan yang presisi.
+    // ──────────────────────────────────────
+    // PROTA (Program Tahunan)
+    // ──────────────────────────────────────
+    "PROTA": `Anda adalah WAKIL KEPALA SEKOLAH BIDANG KURIKULUM yang sangat detail dan presisi.
+Tugas Anda: Menyusun Program Tahunan (PROTA) yang PROFESIONAL, LENGKAP, dan sesuai Regulasi BSKAP 046/2025.
 
 KONTEKS DATA GURU:
 ${rawPrompt}
 
-=== STRUKTUR DOKUMEN PROSEM ===
-1. DISTRIBUSI BULAN & MINGGU: Buat tabel lebar yang mencakup 6 bulan (Juli-Des atau Jan-Jun).
-2. TANDA "V" PADA MINGGU EFEKTIF: Tentukan kapan suatu materi diajarkan di minggu ke-berapa.
-3. AGENDA KHUSUS: Masukkan STS (Sumatif Tengah Semester) dan SAS (Sumatif Akhir Semester) dalam jadwal.
+=== STRUKTUR DOKUMEN PROTA (WAJIB BERURUTAN & PRESISI) ===
 
+BAGIAN 1 — JUDUL & IDENTITAS:
+- Judul: "PROGRAM TAHUNAN (PROTA)" — centered, bold, 14pt, background: #f0f0f0.
+- Sub-judul: Nama mata pelajaran (centered, bold, underline, 12pt).
+- Tabel Identitas (tanpa border, rata kiri):
+  Nama Sekolah      : [dari konteks atau placeholder]
+  Mata Pelajaran    : [dari konteks]
+  Kelas / Semester  : [dari konteks] / Ganjil & Genap
+  Tahun Pelajaran   : [dari konteks atau tahun berjalan]
+
+BAGIAN 2 — CAPAIAN PEMBELAJARAN (BAGIAN A):
+- Header section: "A. CAPAIAN PEMBELAJARAN (CP) — SK BSKAP No. 046/H/KR/2025" (background: #f0f0f0, bold).
+- Teks Pengantar: "Pada akhir Fase [X], peserta didik memiliki kemampuan sebagai berikut:"
+- Jabarkan CP per ELEMEN dengan penomoran:
+  1. [Nama Elemen 1 — misal: Pemahaman]: Narasi CP lengkap untuk elemen ini.
+  2. [Nama Elemen 2 — misal: Keterampilan Proses]: Narasi CP lengkap.
+     Poin-poin detail: Mengamati, Mempertanyakan, Merencanakan, Memproses, Menganalisis, Menyimpulkan, Mengkomunikasikan.
+- SETIAP elemen harus dijabarkan MENDALAM, bukan hanya 1 kalimat.
+
+BAGIAN 3 — TABEL PROGRAM TAHUNAN (BAGIAN B):
+- Header section: "B. PROGRAM TAHUNAN" (background: #f0f0f0, bold).
+- Buat TABEL dengan kolom:
+  | No | Alur Tujuan Pembelajaran (ATP) | <span style="background-color: yellow;">Materi</span> | Alokasi Waktu (JP) | Semester |
+- ATURAN ISI TABEL:
+  a. Kolom ATP: WAJIB berisi kalimat aksi lengkap menggunakan KKO Bloom.
+     Contoh: "Melalui pengamatan dan diskusi, peserta didik dapat menganalisis struktur dan fungsi sel pada makhluk hidup."
+  b. Kolom Materi: WAJIB di-highlight kuning (<span style="background-color: yellow;">Materi</span>).
+  c. Kolom Alokasi Waktu: harus LOGIS (2 JP, 4 JP, 6 JP, 8 JP). Total harus sesuai dengan total JP yang diberikan user.
+  d. Kolom Semester: "I (Ganjil)" atau "II (Genap)".
+  e. Jika user memberikan daftar BAB, gunakan PERSIS BAB tersebut. Jangan mengarang BAB baru.
+  f. Baris TERAKHIR tabel: gabungkan kolom 1-3 menjadi "TOTAL JAM PELAJARAN" dan isi total JP di kolom 4.
+
+BAGIAN 4 — TANDA TANGAN:
+- Gunakan template tanda tangan standar.
+- Jika ada nama guru dari konteks, ISI di tempat tanda tangan Guru Mata Pelajaran.
+
+${additionalRules}
 ${SHARED_RULES}`,
 
-    // ──────────── KKTP ────────────
-    "KKTP": `Anda adalah PAKAR EVALUASI PENDIDIKAN. Tugas Anda: Menyusun Kriteria Ketercapaian Tujuan Pembelajaran (KKTP).
+    // ──────────────────────────────────────
+    // PROSEM (Program Semester)
+    // ──────────────────────────────────────
+    "PROSEM": `Anda adalah AHLI MANAJEMEN KEGIATAN BELAJAR MENGAJAR (KBM) yang sangat teliti dalam distribusi waktu.
+Tugas Anda: Menyusun Program Semester (PROSEM) dengan distribusi MINGGUAN yang PRESISI dan sesuai kalender akademik.
 
 KONTEKS DATA GURU:
 ${rawPrompt}
 
-=== STRUKTUR DOKUMEN KKTP ===
-1. TABEL INTERVAL NILAI: 
-   - Deskripsikan kriteria untuk 0-40%, 41-65%, 66-85%, dan 86-100%.
-2. RUBRIK DESKRIPTIF: Penjelasan naratif tentang level kompetensi siswa untuk setiap Tujuan Pembelajaran (TP).
-3. TINDAK LANJUT: Rekomendasi apa yang harus dilakukan guru jika siswa berada di interval tertentu.
+=== STRUKTUR DOKUMEN PROSEM (WAJIB BERURUTAN & PRESISI) ===
 
+BAGIAN 1 — KOP & IDENTITAS:
+- KOP Surat sekolah.
+- Judul: "PROGRAM SEMESTER (PROSEM)" — centered, bold, 14pt.
+- Tabel Identitas (tanpa border):
+  Satuan Pendidikan, Mata Pelajaran, Kelas/Semester, Fase, Tahun Pelajaran.
+  Alokasi JP per Minggu: [dari konteks].
+
+BAGIAN 2 — TABEL DISTRIBUSI PROSEM:
+Ini adalah INTI dokumen. Buat tabel LEBAR (landscape-style) dengan struktur:
+
+KOLOM TABEL:
+| No | Materi / ATP | JP | Bulan 1 (4-5 minggu) | Bulan 2 (4-5 minggu) | ... sampai Bulan 6 | Ket |
+
+DETAIL KOLOM BULAN:
+- Setiap kolom "Bulan" dipecah menjadi sub-kolom MINGGU (Mg 1, Mg 2, Mg 3, Mg 4, [Mg 5 jika ada]).
+- Contoh header untuk Semester Ganjil:
+  | No | Materi/ATP | JP | Juli (Mg1-Mg4) | Agustus (Mg1-Mg4) | September (Mg1-Mg4) | Oktober (Mg1-Mg5) | November (Mg1-Mg4) | Desember (Mg1-Mg4) | Ket |
+- Contoh header untuk Semester Genap:
+  | No | Materi/ATP | JP | Januari (Mg1-Mg4) | Februari (Mg1-Mg4) | Maret (Mg1-Mg5) | April (Mg1-Mg4) | Mei (Mg1-Mg4) | Juni (Mg1-Mg4) | Ket |
+
+ISI TABEL:
+- Tandai dengan "V" (atau "✓") pada sel minggu di mana materi tersebut diajarkan.
+- Setiap materi harus menempati jumlah minggu yang KONSISTEN dengan alokasi JP-nya.
+  Rumus: Jumlah Minggu = JP Materi ÷ JP per Minggu.
+- Baris khusus (TANPA nomor, background #f0f0f0 atau bold):
+  • STS (Sumatif Tengah Semester) — biasanya di pertengahan semester (sekitar minggu 8-9).
+  • SAS (Sumatif Akhir Semester) — di minggu terakhir semester.
+  • Libur — tandai pada kolom Ket atau beri warna berbeda.
+
+BAGIAN 3 — CATATAN:
+- Tuliskan catatan singkat:
+  • Total minggu efektif: [hitung]
+  • Total JP efektif: [hitung]
+  • Minggu tidak efektif: [jika ada, misal libur nasional]
+
+BAGIAN 4 — TANDA TANGAN:
+- Gunakan template tanda tangan standar.
+
+=== TIPS TEKNIS TABEL PROSEM ===
+- Karena tabel sangat lebar, gunakan font-size: 8pt atau 9pt agar muat.
+- Header minggu (Mg1, Mg2...) bisa dirotasi atau disingkat.
+- Gunakan <th> untuk header dan <td> untuk data.
+- Setiap sel minggu: width minimal 20px, text-align: center.
+
+${additionalRules}
+${SHARED_RULES}`,
+
+    // ──────────────────────────────────────
+    // KKTP (Kriteria Ketercapaian TP)
+    // ──────────────────────────────────────
+    "KKTP": `Anda adalah PAKAR EVALUASI & ASESMEN PENDIDIKAN dengan keahlian dalam penilaian formatif dan sumatif Kurikulum Merdeka.
+Tugas Anda: Menyusun dokumen Kriteria Ketercapaian Tujuan Pembelajaran (KKTP) yang KOMPREHENSIF dan OPERASIONAL.
+
+KONTEKS DATA GURU:
+${rawPrompt}
+
+=== STRUKTUR DOKUMEN KKTP (WAJIB BERURUTAN) ===
+
+BAGIAN 1 — KOP & IDENTITAS:
+- KOP Surat sekolah.
+- Judul: "KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN (KKTP)" — centered, bold, 14pt.
+- Sub-judul: "Berdasarkan Kurikulum Merdeka — SK BSKAP No. 046/H/KR/2025"
+- Tabel Identitas: Satuan Pendidikan, Mata Pelajaran, Kelas/Semester, Fase, Tahun Pelajaran.
+
+BAGIAN 2 — PENDAHULUAN:
+- Penjelasan singkat (150-200 kata) tentang apa itu KKTP dan mengapa penting.
+- Sebutkan dasar hukum: Permendikbudristek tentang Standar Penilaian, SK BSKAP 046/2025.
+- Ambang batas ketuntasan yang ditetapkan sekolah (jika ada dari konteks).
+
+BAGIAN 3 — TABEL INTERVAL NILAI (A):
+- Sub-judul: "A. Interval Konversi Nilai"
+- Buat tabel:
+  | Interval Nilai | Kategori | Predikat | Deskripsi Capaian |
+  | 86 - 100       | Sangat Baik | A | Peserta didik menguasai seluruh TP dengan sangat baik... |
+  | 66 - 85        | Baik        | B | Peserta didik menguasai sebagian besar TP... |
+  | 41 - 65        | Cukup       | C | Peserta didik menguasai sebagian TP... |
+  | 0 - 40         | Perlu Bimbingan | D | Peserta didik belum menguasai TP... |
+- Deskripsi harus SPESIFIK sesuai mata pelajaran, bukan generik.
+
+BAGIAN 4 — RUBRIK DESKRIPTIF PER TP (B):
+- Sub-judul: "B. Rubrik Deskriptif Per Tujuan Pembelajaran"
+- Untuk SETIAP Tujuan Pembelajaran (minimal 4-6 TP), buat tabel:
+  | Tujuan Pembelajaran | Kriteria | Sangat Baik (A) | Baik (B) | Cukup (C) | Perlu Bimbingan (D) |
+- Setiap kolom level harus berisi DESKRIPSI PERILAKU yang OBSERVABLE dan TERUKUR.
+- Gunakan kata kerja yang bisa diamati: "mampu menjelaskan", "dapat menghitung", "mengidentifikasi dengan benar", dll.
+
+BAGIAN 5 — TINDAK LANJUT (C):
+- Sub-judul: "C. Rencana Tindak Lanjut"
+- Buat tabel rekomendasi:
+  | Kategori | Tindak Lanjut |
+  | Sangat Baik | Program pengayaan, tutor sebaya, proyek lanjutan... |
+  | Baik | Penguatan, latihan mandiri... |
+  | Cukup | Remedial teaching, pendampingan kelompok kecil... |
+  | Perlu Bimbingan | Remedial intensif, konsultasi orang tua, modifikasi pembelajaran... |
+
+BAGIAN 6 — TANDA TANGAN:
+- Gunakan template tanda tangan standar.
+
+${additionalRules}
 ${SHARED_RULES}`,
   };
 
+  // ── MATCHING LOGIC ──
   const isType = (t: string) => type.includes(t) || t.includes(type);
-  const isMath = /matematika|math|hitung|angka/i.test(rawPrompt) || /matematika|math/i.test(type);
 
   let finalPrompt = "";
   if (isType("Program Semester") || isType("PROSEM")) finalPrompt = prompts["PROSEM"];
@@ -216,10 +461,6 @@ ${SHARED_RULES}`,
   else if (isType("Capaian Pembelajaran") || type === "CP") finalPrompt = prompts["CP"];
   else if (isType("LKPD")) finalPrompt = prompts["LKPD"];
   else finalPrompt = prompts["ATP"];
-
-  if (isMath) {
-    finalPrompt = finalPrompt.replace("${SHARED_RULES}", `${MATH_RULES}\n\n\${SHARED_RULES}`);
-  }
 
   return finalPrompt;
 }
@@ -230,7 +471,6 @@ function extractTitle(type: string, rawPrompt: string): string {
   let mapel = "";
   let kelas = "";
 
-  // 1. Parsing by Precise IDs from questionnaire (1001: Subject, 1002: Grade, 2001: Specific Material)
   const getAnswerById = (id: string) => {
     const part = parts.find(p => p.startsWith(`${id}.`));
     if (!part) return "";
@@ -241,7 +481,6 @@ function extractTitle(type: string, rawPrompt: string): string {
   mapel = getAnswerById("1001") || getAnswerById("2001");
   kelas = getAnswerById("1002");
 
-  // 2. Fallback to substring search if IDs are not found
   if (!mapel) {
     const mp = parts.find(p => p.toLowerCase().includes("mata pelajaran") || p.toLowerCase().includes("mapel"));
     if (mp) mapel = mp.split(":").pop()?.trim() || "";
@@ -251,14 +490,12 @@ function extractTitle(type: string, rawPrompt: string): string {
     if (kp) kelas = kp.split(":").pop()?.trim() || "";
   }
 
-  // 3. EXTREMELY AGGRESSIVE CLEANING
   const clean = (text: string) => {
     return text
       .replace(/\(isi manual\)/gi, "")
       .replace(/Buatkan dokumen LKPD LENGKAP/gi, "")
       .replace(/^(?:apa yang ingin Anda rancang\?|rancangan|masukkan|tuliskan|mapel|mata pelajaran|kelas|fase|lewati|isi manual|buatkan|dokumen|lengkap)\s*/i, "")
       .replace(/[?:]/g, "")
-      // Remove all leading/trailing non-alphanumeric junk characters (like dots, dashes, spaces)
       .replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "")
       .trim();
   };
@@ -267,7 +504,6 @@ function extractTitle(type: string, rawPrompt: string): string {
   kelas = clean(kelas);
   const materi = clean(getAnswerById("2001"));
 
-  // Final sanitization with rigorous junk detection
   const isMeaningless = (v: string) => {
     const t = v.trim();
     if (!t) return true;
@@ -282,7 +518,6 @@ function extractTitle(type: string, rawPrompt: string): string {
   const finalKelas = isMeaningless(kelas) ? "-" : kelas;
   const finalMateri = isMeaningless(materi) ? "" : materi;
 
-  // New Detailed Template: [TIPE] - Kelas [X] - Mapel [MAPEL] - [MATERI]
   let title = `${type} - Kelas ${finalKelas} - Mapel ${finalMapel}`;
   if (finalMateri) title += ` - ${finalMateri}`;
   
@@ -291,13 +526,37 @@ function extractTitle(type: string, rawPrompt: string): string {
 
 function cleanAIOutput(text: string): string {
   let cleaned = text.trim();
+  // Remove markdown code blocks wrapping
   cleaned = cleaned.replace(/^```html\s*/, "").replace(/```\s*$/, "");
   cleaned = cleaned.replace(/^```\s*/, "").replace(/```\s*$/, "");
   
+  // Remove any preamble text before the first HTML tag
   if (!cleaned.startsWith("<")) {
     const firstTag = cleaned.indexOf("<div");
-    if (firstTag !== -1) cleaned = cleaned.substring(firstTag);
+    const firstTable = cleaned.indexOf("<table");
+    const firstP = cleaned.indexOf("<p");
+    
+    // Find the earliest HTML tag
+    const positions = [firstTag, firstTable, firstP].filter(p => p !== -1);
+    if (positions.length > 0) {
+      cleaned = cleaned.substring(Math.min(...positions));
+    }
   }
+  
+  // Remove trailing conversational text after the last closing tag
+  const lastDivClose = cleaned.lastIndexOf("</div>");
+  const lastTableClose = cleaned.lastIndexOf("</table>");
+  const lastPos = Math.max(lastDivClose, lastTableClose);
+  
+  if (lastPos !== -1) {
+    const closeTagLen = lastDivClose > lastTableClose ? 6 : 8; // length of </div> vs </table>
+    const afterHtml = cleaned.substring(lastPos + closeTagLen).trim();
+    // If there's significant non-HTML text after the last tag, remove it
+    if (afterHtml.length > 10 && !afterHtml.startsWith("<")) {
+      cleaned = cleaned.substring(0, lastPos + closeTagLen);
+    }
+  }
+  
   return cleaned;
 }
 
@@ -325,8 +584,8 @@ export async function POST(req: Request) {
                 messages: [{ role: "system", content: systemPrompt }],
                 model: "deepseek-chat",
                 stream: true,
-                temperature: 0.7,
-                max_tokens: 8192,
+                temperature: 0.4,
+                max_tokens: 16384,
              });
              for await (const chunk of completion) {
                 const text = chunk.choices[0]?.delta?.content || "";
