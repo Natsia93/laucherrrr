@@ -474,6 +474,23 @@ function WorkspaceContent() {
               )}
             </AnimatePresence>
           </div>
+
+          {/* Continue Button below document */}
+          {(isGenerated || docId) && !loading && assistantMode === 'edit' && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }} 
+              animate={{ opacity: 1, scale: 1 }} 
+              className="mt-8 mb-12 flex justify-center"
+            >
+              <Button 
+                onClick={() => handleSendMessage(true)} 
+                className="px-12 py-6 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-xl font-bold shadow-xl shadow-[#4d7537]/20 border-none transition-all active:scale-95 flex items-center gap-3"
+              >
+                <Sparkles className="w-5 h-5 animate-pulse" /> Lanjutkan Penulisan Dokumen
+              </Button>
+            </motion.div>
+          )}
+
           {/* Extra bottom space for scrolling */}
           {displayedContent && <div className="h-32" />}
         </div>
@@ -527,17 +544,8 @@ function WorkspaceContent() {
               </motion.div>
             ))}
 
-            {/* Continue Button inside sidebar */}
-            {(isGenerated || docId) && assistantMode === 'edit' && !loading && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pt-2">
-                <Button 
-                  onClick={() => handleSendMessage(true)} 
-                  className="w-full bg-transparent border-2 border-[#4d7537] text-[#4d7537] hover:bg-[#4d7537] hover:text-white rounded-md h-12 font-bold shadow-lg shadow-[#4d7537]/10 transition-all active:scale-95"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" /> Lanjutkan Penulisan
-                </Button>
-              </motion.div>
-            )}
+            {/* Continue Button removed from here */}
+
           </div>
           
           <div className="p-6 bg-transparent border-t border-border/50">
