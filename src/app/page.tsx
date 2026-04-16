@@ -322,14 +322,32 @@ export default function Home() {
           className="w-full max-w-7xl mt-24 px-4 flex flex-col md:flex-row items-center gap-12"
         >
           <div className="flex-1 space-y-6 text-center md:text-left">
-            <h2 className="font-bricolage text-3xl md:text-5xl font-normal tracking-tight text-neutral-900 dark:text-[#f4f3ed]">
+            <motion.h2 
+              initial={{ opacity: 0, filter: "blur(10px)", y: 20 }}
+              whileInView={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+              className="font-bricolage text-3xl md:text-5xl font-normal tracking-tight text-neutral-900 dark:text-[#f4f3ed]"
+            >
               Membantu Perancangan Kurikulum <br className="hidden md:block"/> 
               <span className="text-[#4d7537] dark:text-[#89b867]">Jauh Lebih Cepat.</span>
-            </h2>
-            <p className="font-sans text-neutral-600 dark:text-[#a2b591] text-lg md:text-xl font-light leading-relaxed max-w-xl">
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0, filter: "blur(10px)", y: 20 }}
+              whileInView={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="font-sans text-neutral-600 dark:text-[#a2b591] text-lg md:text-xl font-light leading-relaxed max-w-xl"
+            >
               Dekstorio adalah platform yang dirancang khusus untuk membantu pendidik dan tenaga ajar dalam menyusun administrasi sekolah dengan presisi tinggi. Menggabungkan fitur AI canggih dengan regulasi kurikulum terbaru untuk hasil yang profesional.
-            </p>
-            <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
+            </motion.p>
+            <motion.div 
+              initial={{ opacity: 0, filter: "blur(10px)", y: 20 }}
+              whileInView={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="flex flex-wrap gap-4 justify-center md:justify-start pt-2"
+            >
               <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-[#a2b591]">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#4d7537]"></div>
                 Standar Kurikulum Merdeka
@@ -342,15 +360,21 @@ export default function Home() {
                 <div className="w-1.5 h-1.5 rounded-full bg-[#4d7537]"></div>
                 Terintegrasi DeepSeek V3
               </div>
-            </div>
+            </motion.div>
           </div>
-          <div className="flex-1 w-full max-w-xl">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, filter: "blur(15px)" }}
+            whileInView={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, delay: 0.4 }}
+            className="flex-1 w-full max-w-xl"
+          >
             <img 
               src="/mockuper.png" 
               alt="Dekstorio Interface" 
               className="w-full h-auto object-cover"
             />
-          </div>
+          </motion.div>
         </motion.section>
 
         {/* Content Galleries */}
