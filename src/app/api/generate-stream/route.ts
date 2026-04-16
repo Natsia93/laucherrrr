@@ -773,7 +773,7 @@ TUGAS ANDA:
                  status: "Selesai",
                  size: `${(cleaned.length / 1024).toFixed(1)} KB`,
                }).returning();
-               send({ type: "done", docId: newDoc.id, provider: finalProvider });
+               send({ type: "done", docId: newDoc.id, title: newDoc.title, provider: finalProvider });
              } else {
                send({ type: "done", provider: finalProvider });
              }

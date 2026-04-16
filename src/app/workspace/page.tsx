@@ -41,6 +41,7 @@ function WorkspaceContent() {
   const [assistantMode, setAssistantMode] = useState<'chat' | 'edit'>('chat');
   const [loading, setLoading] = useState(false);
   const [docContent, setDocContent] = useState("");
+  const [docTitle, setDocTitle] = useState("");
   const [displayedContent, setDisplayedContent] = useState("");
   const [isGenerated, setIsGenerated] = useState(false);
   const [isCutOff, setIsCutOff] = useState(false);
@@ -179,6 +180,7 @@ function WorkspaceContent() {
                   { role: "ai", text: "✅ Selesai! Dokumen sudah siap. Ingin revisi?" }
                 ]);
                 
+                if (data.title) setDocTitle(data.title);
                 if (data.docId) {
                   const newUrl = `${window.location.pathname}?id=${data.docId}`;
                   window.history.replaceState({ ...window.history.state, path: newUrl }, '', newUrl);
@@ -233,6 +235,7 @@ function WorkspaceContent() {
           const data = await res.json();
           setDocContent(data.content);
           setDisplayedContent(data.content);
+          setDocTitle(data.title);
           contentRef.current = data.content;
           setIsGenerated(true);
           setMessages([{ role: "ai", text: `✅ Dokumen berhasil dimuat.` }]);
@@ -414,7 +417,14 @@ function WorkspaceContent() {
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground hover:bg-secondary"><ChevronLeft className="w-5 h-5" /></Button>
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center"><BookOpen className="text-white w-5 h-5" /></div>
-            <span className="font-bricolage font-semibold text-lg hidden md:inline-block text-foreground">Dekstorio</span>
+            <div className="flex flex-col">
+              <span className="font-bricolage font-semibold text-lg leading-none text-foreground">Dekstorio</span>
+              {docTitle && (
+                <span className="text-[10px] text-muted-foreground font-medium truncate max-w-[120px] md:max-w-[200px] mt-0.5">
+                  {docTitle}
+                </span>
+              )}
+            </div>
           </Link>
         </div>
 
