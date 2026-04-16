@@ -192,7 +192,10 @@ function WorkspaceContent() {
                   hasDecidedMode = true;
                   break;
                 } else if (decisionBuffer.length >= 200) {
-                  // Fallback: No clear marker found after 200 chars
+                  // Fallback: No clear marker found after 200 chars (like in Continuation)
+                  contentRef.current += decisionBuffer;
+                  setDocContent(contentRef.current);
+                  setDisplayedContent(contentRef.current);
                   hasDecidedMode = true;
                 }
                 break;

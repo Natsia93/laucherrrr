@@ -588,7 +588,8 @@ export async function POST(req: Request) {
             // === INTELLIGENT INTENT DETECTION (Manual Override) ===
             const mode = body.mode || 'chat';
             const isContinue = body.isContinue || false;
-            willEditDocument = mode === 'edit';
+            // Force edit routing if continuing, so output goes to document chunk, not chat
+            willEditDocument = mode === 'edit' || isContinue;
             isMajorMismatch = false;
 
             // === WEB SEARCH GROUNDING ===
