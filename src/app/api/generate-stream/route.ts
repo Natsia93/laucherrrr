@@ -656,9 +656,10 @@ PENTING (KEDISIPLINAN OUTPUT):
 - Jika Anda menulis teks biasa, itu akan merusak dokumen user.
 
 PENTING (STRUKTURAL AWARENESS): 
-- FORMAT PATCH: Harus menggunakan [PATCH_START] ... SEARCH: ... REPLACE: ... [PATCH_END].
-- SEARCH harus menggunakan potongan teks/HTML yang unik (seperti judul atau nama instansi). 
-- HINDARI menggunakan atribut style CSS yang panjang di SEARCH karena rawan kesalahan penulisan.
+- JIKA REVISI MINOR: Anda HANYA BOLEH mengeluarkan format [PATCH_START] ... [PATCH_END].
+- DILARANG menulis ulang header dokumen atau teks apapun di luar tag tersebut.
+- SEARCH: Ambil potongan teks unik (seperti judul).
+- REPLACE: Konten baru (termasuk KOP jika diminta).
 ` : `
 === MODE: CHAT ASISTEN (AKTIF) ===
 TUGAS ANDA:

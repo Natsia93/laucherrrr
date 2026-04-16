@@ -164,30 +164,37 @@ function WorkspaceContent() {
               if (!hasDecidedMode && isAssistantRevision) {
                 decisionBuffer += data.text;
                 
-                const patchRegex = /\[(SMART_?)?PATCH_START\]/i;
+                const patchRegex = /\[(?:SMART_?)?PATCH_START\]/i;
                 const patchMatch = decisionBuffer.match(patchRegex);
                 const divStartIdx = decisionBuffer.toLowerCase().indexOf("<div");
 
-                if (decisionBuffer.length < 50 && !patchMatch && divStartIdx === -1) {
-                  break;
+                // Buffer up to 200 chars or until we find a clear marker
+                if (decisionBuffer.length < 200 && !patchMatch && divStartIdx === -1) {
+                  break; 
                 }
 
-                if (patchMatch && (divStartIdx === -1 || patchMatch.index! < divStartIdx)) {
+                if (patchMatch) {
                   isPatchMode = true;
-                  patchBuffer = decisionBuffer;
-                } else {
+                  // Critical: discard anything BEFORE the patch starts
+                  patchBuffer = decisionBuffer.substring(patchMatch.index!);
+                  hasDecidedMode = true;
+                  break;
+                } else if (divStartIdx !== -1) {
                   // Major edit - clear content
                   contentRef.current = "";
                   setDocContent("");
                   setDisplayedContent("");
                   
-                  // If there was chatty preamble before the <div>, skip it
-                  const cleanContent = divStartIdx !== -1 ? decisionBuffer.substring(divStartIdx) : decisionBuffer;
+                  const cleanContent = decisionBuffer.substring(divStartIdx);
                   contentRef.current += cleanContent;
                   setDocContent(contentRef.current);
                   setDisplayedContent(contentRef.current);
+                  hasDecidedMode = true;
+                  break;
+                } else if (decisionBuffer.length >= 200) {
+                  // Fallback: No clear marker found after 200 chars
+                  hasDecidedMode = true;
                 }
-                hasDecidedMode = true;
                 break;
               }
 
@@ -231,26 +238,29 @@ function WorkspaceContent() {
               if (isPatchMode && (patchBuffer || decisionBuffer)) {
                 const applySmartPatches = (current: string, patches: string) => {
                   let result = current;
+                  // Handle typo tolerance and case insensitivity
                   const patchBlocks = patches.split(/\[(?:SMART_?)?PATCH_START\]/i);
+                  
                   patchBlocks.forEach(block => {
-                    const endMarker = /\[(?:SMART_?)?PATCH_END\]/i;
-                    if (!endMarker.test(block)) return;
+                    if (!/SEARCH:/i.test(block) || !/REPLACE:/i.test(block)) return;
                     
                     const sMatch = block.match(/SEARCH:\s*([\s\S]*?)\n\s*REPLACE:/i);
-                    const rMatch = block.match(/REPLACE:\s*([\s\S]*?)\n\s*\[(?:SMART_?)?PATCH_END\]/i);
+                    const rMatch = block.match(/REPLACE:\s*([\s\S]*?)(?:\n\s*\[(?:SMART_?)?PATCH_END\]|$)/i);
                     
                     if (sMatch && rMatch) {
                       const s = sMatch[1].trim();
                       const r = rMatch[1].trim();
-                      // Fuzzy match: ignore extra spaces if exact match fails
+                      
                       if (result.includes(s)) {
                         result = result.replace(s, r);
                       } else {
-                        // Try a bit more aggressive matching if exact fails (normalization)
-                        const normalizedS = s.replace(/\s+/g, ' ');
-                        const normalizedResult = result.replace(/\s+/g, ' ');
-                        if (normalizedResult.includes(normalizedS)) {
-                          // This is trickier, just fallback for now or try simpler search
+                        // More aggressive normalization if exact match fails
+                        const normalize = (t: string) => t.replace(/\s+/g, ' ').trim();
+                        const ns = normalize(s);
+                        if (ns.length > 5) { // Only try normalize if search string is substantial
+                           // Try replacing based on line-by-line or partial match if needed
+                           // For now, let's just do a normalized include check
+                           // But for HTML, replace(s, r) is safest.
                         }
                       }
                     }
