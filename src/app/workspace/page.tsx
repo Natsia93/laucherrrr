@@ -48,6 +48,7 @@ function WorkspaceContent() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const contentRef = useRef("");
   const docAreaRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [attachments, setAttachments] = useState<{name: string, content: string, type: string}[]>([]);
@@ -192,6 +193,18 @@ function WorkspaceContent() {
     }
     return () => clearInterval(timer);
   }, [loading]);
+
+  // Auto-scroll chat to bottom when messages update
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      requestAnimationFrame(() => {
+        chatScrollRef.current?.scrollTo({
+          top: chatScrollRef.current.scrollHeight,
+          behavior: 'smooth'
+        });
+      });
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (hasStarted.current) return;
@@ -476,7 +489,7 @@ function WorkspaceContent() {
             </div>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-6 space-y-8 scroll-hide">
+          <div ref={chatScrollRef} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-8 scroll-hide">
             {messages.map((m, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col gap-2 ${m.role === 'user' ? 'items-end text-right' : 'items-start text-left'}`}>
                 {m.role === 'user' ? (
