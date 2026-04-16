@@ -435,17 +435,63 @@ function WorkspaceContent() {
 
   const exportToWord = () => {
     const isArabic = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
+    
+    // Explicit style to match the web A4 paper look exactly
+    const exportStyles = `
+      @page {
+        size: A4;
+        margin: 25mm 20mm 25mm 20mm;
+      }
+      body {
+        font-family: 'Times New Roman', serif;
+        font-size: 12pt;
+        line-height: 1.5;
+        text-align: justify;
+        margin: 0;
+        padding: 0;
+      }
+      .doc-wrapper {
+        width: 100%;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        table-layout: fixed;
+      }
+      th, td {
+        border: 1px solid black;
+        padding: 8px;
+        vertical-align: top;
+        text-align: left;
+        word-wrap: break-word;
+      }
+      h1, h2, h3, h4 {
+        margin-top: 15pt;
+        margin-bottom: 10pt;
+        line-height: 1.2;
+      }
+      p {
+        margin-bottom: 10pt;
+      }
+      [dir="rtl"] {
+        direction: rtl;
+        text-align: right;
+        font-family: 'Amiri', serif;
+      }
+    `;
+
     const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head><meta charset='utf-8'><style>
-        body { font-family: 'Times New Roman', serif; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; border: 1px solid black; }
-        th, td { border: 1px solid black; padding: 6px; vertical-align: top; }
-        [dir="rtl"] { direction: rtl; text-align: right; font-family: 'Amiri', serif; }
-      </style></head><body><div ${isArabic ? 'dir="rtl"' : 'dir="ltr"'}>`;
+      <head>
+        <meta charset='utf-8'>
+        <style>${exportStyles}</style>
+      </head>
+      <body>
+        <div class="doc-wrapper" ${isArabic ? 'dir="rtl"' : 'dir="ltr"'}>
+    `;
     const footer = "</div></body></html>";
     const sourceHTML = header + docContent + footer;
     
-    // Create blob with BOM for UTF-8 to ensure Word renders it correctly
     const blob = new Blob(['\ufeff', sourceHTML], {
       type: 'application/msword'
     });
