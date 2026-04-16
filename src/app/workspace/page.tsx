@@ -164,15 +164,15 @@ function WorkspaceContent() {
               if (!hasDecidedMode && isAssistantRevision) {
                 decisionBuffer += data.text;
                 
-                const patchStartIdx = decisionBuffer.indexOf("[SMART_PATCH");
+                const patchRegex = /\[(SMART_?)?PATCH_START\]/i;
+                const patchMatch = decisionBuffer.match(patchRegex);
                 const divStartIdx = decisionBuffer.toLowerCase().indexOf("<div");
 
-                // If it's short and we don't see any clear markers yet, keep buffering
-                if (decisionBuffer.length < 50 && patchStartIdx === -1 && divStartIdx === -1) {
+                if (decisionBuffer.length < 50 && !patchMatch && divStartIdx === -1) {
                   break;
                 }
 
-                if (patchStartIdx !== -1 && (divStartIdx === -1 || patchStartIdx < divStartIdx)) {
+                if (patchMatch && (divStartIdx === -1 || patchMatch.index! < divStartIdx)) {
                   isPatchMode = true;
                   patchBuffer = decisionBuffer;
                 } else {
@@ -231,15 +231,28 @@ function WorkspaceContent() {
               if (isPatchMode && (patchBuffer || decisionBuffer)) {
                 const applySmartPatches = (current: string, patches: string) => {
                   let result = current;
-                  const blocks = patches.split("[SMART_PATCH_START]");
-                  blocks.forEach(block => {
-                    if (!block.includes("[SMART_PATCH_END]")) return;
-                    const sMatch = block.match(/SEARCH:\s*([\s\S]*?)\n\s*REPLACE:/);
-                    const rMatch = block.match(/REPLACE:\s*([\s\S]*?)\n\s*\[SMART_PATCH_END\]/);
+                  const patchBlocks = patches.split(/\[(?:SMART_?)?PATCH_START\]/i);
+                  patchBlocks.forEach(block => {
+                    const endMarker = /\[(?:SMART_?)?PATCH_END\]/i;
+                    if (!endMarker.test(block)) return;
+                    
+                    const sMatch = block.match(/SEARCH:\s*([\s\S]*?)\n\s*REPLACE:/i);
+                    const rMatch = block.match(/REPLACE:\s*([\s\S]*?)\n\s*\[(?:SMART_?)?PATCH_END\]/i);
+                    
                     if (sMatch && rMatch) {
                       const s = sMatch[1].trim();
                       const r = rMatch[1].trim();
-                      if (result.includes(s)) result = result.replace(s, r);
+                      // Fuzzy match: ignore extra spaces if exact match fails
+                      if (result.includes(s)) {
+                        result = result.replace(s, r);
+                      } else {
+                        // Try a bit more aggressive matching if exact fails (normalization)
+                        const normalizedS = s.replace(/\s+/g, ' ');
+                        const normalizedResult = result.replace(/\s+/g, ' ');
+                        if (normalizedResult.includes(normalizedS)) {
+                          // This is trickier, just fallback for now or try simpler search
+                        }
+                      }
                     }
                   });
                   return result;

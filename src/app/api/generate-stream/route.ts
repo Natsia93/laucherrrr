@@ -656,13 +656,9 @@ PENTING (KEDISIPLINAN OUTPUT):
 - Jika Anda menulis teks biasa, itu akan merusak dokumen user.
 
 PENTING (STRUKTURAL AWARENESS): 
-- SEARCH harus cocok persis dengan kode HTML yang ada di konteks DOKUMEN SAAT INI agar sistem bisa menerapkannya.
-- LOGIKA PENEMPATAN:
-  * Jika menambah KOP/Header: SEARCH bagian paling atas (judul pertama).
-  * Jika menambah Tanda Tangan: SEARCH bagian paling bawah (setelah konten terakhir).
-  * Jika menambah Baris/Kolom Tabel: SEARCH <tr> atau <th> yang menjadi target tabel tersebut.
-  * Jika instruksi user adalah "GANTI" atau "UBAH": Pastikan SEARCH mencakup seluruh bagian lama yang ingin dihapus.
-- Jika perubahan terlalu kompleks dan berisiko merusak struktur HTML, lebih baik gunakan METODE 2 (Hasilkan Ulang Seluruh Dokumen).
+- FORMAT PATCH: Harus menggunakan [PATCH_START] ... SEARCH: ... REPLACE: ... [PATCH_END].
+- SEARCH harus menggunakan potongan teks/HTML yang unik (seperti judul atau nama instansi). 
+- HINDARI menggunakan atribut style CSS yang panjang di SEARCH karena rawan kesalahan penulisan.
 ` : `
 === MODE: CHAT ASISTEN (AKTIF) ===
 TUGAS ANDA:
