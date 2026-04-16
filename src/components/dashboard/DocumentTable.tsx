@@ -160,8 +160,8 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
         )}
       </AnimatePresence>
 
-      <div className="overflow-x-auto overflow-y-hidden scrollbar-hide">
-        <Table>
+      <div className="scrollbar-hide">
+        <Table className="overflow-hidden">
           <TableHeader className="bg-neutral-50 dark:bg-[#1a2315]/50 border-b border-[#dcdad1] dark:border-[#3f612d]/30">
             <TableRow className="hover:bg-transparent border-none">
               <TableHead className="w-[50px] px-6">

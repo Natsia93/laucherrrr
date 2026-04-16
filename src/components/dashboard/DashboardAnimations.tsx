@@ -34,9 +34,9 @@ export function DashboardFadeIn({ children, delay = 0 }: { children: React.React
 export function DashboardTableRow({ children, index, className }: { children: React.ReactNode, index: number, className?: string }) {
   return (
     <motion.tr
-      initial={{ opacity: 0, filter: "blur(8px)" }}
-      animate={{ opacity: 1, filter: "blur(0px)" }}
-      exit={{ opacity: 0, filter: "blur(8px)", transition: { duration: 0.2 } }}
+      initial={{ opacity: 0, x: -10, filter: "blur(8px)" }}
+      animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+      exit={{ opacity: 0, x: 10, filter: "blur(8px)", transition: { duration: 0.2 } }}
       transition={{ delay: 0.1 * index, duration: 0.4 }}
       layout
       className={`border-b border-neutral-100 dark:border-[#3f612d]/20 hover:bg-neutral-50 dark:hover:bg-[#1a2315]/40 transition-colors group ${className || ""}`}
