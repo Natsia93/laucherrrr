@@ -92,11 +92,7 @@ const MATH_RULES = `
    - Gunakan simbol "π" untuk pi.
    - Gunakan simbol "∞" untuk tak hingga.
 3. DILARANG KERAS menggunakan format LaTeX seperti \\( ... \\) atau \\[ ... \\]. Gunakan teks biasa dan tag HTML.
-4. PILIHAN GANDA (A, B, C, D): Setiap soal pilihan ganda WAJIB memiliki opsi dengan format:
-   A. [Opsi]
-   B. [Opsi]
-   C. [Opsi]
-   D. [Opsi]
+4. PILIHAN GANDA (A, B, C, D): Setiap soal pilihan ganda WAJIB menggunakan struktur list (<ul> atau <ol type="A">) untuk teks opsinya. JANGAN gunakan teks biasa bertumpuk menggunakan <br>.
 5. DILARANG menyertakan tanda backslash (\\) atau delimiters LaTeX.
 6. FORMAT PECAHAN: Gunakan format mendatar (contoh: 3/4) atau gunakan <sup>3</sup>/<sub>4</sub> untuk pecahan vertikal.
 7. FORMAT AKAR: Gunakan √ diikuti tanda kurung jika perlu, seperti: √(16) = 4.
@@ -228,7 +224,7 @@ BAGIAN 5 — RINGKASAN MATERI:
 
 BAGIAN 6 — KEGIATAN / SOAL:
 - Buat soal sesuai tipe dan jumlah yang diminta di KONTEKS DATA GURU.
-- Pilihan Ganda: format A. B. C. D. (4 opsi). Soal harus variatif level LOTS-HOTS.
+- Pilihan Ganda: Format (A, B, C, D). WAJIB gunakan list HTML (<ul> atau <ol type="A">) untuk opsinya agar rapi saat di-export. Soal harus variatif level LOTS-HOTS.
 - Jawaban Singkat: berikan ruang jawab (garis kosong).
 - Esai: berikan petunjuk panjang jawaban yang diharapkan.
 - Nomor soal harus KONTINU (tidak reset antar tipe).
