@@ -313,6 +313,50 @@ export default function Home() {
           ))}
         </motion.div>
 
+        {/* Dekstorio Description Section */}
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="w-full max-w-7xl mt-24 px-4 flex flex-col md:flex-row items-center gap-12"
+        >
+          <div className="flex-1 space-y-6 text-center md:text-left">
+            <h2 className="font-bricolage text-3xl md:text-5xl font-normal tracking-tight text-neutral-900 dark:text-[#f4f3ed]">
+              Perancangan Kurikulum <br className="hidden md:block"/> 
+              <span className="text-[#4d7537] dark:text-[#89b867]">Jauh Lebih Cepat.</span>
+            </h2>
+            <p className="font-sans text-neutral-600 dark:text-[#a2b591] text-lg md:text-xl font-light leading-relaxed max-w-xl">
+              Dekstorio adalah platform cerdas yang dirancang khusus untuk membantu pendidik menyusun administrasi sekolah dengan presisi tinggi. Menggabungkan AI tercanggih dengan regulasi kurikulum terbaru untuk hasil yang profesional.
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
+              <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-[#a2b591]">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#4d7537]"></div>
+                Standar Kurikulum Merdeka
+              </div>
+              <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-[#a2b591]">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#4d7537]"></div>
+                Ekspor Word Instan
+              </div>
+              <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-[#a2b591]">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#4d7537]"></div>
+                Terintegrasi DeepSeek V3
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 w-full max-w-2xl">
+            <div className="relative group">
+              {/* Subtle ambient glow behind image */}
+              <div className="absolute -inset-10 bg-[#4d7537]/10 dark:bg-[#3f612d]/20 rounded-full blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+              <img 
+                src="/mockuper.png" 
+                alt="Dekstorio Interface" 
+                className="relative rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-[#dcdad1] dark:border-[#3f612d]/30 w-full object-cover transform transition-all duration-700 group-hover:scale-[1.01]"
+              />
+            </div>
+          </div>
+        </motion.section>
+
         {/* Content Galleries */}
         <div className="w-full max-w-7xl mt-24 space-y-16">
           {sections.map((section, idx) => (
