@@ -566,7 +566,7 @@ function WorkspaceContent() {
                     }
                   }} 
                   placeholder="Ask anything, upload PDF or Word documents..." 
-                  className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground min-h-[40px] px-3 py-2 resize-none scroll-hide shadow-none" 
+                  className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground min-h-[40px] px-3 py-2 resize-none shadow-none" 
                 />
                 
                 <div className="flex items-center justify-between px-2 pt-1 pb-1">
