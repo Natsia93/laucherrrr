@@ -12,7 +12,7 @@ import {
   History, Loader2, CheckCircle2, Brain, FileText, 
   PenTool, Save, Clock, Zap, Folder, XCircle,
   ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen,
-  Plus, ArrowRight, Send, X, Paperclip, Image as ImageIcon
+  Plus, ArrowRight, Send, X, Paperclip, FileText as FileIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -482,7 +482,7 @@ function WorkspaceContent() {
                 >
                   {attachments.map((a, i) => (
                     <div key={i} className="flex items-center gap-2 bg-secondary/80 backdrop-blur-md border border-border rounded-lg px-3 py-1.5 text-xs">
-                      {a.type === "image" ? <ImageIcon className="w-3.5 h-3.5 text-[#4d7537]" /> : <FileText className="w-3.5 h-3.5 text-blue-500" />}
+                      <FileIcon className="w-3.5 h-3.5 text-[#4d7537]" />
                       <span className="max-w-[100px] truncate font-medium">{a.name}</span>
                       <button onClick={() => removeAttachment(i)} className="text-muted-foreground hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
                     </div>
@@ -498,7 +498,7 @@ function WorkspaceContent() {
                   value={chatInput} 
                   onChange={(e) => setChatInput(e.target.value)} 
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} 
-                  placeholder="Ask anything, upload PDF, Word or images..." 
+                  placeholder="Ask anything, upload PDF or Word documents..." 
                   className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground min-h-[44px] px-3" 
                 />
                 
@@ -509,7 +509,7 @@ function WorkspaceContent() {
                       ref={fileInputRef} 
                       onChange={handleFileUpload} 
                       className="hidden" 
-                      accept=".pdf,.docx,image/*" 
+                      accept=".pdf,.docx" 
                     />
                     <Button 
                       variant="ghost" 

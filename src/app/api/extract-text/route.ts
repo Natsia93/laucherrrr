@@ -34,8 +34,8 @@ export async function POST(req: Request) {
         extractedText = result.text;
         
         if (extractedText.trim().length < 50) {
-          const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-          const prompt = "Extract all text from this PDF document accurately, preserving table structures. Return ONLY the text found.";
+          const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+          const prompt = "Extract all text from this PDF document as accurately as possible, preserving table structures for curriculum data. Return ONLY the text found.";
           const result = await model.generateContent([
             prompt,
             { inlineData: { data: buffer.toString("base64"), mimeType: "application/pdf" } }
@@ -45,14 +45,14 @@ export async function POST(req: Request) {
       } catch (err: any) {
         console.log("PDF Parsing error, attempting Gemini OCR...");
         try {
-          const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+          const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
           const result = await model.generateContent([
-            "Extract text from this PDF including all tables. Return ONLY text.",
+            "Extract all text from this PDF document including tables. Provide the output in plain text. Return ONLY the extracted text.",
             { inlineData: { data: buffer.toString("base64"), mimeType: "application/pdf" } }
           ]);
           extractedText = result.response.text();
         } catch (geminiErr: any) {
-          throw new Error(`Gagal OCR PDF: ${geminiErr.message || "Unknown AI error"}`);
+          throw new Error(`Gagal memproses PDF: ${geminiErr.message}`);
         }
       }
     } 
@@ -61,39 +61,28 @@ export async function POST(req: Request) {
         const result = await mammoth.extractRawText({ buffer });
         extractedText = result.value;
       } catch (err: any) {
-        throw new Error("Gagal membaca DOCX.");
-      }
-    }
-    else if (fileType.startsWith("image/") || ["png", "jpg", "jpeg", "webp"].some(ext => fileName.endsWith(ext))) {
-      try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const result = await model.generateContent([
-          "Extract all text and tables from this image accurately. Return ONLY the text.",
-          { inlineData: { data: buffer.toString("base64"), mimeType: fileType.startsWith("image/") ? fileType : "image/jpeg" } }
-        ]);
-        extractedText = result.response.text();
-      } catch (err: any) {
-        throw new Error(`Gagal OCR Gambar: ${err.message || "Unknown AI error"}`);
+        throw new Error("Gagal membaca file Word (.docx).");
       }
     }
     else {
+      // Fallback for plain text or unsupported
       extractedText = buffer.toString("utf-8");
     }
 
     if (!extractedText || extractedText.trim().length === 0) {
-      throw new Error("File kosong atau tidak terbaca.");
+      throw new Error("Teks tidak dapat ditemukan dalam dokumen ini.");
     }
 
     const charLimit = 50000;
     if (extractedText.length > charLimit) {
-      extractedText = extractedText.substring(0, charLimit) + "... [Dipotong]";
+      extractedText = extractedText.substring(0, charLimit) + "... [Teks dipotong]";
     }
 
     return NextResponse.json({ text: extractedText });
   } catch (error: any) {
     console.error("Extraction error:", error);
     return NextResponse.json({ 
-      error: error.message || "Gagal memproses file." 
+      error: error.message || "Gagal memproses dokumen." 
     }, { status: 500 });
   }
 }
