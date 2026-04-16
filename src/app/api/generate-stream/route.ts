@@ -583,54 +583,52 @@ export async function POST(req: Request) {
           if (isAssistant) {
             const currentDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
             
+            // === INTELLIGENT INTENT DETECTION ===
+            const editKeywords = ["perbaiki", "ubah", "ganti", "tulis ulang", "revisi", "tambahkan", "kurangi", "rapikan", "format", "lanjutkan", "susun ulang"];
+            const willEditDocument = editKeywords.some(kw => rawPrompt.toLowerCase().includes(kw));
+
             // === WEB SEARCH GROUNDING ===
             let webSearchContext = "";
-            if (needsWebSearch(rawPrompt)) {
-              send({ type: "chat", text: "🔍 *Mencari informasi terbaru dari internet...*\n\n" });
+            if (needsWebSearch(rawPrompt) && !willEditDocument) {
+              send({ type: "chat", text: "🔍 *Mencari informasi terbaru untuk menjawab pertanyaan Anda...*\n\n" });
               try {
                 const searchResults = await performWebSearch(rawPrompt);
                 webSearchContext = formatSearchContext(searchResults);
-                console.log(`[Web Search] Query: "${rawPrompt}" → ${searchResults.results.length} results`);
               } catch (err) {
                 console.error("[Web Search] Failed:", err);
-                webSearchContext = "[Web Search gagal. Jawab berdasarkan pengetahuan terbaik Anda, tapi beri peringatan bahwa data mungkin tidak akurat.]";
+                webSearchContext = "[Web Search gagal. Jawab berdasarkan pengetahuan terbaik Anda.]";
               }
             }
 
             systemPrompt = `Anda adalah Dekstorio AI Assistant — asisten cerdas premium untuk pendidik Indonesia.
-Kepribadian: Cerdas, ramah, percaya diri saat punya data, dan jujur saat tidak yakin.
-Gunakan Markdown untuk format pesan (bold, list, heading, dll). JANGAN gunakan HTML.
-
 WAKTU SAAT INI: ${currentDate}.
 
 ${webSearchContext ? `${webSearchContext}\n` : ""}
-DOKUMEN DI EDITOR (untuk konteks revisi):
+DOKUMEN SAAT INI DI EDITOR:
 ${rawContext || "Kosong"}
 
-=== ATURAN OTAK AI (SANGAT PENTING — BACA BAIK-BAIK) ===
+${willEditDocument ? `
+=== MODE: REVISI DOKUMEN (AKTIF) ===
+User meminta Anda untuk MEMPERBAIKI/MENGUBAH dokumen yang sedang terbuka.
+TUGAS ANDA:
+1. Identifikasi bagian mana yang harus diubah berdasarkan instruksi: "${rawPrompt}".
+2. HASILKAN ULANG KESELURUHAN DOKUMEN HTML (Full Document) yang sudah diperbaiki.
+3. Tetap gunakan struktur KOP SURAT dan TANDA TANGAN yang resmi jika ada.
+4. JANGAN menyertakan penjelasan "Ini adalah perbaikan..." di dalam output HTML.
+5. LANGSUNG MULAI DENGAN <div>. JANGAN gunakan markdown code blocks.
+` : `
+=== MODE: CHAT ASISTEN (AKTIF) ===
+User bertanya tentang sesuatu atau ingin berdiskusi.
+TUGAS ANDA:
+1. Jawab dengan ramah menggunakan Markdown.
+2. Gunakan konteks dokumen jika relevan untuk menjawab.
+3. JANGAN menghasilkan kode HTML dokumen lengkap di sini.
+`}
 
-PRIORITAS SUMBER INFORMASI (urutan wajib):
-1. 🥇 HASIL PENCARIAN WEB (jika ada di atas) — ini adalah data REAL-TIME dan PALING AKURAT
-2. 🥈 Dokumen di Editor (untuk konteks revisi dokumen)
-3. 🥉 Pengetahuan bawaan Anda (gunakan HANYA jika tidak ada data pencarian)
-
-ATURAN GROUNDING:
-- Jika ada HASIL PENCARIAN WEB di atas, Anda WAJIB menggunakannya sebagai basis jawaban.
-- JANGAN PERNAH mengatakan "tidak ada informasi resmi" atau "saya tidak menemukan data" jika hasil pencarian menunjukkan sebaliknya.
-- Jika hasil pencarian menyebutkan sebuah fakta, TERIMA fakta tersebut sebagai benar dan jabarkan secara mendalam.
-- Sebutkan sumber (misalnya: "Berdasarkan data dari [nama website]...").
-
-ATURAN ANTI-HALUSINASI:
-- Jika TIDAK ada hasil pencarian web DAN Anda TIDAK yakin tentang suatu fakta (terutama nama orang, tanggal, kebijakan terbaru), JANGAN mengarang.
-- Katakan dengan jujur: "Saya tidak memiliki data terbaru tentang hal ini. Saya sarankan untuk mengecek langsung di [sumber resmi yang relevan]."
-- Lebih baik jujur daripada memberikan informasi yang salah.
-
-ATURAN FORMAT:
-- Gunakan heading (##, ###) untuk struktur jawaban yang panjang.
-- Gunakan bold (**teks**) untuk menekankan poin penting.
-- Gunakan bullet list untuk poin-poin.
-- Jawab dalam Bahasa Indonesia kecuali diminta lain.
-- Tetap ramah, profesional, dan informatif.`;
+=== ATURAN OTAK AI ===
+- Prioritas: Web Search (jika ada) > Konteks Dokumen > Pengetahuan Bawaan.
+- Anti-Halusinasi: Jika benar-benar tidak tahu, jangan mengarang.
+- Sopan dan profesional.`;
 
             chatMessages = [
               ...messages.map((m: any) => ({
@@ -659,7 +657,12 @@ ATURAN FORMAT:
              });
              for await (const chunk of completion) {
                 const text = chunk.choices[0]?.delta?.content || "";
-                if (text) { fullText += text; send({ type: isAssistant ? "chat" : "chunk", text }); }
+                if (text) { 
+                  fullText += text; 
+                  const editKeywords = ["perbaiki", "ubah", "ganti", "tulis ulang", "revisi", "tambahkan", "kurangi", "rapikan", "format", "lanjutkan", "susun ulang"];
+                  const willEditDoc = isAssistant && editKeywords.some(kw => rawPrompt.toLowerCase().includes(kw));
+                  send({ type: willEditDoc ? "chunk" : (isAssistant ? "chat" : "chunk"), text }); 
+                }
              }
              return true;
           };
@@ -687,10 +690,20 @@ ATURAN FORMAT:
                });
                
                const userPrompt = chatMessages[chatMessages.length - 1].content;
+               const editKeywords = ["perbaiki", "ubah", "ganti", "tulis ulang", "revisi", "tambahkan", "kurangi", "rapikan", "format", "lanjutkan", "susun ulang"];
+               const willEditDoc = editKeywords.some(kw => userPrompt.toLowerCase().includes(kw));
+
+               if (willEditDoc) {
+                 send({ type: "chat", text: "✍️ *Sedang melakukan revisi pada dokumen Anda...*\n\n" });
+               }
+
                const result = await chat.sendMessageStream(userPrompt);
                for await (const chunk of result.stream) {
                  const text = chunk.text();
-                 if (text) { fullText += text; send({ type: "chat", text }); }
+                 if (text) { 
+                   fullText += text; 
+                   send({ type: willEditDoc ? "chunk" : "chat", text }); 
+                 }
                }
              } else {
                const result = await model.generateContentStream(systemPrompt + "\n\nUser Instructions: " + rawPrompt);

@@ -84,10 +84,15 @@ function WorkspaceContent() {
 
   const streamGenerate = useCallback(async (rawPrompt: string, appendToExisting = false, rawContext?: string, isAssistantMode = false) => {
     setLoading(true);
+    
+    // DETECT REVISION: If in assistant mode AND prompt contains edit keywords, clear editor
+    const editKeywords = ["perbaiki", "ubah", "ganti", "tulis ulang", "revisi", "tambahkan", "kurangi", "rapikan", "format", "lanjutkan", "susun ulang"];
+    const isAssistantRevision = isAssistantMode && editKeywords.some(kw => rawPrompt.toLowerCase().includes(kw));
+
     if (!isAssistantMode) setProgressStage(0);
     setElapsedTime(0);
     
-    if (!appendToExisting && !isAssistantMode) {
+    if (!appendToExisting && (!isAssistantMode || isAssistantRevision)) {
       setDisplayedContent("");
       setDocContent("");
       contentRef.current = "";
@@ -282,10 +287,12 @@ function WorkspaceContent() {
       
     if (!textToSend.trim() && attachments.length === 0) return;
     
-    // Heuristic for Assistant vs Document Mode
-    const editKeywords = ["revisi", "tulis ulang", "buatkan", "tambah", "kurang", "ganti", "perbaiki", "lanjutkan", "susun"];
+    // Assistant Mode is ALWAYS used for sidebar chats to maintain conversation history
+    const isAssistantMode = true;
+    
+    // Check if user specifically wants a revision for UI feedback
+    const editKeywords = ["perbaiki", "ubah", "ganti", "tulis ulang", "revisi", "tambahkan", "kurangi", "rapikan", "format", "lanjutkan", "susun ulang"];
     const isEditInstruction = isContinue || editKeywords.some(kw => textToSend.toLowerCase().includes(kw));
-    const isAssistantMode = !isEditInstruction;
 
     // Add attachments context if present
     let finalPrompt = textToSend;
