@@ -554,13 +554,13 @@ function WorkspaceContent() {
 
             <div className="relative group transition-all">
               <div className="absolute inset-0 bg-[#4d7537]/5 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
-              <div className="relative flex flex-col bg-background border border-border rounded-2xl p-2 shadow-sm transition-all focus-within:ring-2 focus-within:ring-[#4d7537]/20 focus-within:border-[#4d7537]/40 ring-offset-background">
+              <div className="relative flex flex-col bg-transparent border border-border/60 rounded-xl p-1.5 transition-all focus-within:ring-1 focus-within:ring-[#4d7537]/30 focus-within:border-[#4d7537]/50">
                 <Input 
                   value={chatInput} 
                   onChange={(e) => setChatInput(e.target.value)} 
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} 
                   placeholder="Ask anything, upload PDF or Word documents..." 
-                  className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground min-h-[44px] px-3" 
+                  className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground min-h-[40px] px-3 shadow-none" 
                 />
                 
                 <div className="flex items-center justify-between px-2 pt-1 pb-1">
@@ -586,7 +586,7 @@ function WorkspaceContent() {
                   <Button 
                     onClick={() => handleSendMessage()} 
                     disabled={loading || (!chatInput.trim() && attachments.length === 0)} 
-                    className={`h-9 w-9 rounded-xl transition-all ${chatInput.trim() || attachments.length > 0 ? 'bg-[#4d7537] text-white shadow-lg scale-100' : 'bg-secondary text-muted-foreground scale-90'}`}
+                    className={`h-9 w-9 rounded-lg transition-all ${chatInput.trim() || attachments.length > 0 ? 'bg-[#4d7537] text-white shadow-lg scale-100' : 'bg-transparent text-muted-foreground scale-90 opacity-40'}`}
                   >
                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
                   </Button>
