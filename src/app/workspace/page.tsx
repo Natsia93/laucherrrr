@@ -559,20 +559,20 @@ function WorkspaceContent() {
               )}
             </AnimatePresence>
 
-            {/* Mode Toggle */}
-            <div className="flex justify-center mb-3">
-              <div className="bg-secondary/80 backdrop-blur-md p-1 rounded-xl border border-border flex items-center gap-1 shadow-sm">
+            {/* Mode Toggle Compact */}
+            <div className="flex justify-start mb-2 px-1">
+              <div className="bg-secondary/40 backdrop-blur-sm p-0.5 rounded-md border border-border/50 flex items-center shadow-sm">
                 <button 
                   onClick={() => setAssistantMode('chat')}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${assistantMode === 'chat' ? 'bg-[#4d7537] text-white shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-background/50'}`}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-[11px] font-bold transition-all ${assistantMode === 'chat' ? 'bg-[#4d7537] text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                 >
-                  <MessageSquare className="w-3.5 h-3.5" /> Tanya AI
+                  <MessageSquare className="w-3 h-3" /> Tanya AI
                 </button>
                 <button 
                   onClick={() => setAssistantMode('edit')}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${assistantMode === 'edit' ? 'bg-[#4d7537] text-white shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-background/50'}`}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-[11px] font-bold transition-all ${assistantMode === 'edit' ? 'bg-[#4d7537] text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                 >
-                  <FileEdit className="w-3.5 h-3.5" /> Edit Dokumen
+                  <FileEdit className="w-3 h-3" /> Edit Dokumen
                 </button>
               </div>
             </div>
