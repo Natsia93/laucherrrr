@@ -30,77 +30,50 @@ export async function POST(req: Request) {
 
     if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
       try {
-        // First try standard parsing
         const result = await pdfParse(buffer);
         extractedText = result.text;
         
-        // If standard parsing yields very little text (likely a scan), fallback to Gemini OCR
         if (extractedText.trim().length < 50) {
-          console.log("PDF standard parsing failed or yielded minimal text, falling back to Gemini OCR...");
           const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-          const prompt = "Extract all text from this PDF document accurately, including tables. Return ONLY the text found.";
-          
+          const prompt = "Extract all text from this PDF document accurately, preserving table structures. Return ONLY the text found.";
           const result = await model.generateContent([
             prompt,
-            {
-              inlineData: {
-                data: buffer.toString("base64"),
-                mimeType: "application/pdf"
-              }
-            }
+            { inlineData: { data: buffer.toString("base64"), mimeType: "application/pdf" } }
           ]);
           extractedText = result.response.text();
         }
-      } catch (err) {
-        console.log("PDF parsing error, attempting Gemini OCR fallback...");
+      } catch (err: any) {
+        console.log("PDF Parsing error, attempting Gemini OCR...");
         try {
           const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-          const prompt = "Extract all text from this PDF document accurately, including tables. Return ONLY the text found.";
-          
           const result = await model.generateContent([
-            prompt,
-            {
-              inlineData: {
-                data: buffer.toString("base64"),
-                mimeType: "application/pdf"
-              }
-            }
+            "Extract text from this PDF including all tables. Return ONLY text.",
+            { inlineData: { data: buffer.toString("base64"), mimeType: "application/pdf" } }
           ]);
           extractedText = result.response.text();
-        } catch (geminiErr) {
-          console.error("Gemini PDF OCR failed:", geminiErr);
-          throw new Error("Gagal mengekstrak PDF. File mungkin terproteksi atau tidak terbaca.");
+        } catch (geminiErr: any) {
+          throw new Error(`Gagal OCR PDF: ${geminiErr.message || "Unknown AI error"}`);
         }
       }
     } 
-    else if (
-      fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || 
-      fileName.endsWith(".docx")
-    ) {
+    else if (fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || fileName.endsWith(".docx")) {
       try {
         const result = await mammoth.extractRawText({ buffer });
         extractedText = result.value;
-      } catch (err) {
-        throw new Error("Gagal membaca file .docx");
+      } catch (err: any) {
+        throw new Error("Gagal membaca DOCX.");
       }
     }
-    else if (fileType.startsWith("image/")) {
+    else if (fileType.startsWith("image/") || ["png", "jpg", "jpeg", "webp"].some(ext => fileName.endsWith(ext))) {
       try {
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const prompt = "Extract all text from this image as accurately as possible, especially any tables or curriculum data. Return ONLY the text found.";
-        
         const result = await model.generateContent([
-          prompt,
-          {
-            inlineData: {
-              data: buffer.toString("base64"),
-              mimeType: fileType
-            }
-          }
+          "Extract all text and tables from this image accurately. Return ONLY the text.",
+          { inlineData: { data: buffer.toString("base64"), mimeType: fileType.startsWith("image/") ? fileType : "image/jpeg" } }
         ]);
         extractedText = result.response.text();
-      } catch (err) {
-        throw new Error("Gagal melakukan OCR pada gambar.");
+      } catch (err: any) {
+        throw new Error(`Gagal OCR Gambar: ${err.message || "Unknown AI error"}`);
       }
     }
     else {
@@ -108,20 +81,19 @@ export async function POST(req: Request) {
     }
 
     if (!extractedText || extractedText.trim().length === 0) {
-      throw new Error("Tidak ada teks yang ditemukan dalam file ini.");
+      throw new Error("File kosong atau tidak terbaca.");
     }
 
-    // Guard 3: Token Safety
     const charLimit = 50000;
     if (extractedText.length > charLimit) {
-      extractedText = extractedText.substring(0, charLimit) + "... [Teks dipotong karena terlalu panjang]";
+      extractedText = extractedText.substring(0, charLimit) + "... [Dipotong]";
     }
 
     return NextResponse.json({ text: extractedText });
   } catch (error: any) {
     console.error("Extraction error:", error);
     return NextResponse.json({ 
-      error: error.message || "Gagal mengekstrak teks. Pastikan format file benar." 
+      error: error.message || "Gagal memproses file." 
     }, { status: 500 });
   }
 }
