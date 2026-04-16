@@ -43,6 +43,7 @@ function WorkspaceContent() {
   const [docContent, setDocContent] = useState("");
   const [displayedContent, setDisplayedContent] = useState("");
   const [isGenerated, setIsGenerated] = useState(false);
+  const [isCutOff, setIsCutOff] = useState(false);
   const [progressStage, setProgressStage] = useState(-1);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
@@ -90,6 +91,7 @@ function WorkspaceContent() {
     // DETECT REVISION: Now based on manual forcedMode OR assistantMode
     const currentMode = forcedMode || assistantMode;
     const isAssistantRevision = isAssistantMode && currentMode === 'edit';
+    setIsCutOff(false);
 
     if (!isAssistantMode) setProgressStage(0);
     setElapsedTime(0);
@@ -148,6 +150,9 @@ function WorkspaceContent() {
           try {
             const data = JSON.parse(part.slice(6));
             if (data.type === "stage") setProgressStage(data.stage);
+            if (data.type === "status") {
+              if (data.isCutOff) setIsCutOff(true);
+            }
             
             if (data.type === "chunk") {
               contentRef.current += data.text;
@@ -475,11 +480,8 @@ function WorkspaceContent() {
             </AnimatePresence>
           </div>
 
-          {/* Continue Button below document - Only show if content looks cut off */}
-          {(isGenerated || docId) && !loading && assistantMode === 'edit' && displayedContent && (
-            // Heuristic: If it doesn't end with a closing tag, it's likely cut off
-            !/<\/(div|table|tr|td|body|html)>\s*$/i.test(displayedContent) 
-          ) && (
+          {/* Continue Button below document - Now ONLY based on explicit isCutOff status */}
+          {(isGenerated || docId) && !loading && assistantMode === 'edit' && isCutOff && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }} 
               animate={{ opacity: 1, scale: 1 }} 

@@ -674,15 +674,17 @@ TUGAS ANDA:
                 stream: true,
                 temperature: isAssistant ? 0.7 : 0.4,
              });
+             let lastFinishReason = "";
              for await (const chunk of completion) {
                 const text = chunk.choices[0]?.delta?.content || "";
+                lastFinishReason = (chunk as any).choices[0]?.finish_reason || "";
                 if (text) { 
                   fullText += text; 
-                  // Use standardized logic: update editor ONLY if it's a valid revision without mismatch
                   const finalType = (isAssistant && willEditDocument && !isMajorMismatch) ? "chunk" : (isAssistant ? "chat" : "chunk");
                   send({ type: finalType, text }); 
                 }
              }
+             if (lastFinishReason === "length") send({ type: "status", isCutOff: true });
              return true;
           };
 
@@ -714,15 +716,21 @@ TUGAS ANDA:
                  send({ type: "chat", text: "✍️ *Sedang melakukan revisi pada dokumen Anda...*\n\n" });
                }
 
-               const result = await chat.sendMessageStream(userPrompt);
-               for await (const chunk of result.stream) {
-                 const text = chunk.text();
-                 if (text) { 
-                   fullText += text; 
-                   const finalType = (willEditDocument && !isMajorMismatch) ? "chunk" : "chat";
-                   send({ type: finalType, text }); 
-                 }
-               }
+                const result = await chat.sendMessageStream(userPrompt);
+                for await (const chunk of result.stream) {
+                  const text = chunk.text();
+                  if (text) { 
+                    fullText += text; 
+                    const finalType = (willEditDocument && !isMajorMismatch) ? "chunk" : "chat";
+                    send({ type: finalType, text }); 
+                  }
+                }
+                try {
+                  const finalResp = await result.response;
+                  if (finalResp.candidates?.[0]?.finishReason === "LENGTH") {
+                    send({ type: "status", isCutOff: true });
+                  }
+                } catch (e) { console.error("Gemini sync err:", e); }
              } else {
                const result = await model.generateContentStream(systemPrompt + "\n\nUser Instructions: " + rawPrompt);
                for await (const chunk of result.stream) {
