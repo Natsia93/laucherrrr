@@ -163,24 +163,27 @@ function WorkspaceContent() {
             if (data.type === "chunk") {
               if (!hasDecidedMode && isAssistantRevision) {
                 decisionBuffer += data.text;
-                // Deciding mode: wait for signal or enough chars
-                const isPatch = decisionBuffer.includes("[SMART_PATCH");
-                const isFull = decisionBuffer.trim().startsWith("<div");
                 
-                if (decisionBuffer.length < 40 && !isPatch && !isFull) {
+                const patchStartIdx = decisionBuffer.indexOf("[SMART_PATCH");
+                const divStartIdx = decisionBuffer.toLowerCase().indexOf("<div");
+
+                // If it's short and we don't see any clear markers yet, keep buffering
+                if (decisionBuffer.length < 150 && patchStartIdx === -1 && divStartIdx === -1) {
                   break;
                 }
 
-                if (decisionBuffer.includes("[SMART_PATCH")) {
+                if (patchStartIdx !== -1 && (divStartIdx === -1 || patchStartIdx < divStartIdx)) {
                   isPatchMode = true;
                   patchBuffer = decisionBuffer;
                 } else {
-                  if (decisionBuffer.trim().startsWith("<div")) {
-                    contentRef.current = "";
-                    setDocContent("");
-                    setDisplayedContent("");
-                  }
-                  contentRef.current += decisionBuffer;
+                  // Major edit - clear content
+                  contentRef.current = "";
+                  setDocContent("");
+                  setDisplayedContent("");
+                  
+                  // If there was chatty preamble before the <div>, skip it
+                  const cleanContent = divStartIdx !== -1 ? decisionBuffer.substring(divStartIdx) : decisionBuffer;
+                  contentRef.current += cleanContent;
                   setDocContent(contentRef.current);
                   setDisplayedContent(contentRef.current);
                 }
