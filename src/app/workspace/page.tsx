@@ -168,7 +168,7 @@ function WorkspaceContent() {
                 const divStartIdx = decisionBuffer.toLowerCase().indexOf("<div");
 
                 // If it's short and we don't see any clear markers yet, keep buffering
-                if (decisionBuffer.length < 150 && patchStartIdx === -1 && divStartIdx === -1) {
+                if (decisionBuffer.length < 50 && patchStartIdx === -1 && divStartIdx === -1) {
                   break;
                 }
 
@@ -212,48 +212,51 @@ function WorkspaceContent() {
             }
 
             if (data.type === "done") {
+              // Flush decision buffer if it hasn't been processed yet
+              if (!hasDecidedMode && decisionBuffer) {
+                 if (decisionBuffer.includes("[SMART_PATCH")) {
+                   isPatchMode = true;
+                   patchBuffer = decisionBuffer;
+                 } else {
+                   const dIdx = decisionBuffer.toLowerCase().indexOf("<div");
+                   const clean = dIdx !== -1 ? decisionBuffer.substring(dIdx) : decisionBuffer;
+                   contentRef.current += clean;
+                   setDocContent(contentRef.current);
+                   setDisplayedContent(contentRef.current);
+                 }
+                 hasDecidedMode = true;
+              }
+
+              // Apply patches if any
+              if (isPatchMode && (patchBuffer || decisionBuffer)) {
+                const applySmartPatches = (current: string, patches: string) => {
+                  let result = current;
+                  const blocks = patches.split("[SMART_PATCH_START]");
+                  blocks.forEach(block => {
+                    if (!block.includes("[SMART_PATCH_END]")) return;
+                    const sMatch = block.match(/SEARCH:\s*([\s\S]*?)\n\s*REPLACE:/);
+                    const rMatch = block.match(/REPLACE:\s*([\s\S]*?)\n\s*\[SMART_PATCH_END\]/);
+                    if (sMatch && rMatch) {
+                      const s = sMatch[1].trim();
+                      const r = rMatch[1].trim();
+                      if (result.includes(s)) result = result.replace(s, r);
+                    }
+                  });
+                  return result;
+                };
+                const finalContent = applySmartPatches(previousContent, patchBuffer || decisionBuffer);
+                contentRef.current = finalContent;
+                setDocContent(finalContent);
+                setDisplayedContent(finalContent);
+              }
+
+              setIsGenerated(true);
+              setMessages(prev => [
+                ...prev.filter(m => !m.text.startsWith("⏳")), 
+                { role: "ai", text: isPatchMode ? "✅ Revisi minor telah diterapkan!" : "✅ Selesai! Dokumen sudah siap. Ingin revisi?" }
+              ]);
+
               if (!isAssistantMode) {
-                // Handle case where stream ended before decision buffer reached threshold
-                if (!hasDecidedMode && decisionBuffer) {
-                   if (decisionBuffer.includes("[SMART_PATCH")) {
-                     isPatchMode = true;
-                     patchBuffer = decisionBuffer;
-                   } else {
-                     contentRef.current += decisionBuffer;
-                     setDocContent(contentRef.current);
-                     setDisplayedContent(contentRef.current);
-                   }
-                   hasDecidedMode = true;
-                }
-
-                if (isPatchMode && (patchBuffer || decisionBuffer)) {
-                  const applySmartPatches = (current: string, patches: string) => {
-                    let result = current;
-                    const blocks = patches.split("[SMART_PATCH_START]");
-                    blocks.forEach(block => {
-                      if (!block.includes("[SMART_PATCH_END]")) return;
-                      const sMatch = block.match(/SEARCH:\s*([\s\S]*?)\n\s*REPLACE:/);
-                      const rMatch = block.match(/REPLACE:\s*([\s\S]*?)\n\s*\[SMART_PATCH_END\]/);
-                      if (sMatch && rMatch) {
-                        const s = sMatch[1].trim();
-                        const r = rMatch[1].trim();
-                        if (result.includes(s)) result = result.replace(s, r);
-                      }
-                    });
-                    return result;
-                  };
-                  const finalContent = applySmartPatches(previousContent, patchBuffer || decisionBuffer);
-                  contentRef.current = finalContent;
-                  setDocContent(finalContent);
-                  setDisplayedContent(finalContent);
-                }
-
-                setIsGenerated(true);
-                setMessages(prev => [
-                  ...prev.filter(m => !m.text.startsWith("⏳")), 
-                  { role: "ai", text: isPatchMode ? "✅ Revisi minor telah diterapkan!" : "✅ Selesai! Dokumen sudah siap. Ingin revisi?" }
-                ]);
-                
                 if (data.title) setDocTitle(data.title);
                 if (data.docId) {
                   const newUrl = `${window.location.pathname}?id=${data.docId}`;
@@ -261,10 +264,13 @@ function WorkspaceContent() {
                 }
               }
             }
+
             if (data.type === "error") {
               setMessages(prev => [...prev.filter(m => !m.text.startsWith("⏳")), { role: "ai", text: `❌ ${data.message}` }]);
             }
-          } catch {}
+          } catch (e) {
+            console.error("Error parsing part", e);
+          }
         }
       }
     } catch (err: any) {
@@ -275,7 +281,7 @@ function WorkspaceContent() {
       setProgressStage(-1);
       setAbortController(null);
     }
-  }, [docType, model, messages]);
+  }, [docType, model, messages, assistantMode]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
