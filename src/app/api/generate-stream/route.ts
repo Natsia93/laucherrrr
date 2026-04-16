@@ -727,7 +727,8 @@ TUGAS ANDA:
                 }
                 try {
                   const finalResp = await result.response;
-                  if (finalResp.candidates?.[0]?.finishReason === "LENGTH") {
+                  const reason = finalResp.candidates?.[0]?.finishReason as string;
+                  if (reason === "LENGTH" || reason === "MAX_TOKENS") {
                     send({ type: "status", isCutOff: true });
                   }
                 } catch (e) { console.error("Gemini sync err:", e); }
