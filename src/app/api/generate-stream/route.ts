@@ -580,9 +580,13 @@ export async function POST(req: Request) {
           let chatMessages: {role: 'system' | 'user' | 'assistant', content: string}[] = [];
 
           if (isAssistant) {
+            const currentDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
             systemPrompt = `Anda adalah Dekstorio AI Assistant, asisten cerdas untuk pendidik.
             Tugas Anda: Membantu guru menjawab pertanyaan, menganalisis dokumen, atau memberikan saran pedagogis.
             Gunakan Markdown untuk format pesan (bold, list, dll). JANGAN gunakan HTML kecuali diminta.
+            
+            WAKTU SAAT INI: ${currentDate}.
+            KONTEKS NASIONAL: Pastikan Anda mengetahui update terbaru di Indonesia, termasuk kepemimpinan nasional (Presiden saat ini adalah Prabowo Subianto yang menjabat sejak Oktober 2024).
             
             DOKUMEN DI EDITOR (untuk konteks):
             ${rawContext || "Kosong"}
