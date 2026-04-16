@@ -498,7 +498,7 @@ function WorkspaceContent() {
                   value={chatInput} 
                   onChange={(e) => setChatInput(e.target.value)} 
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} 
-                  placeholder="Ask anything, upload PDF or images..." 
+                  placeholder="Ask anything, upload PDF, Word or images..." 
                   className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground min-h-[44px] px-3" 
                 />
                 
@@ -509,7 +509,7 @@ function WorkspaceContent() {
                       ref={fileInputRef} 
                       onChange={handleFileUpload} 
                       className="hidden" 
-                      accept=".pdf,image/*" 
+                      accept=".pdf,.docx,image/*" 
                     />
                     <Button 
                       variant="ghost" 
