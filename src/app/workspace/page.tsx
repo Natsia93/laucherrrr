@@ -470,10 +470,10 @@ function WorkspaceContent() {
         </div>
 
         {/* Sidebar */}
-        <div className={`fixed inset-0 z-[100] md:relative md:inset-auto md:z-10 h-full border-l border-border bg-card flex flex-col transition-all duration-300 ${
+        <div className={`fixed inset-0 z-[100] md:relative md:inset-auto md:z-10 h-full border-l border-border bg-[#0a0a0a] flex flex-col transition-all duration-300 ${
           isSidebarOpen ? 'translate-x-0 w-full' : 'translate-x-full w-full md:translate-x-0'
         } ${isSidebarCollapsed ? 'md:w-0 md:border-l-0 md:overflow-hidden' : 'md:w-[420px]'}`}>
-          <div className="p-5 border-b border-border bg-secondary/50 flex items-center justify-between">
+          <div className="p-5 border-b border-border/50 bg-[#0a0a0a] flex items-center justify-between">
             <h2 className="font-bold text-lg text-foreground font-bricolage flex items-center gap-2"><Sparkles className="w-5 h-5 text-[#4d7537]" /> AI Assistant</h2>
             <div className="flex items-center gap-1">
               <Button 
