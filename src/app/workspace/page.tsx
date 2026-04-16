@@ -454,12 +454,12 @@ function WorkspaceContent() {
         <div className="flex items-center gap-2 md:gap-3">
           {/* Zoom Controls */}
           <div className="hidden md:flex items-center gap-1 bg-secondary/80 rounded-lg p-1 border border-border">
-            <Button variant="ghost" size="icon" onClick={() => handleZoom('out')} className="h-7 w-7 text-muted-foreground hover:text-foreground">
-              <ZoomOut className="w-3.5 h-3.5" />
+            <Button variant="ghost" size="icon" onClick={() => handleZoom('out')} className="h-8 w-8 text-muted-foreground hover:text-foreground">
+              <ZoomOut className="w-4 h-4" />
             </Button>
-            <span className="text-[10px] font-bold text-muted-foreground w-8 text-center">{zoomLevel}%</span>
-            <Button variant="ghost" size="icon" onClick={() => handleZoom('in')} className="h-7 w-7 text-muted-foreground hover:text-foreground">
-              <ZoomIn className="w-3.5 h-3.5" />
+            <span className="text-xs font-bold text-muted-foreground w-10 text-center">{zoomLevel}%</span>
+            <Button variant="ghost" size="icon" onClick={() => handleZoom('in')} className="h-8 w-8 text-muted-foreground hover:text-foreground">
+              <ZoomIn className="w-4 h-4" />
             </Button>
           </div>
 
