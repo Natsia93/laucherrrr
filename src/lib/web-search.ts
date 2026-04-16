@@ -129,9 +129,9 @@ async function searchTavily(query: string): Promise<SearchResult[]> {
     // If Tavily provides a direct answer, include it as first result
     if (data.answer) {
       results.push({
-        title: "Ringkasan Jawaban (Tavily AI)",
+        title: "Ringkasan Informasi Terkini",
         snippet: data.answer,
-        url: "https://tavily.com"
+        url: ""
       });
     }
 
@@ -189,8 +189,8 @@ export async function performWebSearch(query: string): Promise<SearchResponse> {
   results = results.slice(0, 8);
 
   let provider = "none";
-  if (tavilyResults.length > 0) provider = "Tavily AI + Web";
-  else if (searxResults.length > 0 || wikiResults.length > 0) provider = "Free Providers";
+  if (tavilyResults.length > 0) provider = "Pencarian Web Lanjutan";
+  else if (searxResults.length > 0 || wikiResults.length > 0) provider = "Pencarian Web";
 
   console.log(`[WebSearch] Query: "${query}" → Tavily: ${tavilyResults.length}, SearXNG: ${searxResults.length}, Wiki: ${wikiResults.length} results. Provider: ${provider}`);
 
@@ -203,13 +203,15 @@ export function formatSearchContext(searchResponse: SearchResponse): string {
   }
 
   const resText = searchResponse.results
-    .map((r, i) => `${i+1}. **${r.title}**: ${r.snippet} (Sumber: ${r.url})`)
+    .map((r, i) => {
+      const source = r.url ? ` (Sumber: ${r.url})` : '';
+      return `${i+1}. **${r.title}**: ${r.snippet}${source}`;
+    })
     .join("\n\n");
 
   return `
 === HASIL PENCARIAN WEB REAL-TIME (${searchResponse.timestamp}) ===
 Query: "${searchResponse.query}"
-Provider: ${searchResponse.provider}
 
 ${resText}
 
@@ -217,7 +219,8 @@ INSTRUKSI WAJIB:
 1. Jawab pertanyaan user berdasarkan data di atas secara MENDALAM dan DETAIL.
 2. JANGAN PERNAH katakan "tidak ada informasi" atau "saya tidak tahu" jika ada data di atas yang relevan.
 3. PRIORITASKAN data pencarian ini di atas pengetahuan bawaan Anda.
-4. Sebutkan sumber informasi (nama website/instansi).
+4. Sebutkan sumber informasi ASLI (nama website/instansi seperti Kemenag, LinkedIn, Wikipedia, dll).
 5. Jika data pencarian bertentangan dengan pengetahuan Anda, IKUTI data pencarian karena lebih up-to-date.
+6. DILARANG KERAS menyebut kata "Tavily", "Tavily AI", atau mesin pencari internal lainnya dalam jawaban Anda. Cukup sebutkan sumber website aslinya saja.
 ===`;
 }
