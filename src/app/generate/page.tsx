@@ -154,7 +154,7 @@ function GenerateContent() {
         if (!finalQuestions.some(q => q.type === "file")) {
            finalQuestions.push({
               id: 9999,
-              question: "Punya file referensi tambahan (Modul/PDF)? *AI akan memprioritaskan ini",
+              question: "Punya file referensi tambahan (Modul/PDF)?",
               type: "file",
               category: "optional"
            });
@@ -186,7 +186,7 @@ function GenerateContent() {
         if (!fallback.some(q => q.type === "file")) {
            fallback.push({
               id: 9999,
-              question: "Punya file referensi tambahan (Modul/PDF)? *AI akan memprioritaskan ini",
+              question: "Punya file referensi tambahan (Modul/PDF)?",
               type: "file",
               category: "optional"
            });
