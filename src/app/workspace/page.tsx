@@ -8,10 +8,11 @@ marked.use({ async: false });
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { 
-  BookOpen, ChevronLeft, Send, Sparkles, Download, 
+  BookOpen, ChevronLeft, Sparkles, Download, 
   History, Loader2, CheckCircle2, Brain, FileText, 
   PenTool, Save, Clock, Zap, Folder, XCircle,
-  ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen
+  ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen,
+  Plus, ArrowRight, Send, X, Paperclip, Image as ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,9 @@ function WorkspaceContent() {
   const docAreaRef = useRef<HTMLDivElement>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [zoomLevel, setZoomLevel] = useState(100);
+  const [attachments, setAttachments] = useState<{name: string, content: string, type: string}[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -187,6 +191,45 @@ function WorkspaceContent() {
     }
   }, [initialPrompt, context, docType, docId, streamGenerate]);
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Format file terlalu besar. Maksimal 5MB.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/extract-text", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.text) {
+        setAttachments(prev => [...prev, {
+          name: file.name,
+          content: data.text,
+          type: file.type.includes("image") ? "image" : "pdf"
+        }]);
+      } else if (data.error) {
+        alert(data.error);
+      }
+    } catch (err) {
+      alert("Gagal mengunggah file.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSendMessage = async (isContinue = false) => {
     if (loading) return;
     const isArabicDoc = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
@@ -209,14 +252,25 @@ function WorkspaceContent() {
          WAJIB: Gunakan text-align: justify untuk narasi dan text-align: center untuk baris BAB pada tabel.`
       : chatInput;
       
-    if (!textToSend.trim()) return;
+    if (!textToSend.trim() && attachments.length === 0) return;
     
+    // Add attachments context if present
+    let finalPrompt = textToSend;
+    if (attachments.length > 0) {
+      const attachmentText = attachments.map(a => `[REFERENSI FILE: ${a.name}]\n${a.content}`).join("\n\n");
+      finalPrompt = `${textToSend}\n\nKONTEKS DARI FILE YANG DIUNGGAH:\n${attachmentText}`;
+    }
+
     const contextPrompt = isContinue 
       ? `INI ADALAH BAGIAN AKHIR DARI DRAF SEBELUMNYA:\n\n[ ... ${docContent.slice(-1500)} ]\n\nTUGAS ANDA: LANJUTKAN DRAF HTML TERSEBUT DARI TITIK TERAKHIR. JANGAN MENGULANG KALIMAT TERAKHIR. LANGSUNG SAMBUNG KODE HTML-NYA.`
-      : `Revisi draf: ${textToSend}. Tetap pada jenis dokumen ${docType}.`;
+      : `Revisi draf: ${finalPrompt}. Tetap pada jenis dokumen ${docType}.`;
 
-    if (!isContinue) setMessages(prev => [...prev, { role: "user", text: textToSend }]);
+    if (!isContinue) {
+       setMessages(prev => [...prev, { role: "user", text: chatInput || (attachments.length > 0 ? `Mengunggah ${attachments.length} file...` : "") }]);
+    }
+    
     setChatInput("");
+    setAttachments([]);
     
     if (isContinue) {
       contentRef.current = docContent.replace(/(<\/td>|<\/tr>|<\/tbody>|<\/table>|<\/div>|<\/body>|<\/html>|\s+)$/gi, " ");
@@ -417,9 +471,66 @@ function WorkspaceContent() {
           </div>
           
           <div className="p-6 bg-card border-t border-border">
-            <div className="relative flex items-center bg-background border border-border rounded-xl p-2 shadow-inner">
-              <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Tulis instruksi revisi..." className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground" />
-              <Button onClick={() => handleSendMessage()} disabled={loading} className="h-11 w-11 bg-[#4d7537] rounded-lg shadow-lg transition-transform hover:scale-105"><Send className="w-5 h-5" /></Button>
+            {/* Attachment Preview */}
+            <AnimatePresence>
+              {attachments.length > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  exit={{ opacity: 0, y: 10 }}
+                  className="flex flex-wrap gap-2 mb-4"
+                >
+                  {attachments.map((a, i) => (
+                    <div key={i} className="flex items-center gap-2 bg-secondary/80 backdrop-blur-md border border-border rounded-lg px-3 py-1.5 text-xs">
+                      {a.type === "image" ? <ImageIcon className="w-3.5 h-3.5 text-[#4d7537]" /> : <FileText className="w-3.5 h-3.5 text-blue-500" />}
+                      <span className="max-w-[100px] truncate font-medium">{a.name}</span>
+                      <button onClick={() => removeAttachment(i)} className="text-muted-foreground hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="relative group transition-all">
+              <div className="absolute inset-0 bg-[#4d7537]/5 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
+              <div className="relative flex flex-col bg-background border border-border rounded-2xl p-2 shadow-sm transition-all focus-within:ring-2 focus-within:ring-[#4d7537]/20 focus-within:border-[#4d7537]/40 ring-offset-background">
+                <Input 
+                  value={chatInput} 
+                  onChange={(e) => setChatInput(e.target.value)} 
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} 
+                  placeholder="Ask anything, upload PDF or images..." 
+                  className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground min-h-[44px] px-3" 
+                />
+                
+                <div className="flex items-center justify-between px-2 pt-1 pb-1">
+                  <div className="flex items-center gap-1">
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={handleFileUpload} 
+                      className="hidden" 
+                      accept=".pdf,image/*" 
+                    />
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => fileInputRef.current?.click()} 
+                      className="h-9 w-9 text-muted-foreground hover:text-[#4d7537] hover:bg-[#4d7537]/10 rounded-xl"
+                      disabled={isUploading}
+                    >
+                      {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+                    </Button>
+                  </div>
+                  
+                  <Button 
+                    onClick={() => handleSendMessage()} 
+                    disabled={loading || (!chatInput.trim() && attachments.length === 0)} 
+                    className={`h-9 w-9 rounded-xl transition-all ${chatInput.trim() || attachments.length > 0 ? 'bg-[#4d7537] text-white shadow-lg scale-100' : 'bg-secondary text-muted-foreground scale-90'}`}
+                  >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
