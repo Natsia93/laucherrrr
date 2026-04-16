@@ -4,6 +4,7 @@ import { documents } from "@/db/schema";
 import OpenAI from "openai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { needsWebSearch, performWebSearch, formatSearchContext } from "@/lib/web-search";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -581,17 +582,36 @@ export async function POST(req: Request) {
 
           if (isAssistant) {
             const currentDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            
+            // === WEB SEARCH GROUNDING ===
+            let webSearchContext = "";
+            if (needsWebSearch(rawPrompt)) {
+              send({ type: "chat", text: "🔍 *Mencari informasi terbaru dari internet...*\n\n" });
+              try {
+                const searchResults = await performWebSearch(rawPrompt);
+                webSearchContext = formatSearchContext(searchResults);
+                console.log(`[Web Search] Query: "${rawPrompt}" → ${searchResults.results.length} results`);
+              } catch (err) {
+                console.error("[Web Search] Failed:", err);
+                webSearchContext = "[Web Search gagal. Jawab berdasarkan pengetahuan terbaik Anda, tapi beri peringatan bahwa data mungkin tidak akurat.]";
+              }
+            }
+
             systemPrompt = `Anda adalah Dekstorio AI Assistant, asisten cerdas untuk pendidik.
-            Tugas Anda: Membantu guru menjawab pertanyaan, menganalisis dokumen, atau memberikan saran pedagogis.
-            Gunakan Markdown untuk format pesan (bold, list, dll). JANGAN gunakan HTML kecuali diminta.
-            
-            WAKTU SAAT INI: ${currentDate}.
-            KONTEKS NASIONAL: Pastikan Anda mengetahui update terbaru di Indonesia, termasuk kepemimpinan nasional (Presiden saat ini adalah Prabowo Subianto yang menjabat sejak Oktober 2024).
-            
-            DOKUMEN DI EDITOR (untuk konteks):
-            ${rawContext || "Kosong"}
-            
-            Tetap ramah dan profesional.`;
+Tugas Anda: Membantu guru menjawab pertanyaan, menganalisis dokumen, atau memberikan saran pedagogis.
+Gunakan Markdown untuk format pesan (bold, list, dll). JANGAN gunakan HTML kecuali diminta.
+
+WAKTU SAAT INI: ${currentDate}.
+
+${webSearchContext ? `${webSearchContext}\n` : ""}
+DOKUMEN DI EDITOR (untuk konteks):
+${rawContext || "Kosong"}
+
+ATURAN PENTING:
+1. Jika terdapat HASIL WEB SEARCH di atas, PRIORITASKAN data tersebut daripada pengetahuan bawaan Anda.
+2. Sebutkan sumber informasi (misal: "Berdasarkan informasi terbaru dari [sumber]...").
+3. Jika TIDAK ada web search dan Anda tidak yakin tentang suatu fakta terkini, beri peringatan bahwa informasi mungkin tidak up-to-date.
+4. Tetap ramah dan profesional.`;
 
             chatMessages = [
               ...messages.map((m: any) => ({
