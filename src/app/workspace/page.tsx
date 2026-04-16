@@ -163,8 +163,11 @@ function WorkspaceContent() {
             if (data.type === "chunk") {
               if (!hasDecidedMode && isAssistantRevision) {
                 decisionBuffer += data.text;
-                // Wait for enough content to decide mode
-                if (decisionBuffer.length < 100 && !decisionBuffer.includes("[SMART_PATCH") && !decisionBuffer.trim().startsWith("<div")) {
+                // Deciding mode: wait for signal or enough chars
+                const isPatch = decisionBuffer.includes("[SMART_PATCH");
+                const isFull = decisionBuffer.trim().startsWith("<div");
+                
+                if (decisionBuffer.length < 40 && !isPatch && !isFull) {
                   return;
                 }
 
@@ -207,7 +210,20 @@ function WorkspaceContent() {
 
             if (data.type === "done") {
               if (!isAssistantMode) {
-                if (isPatchMode && patchBuffer) {
+                // Handle case where stream ended before decision buffer reached threshold
+                if (!hasDecidedMode && decisionBuffer) {
+                   if (decisionBuffer.includes("[SMART_PATCH")) {
+                     isPatchMode = true;
+                     patchBuffer = decisionBuffer;
+                   } else {
+                     contentRef.current += decisionBuffer;
+                     setDocContent(contentRef.current);
+                     setDisplayedContent(contentRef.current);
+                   }
+                   hasDecidedMode = true;
+                }
+
+                if (isPatchMode && (patchBuffer || decisionBuffer)) {
                   const applySmartPatches = (current: string, patches: string) => {
                     let result = current;
                     const blocks = patches.split("[SMART_PATCH_START]");
@@ -223,7 +239,7 @@ function WorkspaceContent() {
                     });
                     return result;
                   };
-                  const finalContent = applySmartPatches(previousContent, patchBuffer);
+                  const finalContent = applySmartPatches(previousContent, patchBuffer || decisionBuffer);
                   contentRef.current = finalContent;
                   setDocContent(finalContent);
                   setDisplayedContent(finalContent);
