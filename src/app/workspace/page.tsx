@@ -170,7 +170,7 @@ function WorkspaceContent() {
       };
       fetchDoc();
     } else if (context) {
-      const prompt = `Wawancara: ${context.replace(/\|/g, ". ")}. Buatkan dokumen ${docType} LENGKAP.`;
+      const prompt = `Wawancara: ${context.replace(/ _\|\|_ /g, ". ")}. Buatkan dokumen ${docType} LENGKAP.`;
       streamGenerate(prompt, false, context);
     } else if (initialPrompt) {
       streamGenerate(initialPrompt);

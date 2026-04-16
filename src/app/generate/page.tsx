@@ -462,7 +462,7 @@ function GenerateContent() {
                const contextStr = questions.map(q => {
                  const ans = answers[q.id] || (skipped.includes(q.id) ? "Lewati (isi manual)" : "");
                  return `${q.id}. ${q.question}: ${ans}`;
-               }).join("|");
+               }).join(" _||_ ");
                
                const params = new URLSearchParams();
                params.append("context", contextStr);

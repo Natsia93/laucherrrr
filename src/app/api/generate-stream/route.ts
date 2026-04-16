@@ -225,7 +225,7 @@ ${SHARED_RULES}`,
 }
 
 function extractTitle(type: string, rawPrompt: string): string {
-  const parts = rawPrompt.split("|").map(p => p.trim());
+  const parts = rawPrompt.split(" _||_ ").map(p => p.trim());
   
   let mapel = "";
   let kelas = "";
