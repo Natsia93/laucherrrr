@@ -498,7 +498,7 @@ function WorkspaceContent() {
             {messages.map((m, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col gap-2 ${m.role === 'user' ? 'items-end text-right' : 'items-start text-left'}`}>
                 {m.role === 'user' ? (
-                  <div className="bg-[#4d7537]/80 backdrop-blur-md text-white px-4 py-2 rounded-xl rounded-tr-sm text-[14px] max-w-[85%] shadow-sm border border-white/10 leading-relaxed font-medium">
+                  <div className="bg-[#4d7537]/80 backdrop-blur-md text-white px-4 py-2 rounded-lg rounded-tr-sm text-[14px] max-w-[85%] shadow-sm border border-white/5 leading-relaxed font-medium">
                     {m.text}
                   </div>
                 ) : (
@@ -554,7 +554,7 @@ function WorkspaceContent() {
 
             <div className="relative group transition-all">
               <div className="absolute inset-0 bg-[#4d7537]/5 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
-              <div className="relative flex flex-col bg-transparent border border-border/60 rounded-xl p-1.5 transition-all focus-within:ring-1 focus-within:ring-[#4d7537]/30 focus-within:border-[#4d7537]/50">
+              <div className="relative flex flex-col bg-transparent border border-border/40 rounded-lg p-1 transition-all focus-within:ring-1 focus-within:ring-[#4d7537]/20 focus-within:border-[#4d7537]/30">
                 <Input 
                   value={chatInput} 
                   onChange={(e) => setChatInput(e.target.value)} 
