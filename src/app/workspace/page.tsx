@@ -475,8 +475,11 @@ function WorkspaceContent() {
             </AnimatePresence>
           </div>
 
-          {/* Continue Button below document */}
-          {(isGenerated || docId) && !loading && assistantMode === 'edit' && (
+          {/* Continue Button below document - Only show if content looks cut off */}
+          {(isGenerated || docId) && !loading && assistantMode === 'edit' && displayedContent && (
+            // Heuristic: If it doesn't end with a closing tag, it's likely cut off
+            !/<\/(div|table|tr|td|body|html)>\s*$/i.test(displayedContent) 
+          ) && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }} 
               animate={{ opacity: 1, scale: 1 }} 
@@ -486,7 +489,7 @@ function WorkspaceContent() {
                 onClick={() => handleSendMessage(true)} 
                 className="px-12 py-6 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-xl font-bold shadow-xl shadow-[#4d7537]/20 border-none transition-all active:scale-95 flex items-center gap-3"
               >
-                <Sparkles className="w-5 h-5 animate-pulse" /> Lanjutkan Penulisan Dokumen
+                <Sparkles className="w-5 h-5 animate-pulse" /> AI Terhenti? Lanjutkan Penulisan
               </Button>
             </motion.div>
           )}
