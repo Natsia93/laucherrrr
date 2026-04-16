@@ -650,10 +650,15 @@ Pilih salah satu metode output berdasarkan kerumitan revisi:
    - Langsung mulai dengan <div>.
    - Tanpa markdown code blocks.
 
-PENTING: 
+PENTING (STRUKTURAL AWARENESS): 
 - SEARCH harus cocok persis dengan kode HTML yang ada di konteks DOKUMEN SAAT INI agar sistem bisa menerapkannya.
-- Jika ingin menambahkan KOP, gunakan bagian paling atas dokumen (seperti judul utama) sebagai SEARCH agar KOP bisa diletakkan di atasnya.
+- LOGIKA PENEMPATAN:
+  * Jika menambah KOP/Header: SEARCH bagian paling atas (judul pertama).
+  * Jika menambah Tanda Tangan: SEARCH bagian paling bawah (setelah konten terakhir).
+  * Jika menambah Baris/Kolom Tabel: SEARCH <tr> atau <th> yang menjadi target tabel tersebut.
+  * Jika instruksi user adalah "GANTI" atau "UBAH": Pastikan SEARCH mencakup seluruh bagian lama yang ingin dihapus.
 - JANGAN membiarkan tag [SMART_PATCH] terlihat di hasil akhir.
+- Jika perubahan terlalu kompleks dan berisiko merusak struktur HTML, lebih baik gunakan METODE 2 (Hasilkan Ulang Seluruh Dokumen).
 ` : `
 === MODE: CHAT ASISTEN (AKTIF) ===
 TUGAS ANDA:
