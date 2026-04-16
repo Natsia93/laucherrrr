@@ -566,9 +566,8 @@ export async function POST(req: Request) {
     if (!session) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
 
     const body = await req.json();
-    const { rawPrompt, type, model: requestedModel = "deepseek", rawContext } = body;
+    const { rawPrompt, type, model: requestedModel = "deepseek", rawContext, messages = [], isAssistant = false } = body;
 
-    const systemPrompt = buildSystemPrompt(type, rawPrompt);
     const encoder = new TextEncoder();
     let fullText = "";
 
@@ -577,29 +576,90 @@ export async function POST(req: Request) {
         const send = (data: any) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 
         try {
-          send({ type: "stage", stage: 0, label: "Menganalisis Konteks..." });
+          let systemPrompt = "";
+          let chatMessages: {role: 'system' | 'user' | 'assistant', content: string}[] = [];
+
+          if (isAssistant) {
+            // mode ASSISTANT / CHAT
+            systemPrompt = `Anda adalah Dekstorio AI Assistant, asisten cerdas untuk pendidik. 
+            Tugas Anda: Membantu guru menjawab pertanyaan, menganalisis dokumen yang diunggah, atau memberikan saran pedagogis.
+            
+            KONTEKS DOKUMEN SAAT INI (Gunakan ini jika user bertanya tentang dokumen di editor):
+            ---
+            ${rawContext || "Belum ada dokumen yang dibuat."}
+            ---
+            
+            ATURAN:
+            1. JANGAN menghasilkan kode HTML mentah kecuali diminta. Gunakan Markdown biasa.
+            2. Fokus pada membantu user melalui percakapan (Chat).
+            3. Jika user mengunggah file (PDF/Word), analisis isinya dan jawab pertanyaannya secara detail.
+            4. Tetap ramah, profesional, dan suportif terhadap pendidik.`;
+
+            chatMessages = [
+              { role: "system", content: systemPrompt },
+              ...messages.map((m: any) => ({
+                role: m.role === "ai" ? "assistant" as const : "user" as const,
+                content: m.text
+              })),
+              { role: "user", content: rawPrompt }
+            ];
+          } else {
+            // mode DOCUMENT GENERATOR
+            systemPrompt = buildSystemPrompt(type, rawPrompt);
+            chatMessages = [{ role: "system", content: systemPrompt }];
+          }
+
+          send({ type: "stage", stage: 0, label: isAssistant ? "Menganalisis Permintaan..." : "Menganalisis Konteks..." });
 
           const attemptDeepSeek = async () => {
              const completion = await deepseek.chat.completions.create({
-                messages: [{ role: "system", content: systemPrompt }],
+                messages: chatMessages,
                 model: "deepseek-chat",
                 stream: true,
-                temperature: 0.4,
+                temperature: isAssistant ? 0.7 : 0.4,
                 max_tokens: 16384,
              });
              for await (const chunk of completion) {
                 const text = chunk.choices[0]?.delta?.content || "";
-                if (text) { fullText += text; send({ type: "chunk", text }); }
+                if (text) { 
+                  fullText += text; 
+                  send({ type: isAssistant ? "chat" : "chunk", text }); 
+                }
              }
              return true;
           };
 
           const attemptGemini = async (modelName: string) => {
              const model = genAI.getGenerativeModel({ model: modelName });
-             const result = await model.generateContentStream(systemPrompt);
-             for await (const chunk of result.stream) {
+             
+             // Convert chat history for Gemini
+             const history = chatMessages.slice(0, -1).map(m => ({
+               role: m.role === "system" ? "user" : (m.role === "assistant" ? "model" : "user"),
+               parts: [{ text: m.content }]
+             }));
+             const userPrompt = chatMessages[chatMessages.length - 1].content;
+
+             const result = await model.generateContentStream({
+               contents: history,
+               systemInstruction: isAssistant ? systemPrompt : undefined,
+             });
+             
+             // Simple fallback because older Gemini SDK might not support systemInstruction this way or chatMessages
+             // Let's use a more robust one for Gemini:
+             const geminiModel = genAI.getGenerativeModel({ model: modelName });
+             const chat = geminiModel.startChat({
+               history: isAssistant ? history : [],
+               generationConfig: { maxOutputTokens: 16384, temperature: isAssistant ? 0.7 : 0.4 }
+             });
+
+             const streamResult = await chat.sendMessageStream(isAssistant ? userPrompt : systemPrompt + "\n\nUser Input: " + userPrompt);
+             
+             for await (const chunk of streamResult.stream) {
                 const text = chunk.text();
-                if (text) { fullText += text; send({ type: "chunk", text }); }
+                if (text) { 
+                  fullText += text; 
+                  send({ type: isAssistant ? "chat" : "chunk", text }); 
+                }
              }
              return true;
           };
@@ -607,44 +667,44 @@ export async function POST(req: Request) {
           let finalProvider = requestedModel === "deepseek" ? "DeepSeek V3" : "Gemini 2.0 Flash";
           
           try {
-             send({ type: "stage", stage: 1, label: `Menyusun Konten dengan ${finalProvider}...` });
+             send({ type: "stage", stage: 1, label: `${isAssistant ? 'Membalas Chat' : 'Menyusun Konten'} dengan ${finalProvider}...` });
              if (requestedModel === "deepseek") await attemptDeepSeek();
-             else await attemptGemini("gemini-2.0-flash");
+             else await attemptGemini("gemini-1.5-flash-latest"); // Switch to stable flash
           } catch (e) {
              console.error("Primary model failed, falling back...");
              fullText = "";
              try {
-                finalProvider = requestedModel === "deepseek" ? "Gemini 2.0 Flash (Fallback)" : "DeepSeek V3 (Fallback)";
+                finalProvider = "Gemini 1.5 Flash (Fallback)";
                 send({ type: "stage", stage: 2, label: "Mencoba Jalur Alternatif..." });
-                if (requestedModel === "deepseek") await attemptGemini("gemini-2.0-flash");
-                else await attemptDeepSeek();
+                await attemptGemini("gemini-1.5-flash-latest");
              } catch (e2) {
                 console.error("Secondary fallback failed...");
-                fullText = "";
-                finalProvider = "Gemini 1.5 Flash (Safety Net)";
-                send({ type: "stage", stage: 2, label: "Menggunakan Model Cadangan..." });
-                await attemptGemini("gemini-1.5-flash");
+                send({ type: "error", message: "Sistem sibuk. Mohon coba beberapa saat lagi." });
              }
           }
 
           if (fullText) {
-             send({ type: "stage", stage: 3, label: "Finalisasi & Penyimpanan..." });
-             const cleaned = cleanAIOutput(fullText);
-             const [newDoc] = await db.insert(documents).values({
-               title: extractTitle(type, rawContext || rawPrompt),
-               type: type,
-               content: cleaned,
-               userId: session.user.id,
-               status: "Selesai",
-               size: `${(cleaned.length / 1024).toFixed(1)} KB`,
-             }).returning();
-             send({ type: "done", docId: newDoc.id, provider: finalProvider });
+             if (!isAssistant) {
+               send({ type: "stage", stage: 3, label: "Finalisasi & Penyimpanan..." });
+               const cleaned = cleanAIOutput(fullText);
+               const [newDoc] = await db.insert(documents).values({
+                 title: extractTitle(type, rawContext || rawPrompt),
+                 type: type,
+                 content: cleaned,
+                 userId: session.user.id,
+                 status: "Selesai",
+                 size: `${(cleaned.length / 1024).toFixed(1)} KB`,
+               }).returning();
+               send({ type: "done", docId: newDoc.id, provider: finalProvider });
+             } else {
+               send({ type: "done", provider: finalProvider });
+             }
           } else {
-             send({ type: "error", message: "Gagal men-generate konten. Coba lagi." });
+             send({ type: "error", message: "Gagal memproses permintaan." });
           }
           controller.close();
         } catch (error) {
-          send({ type: "error", message: "Sistem sibuk, silakan coba beberapa saat lagi." });
+          console.error("Stream error:", error);
           controller.close();
         }
       }

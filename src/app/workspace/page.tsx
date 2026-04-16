@@ -80,12 +80,12 @@ function WorkspaceContent() {
     }
   };
 
-  const streamGenerate = useCallback(async (rawPrompt: string, appendToExisting = false, rawContext?: string) => {
+  const streamGenerate = useCallback(async (rawPrompt: string, appendToExisting = false, rawContext?: string, isAssistantMode = false) => {
     setLoading(true);
-    setProgressStage(0);
+    if (!isAssistantMode) setProgressStage(0);
     setElapsedTime(0);
     
-    if (!appendToExisting) {
+    if (!appendToExisting && !isAssistantMode) {
       setDisplayedContent("");
       setDocContent("");
       contentRef.current = "";
@@ -94,17 +94,28 @@ function WorkspaceContent() {
     const controller = new AbortController();
     setAbortController(controller);
 
-    setMessages(prev => [
-      ...prev.filter(m => !m.text.startsWith("⏳")), 
-      { role: "ai", text: "⏳ Sedang menyusun konten..." }
-    ]);
+    if (isAssistantMode) {
+      setMessages(prev => [...prev, { role: "ai", text: "" }]);
+    } else {
+      setMessages(prev => [
+        ...prev.filter(m => !m.text.startsWith("⏳")), 
+        { role: "ai", text: "⏳ Sedang menyusun konten..." }
+      ]);
+    }
 
     try {
       const response = await fetch("/api/generate-stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
-        body: JSON.stringify({ rawPrompt, type: docType, model, rawContext }),
+        body: JSON.stringify({ 
+          rawPrompt, 
+          type: docType, 
+          model, 
+          rawContext, 
+          messages: messages.slice(-6), // Send last 6 messages for context
+          isAssistant: isAssistantMode 
+        }),
       });
 
       if (!response.ok) throw new Error("Gagal menyambung ke AI");
@@ -126,23 +137,40 @@ function WorkspaceContent() {
           try {
             const data = JSON.parse(part.slice(6));
             if (data.type === "stage") setProgressStage(data.stage);
+            
             if (data.type === "chunk") {
               contentRef.current += data.text;
               setDisplayedContent(contentRef.current);
               setDocContent(contentRef.current);
             }
+
+            if (data.type === "chat") {
+              setMessages(prev => {
+                const newMessages = [...prev];
+                const last = newMessages[newMessages.length - 1];
+                if (last && last.role === "ai") {
+                  last.text += data.text;
+                }
+                return newMessages;
+              });
+            }
+
             if (data.type === "done") {
-              setIsGenerated(true);
-              setMessages(prev => [
-                ...prev.filter(m => !m.text.startsWith("⏳")), 
-                { role: "ai", text: "✅ Selesai! Dokumen sudah siap. Ingin revisi?" }
-              ]);
-              
-              // PERBAIKAN: Update URL agar saat refresh tidak generate ulang
-              if (data.docId) {
-                const newUrl = `${window.location.pathname}?id=${data.docId}`;
-                window.history.replaceState({ ...window.history.state, path: newUrl }, '', newUrl);
+              if (!isAssistantMode) {
+                setIsGenerated(true);
+                setMessages(prev => [
+                  ...prev.filter(m => !m.text.startsWith("⏳")), 
+                  { role: "ai", text: "✅ Selesai! Dokumen sudah siap. Ingin revisi?" }
+                ]);
+                
+                if (data.docId) {
+                  const newUrl = `${window.location.pathname}?id=${data.docId}`;
+                  window.history.replaceState({ ...window.history.state, path: newUrl }, '', newUrl);
+                }
               }
+            }
+            if (data.type === "error") {
+              setMessages(prev => [...prev.filter(m => !m.text.startsWith("⏳")), { role: "ai", text: `❌ ${data.message}` }]);
             }
           } catch {}
         }
@@ -155,7 +183,7 @@ function WorkspaceContent() {
       setProgressStage(-1);
       setAbortController(null);
     }
-  }, [docType, model]);
+  }, [docType, model, messages]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -235,25 +263,16 @@ function WorkspaceContent() {
     const isArabicDoc = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
     
     const textToSend = isContinue 
-      ? `INI ADALAH KONTINUASI (LANJUTAN) DARI DRAF SEBELUMNYA. 
-         TUGAS ANDA HANYA MENERUSKAN ISI HTML YANG TERPOTONG. 
-         
-         DILARANG KERAS MELAKUKAN HAL BERIKUT:
-         1. DILARANG membuat Kop Surat/Identitas baru.
-         2. DILARANG membuat ulang tag header dokumen.
-         3. DILARANG membuat ulang kerangka tabel dari awal jika sedang di tengah tabel.
-         4. DILARANG menduplikasi/mengulang isi yang sudah ada di draf.
-         5. DILARANG membuat kalimat pembuka atau penutup.
-         
-         Jika draf sebelumnya terpotong di tengah baris tabel, lanjutkan langsung elemen HTML (\`<tr>\`, \`<td>\`, dll) yang terpotong tersebut.
-         LANGSUNG BERIKAN KELANJUTAN KONTEN HTML-NYA SAJA DARI TITIK TERAKHIR.
-         
-         Gunakan Bahasa ${isArabicDoc ? 'Arab Ber-Harokat (Full Tasykil) dan RTL' : 'Indonesia'}.
-         WAJIB: Gunakan text-align: justify untuk narasi dan text-align: center untuk baris BAB pada tabel.`
+      ? `INI ADALAH KONTINUASI (LANJUTAN) DARI DRAF SEBELUMNYA. TUGAS ANDA HANYA MENERUSKAN ISI HTML YANG TERPOTONG.`
       : chatInput;
       
     if (!textToSend.trim() && attachments.length === 0) return;
     
+    // Heuristic for Assistant vs Document Mode
+    const editKeywords = ["revisi", "tulis ulang", "buatkan", "tambah", "kurang", "ganti", "perbaiki", "lanjutkan", "susun"];
+    const isEditInstruction = isContinue || editKeywords.some(kw => textToSend.toLowerCase().includes(kw));
+    const isAssistantMode = !isEditInstruction;
+
     // Add attachments context if present
     let finalPrompt = textToSend;
     if (attachments.length > 0) {
@@ -262,11 +281,13 @@ function WorkspaceContent() {
     }
 
     const contextPrompt = isContinue 
-      ? `INI ADALAH BAGIAN AKHIR DARI DRAF SEBELUMNYA:\n\n[ ... ${docContent.slice(-1500)} ]\n\nTUGAS ANDA: LANJUTKAN DRAF HTML TERSEBUT DARI TITIK TERAKHIR. JANGAN MENGULANG KALIMAT TERAKHIR. LANGSUNG SAMBUNG KODE HTML-NYA.`
-      : `Revisi draf: ${finalPrompt}. Tetap pada jenis dokumen ${docType}.`;
+      ? `INI ADALAH BAGIAN AKHIR DARI DRAF SEBELUMNYA:\n\n[ ... ${docContent.slice(-1500)} ]\n\nTUGAS ANDA: LANJUTKAN DRAF HTML TERSEBUT DARI TITIK TERAKHIR.`
+      : isAssistantMode 
+        ? finalPrompt
+        : `Revisi draf: ${finalPrompt}. Tetap pada jenis dokumen ${docType}.`;
 
     if (!isContinue) {
-       setMessages(prev => [...prev, { role: "user", text: chatInput || (attachments.length > 0 ? `Mengunggah ${attachments.length} file...` : "") }]);
+       setMessages(prev => [...prev.filter(m => !m.text.startsWith("⏳")), { role: "user", text: chatInput || (attachments.length > 0 ? `📄 Mengunggah ${attachments.length} file...` : "") }]);
     }
     
     setChatInput("");
@@ -275,7 +296,8 @@ function WorkspaceContent() {
     if (isContinue) {
       contentRef.current = docContent.replace(/(<\/td>|<\/tr>|<\/tbody>|<\/table>|<\/div>|<\/body>|<\/html>|\s+)$/gi, " ");
     }
-    await streamGenerate(contextPrompt, isContinue);
+    
+    await streamGenerate(contextPrompt, isContinue, contentRef.current, isAssistantMode);
   };
 
   const exportToWord = () => {
