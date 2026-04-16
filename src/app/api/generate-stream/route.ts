@@ -579,13 +579,32 @@ export async function POST(req: Request) {
         try {
           let systemPrompt = "";
           let chatMessages: {role: 'system' | 'user' | 'assistant', content: string}[] = [];
+          let willEditDocument = false;
+          let isMajorMismatch = false;
 
           if (isAssistant) {
             const currentDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
             
             // === INTELLIGENT INTENT DETECTION ===
             const editKeywords = ["perbaiki", "ubah", "ganti", "tulis ulang", "revisi", "tambahkan", "kurangi", "rapikan", "format", "lanjutkan", "susun ulang"];
-            const willEditDocument = editKeywords.some(kw => rawPrompt.toLowerCase().includes(kw));
+            willEditDocument = editKeywords.some(kw => rawPrompt.toLowerCase().includes(kw));
+
+            // === SAFETY CHECK: Drastic Context Mismatch ===
+            const lowerPrompt = rawPrompt.toLowerCase();
+            const lowerContext = (rawContext || "").toLowerCase();
+            
+            const subjects = ["ipa", "ips", "matematika", "bahasa indonesia", "bahasa inggris", "pai", "pkn", "pjok", "seni"];
+            const currentSubject = subjects.find(s => lowerContext.includes(s));
+            const requestedSubject = subjects.find(s => lowerPrompt.includes(s));
+            
+            const docTypes = ["lkpd", "atp", "prota", "prosem", "kktp", "cp"];
+            const currentType = type.toLowerCase();
+            const requestedType = docTypes.find(t => lowerPrompt.includes(t));
+
+            isMajorMismatch = willEditDocument && (
+               (requestedSubject && currentSubject && requestedSubject !== currentSubject) ||
+               (requestedType && currentType && requestedType !== currentType)
+            );
 
             // === WEB SEARCH GROUNDING ===
             let webSearchContext = "";
@@ -605,9 +624,18 @@ WAKTU SAAT INI: ${currentDate}.
 
 ${webSearchContext ? `${webSearchContext}\n` : ""}
 DOKUMEN SAAT INI DI EDITOR:
-${rawContext || "Kosong"}
+Jenis: ${type}
+Konten: ${rawContext || "Kosong"}
 
-${willEditDocument ? `
+${isMajorMismatch ? `
+=== PERINGATAN: MISMATCH KONTEKS (PENTING) ===
+User meminta revisi yang sangat berbeda dengan dokumen saat ini (misal: ganti mapel atau ganti jenis dokumen).
+TUGAS ANDA:
+1. JANGAN lakukan revisi dulu. 
+2. Berikan PERINGATAN kepada user di Chat Sidebar bahwa ini akan menghapus data lama mereka.
+3. Jelaskan apa perbedaannya (Contoh: "Anda meminta LKPD, tapi dokumen ini adalah Prosem").
+4. Tanya konfirmasi: "Apakah Anda yakin ingin merombak total dokumen ini?"
+` : willEditDocument ? `
 === MODE: REVISI DOKUMEN (AKTIF) ===
 User meminta Anda untuk MEMPERBAIKI/MENGUBAH dokumen yang sedang terbuka.
 TUGAS ANDA:
@@ -659,9 +687,9 @@ TUGAS ANDA:
                 const text = chunk.choices[0]?.delta?.content || "";
                 if (text) { 
                   fullText += text; 
-                  const editKeywords = ["perbaiki", "ubah", "ganti", "tulis ulang", "revisi", "tambahkan", "kurangi", "rapikan", "format", "lanjutkan", "susun ulang"];
-                  const willEditDoc = isAssistant && editKeywords.some(kw => rawPrompt.toLowerCase().includes(kw));
-                  send({ type: willEditDoc ? "chunk" : (isAssistant ? "chat" : "chunk"), text }); 
+                  // Use standardized logic: update editor ONLY if it's a valid revision without mismatch
+                  const finalType = (isAssistant && willEditDocument && !isMajorMismatch) ? "chunk" : (isAssistant ? "chat" : "chunk");
+                  send({ type: finalType, text }); 
                 }
              }
              return true;
@@ -690,10 +718,8 @@ TUGAS ANDA:
                });
                
                const userPrompt = chatMessages[chatMessages.length - 1].content;
-               const editKeywords = ["perbaiki", "ubah", "ganti", "tulis ulang", "revisi", "tambahkan", "kurangi", "rapikan", "format", "lanjutkan", "susun ulang"];
-               const willEditDoc = editKeywords.some(kw => userPrompt.toLowerCase().includes(kw));
-
-               if (willEditDoc) {
+               
+               if (willEditDocument && !isMajorMismatch) {
                  send({ type: "chat", text: "✍️ *Sedang melakukan revisi pada dokumen Anda...*\n\n" });
                }
 
@@ -702,7 +728,8 @@ TUGAS ANDA:
                  const text = chunk.text();
                  if (text) { 
                    fullText += text; 
-                   send({ type: willEditDoc ? "chunk" : "chat", text }); 
+                   const finalType = (willEditDocument && !isMajorMismatch) ? "chunk" : "chat";
+                   send({ type: finalType, text }); 
                  }
                }
              } else {
