@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -473,7 +474,7 @@ function WorkspaceContent() {
         <div className={`fixed inset-0 z-[100] md:relative md:inset-auto md:z-10 h-full border-l border-border bg-card flex flex-col transition-all duration-300 ${
           isSidebarOpen ? 'translate-x-0 w-full' : 'translate-x-full w-full md:translate-x-0'
         } ${isSidebarCollapsed ? 'md:w-0 md:border-l-0 md:overflow-hidden' : 'md:w-[420px]'}`}>
-          <div className="p-5 border-b border-border bg-secondary/50 flex items-center justify-between">
+          <div className="py-3 px-5 border-b border-border bg-secondary/50 flex items-center justify-between">
             <h2 className="font-bold text-lg text-foreground font-bricolage flex items-center gap-2"><Sparkles className="w-5 h-5 text-[#4d7537]" /> AI Assistant</h2>
             <div className="flex items-center gap-1">
               <Button 
@@ -555,12 +556,17 @@ function WorkspaceContent() {
             <div className="relative group transition-all">
               <div className="absolute inset-0 bg-[#4d7537]/5 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
               <div className="relative flex flex-col bg-[#121212] border border-white/5 rounded-lg p-1.5 transition-all focus-within:ring-1 focus-within:ring-[#4d7537]/20">
-                <Input 
+                <Textarea 
                   value={chatInput} 
                   onChange={(e) => setChatInput(e.target.value)} 
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} 
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }} 
                   placeholder="Ask anything, upload PDF or Word documents..." 
-                  className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground min-h-[40px] px-3 shadow-none" 
+                  className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground min-h-[40px] px-3 py-2 resize-none scroll-hide shadow-none" 
                 />
                 
                 <div className="flex items-center justify-between px-2 pt-1 pb-1">
