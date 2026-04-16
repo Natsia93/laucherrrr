@@ -454,9 +454,8 @@ function WorkspaceContent() {
         text-align: left;
       }
       p {
-        text-align: justify;
-        text-align-last: left;
         margin-bottom: 10pt;
+        text-align: left;
       }
       table {
         width: 100%;
