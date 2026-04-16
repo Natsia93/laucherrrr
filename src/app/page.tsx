@@ -323,11 +323,11 @@ export default function Home() {
         >
           <div className="flex-1 space-y-6 text-center md:text-left">
             <h2 className="font-bricolage text-3xl md:text-5xl font-normal tracking-tight text-neutral-900 dark:text-[#f4f3ed]">
-              Perancangan Kurikulum <br className="hidden md:block"/> 
+              Membantu Perancangan Kurikulum <br className="hidden md:block"/> 
               <span className="text-[#4d7537] dark:text-[#89b867]">Jauh Lebih Cepat.</span>
             </h2>
             <p className="font-sans text-neutral-600 dark:text-[#a2b591] text-lg md:text-xl font-light leading-relaxed max-w-xl">
-              Dekstorio adalah platform cerdas yang dirancang khusus untuk membantu pendidik menyusun administrasi sekolah dengan presisi tinggi. Menggabungkan AI tercanggih dengan regulasi kurikulum terbaru untuk hasil yang profesional.
+              Dekstorio adalah platform yang dirancang khusus untuk membantu pendidik dan tenaga ajar dalam menyusun administrasi sekolah dengan presisi tinggi. Menggabungkan fitur AI canggih dengan regulasi kurikulum terbaru untuk hasil yang profesional.
             </p>
             <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
               <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-[#a2b591]">
