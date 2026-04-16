@@ -375,6 +375,11 @@ function WorkspaceContent() {
         .curriculum-content table { border-collapse: collapse; width: 100%; border: 1px solid black; text-align: left; }
         .curriculum-content th, .curriculum-content td { border: 1px solid black; padding: 8px; vertical-align: top; }
         .curriculum-content [dir="rtl"] { direction: rtl; text-align: right; }
+        
+        .markdown-chat h1, .markdown-chat h2, .markdown-chat h3 { font-weight: bold; margin-bottom: 0.5rem; margin-top: 1rem; }
+        .markdown-chat p { margin-bottom: 0.75rem; }
+        .markdown-chat ul, .markdown-chat ol { margin-left: 1.5rem; margin-bottom: 0.75rem; }
+        .markdown-chat code { background: rgba(0,0,0,0.05); padding: 0.1rem 0.3rem; border-radius: 0.2rem; }
       `}</style>
 
       <nav className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50 transition-colors duration-300 shrink-0 relative">
@@ -471,11 +476,27 @@ function WorkspaceContent() {
             </div>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 scroll-hide">
+          <div className="flex-1 overflow-y-auto p-6 space-y-8 scroll-hide">
             {messages.map((m, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-lg ${m.role === 'user' ? 'bg-secondary text-foreground border border-border' : 'bg-[#4d7537] text-white'}`}>{m.role === 'user' ? 'U' : <Sparkles className="w-5 h-5" />}</div>
-                <div className={`p-4 rounded-xl text-[13px] leading-relaxed max-w-[85%] border shadow-xl ${m.role === 'user' ? 'bg-[#4d7537]/70 backdrop-blur-md border-border text-white' : 'bg-secondary/50 border-border text-foreground'}`}>{m.text}</div>
+              <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col gap-2 ${m.role === 'user' ? 'items-end text-right' : 'items-start text-left'}`}>
+                {m.role === 'user' ? (
+                  <div className="bg-[#4d7537] text-white px-4 py-2.5 rounded-2xl rounded-tr-none text-[13px] max-w-[85%] shadow-md">
+                    {m.text}
+                  </div>
+                ) : (
+                  <div className="w-full text-foreground">
+                    {m.text.startsWith("⏳") || m.text.startsWith("✅") || m.text.startsWith("❌") ? (
+                      <div className="inline-flex items-center gap-2 bg-secondary/50 border border-border px-3 py-1.5 rounded-lg text-xs text-muted-foreground animate-pulse">
+                        {m.text}
+                      </div>
+                    ) : (
+                      <div 
+                        className="markdown-chat prose prose-sm dark:prose-invert max-w-none text-[14px] leading-relaxed antialiased"
+                        dangerouslySetInnerHTML={{ __html: marked.parse(m.text) }}
+                      />
+                    )}
+                  </div>
+                )}
               </motion.div>
             ))}
 
