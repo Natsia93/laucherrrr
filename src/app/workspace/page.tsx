@@ -168,7 +168,7 @@ function WorkspaceContent() {
                 const isFull = decisionBuffer.trim().startsWith("<div");
                 
                 if (decisionBuffer.length < 40 && !isPatch && !isFull) {
-                  return;
+                  break;
                 }
 
                 if (decisionBuffer.includes("[SMART_PATCH")) {
@@ -185,7 +185,7 @@ function WorkspaceContent() {
                   setDisplayedContent(contentRef.current);
                 }
                 hasDecidedMode = true;
-                return;
+                break;
               }
 
               if (isPatchMode) {
