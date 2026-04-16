@@ -370,7 +370,7 @@ function WorkspaceContent() {
   return (
     <div className="min-h-screen bg-background flex flex-col h-screen overflow-hidden text-foreground">
       <style>{`
-        .scroll-hide { scrollbar-width: none; -ms-overflow-style: none; }
+        .scroll-hide { scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; }
         .scroll-hide::-webkit-scrollbar { display: none; }
         .a4-paper {
           width: 210mm;
@@ -470,7 +470,7 @@ function WorkspaceContent() {
         </div>
 
         {/* Sidebar */}
-        <div className={`fixed inset-0 z-[100] md:relative md:inset-auto md:z-10 border-l border-border bg-card flex flex-col transition-all duration-300 ${
+        <div className={`fixed inset-0 z-[100] md:relative md:inset-auto md:z-10 md:h-full border-l border-border bg-card flex flex-col transition-all duration-300 ${
           isSidebarOpen ? 'translate-x-0 w-full' : 'translate-x-full w-full md:translate-x-0'
         } ${isSidebarCollapsed ? 'md:w-0 md:border-l-0 md:overflow-hidden' : 'md:w-[420px]'}`}>
           <div className="p-5 border-b border-border bg-secondary/50 flex items-center justify-between">
@@ -489,7 +489,7 @@ function WorkspaceContent() {
             </div>
           </div>
           
-          <div ref={chatScrollRef} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-8 scroll-hide">
+          <div ref={chatScrollRef} className="flex-1 min-h-0 overflow-y-scroll p-6 space-y-8 scroll-hide">
             {messages.map((m, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col gap-2 ${m.role === 'user' ? 'items-end text-right' : 'items-start text-left'}`}>
                 {m.role === 'user' ? (
