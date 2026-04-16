@@ -301,22 +301,22 @@ function WorkspaceContent() {
         .curriculum-content [dir="rtl"] { direction: rtl; text-align: right; }
       `}</style>
 
-      <nav className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-[#dcdad1] dark:border-[#3f612d]/20 bg-[#f4f3ed]/90 dark:bg-[#080b06]/90 sticky top-0 z-50 backdrop-blur-md transition-colors duration-300 shrink-0 relative">
+      <nav className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50 transition-colors duration-300 shrink-0 relative">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground hover:bg-neutral-100 dark:hover:bg-[#1a2315]"><ChevronLeft className="w-5 h-5" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground hover:bg-secondary"><ChevronLeft className="w-5 h-5" /></Button>
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center"><BookOpen className="text-white w-5 h-5" /></div>
-            <span className="font-bricolage font-semibold text-lg hidden md:inline-block">Dekstorio</span>
+            <span className="font-bricolage font-semibold text-lg hidden md:inline-block text-foreground">Dekstorio</span>
           </Link>
         </div>
 
-        {/* Center Toggle Navigation — matched with landing page & dashboard */}
-        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-white dark:bg-[#10140d]/80 backdrop-blur-md rounded-lg p-1 border border-[#dcdad1] dark:border-[#3f612d]/30">
+        {/* Center Toggle Navigation — layout matched, but colors back to grey */}
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-secondary/80 backdrop-blur-md rounded-lg p-1 border border-border">
           <Link href="/dashboard">
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-neutral-500 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-[#f4f3ed] hover:bg-neutral-100 dark:hover:bg-[#1a2315] rounded-md"
+              className="text-muted-foreground hover:text-foreground hover:bg-background/50 rounded-md"
             >
               <Folder className="w-4 h-4 mr-2" />
               Penyimpanan File
@@ -326,7 +326,7 @@ function WorkspaceContent() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="bg-neutral-100 dark:bg-[#1a2315] text-neutral-900 dark:text-[#f4f3ed] hover:bg-neutral-200 dark:hover:bg-[#2c471c] hover:text-neutral-900 dark:hover:text-white rounded-md"
+              className="bg-background text-foreground hover:bg-background/80 rounded-md shadow-sm"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               AI Generate
@@ -335,18 +335,18 @@ function WorkspaceContent() {
         </div>
         <div className="flex items-center gap-2 md:gap-3">
           {/* Zoom Controls */}
-          <div className="hidden md:flex items-center gap-1 bg-white dark:bg-[#10140d]/80 rounded-lg p-1 border border-[#dcdad1] dark:border-[#3f612d]/30">
-            <Button variant="ghost" size="icon" onClick={() => handleZoom('out')} className="h-7 w-7 text-neutral-500 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-white">
+          <div className="hidden md:flex items-center gap-1 bg-secondary/80 rounded-lg p-1 border border-border">
+            <Button variant="ghost" size="icon" onClick={() => handleZoom('out')} className="h-7 w-7 text-muted-foreground hover:text-foreground">
               <ZoomOut className="w-3.5 h-3.5" />
             </Button>
-            <span className="text-[10px] font-bold text-neutral-500 dark:text-[#a2b591] w-8 text-center">{zoomLevel}%</span>
-            <Button variant="ghost" size="icon" onClick={() => handleZoom('in')} className="h-7 w-7 text-neutral-500 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-white">
+            <span className="text-[10px] font-bold text-muted-foreground w-8 text-center">{zoomLevel}%</span>
+            <Button variant="ghost" size="icon" onClick={() => handleZoom('in')} className="h-7 w-7 text-muted-foreground hover:text-foreground">
               <ZoomIn className="w-3.5 h-3.5" />
             </Button>
           </div>
 
           <ThemeToggle />
-          <Button onClick={exportToWord} size="sm" className="bg-[#4d7537] text-white hover:bg-[#5a8b41] shadow-lg shadow-black/5 dark:shadow-[#3f612d]/20 border border-[#4d7537] dark:border-[#6b9d4f]/50 transition-all active:scale-95">
+          <Button onClick={exportToWord} size="sm" className="bg-[#4d7537] text-white hover:bg-[#5a8b41] shadow-lg shadow-[#4d7537]/20 border-none transition-all active:scale-95">
              <Download className="w-4 h-4 mr-2" /> Export .doc
           </Button>
         </div>
