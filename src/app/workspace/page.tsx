@@ -301,24 +301,24 @@ function WorkspaceContent() {
         .curriculum-content [dir="rtl"] { direction: rtl; text-align: right; }
       `}</style>
 
-      <nav className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/50 backdrop-blur-md z-50 shrink-0 relative">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground hover:bg-secondary"><ChevronLeft className="w-5 h-5" /></Button>
+      <nav className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-[#dcdad1] dark:border-[#3f612d]/20 bg-[#f4f3ed]/90 dark:bg-[#080b06]/90 sticky top-0 z-50 backdrop-blur-md transition-colors duration-300 shrink-0 relative">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground hover:bg-neutral-100 dark:hover:bg-[#1a2315]"><ChevronLeft className="w-5 h-5" /></Button>
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center shadow-lg"><BookOpen className="text-white w-4.5 h-4.5" /></div>
-            <span className="font-bricolage font-bold text-xl text-foreground hidden md:inline-block">Dekstorio</span>
+            <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center"><BookOpen className="text-white w-5 h-5" /></div>
+            <span className="font-bricolage font-semibold text-lg hidden md:inline-block">Dekstorio</span>
           </Link>
         </div>
 
-        {/* Center Toggle Navigation */}
-        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-secondary backdrop-blur-md rounded-lg p-1 border border-border">
+        {/* Center Toggle Navigation — matched with landing page & dashboard */}
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-white dark:bg-[#10140d]/80 backdrop-blur-md rounded-lg p-1 border border-[#dcdad1] dark:border-[#3f612d]/30">
           <Link href="/dashboard">
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-muted-foreground hover:text-foreground hover:bg-background/50 rounded-md h-8 text-[11px] font-medium transition-all"
+              className="text-neutral-500 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-[#f4f3ed] hover:bg-neutral-100 dark:hover:bg-[#1a2315] rounded-md"
             >
-              <Folder className="w-3.5 h-3.5 mr-2" />
+              <Folder className="w-4 h-4 mr-2" />
               Penyimpanan File
             </Button>
           </Link>
@@ -326,38 +326,27 @@ function WorkspaceContent() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-md h-8 text-[11px] font-medium transition-all shadow-lg shadow-[#4d7537]/20"
+              className="bg-neutral-100 dark:bg-[#1a2315] text-neutral-900 dark:text-[#f4f3ed] hover:bg-neutral-200 dark:hover:bg-[#2c471c] hover:text-neutral-900 dark:hover:text-white rounded-md"
             >
-              <Sparkles className="w-3.5 h-3.5 mr-2" />
+              <Sparkles className="w-4 h-4 mr-2" />
               AI Generate
             </Button>
           </Link>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           {/* Zoom Controls */}
-          <div className="hidden md:flex items-center gap-1 bg-secondary rounded-lg p-1 border border-border">
-            <Button variant="ghost" size="icon" onClick={() => handleZoom('out')} className="h-7 w-7 text-muted-foreground hover:text-foreground">
+          <div className="hidden md:flex items-center gap-1 bg-white dark:bg-[#10140d]/80 rounded-lg p-1 border border-[#dcdad1] dark:border-[#3f612d]/30">
+            <Button variant="ghost" size="icon" onClick={() => handleZoom('out')} className="h-7 w-7 text-neutral-500 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-white">
               <ZoomOut className="w-3.5 h-3.5" />
             </Button>
-            <span className="text-[10px] font-bold text-muted-foreground w-8 text-center">{zoomLevel}%</span>
-            <Button variant="ghost" size="icon" onClick={() => handleZoom('in')} className="h-7 w-7 text-muted-foreground hover:text-foreground">
+            <span className="text-[10px] font-bold text-neutral-500 dark:text-[#a2b591] w-8 text-center">{zoomLevel}%</span>
+            <Button variant="ghost" size="icon" onClick={() => handleZoom('in')} className="h-7 w-7 text-neutral-500 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-white">
               <ZoomIn className="w-3.5 h-3.5" />
             </Button>
           </div>
 
-          {/* Sidebar Toggle (Desktop) */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
-            className="hidden md:flex h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary"
-            title={isSidebarCollapsed ? "Tampilkan Sidebar" : "Sembunyikan Sidebar"}
-          >
-            {isSidebarCollapsed ? <PanelRightOpen className="w-4 h-4" /> : <PanelRightClose className="w-4 h-4" />}
-          </Button>
-
           <ThemeToggle />
-          <Button onClick={exportToWord} size="sm" className="bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-lg shadow-xl shadow-[#4d7537]/20 border-none transition-all active:scale-95">
+          <Button onClick={exportToWord} size="sm" className="bg-[#4d7537] text-white hover:bg-[#5a8b41] shadow-lg shadow-black/5 dark:shadow-[#3f612d]/20 border border-[#4d7537] dark:border-[#6b9d4f]/50 transition-all active:scale-95">
              <Download className="w-4 h-4 mr-2" /> Export .doc
           </Button>
         </div>
@@ -392,7 +381,18 @@ function WorkspaceContent() {
         } ${isSidebarCollapsed ? 'md:w-0 md:border-l-0 md:overflow-hidden' : 'md:w-[420px]'}`}>
           <div className="p-5 border-b border-border bg-secondary/50 flex items-center justify-between">
             <h2 className="font-bold text-lg text-foreground font-bricolage flex items-center gap-2"><Sparkles className="w-5 h-5 text-[#4d7537]" /> AI Assistant</h2>
-            <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground" onClick={() => setIsSidebarOpen(false)}><XCircle className="w-5 h-5" /></Button>
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsSidebarCollapsed(true)} 
+                className="hidden md:flex h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-background/50"
+                title="Sembunyikan Sidebar"
+              >
+                <PanelRightClose className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground" onClick={() => setIsSidebarOpen(false)}><XCircle className="w-5 h-5" /></Button>
+            </div>
           </div>
           
           <div className="flex-1 overflow-y-auto p-6 space-y-6 scroll-hide">
@@ -427,6 +427,17 @@ function WorkspaceContent() {
       
       {/* Mobile FAB for sidebar */}
       {!isSidebarOpen && <Button onClick={() => setIsSidebarOpen(true)} className="fixed bottom-6 right-6 z-50 md:hidden w-16 h-16 rounded-full bg-[#4d7537] text-white shadow-2xl flex items-center justify-center p-0"><Sparkles className="w-8 h-8" /></Button>}
+      
+      {/* Desktop: Re-open sidebar button when collapsed */}
+      {isSidebarCollapsed && (
+        <Button 
+          onClick={() => setIsSidebarCollapsed(false)} 
+          className="hidden md:flex fixed top-20 right-4 z-50 h-9 w-9 rounded-lg bg-white dark:bg-[#10140d] border border-[#dcdad1] dark:border-[#3f612d]/30 text-muted-foreground hover:text-foreground hover:bg-neutral-100 dark:hover:bg-[#1a2315] shadow-lg transition-all p-0 items-center justify-center"
+          title="Tampilkan Sidebar"
+        >
+          <PanelRightOpen className="w-4 h-4" />
+        </Button>
+      )}
     </div>
   );
 }
