@@ -503,6 +503,10 @@ function WorkspaceContent() {
           font-family: 'Times New Roman', serif;
           font-size: 12pt;
           line-height: 1.5;
+          overflow-wrap: break-word;
+          word-wrap: break-word;
+          word-break: break-word;
+          overflow: hidden;
         }
         .curriculum-content { text-align: justify; }
         .curriculum-content table { border-collapse: collapse; width: 100%; border: 1px solid black; text-align: left; }
@@ -593,8 +597,8 @@ function WorkspaceContent() {
             </AnimatePresence>
           </div>
 
-          {/* Continue Button below document - Now ONLY based on explicit isCutOff status */}
-          {(isGenerated || docId) && !loading && assistantMode === 'edit' && isCutOff && (
+          {/* Continue Button below document - Show whenever cut off */}
+          {isCutOff && !loading && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }} 
               animate={{ opacity: 1, scale: 1 }} 
