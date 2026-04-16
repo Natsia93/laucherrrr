@@ -323,29 +323,29 @@ export default function Home() {
         >
           <div className="flex-1 space-y-6 text-center md:text-left">
             <motion.h2 
-              initial={{ opacity: 0, filter: "blur(10px)", y: 20 }}
-              whileInView={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.1 }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
               className="font-bricolage text-3xl md:text-5xl font-normal tracking-tight text-neutral-900 dark:text-[#f4f3ed]"
             >
               Membantu Perancangan Kurikulum <br className="hidden md:block"/> 
               <span className="text-[#4d7537] dark:text-[#89b867]">Jauh Lebih Cepat.</span>
             </motion.h2>
             <motion.p 
-              initial={{ opacity: 0, filter: "blur(10px)", y: 20 }}
-              whileInView={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
               className="font-sans text-neutral-600 dark:text-[#a2b591] text-lg md:text-xl font-light leading-relaxed max-w-xl"
             >
               Dekstorio adalah platform yang dirancang khusus untuk membantu pendidik dan tenaga ajar dalam menyusun administrasi sekolah dengan presisi tinggi. Menggabungkan fitur AI canggih dengan regulasi kurikulum terbaru untuk hasil yang profesional.
             </motion.p>
             <motion.div 
-              initial={{ opacity: 0, filter: "blur(10px)", y: 20 }}
-              whileInView={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.3 }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
               className="flex flex-wrap gap-4 justify-center md:justify-start pt-2"
             >
               <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-[#a2b591]">
@@ -363,10 +363,10 @@ export default function Home() {
             </motion.div>
           </div>
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95, filter: "blur(15px)" }}
-            whileInView={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            initial={{ opacity: 0, x: 40 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 1, delay: 0.4 }}
+            transition={{ duration: 1, ease: "easeOut", delay: 0.4 }}
             className="flex-1 w-full max-w-xl"
           >
             <img 
