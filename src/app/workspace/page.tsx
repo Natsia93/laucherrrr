@@ -97,7 +97,8 @@ function WorkspaceContent() {
     if (!isAssistantMode) setProgressStage(0);
     setElapsedTime(0);
     
-    if (!appendToExisting && (!isAssistantMode || isAssistantRevision)) {
+    const previousContent = contentRef.current;
+    if (!appendToExisting && !isAssistantMode) {
       setDisplayedContent("");
       setDocContent("");
       contentRef.current = "";
@@ -114,6 +115,10 @@ function WorkspaceContent() {
         { role: "ai", text: "⏳ Sedang menyusun konten..." }
       ]);
     }
+
+    let isPatchMode = false;
+    let patchBuffer = "";
+    let hasDecidedMode = false;
 
     try {
       const response = await fetch("/api/generate-stream", {
@@ -154,11 +159,26 @@ function WorkspaceContent() {
             if (data.type === "status") {
               if (data.isCutOff) setIsCutOff(true);
             }
-            
             if (data.type === "chunk") {
-              contentRef.current += data.text;
-              setDisplayedContent(contentRef.current);
-              setDocContent(contentRef.current);
+              if (!hasDecidedMode && isAssistantRevision) {
+                if (data.text.includes("[SMART_PATCH")) {
+                  isPatchMode = true;
+                } else if (data.text.trim().startsWith("<div")) {
+                  // Major edit - clear content for full regeneration
+                  contentRef.current = "";
+                  setDocContent("");
+                  setDisplayedContent("");
+                }
+                hasDecidedMode = true;
+              }
+
+              if (isPatchMode) {
+                patchBuffer += data.text;
+              } else {
+                contentRef.current += data.text;
+                setDisplayedContent(contentRef.current);
+                setDocContent(contentRef.current);
+              }
             }
 
             if (data.type === "chat") {
@@ -174,10 +194,32 @@ function WorkspaceContent() {
 
             if (data.type === "done") {
               if (!isAssistantMode) {
+                if (isPatchMode && patchBuffer) {
+                  const applySmartPatches = (current: string, patches: string) => {
+                    let result = current;
+                    const blocks = patches.split("[SMART_PATCH_START]");
+                    blocks.forEach(block => {
+                      if (!block.includes("[SMART_PATCH_END]")) return;
+                      const sMatch = block.match(/SEARCH:\s*([\s\S]*?)\n\s*REPLACE:/);
+                      const rMatch = block.match(/REPLACE:\s*([\s\S]*?)\n\s*\[SMART_PATCH_END\]/);
+                      if (sMatch && rMatch) {
+                        const s = sMatch[1].trim();
+                        const r = rMatch[1].trim();
+                        if (result.includes(s)) result = result.replace(s, r);
+                      }
+                    });
+                    return result;
+                  };
+                  const finalContent = applySmartPatches(previousContent, patchBuffer);
+                  contentRef.current = finalContent;
+                  setDocContent(finalContent);
+                  setDisplayedContent(finalContent);
+                }
+
                 setIsGenerated(true);
                 setMessages(prev => [
                   ...prev.filter(m => !m.text.startsWith("⏳")), 
-                  { role: "ai", text: "✅ Selesai! Dokumen sudah siap. Ingin revisi?" }
+                  { role: "ai", text: isPatchMode ? "✅ Revisi minor telah diterapkan!" : "✅ Selesai! Dokumen sudah siap. Ingin revisi?" }
                 ]);
                 
                 if (data.title) setDocTitle(data.title);

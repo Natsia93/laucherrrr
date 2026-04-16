@@ -628,14 +628,29 @@ ATURAN MATI:
 === PERINGATAN: MISMATCH KONTEKS (PENTING) ===
 TUGAS ANDA: Peringatkan user di sidebar bahwa materi/tipe berbeda. JANGAN edit dokumen. 
 ` : willEditDocument ? `
-=== MODE: REVISI DOKUMEN (SANGAT KETAT) ===
-INSTRUKSI REVISI: "${rawPrompt}"
+=== MODE: REVISI DOKUMEN (SMART PARTIAL EDIT) ===
+INSTRUKSI REVISI DARI USER: "${rawPrompt}"
+
 TUGAS ANDA:
-1. HASILKAN ULANG SELURUH KODE HTML DOKUMEN (Full Document).
-2. Terapkan semua perubahan yang diminta dalam kode HTML tersebut.
-3. JANGAN memberikan teks penjelasan panjang di sidebar. Fokus pada edit konten.
-4. JANGAN gunakan markdown code blocks. LANGSUNG MULAI DENGAN <div>.
-5. Pastikan format tabel dan struktur resmi tetap terjaga.
+Pilih salah satu metode output berdasarkan kerumitan revisi:
+
+1. JIKA REVISI MINOR (Ganti kata, tambah baris tabel, tambah kolom, perbarui informasi spesifik, perbaiki typo):
+   - JANGAN kirim ulang seluruh dokumen.
+   - Gunakan format [SMART_PATCH] untuk menghemat token.
+   - Format:
+     [SMART_PATCH_START]
+     SEARCH: [Kutipan kode HTML asli yang ingin diganti. Harus cukup panjang agar unik dan akurat.]
+     REPLACE: [Kode HTML baru yang menggantikannya.]
+     [SMART_PATCH_END]
+   - Anda boleh mengirimkan lebih dari satu [SMART_PATCH] jika ada beberapa titik yang diubah.
+   - JANGAN berikan penjelasan apapun di luar blok ini.
+
+2. JIKA REVISI MAJOR (Struktur berubah total, ganti tipe dokumen, atau revisi yang mencakup >50% dokumen):
+   - Hasilkan kembali SELURUH kode HTML dari awal (KOP) sampai akhir (Tanda Tangan).
+   - Langsung mulai dengan <div>.
+   - Tanpa markdown code blocks.
+
+PENTING: SEARCH harus cocok persis dengan kode HTML yang ada di konteks DOKUMEN SAAT INI agar sistem bisa menerapkannya.
 ` : `
 === MODE: CHAT ASISTEN (AKTIF) ===
 TUGAS ANDA:
