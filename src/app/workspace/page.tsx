@@ -57,6 +57,13 @@ function WorkspaceContent() {
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [zoomLevel, setZoomLevel] = useState(100);
+
+  useEffect(() => {
+    const isLandscape = docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA");
+    if (isLandscape) {
+      setZoomLevel(80);
+    }
+  }, [docType]);
   const [attachments, setAttachments] = useState<{name: string, content: string, type: string}[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
