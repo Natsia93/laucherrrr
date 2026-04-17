@@ -200,8 +200,14 @@ BAGIAN A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025:
 
 BAGIAN B. ALUR TUJUAN PEMBELAJARAN (ATP):
 - Gunakan judul: "B. ALUR TUJUAN PEMBELAJARAN (ATP)" (Bold, CAPS).
-- Buat tabel utama dengan kolom: **No**, **Alur Tujuan Pembelajaran**, **Dimensi Profil Lulusan**, **Materi Pokok**, **Alokasi Waktu**.
-- Header Tabel: background-color: #f2f2f2.
+- Buat tabel utama dengan lebar 100% dan table-layout: fixed.
+- Tentukan lebar kolom (SANGAT PENTING agar judul tidak wrap sampai 4 baris):
+  1. **No**: 5%
+  2. **Alur Tujuan Pembelajaran**: 35%
+  3. **Dimensi Profil Lulusan**: 20%
+  4. **Materi Pokok**: 25%
+  5. **Alokasi Waktu**: 15%
+- Header Tabel: background-color: #FFF2CC; color: black; font-weight: bold; text-align: center; vertical-align: middle; padding: 12px 5px; border: 1px solid black;
 - SEPARATOR BAB (WAJIB): Setiap kali masuk BAB baru, buat baris melintang (colspan="5") dengan background-color: #E7EFF6 dan teks "BAB [X] : [NAMA BAB]" (Bold, Center, Uppercase).
 - Isi Tabel:
   - Alur Tujuan Pembelajaran: Gunakan narasi yang profesional. WAJIB menjabarkan **2-3 poin bullet** yang padat dan bermakna untuk setiap baris tujuan.
@@ -216,7 +222,7 @@ FOOTER TABEL (TOTAL JP - WAJIB DI DALAM TABEL):
 - **DILARANG KERAS** membuat bagian "TOTAL ALOKASI WAKTU" terpisah di luar tabel.
 
 ATURAN GRANULARITAS & PENOMORAN:
-- **PENOMORAN**: Nomor urut pada kolom 'No' WAJIB RESET ke angka 1 setiap kali berganti BAB baru.
+- **PENOMORAN**: Nomor urut pada kolom 'No' WAJIB RESET ke angka 1 setiap kali berganti BAB baru. JANGAN sampai wrap (harus 1 baris).
 - **JUMLAH BARIS PER BAB**: Setiap BAB WAJIB memiliki **minimal 3 sampai 5 baris (rows)** yang berbeda.
 
 BAGIAN 5 — TANDA TANGAN:
