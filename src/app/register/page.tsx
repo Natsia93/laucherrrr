@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -57,8 +58,13 @@ export default function RegisterPage() {
       </div>
       
       <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 hover:opacity-80 transition-opacity">
-        <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center">
-          <BookOpen className="text-white w-5 h-5" />
+        <div className="relative w-8 h-8 rounded overflow-hidden">
+          <Image 
+            src="/logo/Logo Hijau.svg" 
+            alt="Dekstorio Logo" 
+            fill
+            className="object-cover"
+          />
         </div>
         <span className="font-bricolage font-semibold text-lg tracking-tight text-[#1a2315] dark:text-[#f4f3ed]">Dekstorio</span>
       </Link>

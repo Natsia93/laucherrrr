@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 const PROGRESS_STAGES = [
   { icon: Brain, label: "Menganalisis Konteks", description: "Membaca dan memahami data wawancara Anda..." },
@@ -613,7 +614,14 @@ function WorkspaceContent() {
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground hover:bg-secondary"><ChevronLeft className="w-5 h-5" /></Button>
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center"><BookOpen className="text-white w-5 h-5" /></div>
+            <div className="relative w-8 h-8 rounded overflow-hidden">
+              <Image 
+                src="/logo/Logo Hijau.svg" 
+                alt="Dekstorio Logo" 
+                fill
+                className="object-cover"
+              />
+            </div>
             <div className="flex flex-col">
               <span className="font-bricolage font-semibold text-lg leading-none text-foreground">Dekstorio</span>
               {docTitle && (
@@ -680,7 +688,14 @@ function WorkspaceContent() {
                 />
               ) : loading ? renderProgressIndicator() : (
                 <div className="flex flex-col items-center justify-center min-h-[900px] opacity-10 py-20">
-                   <BookOpen className="w-16 h-16 text-foreground mb-4" />
+                   <div className="relative w-16 h-16 mb-4">
+                     <Image 
+                       src="/logo/Logo Hijau.svg" 
+                       alt="Dekstorio Logo" 
+                       fill
+                       className="object-cover"
+                     />
+                   </div>
                    <p className="text-xl font-bold">Menunggu Konteks...</p>
                 </div>
               )}

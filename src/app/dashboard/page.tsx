@@ -21,6 +21,7 @@ import { DocumentTable } from "@/components/dashboard/DashboardClientWrapper";
 import { DashboardSearchBar } from "@/components/dashboard/DashboardClientWrapper";
 import { DashboardFilter } from "@/components/dashboard/DashboardClientWrapper";
 import { Suspense } from "react";
+import Image from "next/image";
 
 export default async function DashboardPage(props: { searchParams: Promise<{ search?: string; category?: string }> }) {
   const searchParams = await props.searchParams;
@@ -96,8 +97,13 @@ export default async function DashboardPage(props: { searchParams: Promise<{ sea
       <nav className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-[#dcdad1] dark:border-[#3f612d]/20 bg-[#f4f3ed]/90 dark:bg-[#080b06]/90 sticky top-0 z-50 backdrop-blur-md transition-colors duration-300">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 text-[#1a2315] dark:text-[#f4f3ed]">
-            <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center">
-              <BookOpen className="text-white w-5 h-5" />
+            <div className="relative w-8 h-8 rounded overflow-hidden">
+              <Image 
+                src="/logo/Logo Hijau.svg" 
+                alt="Dekstorio Logo" 
+                fill
+                className="object-cover"
+              />
             </div>
             <span className="font-bricolage font-semibold text-lg hidden sm:block">Dekstorio</span>
           </Link>

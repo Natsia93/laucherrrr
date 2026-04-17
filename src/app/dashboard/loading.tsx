@@ -2,6 +2,7 @@ import React from "react";
 import { Folder, FileText, BookOpen, Search, Filter, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import Image from "next/image";
 
 export default function DashboardLoading() {
   return (
@@ -9,8 +10,13 @@ export default function DashboardLoading() {
       {/* Navbar Skeleton */}
       <nav className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-[#dcdad1] dark:border-[#3f612d]/20 bg-[#f4f3ed]/90 dark:bg-[#080b06]/90 sticky top-0 z-50 backdrop-blur-md">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center">
-            <BookOpen className="text-white w-5 h-5" />
+          <div className="relative w-8 h-8 rounded overflow-hidden">
+            <Image 
+              src="/logo/Logo Hijau.svg" 
+              alt="Dekstorio Logo" 
+              fill
+              className="object-cover"
+            />
           </div>
           <Skeleton className="h-6 w-24 hidden sm:block bg-neutral-200 dark:bg-[#1a2315]" />
         </div>
