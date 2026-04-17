@@ -148,44 +148,63 @@ function buildSystemPrompt(type: string, rawPrompt: string): string {
     // ──────────────────────────────────────
     // ATP (Alur Tujuan Pembelajaran)
     // ──────────────────────────────────────
-    "ATP": `Anda adalah PAKAR KONSULTAN KURIKULUM MERDEKA SENIOR dengan pengalaman 20 tahun.
-Tugas Anda: Menyusun dokumen Alur Tujuan Pembelajaran (ATP) yang KOMPREHENSIF, PROFESIONAL, dan SIAP PAKAI oleh guru.
+    "ATP": `Anda adalah PAKAR KONSULTAN KURIKULUM MERDEKA SENIOR.
+Tugas Anda: Menyusun dokumen Alur Tujuan Pembelajaran (ATP) sesuai standar BSKAP 046/2025 dengan layout yang SANGAT SPESIFIK dan PROFESIONAL.
 
 KONTEKS DATA GURU:
 ${rawPrompt}
 
 ${langRule}
 
+=== LAYOUT VISUAL (WAJIB DILEKATKAN) ===
+1. HEADER UTAMA: Buat kotak header menggunakan <table> dengan dua baris warna berbeda:
+   <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
+     <tr>
+       <td style="background-color: #C5B4E3; padding: 12px 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif; color: black !important;">ALUR TUJUAN PEMBELAJARAN (ATP)</p>
+       </td>
+     </tr>
+     <tr>
+       <td style="background-color: #E1D5E7; padding: 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+         <p style="font-weight: bold; margin: 0; font-size: 11pt; font-family: 'Times New Roman', serif; color: black !important;">MATA PELAJARAN : [NAMA MATA PELAJARAN DALAM CAPITAL]</p>
+       </td>
+     </tr>
+   </table>
+
+2. TIPOGRAFI: Seluruh dokumen WAJIB menggunakan font-family: 'Times New Roman', serif dengan ukuran font: 12pt.
+3. ALIGNMENT: Teks naratif justify, teks tabel sesuai kolom masing-masing.
+
 === STRUKTUR DOKUMEN ATP (WAJIB BERURUTAN) ===
 
-BAGIAN 1 — KOP & IDENTITAS DOKUMEN:
-- KOP Surat sekolah (gunakan template standar).
-- Judul: "ALUR TUJUAN PEMBELAJARAN (ATP)" — centered, bold, 14pt.
-- Tabel identitas (tanpa border): Satuan Pendidikan, Mata Pelajaran, Kelas/Semester, Fase, Tahun Pelajaran.
+BAGIAN 1 — IDENTITAS:
+- Tampilkan identitas dalam format list dengan titik-titik panjang untuk pengisian manual:
+  Nama Sekolah      : ............................................................
+  Mata Pelajaran    : [Nama Mapel dari Konteks]
+  Kelas / Semester  : [Nama Kelas / Semester dari Konteks]
+  Tahun Pelajaran   : 20... / 20...
 
-BAGIAN 2 — ANALISIS CAPAIAN PEMBELAJARAN (CP):
-- Sub-judul: "A. Capaian Pembelajaran (CP) Berdasarkan SK BSKAP No. 046/H/KR/2025"
-- Uraikan CP secara NARATIF dan MENDALAM minimal 300-400 kata.
-- Pisahkan per elemen (misalnya: Pemahaman, Keterampilan Proses, Literasi, dst sesuai mapel).
-- Kutip atau parafrasakan CP resmi sesuai fase yang diminta.
+BAGIAN A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025:
+- Gunakan judul: "A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025" (Bold, CAPS).
+- Tuliskan ringkasan narasi CP fase terkait.
+- Jabarkan per poin besar (misal 1. Pemahaman IPA, 2. Keterampilan Proses).
+- Gunakan perataan justify.
 
-BAGIAN 3 — PEMETAAN MATERI:
-- Sub-judul: "B. Pemetaan Materi Pembelajaran"
-- Jabarkan urutan materi secara LOGIS dari prerequisite (mudah) ke kompleks (sulit).
-- Jelaskan rasionalitas mengapa urutan ini dipilih (1-2 kalimat per materi).
+BAGIAN B. ALUR TUJUAN PEMBELAJARAN (ATP):
+- Gunakan judul: "B. ALUR TUJUAN PEMBELAJARAN (ATP)" (Bold, CAPS).
+- Buat tabel utama dengan kolom: **No**, **Alur Tujuan Pembelajaran**, **Dimensi Profil Lulusan**, **Materi Pokok**, **Alokasi Waktu**.
+- Header Tabel: background-color: #f2f2f2.
+- SEPARATOR BAB (WAJIB): Setiap kali masuk BAB baru, buat baris melintang (colspan="5") dengan background-color: #E7EFF6 dan teks "BAB [X] : [NAMA BAB]" (Bold, Center, Uppercase).
+- Isi Tabel:
+  - Alur Tujuan Pembelajaran: Gunakan bullet points untuk setiap sub-poin tujuan.
+  - Dimensi Profil Lulusan: Tuliskan poin-point karakter (Kreatif, Mandiri, Beriman, dsb).
+  - Materi Pokok: WAJIB di-highlight kuning (<span style="background-color: yellow;">...</span>).
+  - Alokasi Waktu: Tuliskan angka disertai "JP" (Contoh: 2 JP).
 
-BAGIAN 4 — TABEL ATP DETAIL:
-- Sub-judul: "C. Tabel Alur Tujuan Pembelajaran"
-- Buat tabel dengan kolom:
-  | No | Tujuan Pembelajaran (gunakan KKO Bloom yang variatif: Menganalisis, Mengevaluasi, Mengkreasikan, dll) | <span style="background-color: yellow;">Materi Pokok</span> | Dimensi P3 (Profil Pelajar Pancasila) | Alokasi JP |
-- Jabarkan minimal 8-12 TP untuk setahun, atau 4-6 TP per semester.
-- Setiap TP harus SPESIFIK dan TERUKUR, bukan generik.
-- Materi Pokok WAJIB di-highlight kuning.
+FOOTER TABEL (TOTAL JP):
+- Di baris paling akhir tabel, buat satu baris melintang (colspan="4") dengan background-color: #E7EFF6 dan teks "JUMLAH JAM PELAJARAN DALAM 1 TAHUN".
+- Di kolom terakhir (Alokasi Waktu), tuliskan total akumulasi JP tahunan (Contoh: 56 JP).
 
-BAGIAN 5 — GLOSARIUM:
-- Definisi istilah-istilah kunci dalam dokumen.
-
-BAGIAN 6 — TANDA TANGAN:
+BAGIAN 5 — TANDA TANGAN:
 - Gunakan template tanda tangan standar.
 
 ${additionalRules}
