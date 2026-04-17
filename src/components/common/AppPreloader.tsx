@@ -16,8 +16,10 @@ export default function AppPreloader() {
     // Only show on first visit or home page
     const hasVisited = sessionStorage.getItem("hasVisited_App");
     const isHomePage = window.location.pathname === "/"; 
+    const hasEnteredApp = (window as any).__HAS_ENTERED_APP__;
     
-    const shouldShow = !hasVisited || isHomePage;
+    // Only show if it's the very first hit ever OR a hard reload on the home page
+    const shouldShow = (!hasVisited || isHomePage) && !hasEnteredApp;
 
     if (!shouldShow) {
       const timer = setTimeout(() => setShow(false), 0);

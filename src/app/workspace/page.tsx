@@ -38,6 +38,7 @@ function WorkspaceContent() {
   const model = searchParams.get("model") || "deepseek";
   const docId = searchParams.get("id");
 
+  const [activeDocType, setActiveDocType] = useState(docType);
   const [chatInput, setChatInput] = useState("");
   const [assistantMode, setAssistantMode] = useState<'chat' | 'edit'>('chat');
   const [loading, setLoading] = useState(false);
@@ -59,11 +60,13 @@ function WorkspaceContent() {
   const [zoomLevel, setZoomLevel] = useState(100);
 
   useEffect(() => {
-    const isLandscape = docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA") || docType.includes("KKTP");
+    const isLandscape = activeDocType.includes("Program Semester") || activeDocType.includes("Program Tahunan") || activeDocType.includes("PROSEM") || activeDocType.includes("PROTA") || activeDocType.includes("KKTP");
     if (isLandscape) {
       setZoomLevel(80);
+    } else {
+      setZoomLevel(100);
     }
-  }, [docType]);
+  }, [activeDocType]);
   const [attachments, setAttachments] = useState<{name: string, content: string, type: string}[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -350,6 +353,7 @@ function WorkspaceContent() {
           setDocContent(data.content);
           setDisplayedContent(data.content);
           setDocTitle(data.title);
+          if (data.type) setActiveDocType(data.type);
           contentRef.current = data.content;
           setIsGenerated(true);
           setMessages([{ role: "ai", text: `✅ Dokumen berhasil dimuat.` }]);
@@ -693,11 +697,11 @@ function WorkspaceContent() {
         <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto p-8 md:p-12 text-center bg-background scroll-hide">
           <div 
             className={`a4-paper curriculum-content relative inline-block text-left origin-top transition-transform duration-200 ${
-              (docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA") || docType.includes("KKTP")) ? "landscape" : ""
+              (activeDocType.includes("Program Semester") || activeDocType.includes("Program Tahunan") || activeDocType.includes("PROSEM") || activeDocType.includes("PROTA") || activeDocType.includes("KKTP")) ? "landscape" : ""
             }`}
             style={{ 
               transform: `scale(${zoomLevel / 100})`,
-              maxWidth: (docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA") || docType.includes("KKTP")) ? '297mm' : '210mm'
+              maxWidth: (activeDocType.includes("Program Semester") || activeDocType.includes("Program Tahunan") || activeDocType.includes("PROSEM") || activeDocType.includes("PROTA") || activeDocType.includes("KKTP")) ? '297mm' : '210mm'
             }}
           >
             <AnimatePresence mode="wait">
