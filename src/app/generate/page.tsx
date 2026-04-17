@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
-  Sparkles, ArrowRight, Loader2, Plus, ArrowLeft, Zap, Brain, CheckCircle2, FileText, Eye
+  Sparkles, ArrowRight, Loader2, Plus, ArrowLeft, Zap, Brain, CheckCircle2, FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -323,9 +323,6 @@ function GenerateContent() {
 
         <main className="max-w-3xl mx-auto pt-28 px-6">
           <header className="mb-10 text-center">
-            <div className="w-16 h-16 rounded-full bg-[#4d7537]/10 flex items-center justify-center mx-auto mb-5">
-              <Eye className="w-8 h-8 text-[#4d7537]" />
-            </div>
             <h1 className="text-2xl font-bricolage font-bold mb-2">Periksa Data Sebelum Generate</h1>
             <p className="text-muted-foreground text-sm max-w-md mx-auto">Pastikan semua data di bawah sudah benar. Klik "Mulai Generate" jika sudah siap.</p>
           </header>
@@ -550,7 +547,7 @@ function GenerateContent() {
              onClick={() => setShowSummary(true)}
              className="w-full max-w-md h-14 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-lg text-base font-bold shadow-md shadow-[#4d7537]/10 transition-all hover:scale-[1.01] active:scale-95 group disabled:opacity-50 disabled:grayscale disabled:hover:scale-100"
            >
-             <Eye className="w-5 h-5 mr-2" />
+
              Tinjau & Generate {docType}
              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
            </Button>

@@ -401,7 +401,7 @@ BAGIAN 1 — HEADER BERWARNA:
 - Buat header menggunakan tabel:
   <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1.5pt solid black; table-layout: fixed;">
     <tr>
-      <td style="background-color: #E1D5E7; padding: 12px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+      <td style="background-color: #C5B4E3; padding: 12px; text-align: center; border: 1pt solid black; vertical-align: middle;">
         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif;">PROGRAM TAHUNAN (PROTA)</p>
       </td>
     </tr>
@@ -443,11 +443,15 @@ BAGIAN A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025:
 
 BAGIAN B. PROGRAM TAHUNAN:
 - Judul: "B. PROGRAM TAHUNAN" (bold, background: #f2f2f2, padding: 5px).
-- Buat TABEL LANDSCAPE dengan kolom:
-  | No | Alur Tujuan Pembelajaran | Materi | Alokasi Waktu | Semester |
-- HEADER TABEL: background-color: #9FC5E8; text-align: center; font-weight: bold; padding: 10px;
+- Buat TABEL LANDSCAPE dengan lebar kolom yang diatur (PENTING):
+  1. No (3%)
+  2. Alur Tujuan Pembelajaran (35%)
+  3. Materi (30%)
+  4. Alokasi Waktu (10%)
+  5. Semester (22%)
+- HEADER TABEL: background-color: #FCE4D6; text-align: center; font-weight: bold; padding: 12px 5px; border: 1px solid black;
 - SEPARATOR BAB:
-  - Gunakan baris melintang: <tr style="background-color: #ADD8E6;"><td colspan="5" style="text-align: center; font-weight: bold;">BAB [X] : [NAMA BAB]</td></tr>
+  - Gunakan baris melintang: <tr style="background-color: #ADD8E6;"><td colspan="5" style="text-align: center; font-weight: bold; padding: 10px;">BAB [X] : [NAMA BAB]</td></tr>
 
 ISI TABEL:
 - No: WAJIB direset mulai dari angka 1 di setiap BAB baru.
@@ -481,7 +485,7 @@ BAGIAN 1 — HEADER BERWARNA:
 - Buat header menggunakan tabel:
   <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1.5pt solid black; table-layout: fixed;">
     <tr>
-      <td style="background-color: #E1D5E7; padding: 12px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+      <td style="background-color: #C5B4E3; padding: 12px; text-align: center; border: 1pt solid black; vertical-align: middle;">
         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif;">PROGRAM SEMESTER (PROSEM)</p>
       </td>
     </tr>
@@ -524,22 +528,22 @@ BAGIAN A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025:
 BAGIAN B. PROGRAM SEMESTER:
 - Judul: "B. PROGRAM SEMESTER" (bold, background: #f2f2f2, padding: 5px).
 - Buat TABEL MINGGUAN (LANDSCAPE) dengan TOTAL 33 KOLOM.
-- HEADER TABEL (SANGAT KRUSIAL):
+- HEADER TABEL (SANGAT KRUSIAL - GUNAKAN WIDTH SPESIFIK):
   - Row 1: 
-    • No (rowspan="2")
-    • Alur dan Tujuan Pembelajaran (rowspan="2")
-    • Alokasi Waktu (rowspan="2")
-    • [Nama Bulan 1 s/d 6] (masing-masing colspan="5").
+    • No (rowspan="2", width: 30px, background: #FCE4D6)
+    • Alur dan Tujuan Pembelajaran (rowspan="2", width: 320px, background: #C5B4E3)
+    • Alokasi Waktu (rowspan="2", width: 50px, background: #FCE4D6)
+    • [Nama Bulan 1 s/d 6] (masing-masing colspan="5", background: #C5B4E3).
   - Row 2:
-    • Angka minggu 1, 2, 3, 4, 5 yang berulang untuk setiap bulan (total 30 sel <td>).
-  - STYLING HEADER: Row 1 background #D9D9D9, Row 2 background #FCE4D6.
+    • Angka minggu 1, 2, 3, 4, 5 yang berulang (30 sel <td>, width: 22px, background: #FCE4D6).
+  - STYLING HEADER: Gunakan font-size: 9pt, text-align: center, font-weight: bold, border: 1px solid black.
 - SEPARATOR BAB:
   - Gunakan baris melintang (colspan="33") dengan background-color: #ADD8E6 (Light Blue).
-  - Teks: "BAB [X] : [NAMA BAB]" (Bold, Center).
+  - Teks: "BAB [X] : [NAMA BAB]" (Bold, Center, padding: 8px).
 
 ISI TABEL:
 - No: WAJIB direset mulai dari angka 1 di setiap BAB baru.
-- ATP: Gunakan format **Bold & Italic** untuk menuliskan Materi Kunci.
+- ATP: Gunakan format ***Bold & Italic*** untuk menuliskan Materi Kunci (DILARANG menggunakan highlight kuning).
 - Gunakan bullet points untuk detail aktivitas di bawah materi.
 - Tandai minggu pelaksanaan dengan "V" atau biarkan kosong.
 - Baris khusus (TANPA nomor, background #f0f0f0 atau bold):
