@@ -27,18 +27,16 @@ export default function Home() {
   const heroWords = ["Prosem & Prota", "CP, ATP & KKTP", "Perangkat Ajar", "Lembar Kerja PD"];
 
   useEffect(() => {
-    // Coordination with Preloader
-    const hasVisited = sessionStorage.getItem("hasVisited_App");
-    const isHomePage = window.location.pathname === "/"; 
-    const willShowPreloader = !hasVisited || isHomePage;
+    // Detect if this is a hard entry (reload/first visit) or client-side navigation
+    const hasEntered = (window as any).__HAS_ENTERED_APP__;
+    (window as any).__HAS_ENTERED_APP__ = true;
 
-    if (willShowPreloader) {
-      // Delay landing animations until preloader ripple starts revealing content
-      // Preloader timing: 3.2s stroke + ripple phase. 
-      // 4800ms allows the ripple to expand significantly before content enters.
+    if (!hasEntered) {
+      // Hard entry/reload: delay animations to sync with preloader
       const timer = setTimeout(() => setIsReady(true), 4800);
       return () => clearTimeout(timer);
     } else {
+      // Internal navigation: show animations immediately
       setIsReady(true);
     }
   }, []);

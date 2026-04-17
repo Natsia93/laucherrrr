@@ -26,6 +26,7 @@ export default function AppPreloader() {
 
     sessionStorage.setItem("hasVisited_App", "true");
     document.body.style.overflow = "hidden";
+    (window as any).__PRELOADER_ACTIVE__ = true;
 
     const ctx = gsap.context(() => {
       const targetRadius = Math.max(window.innerWidth, window.innerHeight) * 1.5;
@@ -50,6 +51,8 @@ export default function AppPreloader() {
                onComplete: () => {
                  setShow(false);
                  document.body.style.overflow = "";
+                 (window as any).__PRELOADER_ACTIVE__ = false;
+                 (window as any).__PRELOADER_DONE__ = true;
                }
              });
 

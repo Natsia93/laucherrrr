@@ -19,6 +19,9 @@ const bricolage = Bricolage_Grotesque({
 export const metadata: Metadata = {
   title: "Dekstorio AI - Asisten Kurikulum Merdeka",
   description: "Buat CP, ATP, Prosem, Prota, dan KKTP secara otomatis dengan AI.",
+  icons: {
+    icon: "/logo/Logo Hijau.svg",
+  },
 };
 
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
