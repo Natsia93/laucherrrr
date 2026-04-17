@@ -29,14 +29,15 @@ export default function Home() {
   useEffect(() => {
     // Detect if this is a hard entry (reload/first visit) or client-side navigation
     const hasEntered = (window as any).__HAS_ENTERED_APP__;
+    const preloaderActive = (window as any).__PRELOADER_ACTIVE__;
     (window as any).__HAS_ENTERED_APP__ = true;
 
-    if (!hasEntered) {
-      // Hard entry/reload: delay animations to sync with preloader
-      const timer = setTimeout(() => setIsReady(true), 4800);
+    if (!hasEntered && preloaderActive) {
+      // Hard entry with preloader: delay animations slightly less for a snappy overlap
+      const timer = setTimeout(() => setIsReady(true), 4200);
       return () => clearTimeout(timer);
     } else {
-      // Internal navigation: show animations immediately
+      // Internal navigation or already entered: show animations immediately
       setIsReady(true);
     }
   }, []);
@@ -199,7 +200,7 @@ export default function Home() {
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={isReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="inline-flex items-center gap-2 bg-white dark:bg-[#1a2315] border border-[#dcdad1] dark:border-[#3f612d]/40 px-3 py-1.5 rounded-full text-[10px] sm:text-xs md:text-sm text-[#4d7537] dark:text-[#d4e4c8] shadow-sm mb-2"
           >
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#4d7537] dark:text-[#89b867]" />
@@ -210,7 +211,7 @@ export default function Home() {
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={isReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ delay: 0.1, duration: 0.5 }}
+              transition={{ delay: 0.05, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
               className="font-bricolage text-3xl sm:text-5xl md:text-6xl font-normal tracking-tight text-neutral-900 dark:text-[#f4f3ed] flex flex-col md:flex-row items-center justify-center gap-y-2 md:gap-x-4 md:pl-20"
             >
               <span>Buat Dokumen</span>
@@ -234,7 +235,7 @@ export default function Home() {
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={isReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
+            transition={{ delay: 0.1, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="font-sans text-neutral-600 dark:text-[#a2b591] text-lg md:text-xl font-light max-w-2xl text-center mx-auto"
           >
             Asisten AI perancang CP, ATP, KKTP, Program Tahunan, Program Semester, hingga Lembar Kerja Peserta Didik (LKPD). Terstandarisasi dan siap export ke Word.
@@ -243,9 +244,9 @@ export default function Home() {
 
         {/* Modern Prompt Input Box */}
         <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={isReady ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={isReady ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.98 }}
+          transition={{ delay: 0.15, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="mt-12 w-full max-w-3xl relative z-10"
         >
           {/* Main Box Area */}
