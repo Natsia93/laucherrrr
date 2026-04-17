@@ -34,8 +34,8 @@ export default function Home() {
     if (willShowPreloader) {
       // Delay landing animations until preloader ripple starts revealing content
       // Preloader timing: 3.2s stroke + ripple phase. 
-      // 4200ms gives enough time for the ripple to widen significantly.
-      const timer = setTimeout(() => setIsReady(true), 4200);
+      // 4800ms allows the ripple to expand significantly before content enters.
+      const timer = setTimeout(() => setIsReady(true), 4800);
       return () => clearTimeout(timer);
     } else {
       setIsReady(true);
