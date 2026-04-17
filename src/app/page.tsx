@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Link from "next/link";
+import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
@@ -104,8 +105,13 @@ export default function Home() {
       {/* Navbar */}
       <nav className={`fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 transition-all duration-300 ${scrolled ? "py-4 bg-[#f4f3ed]/60 dark:bg-[#080b06]/40 backdrop-blur-xl border-b border-[#dcdad1] dark:border-[#3f612d]/50 shadow-none" : "py-6 bg-transparent border-transparent"}`}>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded bg-[#4d7537] flex items-center justify-center">
-            <BookOpen className="text-white w-5 h-5" />
+          <div className="relative w-8 h-8 rounded overflow-hidden">
+            <Image 
+              src="/logo/Logo Hijau.svg" 
+              alt="Dekstorio Logo" 
+              fill
+              className="object-cover"
+            />
           </div>
           <span className="font-bricolage font-semibold text-lg tracking-tight hidden md:inline-block">Dekstorio</span>
         </div>
@@ -463,8 +469,13 @@ export default function Home() {
       <footer className="border-t border-[#dcdad1] dark:border-[#3f612d]/20 mt-20 bg-neutral-50 dark:bg-[#080b06] relative z-10">
         <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-[#4d7537] flex items-center justify-center">
-              <BookOpen className="text-white w-3 h-3" />
+            <div className="relative w-6 h-6 rounded overflow-hidden">
+              <Image 
+                src="/logo/Logo Hijau.svg" 
+                alt="Dekstorio Logo" 
+                fill
+                className="object-cover"
+              />
             </div>
             <span className="font-bricolage font-semibold text-sm text-neutral-900 dark:text-[#f4f3ed]">Dekstorio AI</span>
           </div>
