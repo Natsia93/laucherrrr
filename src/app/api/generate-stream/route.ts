@@ -207,7 +207,7 @@ BAGIAN B. ALUR TUJUAN PEMBELAJARAN (ATP):
   3. **Dimensi Profil Lulusan**: 20%
   4. **Materi Pokok**: 25%
   5. **Alokasi Waktu**: 15%
-- Header Tabel: background-color: #FFF2CC; color: black; font-weight: bold; text-align: center; vertical-align: middle; padding: 12px 5px; border: 1px solid black;
+- Header Tabel: background-color: #FCE4D6; color: black; font-weight: bold; text-align: center; vertical-align: middle; padding: 12px 5px; border: 1px solid black;
 - SEPARATOR BAB (WAJIB): Setiap kali masuk BAB baru, buat baris melintang (colspan="5") dengan background-color: #E7EFF6 dan teks "BAB [X] : [NAMA BAB]" (Bold, Center, Uppercase).
 - Isi Tabel:
   - Alur Tujuan Pembelajaran: Gunakan narasi yang profesional. WAJIB menjabarkan **2-3 poin bullet** yang padat dan bermakna untuk setiap baris tujuan.
