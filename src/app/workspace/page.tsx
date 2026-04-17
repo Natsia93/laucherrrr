@@ -317,6 +317,18 @@ function WorkspaceContent() {
       setLoading(false);
       setProgressStage(-1);
       setAbortController(null);
+      
+      // Auto-detect cut off if not explicitly signaled
+      if (contentRef.current.length > 1000) {
+        const lastTarget = contentRef.current.trim();
+        const hasOpenTag = lastTarget.lastIndexOf("<") > lastTarget.lastIndexOf(">");
+        const isTableIncomplete = lastTarget.includes("<table") && !lastTarget.endsWith("</table>");
+        const isDivIncomplete = lastTarget.includes("<div") && !lastTarget.endsWith("</div>");
+        
+        if (hasOpenTag || isTableIncomplete || isDivIncomplete) {
+          setIsCutOff(true);
+        }
+      }
     }
   }, [docType, model, messages, assistantMode]);
 
@@ -596,7 +608,7 @@ function WorkspaceContent() {
           min-height: 297mm;
           background: white !important;
           color: black !important;
-          box-shadow: 0 0 30px rgba(0,0,0,0.15), 0 0 100px rgba(0,0,0,0.05);
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.05);
           padding: 20mm 15mm;
           margin: 40px auto;
           font-family: 'Times New Roman', serif;
@@ -605,7 +617,7 @@ function WorkspaceContent() {
           overflow-wrap: break-word;
           word-wrap: break-word;
           word-break: break-word;
-          overflow: hidden;
+          overflow: visible;
           transition: transform 0.2s ease-in-out;
         }
         .a4-paper.landscape {
@@ -694,8 +706,8 @@ function WorkspaceContent() {
       </nav>
 
       <main className="flex-1 flex overflow-hidden min-h-0 relative">
-        <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto overflow-x-auto p-8 md:p-12 bg-background scroll-hide">
-          <div className="min-w-max flex justify-center">
+        <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto overflow-x-auto p-4 md:p-12 bg-secondary/20">
+          <div className="min-w-max flex justify-center py-4">
             <div 
               className={`a4-paper curriculum-content relative inline-block text-left origin-top transition-transform duration-200 ${
                 (activeDocType.includes("Program Semester") || activeDocType.includes("Program Tahunan") || activeDocType.includes("PROSEM") || activeDocType.includes("PROTA")) ? "landscape" : ""
