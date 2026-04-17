@@ -185,18 +185,36 @@ ${langRule}
 
 === STRUKTUR DOKUMEN ATP (WAJIB BERURUTAN) ===
 
-BAGIAN 1 — IDENTITAS:
-- Tampilkan identitas dalam format list dengan titik-titik panjang untuk pengisian manual:
-  Nama Sekolah      : ............................................................
-  Mata Pelajaran    : [Nama Mapel dari Konteks]
-  Kelas / Semester  : [Nama Kelas / Semester dari Konteks]
-  Tahun Pelajaran   : 20... / 20...
+BAGIAN 1 — IDENTITAS (TANPA JUDUL TEKS "BAGIAN 1"):
+- Gunakan tabel borderless (border="0") agar titik-titik dan label sejajar sempurna:
+  <table border="0" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
+    <tr>
+      <td style="width: 160px; font-weight: bold; padding: 4px 0;">Nama Sekolah</td>
+      <td style="width: 20px;">:</td>
+      <td>............................................................</td>
+    </tr>
+    <tr>
+      <td style="font-weight: bold; padding: 4px 0;">Mata Pelajaran</td>
+      <td>:</td>
+      <td>[Nama Mapel dari Konteks]</td>
+    </tr>
+    <tr>
+      <td style="font-weight: bold; padding: 4px 0;">Kelas / Semester</td>
+      <td>:</td>
+      <td>[Nama Kelas / Semester dari Konteks]</td>
+    </tr>
+    <tr>
+      <td style="font-weight: bold; padding: 4px 0;">Tahun Pelajaran</td>
+      <td>:</td>
+      <td>20... / 20...</td>
+    </tr>
+  </table>
 
 BAGIAN A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025:
-- Gunakan judul: "A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025" (Bold, CAPS).
+- Gunakan judul: "A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025" (Bold, CAPS, background: #f2f2f2, padding: 5px).
 - Tuliskan narasi CP fase terkait secara MENDALAM (minimal 350-450 kata).
 - Jabarkan per poin besar (misal 1. Pemahaman ..., 2. Keterampilan Proses ...).
-- Pastikan teks perataan justify dan formal.
+- Pastikan teks perataan justify.
 
 BAGIAN B. ALUR TUJUAN PEMBELAJARAN (ATP):
 - Gunakan judul: "B. ALUR TUJUAN PEMBELAJARAN (ATP)" (Bold, CAPS).
