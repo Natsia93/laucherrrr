@@ -5,7 +5,23 @@ import gsap from "gsap";
 import Image from "next/image";
 
 export default function AppPreloader() {
-  const [show, setShow] = useState(true);
+  const [show, setShow] = useState(() => {
+    if (typeof window === "undefined") return true; 
+
+    // Detect if this is the very first mount of the layout (app entry)
+    const hasEntered = (window as any).__HAS_ENTERED_APP__;
+    const isHomePage = window.location.pathname === "/"; 
+    
+    // Only show preloader if it's the landing page and we haven't entered via another page
+    const shouldShow = isHomePage && !hasEntered;
+    
+    if (shouldShow) {
+      (window as any).__PRELOADER_ACTIVE__ = true;
+    }
+    
+    return shouldShow;
+  });
+
   const pathRef = useRef<SVGPathElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const logoMainRef = useRef<HTMLDivElement>(null);
@@ -13,28 +29,13 @@ export default function AppPreloader() {
   const circleRef = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
-    // Detect if this is the very first mount of the layout (app entry)
-    const hasEntered = (window as any).__HAS_ENTERED_APP__;
-    (window as any).__HAS_ENTERED_APP__ = true;
-
-    const hasVisited = sessionStorage.getItem("hasVisited_App");
-    const isHomePage = window.location.pathname === "/"; 
-    
-    // Only show preloader if:
-    // 1. It's the home page
-    // 2. We haven't visited in this session OR it's a hard reload/first match
-    // 3. BUT don't show if we already "entered" via another page (internal navigation)
-    const shouldShow = isHomePage && !hasVisited && !hasEntered;
-
-    if (!shouldShow) {
-      if (isHomePage) sessionStorage.setItem("hasVisited_App", "true");
-      setShow(false);
+    if (!show) {
+      (window as any).__HAS_ENTERED_APP__ = true;
       return;
     }
 
-    sessionStorage.setItem("hasVisited_App", "true");
+    (window as any).__HAS_ENTERED_APP__ = true;
     document.body.style.overflow = "hidden";
-    (window as any).__PRELOADER_ACTIVE__ = true;
 
     const ctx = gsap.context(() => {
       const targetRadius = Math.max(window.innerWidth, window.innerHeight) * 1.5;
