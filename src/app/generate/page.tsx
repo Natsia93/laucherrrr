@@ -77,7 +77,13 @@ function GenerateContent() {
         
         let initialQuestions = [...mandatoryQuestions];
 
-        if (["Capaian Pembelajaran (CP)", "CP", "KKTP"].includes(docType)) {
+        if (["Capaian Pembelajaran (CP)", "CP"].includes(docType)) {
+           // CP tidak butuh JP (1005) dan tidak butuh Semester (1004)
+           initialQuestions = initialQuestions.filter(q => q.id !== 1005);
+        }
+
+        if (docType === "KKTP") {
+           // KKTP tidak butuh JP (1005) tapi butuh Semester (1004)
            initialQuestions = initialQuestions.filter(q => q.id !== 1005);
            initialQuestions.push({
               id: 1004,
@@ -163,7 +169,11 @@ function GenerateContent() {
       } catch (err) {
         let fallback = [...mandatoryQuestions];
         
-        if (["Alur Tujuan Pembelajaran (ATP)", "Capaian Pembelajaran (CP)", "KKTP", "ATP", "CP"].includes(docType)) {
+        if (["Capaian Pembelajaran (CP)", "CP"].includes(docType)) {
+           fallback = fallback.filter(q => q.id !== 1005);
+        }
+
+        if (["Alur Tujuan Pembelajaran (ATP)", "ATP", "KKTP"].includes(docType)) {
            fallback.push({
               id: 1004,
               question: "Pilih Semester yang ingin di-generate:",
