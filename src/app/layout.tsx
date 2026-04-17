@@ -22,6 +22,7 @@ export const metadata: Metadata = {
 };
 
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import AppPreloader from "@/components/common/AppPreloader";
 
 export default function RootLayout({
   children,
@@ -37,6 +38,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <AppPreloader />
           <NextTopLoader color="#4d7537" showSpinner={false} shadow="0 0 10px #4d7537,0 0 5px #4d7537" />
           <NuqsAdapter>
             <MobileBottomNav />
