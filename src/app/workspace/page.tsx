@@ -448,7 +448,7 @@ function WorkspaceContent() {
       body {
         font-family: 'Times New Roman', serif;
         font-size: 12pt;
-        line-height: 1.5;
+        line-height: 1.2;
         margin: 0;
         padding: 0;
       }
@@ -456,33 +456,45 @@ function WorkspaceContent() {
         width: 100%;
       }
       p {
-        margin-bottom: 8pt;
+        margin: 0 0 8pt 0;
         text-align: justify;
-        line-height: 1.5;
+        line-height: 1.2;
+      }
+      /* Indent only for normal paragraphs, not titles or table cells */
+      .doc-wrapper > p, .doc-wrapper > div > p {
+        text-indent: 0.4in;
       }
       table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 20px;
+        margin-bottom: 15pt;
+        mso-table-lspace: 0pt;
+        mso-table-rspace: 0pt;
       }
       th {
         background-color: #f2f2f2;
         border: 1px solid black;
-        padding: 8px;
+        padding: 6pt;
         font-weight: bold;
         text-align: center;
       }
       td {
         border: 1px solid black;
-        padding: 8px;
+        padding: 6pt;
         vertical-align: top;
         text-align: justify;
       }
+      /* Title tables (KOP and BOX) shouldn't have paragraph indentation */
+      table p {
+        text-indent: 0 !important;
+        margin: 0 !important;
+      }
       h1, h2, h3, h4 {
-        margin-top: 15pt;
-        margin-bottom: 10pt;
+        margin-top: 12pt;
+        margin-bottom: 8pt;
         text-align: center;
         font-weight: bold;
+        text-indent: 0 !important;
       }
       [dir="rtl"] {
         direction: rtl;
@@ -568,7 +580,7 @@ function WorkspaceContent() {
           margin: 40px auto;
           font-family: 'Times New Roman', serif;
           font-size: 12pt;
-          line-height: 1.5;
+          line-height: 1.3;
           overflow-wrap: break-word;
           word-wrap: break-word;
           word-break: break-word;
@@ -576,10 +588,11 @@ function WorkspaceContent() {
           transition: transform 0.2s ease-in-out;
         }
         .curriculum-content { text-align: justify; }
-        .curriculum-content p { margin-bottom: 1em; text-indent: 30px; }
-        .curriculum-content table { border-collapse: collapse; width: 100%; border: 1px solid black; margin-bottom: 1.5rem; }
-        .curriculum-content th { background-color: #f2f2f2; border: 1px solid black; padding: 10px; font-weight: bold; text-align: center; }
-        .curriculum-content td { border: 1px solid black; padding: 10px; vertical-align: top; text-align: justify; }
+        .curriculum-content p { margin-bottom: 0.8em; text-indent: 0.4in; }
+        .curriculum-content table p { text-indent: 0 !important; margin: 0 !important; }
+        .curriculum-content table { border-collapse: collapse; width: 100%; border: 1px solid black; margin-bottom: 1.5rem; table-layout: fixed; }
+        .curriculum-content th { background-color: #f2f2f2; border: 1px solid black; padding: 10px; font-weight: bold; text-align: center; font-size: 11pt; }
+        .curriculum-content td { border: 1px solid black; padding: 10px; vertical-align: top; text-align: justify; font-size: 11pt; }
         .curriculum-content [dir="rtl"] { direction: rtl; text-align: right; }
         
         .markdown-chat h1, .markdown-chat h2, .markdown-chat h3 { font-weight: bold; margin-bottom: 0.5rem; margin-top: 1rem; }

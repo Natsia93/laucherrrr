@@ -20,30 +20,29 @@ const deepseek = new OpenAI({
 // ── KOP SURAT TEMPLATE ──
 const KOP_TEMPLATE = `
 === TEMPLATE KOP SURAT (WAJIB DI AWAL DOKUMEN) ===
-Buat KOP menggunakan <table> tanpa border (border:none) dengan layout:
-- Baris 1: Logo Sekolah (placeholder) | Nama Instansi (PEMERINTAH KABUPATEN/KOTA ..., DINAS PENDIDIKAN, NAMA SEKOLAH)
-- Di bawah KOP: garis horizontal tebal (border-bottom: 3px double black)
-- Alamat sekolah, telp, dan kode pos (jika diketahui dari konteks)
-Jika NAMA SEKOLAH tidak diketahui, tulis "[Nama Sekolah]" sebagai placeholder.
-Setelah KOP, tuliskan judul dokumen di tengah (centered, bold, font-size 14pt).
+Buat KOP menggunakan <table> dengan border: none dan table-layout: fixed.
+- Baris 1: Kolom 1 (Logo), Kolom 2 (Identitas Sekolah).
+- Gunakan font-size: 12pt untuk Nama Dinas, 14pt Bold untuk Nama Sekolah.
+- Di bawah KOP: garis horizontal tebal (border-bottom: 3px double black atau div border-bottom).
+Setelah KOP, tuliskan judul dokumen di tengah (centered, bold, font-size: 12pt).
 `;
 
 // ── TANDA TANGAN TEMPLATE ──
 const SIGNATURE_TEMPLATE = `
 === TEMPLATE TANDA TANGAN (WAJIB DI AKHIR DOKUMEN) ===
-<table style="width: 100%; border: none; margin-top: 50px; font-family: serif; border-collapse: collapse;">
+<table border="0" cellspacing="0" cellpadding="0" style="width: 100%; border: none; border-collapse: collapse; margin-top: 50px; font-family: 'Times New Roman', serif; table-layout: fixed;">
   <tr>
-    <td style="width: 50%; text-align: center; border:none; padding: 10px;">
-      <p>Mengetahui,</p>
-      <p style="font-weight: bold; margin-bottom: 60px;">Kepala Sekolah</p>
-      <p style="border-bottom: 1px solid black; display: inline-block; min-width: 180px;">(...................................)</p>
-      <p style="margin-top: 5px;">NIP. ................................</p>
+    <td style="width: 50%; text-align: center; vertical-align: top; padding: 10px; border: none;">
+      <p style="margin: 0;">Mengetahui,</p>
+      <p style="font-weight: bold; margin: 0 0 60px 0;">Kepala Sekolah</p>
+      <p style="font-weight: bold; text-decoration: underline; margin: 0;">(...................................)</p>
+      <p style="margin: 5px 0 0 0;">NIP. ................................</p>
     </td>
-    <td style="width: 50%; text-align: center; border:none; padding: 10px;">
-      <p>.................., .................. 20....</p>
-      <p style="font-weight: bold; margin-bottom: 60px;">Guru Mata Pelajaran</p>
-      <p style="border-bottom: 1px solid black; display: inline-block; min-width: 180px;">(...................................)</p>
-      <p style="margin-top: 5px;">NIP. ................................</p>
+    <td style="width: 50%; text-align: center; vertical-align: top; padding: 10px; border: none;">
+      <p style="margin: 0;">.................., .................. 20....</p>
+      <p style="font-weight: bold; margin: 0 0 60px 0;">Guru Mata Pelajaran</p>
+      <p style="font-weight: bold; text-decoration: underline; margin: 0;">(...................................)</p>
+      <p style="margin: 5px 0 0 0;">NIP. ................................</p>
     </td>
   </tr>
 </table>`;
@@ -249,11 +248,20 @@ ${rawPrompt}
 ${langRule}
 
 === LAYOUT VISUAL (WAJIB DILEKATKAN) ===
-1. HEADER UTAMA: Buat kotak header menggunakan <div style="background-color: #E1D5E7; border: 1px solid black; padding: 15px; text-align: center; margin-bottom: 25px;">.
-   Di dalamnya tulis:
-   <p style="font-weight: bold; margin: 0; font-size: 14pt; font-family: 'Times New Roman', serif;">CAPAIAN PEMBELAJARAN (NOMOR 046/H/KR/2025)</p>
-   <p style="font-weight: bold; margin: 5px 0 0 0; font-size: 12pt; font-family: 'Times New Roman', serif;">[NAMA MATA PELAJARAN DALAM CAPITAL]</p>
-</div>
+1. HEADER UTAMA: Buat kotak header menggunakan <table> dengan border: 1px solid black dan table-layout: fixed.
+   Gunakan dua baris dengan warna berbeda:
+   <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1px solid black; table-layout: fixed;">
+     <tr>
+       <td style="background-color: #C5B4E3; padding: 10px; text-align: center; border: 1px solid black;">
+         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif;">CAPAIAN PEMBELAJARAN (NOMOR 046/H/KR/2025)</p>
+       </td>
+     </tr>
+     <tr>
+       <td style="background-color: #E1D5E7; padding: 8px; text-align: center; border: 1px solid black;">
+         <p style="font-weight: bold; margin: 0; font-size: 11pt; font-family: 'Times New Roman', serif;">[NAMA MATA PELAJARAN DALAM CAPITAL]</p>
+       </td>
+     </tr>
+   </table>
 
 2. TIPOGRAFI: Seluruh dokumen WAJIB menggunakan font-family: 'Times New Roman', serif dengan ukuran font: 12pt.
 3. ALIGNMENT: Seluruh teks naratif WAJIB menggunakan style="text-align: justify;".

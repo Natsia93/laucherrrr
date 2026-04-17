@@ -31,13 +31,16 @@ export async function GET(req: Request) {
     const wordHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head><meta charset='utf-8'><style>
         @page { size: A4; margin: 20mm 15mm; }
-        body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; }
-        p { text-align: justify; margin-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; border: 1px solid black; margin-bottom: 20px; }
+        body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.2; }
+        p { text-align: justify; margin: 0 0 8pt 0; line-height: 1.2; }
+        .doc-wrapper > p, .doc-wrapper > div > p { text-indent: 0.4in; }
+        table { width: 100%; border-collapse: collapse; border: 1px solid black; margin-bottom: 20px; table-layout: fixed; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
         th { background-color: #f2f2f2; border: 1px solid black; padding: 8px; font-weight: bold; text-align: center; }
         td { border: 1px solid black; padding: 8px; vertical-align: top; text-align: justify; }
+        table p { text-indent: 0 !important; margin: 0 !important; }
+        h1, h2, h3, h4 { text-align: center; font-weight: bold; text-indent: 0 !important; margin: 12pt 0 8pt 0; }
         [dir="rtl"] { direction: rtl; text-align: right; font-family: 'Amiri', serif; }
-      </style></head><body><div ${isArabic ? 'dir="rtl"' : 'dir="ltr"'}>${doc.content}</div></body></html>`;
+      </style></head><body><div class="doc-wrapper" ${isArabic ? 'dir="rtl"' : 'dir="ltr"'}>${doc.content}</div></body></html>`;
 
     const filename = `${doc.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.doc`;
     const buffer = new TextEncoder().encode(wordHtml);
