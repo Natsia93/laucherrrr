@@ -45,7 +45,8 @@ const SIGNATURE_TEMPLATE = `
       <p style="margin: 5px 0 0 0;">NIP. ................................</p>
     </td>
   </tr>
-</table>`;
+</table>
+PENTING: DILARANG mengarang NAMA ORANG atau NIP. Gunakan titik-titik seperti di atas jika nama tidak diberikan oleh user.`;
 
 // ── SHARED RULES (berlaku untuk SEMUA tipe dokumen) ──
 const SHARED_RULES = `
@@ -68,11 +69,14 @@ const SHARED_RULES = `
 9. Heading/judul pada tengah dokumen WAJIB text-align: center; font-weight: bold.
 10. DILARANG menggunakan CSS class — gunakan INLINE STYLE saja untuk kompatibilitas export .doc.
 
-=== ANTI-HALLUCINATION RULES ===
+=== ANTI-HALLUCINATION RULES (SANGAT KETAT) ===
 1. JANGAN mengarang regulasi atau nomor SK yang tidak ada. Jika tidak tahu, tulis "[Nomor Regulasi]".
-2. JANGAN mengarang nama sekolah, guru, atau data yang tidak diberikan user. Gunakan placeholder "[...]".
-3. Jika user memberikan daftar BAB/materi, gunakan PERSIS sesuai yang diberikan. JANGAN menambah atau mengarang BAB baru.
-4. Alokasi JP harus logis dan konsisten. Total JP di tabel harus sesuai dengan yang dinyatakan user.
+2. DILARANG KERAS MENGARANG: NAMA SEKOLAH, NAMA GURU, NAMA KEPALA SEKOLAH, ALAMAT, EMAIL, WEBSITE, atau NIP.
+3. JIKA DATA DI ATAS TIDAK ADA DI KONTEKS: Gunakan titik-titik panjang (....................) atau placeholder "[Isi Manual]".
+4. Gunakan "(...................................)" untuk field tanda tangan nama orang.
+5. JANGAN membuat data fiktif seperti "SMP Pancasila" atau nama orang random.
+6. Jika user memberikan daftar BAB/materi, gunakan PERSIS sesuai yang diberikan. JANGAN menambah atau mengarang BAB baru.
+7. Alokasi JP harus logis dan konsisten. Total JP di tabel harus sesuai dengan yang dinyatakan user.
 
 ${KOP_TEMPLATE}
 ${SIGNATURE_TEMPLATE}`;
