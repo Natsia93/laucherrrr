@@ -34,9 +34,11 @@ export async function GET(req: Request) {
         body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.2; }
         p { text-align: justify; margin: 0 0 8pt 0; line-height: 1.2; }
         .doc-wrapper > p, .doc-wrapper > div > p { text-indent: 0.4in; }
-        table { width: 100%; border-collapse: collapse; border: 1px solid black; margin-bottom: 20px; table-layout: fixed; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-        th { background-color: #f2f2f2; border: 1px solid black; padding: 8px; font-weight: bold; text-align: center; }
-        td { border: 1px solid black; padding: 8px; vertical-align: top; text-align: justify; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        table:not([border="0"]) th, table:not([border="0"]) td { border: 1pt solid black; }
+        table[border="0"] th, table[border="0"] td { border: none !important; }
+        th { background-color: #f2f2f2; padding: 8pt 6pt; font-weight: bold; text-align: center; }
+        td { padding: 8pt 6pt; vertical-align: top; text-align: justify; }
         table p { text-indent: 0 !important; margin: 0 !important; }
         h1, h2, h3, h4 { text-align: center; font-weight: bold; text-indent: 0 !important; margin: 12pt 0 8pt 0; }
         [dir="rtl"] { direction: rtl; text-align: right; font-family: 'Amiri', serif; }

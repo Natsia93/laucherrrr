@@ -470,17 +470,23 @@ function WorkspaceContent() {
         margin-bottom: 15pt;
         mso-table-lspace: 0pt;
         mso-table-rspace: 0pt;
+        table-layout: fixed;
+      }
+      /* Only show borders if NOT explicitly disabled */
+      table:not([border="0"]) th, table:not([border="0"]) td {
+        border: 1pt solid black;
+      }
+      table[border="0"] th, table[border="0"] td {
+        border: none !important;
       }
       th {
         background-color: #f2f2f2;
-        border: 1px solid black;
-        padding: 6pt;
+        padding: 8pt 6pt;
         font-weight: bold;
         text-align: center;
       }
       td {
-        border: 1px solid black;
-        padding: 6pt;
+        padding: 8pt 6pt;
         vertical-align: top;
         text-align: justify;
       }
@@ -591,8 +597,9 @@ function WorkspaceContent() {
         .curriculum-content p { margin-bottom: 0.8em; text-indent: 0.4in; }
         .curriculum-content table p { text-indent: 0 !important; margin: 0 !important; }
         .curriculum-content table { border-collapse: collapse; width: 100%; border: 1px solid black; margin-bottom: 1.5rem; table-layout: fixed; }
-        .curriculum-content th { background-color: #f2f2f2; border: 1px solid black; padding: 10px; font-weight: bold; text-align: center; font-size: 11pt; }
-        .curriculum-content td { border: 1px solid black; padding: 10px; vertical-align: top; text-align: justify; font-size: 11pt; }
+        .curriculum-content table:not([border="0"]) th { background-color: #f2f2f2; border: 1px solid black; padding: 12px 10px; font-weight: bold; text-align: center; font-size: 11pt; }
+        .curriculum-content table:not([border="0"]) td { border: 1px solid black; padding: 12px 10px; vertical-align: top; text-align: justify; font-size: 11pt; }
+        .curriculum-content table[border="0"], .curriculum-content table[border="0"] td, .curriculum-content table[border="0"] th { border: none !important; }
         .curriculum-content [dir="rtl"] { direction: rtl; text-align: right; }
         
         .markdown-chat h1, .markdown-chat h2, .markdown-chat h3 { font-weight: bold; margin-bottom: 0.5rem; margin-top: 1rem; }

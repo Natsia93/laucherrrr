@@ -20,11 +20,22 @@ const deepseek = new OpenAI({
 // ── KOP SURAT TEMPLATE ──
 const KOP_TEMPLATE = `
 === TEMPLATE KOP SURAT (WAJIB DI AWAL DOKUMEN) ===
-Buat KOP menggunakan <table> dengan border: none dan table-layout: fixed.
-- Baris 1: Kolom 1 (Logo), Kolom 2 (Identitas Sekolah).
-- Gunakan font-size: 12pt untuk Nama Dinas, 14pt Bold untuk Nama Sekolah.
-- Di bawah KOP: garis horizontal tebal (border-bottom: 3px double black atau div border-bottom).
-Setelah KOP, tuliskan judul dokumen di tengah (centered, bold, font-size: 12pt).
+Buat KOP menggunakan <table border="0" cellspacing="0" cellpadding="0" style="width: 100%; border: none; border-collapse: collapse; table-layout: fixed;">
+  <tr>
+    <td style="width: 15%; text-align: center; border: none; vertical-align: middle;">
+      [LOGO]
+    </td>
+    <td style="width: 85%; text-align: center; border: none; vertical-align: middle;">
+      <p style="margin: 0; font-size: 11pt; font-weight: bold; text-align: center;">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</p>
+      <p style="margin: 0; font-size: 11pt; font-weight: bold; text-align: center;">DIREKTORAT JENDERAL PENDIDIKAN ANAK USIA DINI,</p>
+      <p style="margin: 0; font-size: 11pt; font-weight: bold; text-align: center;">PENDIDIKAN DASAR, DAN PENDIDIKAN MENENGAH</p>
+      <p style="margin: 2px 0; font-size: 13pt; font-weight: bold; text-align: center;">[NAMA SEKOLAH]</p>
+      <p style="margin: 0; font-size: 8pt; text-align: center;">Alamat: [Isi Manual], Email: [Isi Manual], Website: [Isi Manual]</p>
+    </td>
+  </tr>
+</table>
+<div style="border-bottom: 3px double black; margin: 10px 0 20px 0;"></div>
+Setelah KOP, tuliskan judul dokumen (misal: "CAPAIAN PEMBELAJARAN MATA PELAJARAN...") di tengah (centered, bold, font-size: 12pt).
 `;
 
 // ── TANDA TANGAN TEMPLATE ──
@@ -252,17 +263,17 @@ ${rawPrompt}
 ${langRule}
 
 === LAYOUT VISUAL (WAJIB DILEKATKAN) ===
-1. HEADER UTAMA: Buat kotak header menggunakan <table> dengan border: 1px solid black dan table-layout: fixed.
+1. HEADER UTAMA: Buat kotak header menggunakan <table> dengan border="1" agar Word mendeteksi border-nya.
    Gunakan dua baris dengan warna berbeda:
-   <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1px solid black; table-layout: fixed;">
+   <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
      <tr>
-       <td style="background-color: #C5B4E3; padding: 10px; text-align: center; border: 1px solid black;">
-         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif;">CAPAIAN PEMBELAJARAN (NOMOR 046/H/KR/2025)</p>
+       <td style="background-color: #C5B4E3; padding: 12px 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif; color: black !important;">CAPAIAN PEMBELAJARAN (NOMOR 046/H/KR/2025)</p>
        </td>
      </tr>
      <tr>
-       <td style="background-color: #E1D5E7; padding: 8px; text-align: center; border: 1px solid black;">
-         <p style="font-weight: bold; margin: 0; font-size: 11pt; font-family: 'Times New Roman', serif;">[NAMA MATA PELAJARAN DALAM CAPITAL]</p>
+       <td style="background-color: #E1D5E7; padding: 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+         <p style="font-weight: bold; margin: 0; font-size: 11pt; font-family: 'Times New Roman', serif; color: black !important;">[NAMA MATA PELAJARAN DALAM CAPITAL]</p>
        </td>
      </tr>
    </table>
