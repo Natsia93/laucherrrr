@@ -364,9 +364,6 @@ BAGIAN C. KARAKTERISTIK:
         <th style="border: 1px solid black; padding: 8px; text-align: center; width: 30%;">Elemen</th>
         <th style="border: 1px solid black; padding: 8px; text-align: center;">Deskripsi</th>
       </tr>
-    </thead>
-    <tbody>
-      <tr>
         <td style="border: 1px solid black; padding: 10px; font-weight: bold; text-align: center;">[Nama Elemen]</td>
         <td style="border: 1px solid black; padding: 10px; text-align: justify;">[Deskripsi Elemen yang Panjang dan Mendalam]</td>
       </tr>
@@ -390,47 +387,76 @@ ${SHARED_RULES}`,
     // PROTA (Program Tahunan)
     // ──────────────────────────────────────
     "PROTA": `Anda adalah WAKIL KEPALA SEKOLAH BIDANG KURIKULUM yang sangat detail dan presisi.
-Tugas Anda: Menyusun Program Tahunan (PROTA) yang PROFESIONAL, LENGKAP, dan sesuai Regulasi BSKAP 046/2025.
+Tugas Anda: Menyusun Program Tahunan (PROTA) yang PROFESIONAL, LENGKAP, dan sesuai Regulasi BSKAP 046/2025 dengan layout LANDSCAPE.
 
 KONTEKS DATA GURU:
 ${rawPrompt}
 
+=== ATURAN LAYOUT LANDSCAPE (SANGAT PENTING) ===
+- Dokumen ini dikerjakan dalam format LANDSCAPE agar tabel terlihat luas dan profesional.
+
 === STRUKTUR DOKUMEN PROTA (WAJIB BERURUTAN & PRESISI) ===
 
-BAGIAN 1 — JUDUL & IDENTITAS:
-- Judul: "PROGRAM TAHUNAN (PROTA)" — centered, bold, 14pt, background: #f0f0f0.
-- Sub-judul: Nama mata pelajaran (centered, bold, underline, 12pt).
-- Tabel Identitas (tanpa border, rata kiri):
-  Nama Sekolah      : [dari konteks atau placeholder]
-  Mata Pelajaran    : [dari konteks]
-  Kelas / Semester  : [dari konteks] / Ganjil & Genap
-  Tahun Pelajaran   : [dari konteks atau tahun berjalan]
+BAGIAN 1 — HEADER BERWARNA:
+- Buat header menggunakan tabel:
+  <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1.5pt solid black; table-layout: fixed;">
+    <tr>
+      <td style="background-color: #E1D5E7; padding: 12px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+        <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif;">PROGRAM TAHUNAN (PROTA)</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #F3E5F5; padding: 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+        <p style="font-weight: bold; margin: 0; font-size: 11pt; font-family: 'Times New Roman', serif;">MATA PELAJARAN : [MAPEL DALAM CAPITAL]</p>
+      </td>
+    </tr>
+  </table>
 
-BAGIAN 2 — CAPAIAN PEMBELAJARAN (BAGIAN A):
-- Header section: "A. CAPAIAN PEMBELAJARAN (CP) — SK BSKAP No. 046/H/KR/2025" (background: #f0f0f0, bold).
-- Teks Pengantar: "Pada akhir Fase [X], peserta didik memiliki kemampuan sebagai berikut:"
-- Jabarkan CP per ELEMEN dengan penomoran:
-  1. [Nama Elemen 1 — misal: Pemahaman]: Narasi CP lengkap untuk elemen ini.
-  2. [Nama Elemen 2 — misal: Keterampilan Proses]: Narasi CP lengkap.
-     Poin-poin detail: Mengamati, Mempertanyakan, Merencanakan, Memproses, Menganalisis, Menyimpulkan, Mengkomunikasikan.
-- SETIAP elemen harus dijabarkan MENDALAM, bukan hanya 1 kalimat.
+BAGIAN 2 — IDENTITAS TABEL:
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
+  <tr>
+    <td style="width: 160px; font-weight: bold; padding: 4px 0;">Nama Sekolah</td>
+    <td style="width: 20px;">:</td>
+    <td>............................................................</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold; padding: 4px 0;">Mata Pelajaran</td>
+    <td>:</td>
+    <td>[Mapel]</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold; padding: 4px 0;">Kelas / Semester</td>
+    <td>:</td>
+    <td>[Kelas] / Ganjil &amp; Genap</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold; padding: 4px 0;">Tahun Pelajaran</td>
+    <td>:</td>
+    <td>20... / 20...</td>
+  </tr>
+</table>
 
-BAGIAN 3 — TABEL PROGRAM TAHUNAN (BAGIAN B):
-- Header section: "B. PROGRAM TAHUNAN" (background: #f0f0f0, bold).
-- Buat TABEL dengan kolom:
-  | No | Alur Tujuan Pembelajaran (ATP) | <span style="background-color: yellow;">Materi</span> | Alokasi Waktu (JP) | Semester |
-- ATURAN ISI TABEL:
-  a. Kolom ATP: WAJIB berisi kalimat aksi lengkap menggunakan KKO Bloom.
-     Contoh: "Melalui pengamatan dan diskusi, peserta didik dapat menganalisis struktur dan fungsi sel pada makhluk hidup."
-  b. Kolom Materi: WAJIB di-highlight kuning (<span style="background-color: yellow;">Materi</span>).
-  c. Kolom Alokasi Waktu: harus LOGIS (2 JP, 4 JP, 6 JP, 8 JP). Total harus sesuai dengan total JP yang diberikan user.
-  d. Kolom Semester: "I (Ganjil)" atau "II (Genap)".
-  e. Jika user memberikan daftar BAB, gunakan PERSIS BAB tersebut. Jangan mengarang BAB baru.
-  f. Baris TERAKHIR tabel: gabungkan kolom 1-3 menjadi "TOTAL JAM PELAJARAN" dan isi total JP di kolom 4.
+BAGIAN A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025:
+- Judul: "A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025" (background: #f2f2f2, bold, padding: 5px).
+- Jabarkan CP Fase terkait secara detail (Pemahaman & Keterampilan Proses).
+- Gunakan bullet points untuk Keterampilan Proses (Mengamati, Mempertanyakan, dll).
+
+BAGIAN B. PROGRAM TAHUNAN:
+- Judul: "B. PROGRAM TAHUNAN" (bold, background: #f2f2f2, padding: 5px).
+- Buat TABEL LANDSCAPE dengan kolom:
+  | No | Alur Tujuan Pembelajaran | Materi | Alokasi Waktu | Semester |
+- HEADER TABEL: background-color: #9FC5E8; text-align: center; font-weight: bold; padding: 10px;
+- SEPARATOR BAB:
+  - Gunakan baris melintang: <tr style="background-color: #ADD8E6;"><td colspan="5" style="text-align: center; font-weight: bold;">BAB [X] : [NAMA BAB]</td></tr>
+
+ISI TABEL:
+- Alur Tujuan Pembelajaran: Gunakan bullet points untuk merinci langkah-langkah pembelajaran.
+- Materi: WAJIB di-highlight kuning: <span style="background-color: yellow; font-weight: bold; font-style: italic;">[Nama Materi]</span>.
+- Alokasi Waktu: Tuliskan angka + "JP".
+- Semester: Tuliskan "I (Ganjil)" atau "II (Genap)".
 
 BAGIAN 4 — TANDA TANGAN:
 - Gunakan template tanda tangan standar.
-- Jika ada nama guru dari konteks, ISI di tempat tanda tangan Guru Mata Pelajaran.
 
 ${additionalRules}
 ${SHARED_RULES}`,
