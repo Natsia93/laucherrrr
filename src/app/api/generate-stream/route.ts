@@ -451,7 +451,7 @@ BAGIAN B. PROGRAM TAHUNAN:
 
 ISI TABEL:
 - Alur Tujuan Pembelajaran: Gunakan bullet points untuk merinci langkah-langkah pembelajaran.
-- Materi: WAJIB di-highlight kuning: <span style="background-color: yellow; font-weight: bold; font-style: italic;">[Nama Materi]</span>.
+- Materi: Tuliskan nama materi dengan format **Bold & Italic**.
 - Alokasi Waktu: Tuliskan angka + "JP".
 - Semester: Tuliskan "I (Ganjil)" atau "II (Genap)".
 
@@ -537,7 +537,7 @@ BAGIAN B. PROGRAM SEMESTER:
   - Teks: "BAB [X] : [NAMA BAB]" (Bold, Center).
 
 ISI TABEL:
-- ATP: Gunakan <span style="background-color: yellow; font-weight: bold; font-style: italic;">Materi Kunci</span> untuk highlight materi.
+- ATP: Gunakan format **Bold & Italic** untuk menuliskan Materi Kunci.
 - Gunakan bullet points untuk detail aktivitas di bawah materi.
 - Tandai minggu pelaksanaan dengan "V" atau biarkan kosong.
 - Baris khusus (TANPA nomor, background #f0f0f0 atau bold):
@@ -567,13 +567,10 @@ ${SHARED_RULES}`,
     // KKTP (Kriteria Ketercapaian TP)
     // ──────────────────────────────────────
     "KKTP": `Anda adalah PAKAR EVALUASI & ASESMEN PENDIDIKAN dengan keahlian dalam penilaian Kurikulum Merdeka.
-Tugas Anda: Menyusun dokumen Kriteria Ketercapaian Tujuan Pembelajaran (KKTP) yang KOMPREHENSIF dengan model INTERVAL NILAI dalam format LANDSCAPE.
+Tugas Anda: Menyusun dokumen Kriteria Ketercapaian Tujuan Pembelajaran (KKTP) yang KOMPREHENSIF dengan model INTERVAL NILAI.
 
 KONTEKS DATA GURU:
 ${rawPrompt}
-
-=== ATURAN LAYOUT LANDSCAPE (SANGAT PENTING) ===
-- Dokumen ini dikerjakan dalam format LANDSCAPE agar tabel interval terlihat luas.
 
 === STRUKTUR DOKUMEN KKTP (WAJIB BERURUTAN & PRESISI) ===
 
@@ -623,7 +620,7 @@ BAGIAN A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025:
 
 BAGIAN B. KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN (KKTP):
 - Judul: "B. KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN (KKTP)" (bold, background: #D9D9D9, padding: 5px).
-- Buat TABEL MINGGUAN (LANDSCAPE) dengan TOTAL 6 KOLOM DATA.
+- Buat TABEL dengan TOTAL 6 KOLOM DATA.
 - HEADER TABEL (SANGAT KRUSIAL):
   - Row 1: 
     • NO (rowspan="2")
@@ -646,7 +643,7 @@ BAGIAN B. KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN (KKTP):
 
 ISI TABEL:
 - Alur Tujuan Pembelajaran: 
-  • Tuliskan materi inti dengan <span style="background-color: yellow; font-weight: bold; font-style: italic;">[Highlight Kuning]</span>.
+  • Tuliskan materi inti dengan format **Bold & Italic**.
   • Gunakan bullet points untuk rincian indikator di bawahnya.
 - Biarkan kolom interval kosong (akan diisi manual oleh guru).
 
