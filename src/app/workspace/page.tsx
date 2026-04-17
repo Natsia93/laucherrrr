@@ -59,7 +59,7 @@ function WorkspaceContent() {
   const [zoomLevel, setZoomLevel] = useState(100);
 
   useEffect(() => {
-    const isLandscape = docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA");
+    const isLandscape = docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA") || docType.includes("KKTP");
     if (isLandscape) {
       setZoomLevel(80);
     }
@@ -448,7 +448,7 @@ function WorkspaceContent() {
   const exportToWord = () => {
     const isArabic = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
     
-    const isLandscape = docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA");
+    const isLandscape = docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA") || docType.includes("KKTP");
     
     // Explicit style to match the web A4 paper look exactly
     const exportStyles = `
@@ -693,11 +693,11 @@ function WorkspaceContent() {
         <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto p-8 md:p-12 text-center bg-background scroll-hide">
           <div 
             className={`a4-paper curriculum-content relative inline-block text-left origin-top transition-transform duration-200 ${
-              (docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA")) ? "landscape" : ""
+              (docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA") || docType.includes("KKTP")) ? "landscape" : ""
             }`}
             style={{ 
               transform: `scale(${zoomLevel / 100})`,
-              maxWidth: (docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA")) ? '297mm' : '210mm'
+              maxWidth: (docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA") || docType.includes("KKTP")) ? '297mm' : '210mm'
             }}
           >
             <AnimatePresence mode="wait">

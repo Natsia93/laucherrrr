@@ -566,52 +566,91 @@ ${SHARED_RULES}`,
     // ──────────────────────────────────────
     // KKTP (Kriteria Ketercapaian TP)
     // ──────────────────────────────────────
-    "KKTP": `Anda adalah PAKAR EVALUASI & ASESMEN PENDIDIKAN dengan keahlian dalam penilaian formatif dan sumatif Kurikulum Merdeka.
-Tugas Anda: Menyusun dokumen Kriteria Ketercapaian Tujuan Pembelajaran (KKTP) yang KOMPREHENSIF dan OPERASIONAL.
+    "KKTP": `Anda adalah PAKAR EVALUASI & ASESMEN PENDIDIKAN dengan keahlian dalam penilaian Kurikulum Merdeka.
+Tugas Anda: Menyusun dokumen Kriteria Ketercapaian Tujuan Pembelajaran (KKTP) yang KOMPREHENSIF dengan model INTERVAL NILAI dalam format LANDSCAPE.
 
 KONTEKS DATA GURU:
 ${rawPrompt}
 
-=== STRUKTUR DOKUMEN KKTP (WAJIB BERURUTAN) ===
+=== ATURAN LAYOUT LANDSCAPE (SANGAT PENTING) ===
+- Dokumen ini dikerjakan dalam format LANDSCAPE agar tabel interval terlihat luas.
 
-BAGIAN 1 — KOP & IDENTITAS:
-- KOP Surat sekolah.
-- Judul: "KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN (KKTP)" — centered, bold, 14pt.
-- Sub-judul: "Berdasarkan Kurikulum Merdeka — SK BSKAP No. 046/H/KR/2025"
-- Tabel Identitas: Satuan Pendidikan, Mata Pelajaran, Kelas/Semester, Fase, Tahun Pelajaran.
+=== STRUKTUR DOKUMEN KKTP (WAJIB BERURUTAN & PRESISI) ===
 
-BAGIAN 2 — PENDAHULUAN:
-- Penjelasan singkat (150-200 kata) tentang apa itu KKTP dan mengapa penting.
-- Sebutkan dasar hukum: Permendikbudristek tentang Standar Penilaian, SK BSKAP 046/2025.
-- Ambang batas ketuntasan yang ditetapkan sekolah (jika ada dari konteks).
+BAGIAN 1 — HEADER BERWARNA:
+- Buat header menggunakan tabel:
+  <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1.5pt solid black; table-layout: fixed;">
+    <tr>
+      <td style="background-color: #E1D5E7; padding: 12px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+        <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif;">KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN (KKTP)</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #F3E5F5; padding: 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+        <p style="font-weight: bold; margin: 0; font-size: 11pt; font-family: 'Times New Roman', serif;">MATA PELAJARAN : [MAPEL DALAM CAPITAL]</p>
+      </td>
+    </tr>
+  </table>
 
-BAGIAN 3 — TABEL INTERVAL NILAI (A):
-- Sub-judul: "A. Interval Konversi Nilai"
-- Buat tabel:
-  | Interval Nilai | Kategori | Predikat | Deskripsi Capaian |
-  | 86 - 100       | Sangat Baik | A | Peserta didik menguasai seluruh TP dengan sangat baik... |
-  | 66 - 85        | Baik        | B | Peserta didik menguasai sebagian besar TP... |
-  | 41 - 65        | Cukup       | C | Peserta didik menguasai sebagian TP... |
-  | 0 - 40         | Perlu Bimbingan | D | Peserta didik belum menguasai TP... |
-- Deskripsi harus SPESIFIK sesuai mata pelajaran, bukan generik.
+BAGIAN 2 — IDENTITAS TABEL:
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
+  <tr>
+    <td style="width: 160px; font-weight: bold; padding: 4px 0;">Nama Sekolah</td>
+    <td style="width: 20px;">:</td>
+    <td>............................................................</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold; padding: 4px 0;">Mata Pelajaran</td>
+    <td>:</td>
+    <td>[Mapel]</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold; padding: 4px 0;">Kelas / Semester</td>
+    <td>:</td>
+    <td>[Kelas] / [Semester]</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold; padding: 4px 0;">Tahun Pelajaran</td>
+    <td>:</td>
+    <td>20... / 20...</td>
+  </tr>
+</table>
 
-BAGIAN 4 — RUBRIK DESKRIPTIF PER TP (B):
-- Sub-judul: "B. Rubrik Deskriptif Per Tujuan Pembelajaran"
-- Untuk SETIAP Tujuan Pembelajaran (minimal 4-6 TP), buat tabel:
-  | Tujuan Pembelajaran | Kriteria | Sangat Baik (A) | Baik (B) | Cukup (C) | Perlu Bimbingan (D) |
-- Setiap kolom level harus berisi DESKRIPSI PERILAKU yang OBSERVABLE dan TERUKUR.
-- Gunakan kata kerja yang bisa diamati: "mampu menjelaskan", "dapat menghitung", "mengidentifikasi dengan benar", dll.
+BAGIAN A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025:
+- Judul: "A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025" (background: #f2f2f2, bold, padding: 5px).
+- Jabarkan CP Fase terkait secara detail (Pemahaman & Keterampilan Proses).
+- Gunakan bullet points untuk Keterampilan Proses.
 
-BAGIAN 5 — TINDAK LANJUT (C):
-- Sub-judul: "C. Rencana Tindak Lanjut"
-- Buat tabel rekomendasi:
-  | Kategori | Tindak Lanjut |
-  | Sangat Baik | Program pengayaan, tutor sebaya, proyek lanjutan... |
-  | Baik | Penguatan, latihan mandiri... |
-  | Cukup | Remedial teaching, pendampingan kelompok kecil... |
-  | Perlu Bimbingan | Remedial intensif, konsultasi orang tua, modifikasi pembelajaran... |
+BAGIAN B. KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN (KKTP):
+- Judul: "B. KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN (KKTP)" (bold, background: #D9D9D9, padding: 5px).
+- Buat TABEL MINGGUAN (LANDSCAPE) dengan TOTAL 6 KOLOM DATA.
+- HEADER TABEL (SANGAT KRUSIAL):
+  - Row 1: 
+    • NO (rowspan="2")
+    • ALUR TUJUAN PEMBELAJARAN (rowspan="2")
+    • Skala atau Interval Nilai (colspan="4")
+  - Row 2: 
+    • 0 - 40%
+    • 41 - 65%
+    • 66 - 85%
+    • 86 - 100%
+  - STYLING HEADER: Row 1 background #E1D5E7 (Purple/Blue), Row 2 background #E1D5E7.
+- DESKRIPSI INTERVAL (Row 3):
+  - Isi sel di bawah tiap interval dengan teks:
+    • 0-40%: Belum mencapai, remedial di seluruh bagian
+    • 41-65%: Belum mencapai ketuntasan, remedial di bagian yang diperlukan
+    • 66-85%: Sudah mencapai ketuntasan, tidak perlu remedial
+    • 86-100%: Sudah mencapai ketuntasan, perlu pengayaan
+- SEPARATOR BAB:
+  - Gunakan baris melintang: <tr style="background-color: #F9CB9C;"><td colspan="6" style="text-align: center; font-weight: bold;">BAB [X] : [NAMA BAB]</td></tr>
 
-BAGIAN 6 — TANDA TANGAN:
+ISI TABEL:
+- Alur Tujuan Pembelajaran: 
+  • Tuliskan materi inti dengan <span style="background-color: yellow; font-weight: bold; font-style: italic;">[Highlight Kuning]</span>.
+  • Gunakan bullet points untuk rincian indikator di bawahnya.
+- Biarkan kolom interval kosong (akan diisi manual oleh guru).
+
+BAGIAN 4 — TANDA TANGAN:
 - Gunakan template tanda tangan standar.
 
 ${additionalRules}
