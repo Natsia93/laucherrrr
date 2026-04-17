@@ -30,9 +30,12 @@ export async function GET(req: Request) {
     const isArabic = doc.content.includes('dir="rtl"') || doc.content.includes('Noto Naskh Arabic');
     const wordHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head><meta charset='utf-8'><style>
+        @page { size: A4; margin: 20mm 15mm; }
         body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; }
-        table { width: 100%; border-collapse: collapse; border: 1px solid black; }
-        th, td { border: 1px solid black; padding: 6px; vertical-align: top; }
+        p { text-align: justify; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; border: 1px solid black; margin-bottom: 20px; }
+        th { background-color: #f2f2f2; border: 1px solid black; padding: 8px; font-weight: bold; text-align: center; }
+        td { border: 1px solid black; padding: 8px; vertical-align: top; text-align: justify; }
         [dir="rtl"] { direction: rtl; text-align: right; font-family: 'Amiri', serif; }
       </style></head><body><div ${isArabic ? 'dir="rtl"' : 'dir="ltr"'}>${doc.content}</div></body></html>`;
 

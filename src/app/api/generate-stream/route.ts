@@ -65,7 +65,7 @@ const SHARED_RULES = `
 5. SEMUA sel tabel (th, td) WAJIB menggunakan: border: 1px solid black; padding: 8px 12px; vertical-align: top.
 6. Gunakan Bahasa Indonesia formal kecuali konten khusus Bahasa Arab/Inggris.
 7. Gunakan font-family: 'Times New Roman', serif untuk kesan dokumen resmi.
-8. DILARANG menggunakan inline style 'text-align: justify' pada <div>, <p>, atau elemen apapun. Biarkan rata kiri (default).
+8. Gunakan 'text-align: justify' pada <div> atau <p> untuk narasi panjang agar terlihat profesional. Gunakan text-indent: 30px untuk awal paragraf.
 9. Heading/judul pada tengah dokumen WAJIB text-align: center; font-weight: bold.
 10. DILARANG menggunakan CSS class — gunakan INLINE STYLE saja untuk kompatibilitas export .doc.
 
@@ -240,47 +240,66 @@ ${SHARED_RULES}`,
     // ──────────────────────────────────────
     // CP (Capaian Pembelajaran)
     // ──────────────────────────────────────
-    "CP": `Anda adalah STAF AHLI BADAN STANDAR KURIKULUM DAN ASESMEN PENDIDIKAN (BSKAP) Kemendikbudristek.
-Tugas Anda: Menjabarkan Capaian Pembelajaran (CP) berdasarkan regulasi resmi menjadi instrumen yang SIAP PAKAI oleh guru.
+    "CP": `Anda adalah PAKAR KURIKULUM dari BSKAP Kemendikbudristek.
+Tugas Anda: Menjabarkan Capaian Pembelajaran (CP) sesuai regulasi resmi No. 046/H/KR/2025 dengan layout yang SANGAT SPESIFIK dan PROFESIONAL.
 
 KONTEKS DATA GURU:
 ${rawPrompt}
 
 ${langRule}
 
+=== LAYOUT VISUAL (WAJIB DILEKATKAN) ===
+1. HEADER UTAMA: Buat kotak header menggunakan <div style="background-color: #E1D5E7; border: 1px solid black; padding: 15px; text-align: center; margin-bottom: 25px;">.
+   Di dalamnya tulis:
+   <p style="font-weight: bold; margin: 0; font-size: 14pt; font-family: 'Times New Roman', serif;">CAPAIAN PEMBELAJARAN (NOMOR 046/H/KR/2025)</p>
+   <p style="font-weight: bold; margin: 5px 0 0 0; font-size: 12pt; font-family: 'Times New Roman', serif;">[NAMA MATA PELAJARAN DALAM CAPITAL]</p>
+</div>
+
+2. TIPOGRAFI: Seluruh dokumen WAJIB menggunakan font-family: 'Times New Roman', serif dengan ukuran font: 12pt.
+3. ALIGNMENT: Seluruh teks naratif WAJIB menggunakan style="text-align: justify;".
+
 === STRUKTUR DOKUMEN CP (WAJIB BERURUTAN) ===
 
-BAGIAN 1 — KOP & IDENTITAS:
-- KOP Surat sekolah.
-- Judul: "CAPAIAN PEMBELAJARAN (CP)" — centered, bold, 14pt.
-- Sub-judul: "Berdasarkan Keputusan BSKAP No. 046/H/KR/2025"
-- Tabel identitas: Satuan Pendidikan, Mata Pelajaran, Fase, Kelas.
+BAGIAN A. RASIONAL:
+- Judul: "A. RASIONAL" (Bold, Left Align).
+- Uraikan alasan mendalam pentingnya mata pelajaran ini.
+- Teks harus padat, formal, dan berbobot (minimal 400-500 kata).
+- Gunakan kosa kata akademis: empiris, kompetensi, holistik, pedagogis, keberlangsungan.
+- Gunakan <p style="text-align: justify; text-indent: 35px; margin-bottom: 12px;"> untuk setiap paragraf.
 
-BAGIAN 2 — RASIONALITAS (A):
-- Sub-judul: "A. Rasionalitas"
-- Uraikan MENGAPA mata pelajaran ini penting bagi peserta didik secara MENDALAM.
-- Jumlah minimal: 400-500 kata.
-- Bahas aspek: relevansi kontekstual, keterkaitan dengan kebutuhan abad 21, hubungan dengan Profil Pelajar Pancasila.
-- Jika ada visi/misi sekolah dari konteks, integrasikan di sini.
+BAGIAN B. TUJUAN:
+- Judul: "B. TUJUAN" (Bold).
+- Daftar kompetensi yang diharapkan tercapai.
+- Gunakan narasi pengantar: "Dengan mempelajari [Mapel], murid dapat:"
+- Gunakan numbered list (1, 2, 3...) dengan indentasi yang rapi.
 
-BAGIAN 3 — TUJUAN MATA PELAJARAN (B):
-- Sub-judul: "B. Tujuan Mata Pelajaran"
-- Daftar kompetensi yang diharapkan tercapai setelah mempelajari mapel ini.
-- Gunakan format numbered list dengan KKO (Kata Kerja Operasional) yang spesifik.
+BAGIAN C. KARAKTERISTIK:
+- Judul: "C. KARAKTERISTIK" (Bold).
+- Jelaskan elemen-elemen pembentuk mata pelajaran.
+- Di akhir bagian ini, buat TABEL ELEMEN & DESKRIPSI:
+  <table style="width: 100%; border-collapse: collapse; border: 1px solid black; margin-top: 15px;">
+    <thead>
+      <tr style="background-color: #f2f2f2;">
+        <th style="border: 1px solid black; padding: 8px; text-align: center; width: 30%;">Elemen</th>
+        <th style="border: 1px solid black; padding: 8px; text-align: center;">Deskripsi</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="border: 1px solid black; padding: 10px; font-weight: bold; text-align: center;">[Nama Elemen]</td>
+        <td style="border: 1px solid black; padding: 10px; text-align: justify;">[Deskripsi Elemen yang Panjang dan Mendalam]</td>
+      </tr>
+    </tbody>
+  </table>
 
-BAGIAN 4 — KARAKTERISTIK MATA PELAJARAN (C):
-- Sub-judul: "C. Karakteristik Mata Pelajaran"
-- Jelaskan elemen-elemen pembentuk mata pelajaran ini.
-- Deskripsikan pendekatan pembelajaran yang khas (inquiry, PBL, dll).
+BAGIAN D. CAPAIAN PEMBELAJARAN FASE [X]:
+- Judul: "D. CAPAIAN PEMBELAJARAN FASE [X] (UMUMNYA UNTUK KELAS ...)" (Bold).
+- Gunakan pengantar: "Pada akhir Fase [X], murid memiliki kemampuan sebagai berikut:"
+- Jabarkan CP per sub-poin (misal 1. Pemahaman, 2. Keterampilan Proses).
+- Untuk elemen Keterampilan Proses, gunakan bullet points.
+- Format khusus list: **Nama Poin :** (Tebalkan nama poin, diikuti titik dua).
 
-BAGIAN 5 — CAPAIAN PEMBELAJARAN PER ELEMEN (D):
-- Sub-judul: "D. Capaian Pembelajaran Per Elemen"
-- Buat TABEL DETAIL dengan kolom:
-  | No | Elemen | Capaian Pembelajaran (Narasi CP Resmi) | Indikator Ketercapaian (Uraian Detail) |
-- Setiap elemen harus dijabarkan dengan indikator yang TERUKUR dan OBSERVABLE.
-- Minimal 3-5 indikator per elemen.
-
-BAGIAN 6 — TANDA TANGAN:
+BAGIAN 5 — TANDA TANGAN:
 - Gunakan template tanda tangan standar.
 
 ${additionalRules}

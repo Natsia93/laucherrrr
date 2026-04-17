@@ -443,7 +443,7 @@ function WorkspaceContent() {
     const exportStyles = `
       @page {
         size: A4;
-        margin: 25mm 20mm 25mm 20mm;
+        margin: 20mm 15mm 20mm 15mm;
       }
       body {
         font-family: 'Times New Roman', serif;
@@ -454,38 +454,35 @@ function WorkspaceContent() {
       }
       .doc-wrapper {
         width: 100%;
-        text-align: left;
       }
       p {
-        margin-bottom: 10pt;
-        text-align: left;
+        margin-bottom: 8pt;
+        text-align: justify;
+        line-height: 1.5;
       }
       table {
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 20px;
-        table-layout: fixed;
       }
-      th, td {
+      th {
+        background-color: #f2f2f2;
+        border: 1px solid black;
+        padding: 8px;
+        font-weight: bold;
+        text-align: center;
+      }
+      td {
         border: 1px solid black;
         padding: 8px;
         vertical-align: top;
-        text-align: left;
-        word-wrap: break-word;
-      }
-      ul, ol {
-        text-align: left;
-        margin-bottom: 10pt;
-      }
-      li {
-        text-align: left;
-        margin-bottom: 5pt;
+        text-align: justify;
       }
       h1, h2, h3, h4 {
         margin-top: 15pt;
         margin-bottom: 10pt;
-        line-height: 1.2;
         text-align: center;
+        font-weight: bold;
       }
       [dir="rtl"] {
         direction: rtl;
@@ -566,8 +563,8 @@ function WorkspaceContent() {
           min-height: 297mm;
           background: white !important;
           color: black !important;
-          box-shadow: 0 40px 100px rgba(0,0,0,0.1);
-          padding: 25mm 20mm;
+          box-shadow: 0 0 30px rgba(0,0,0,0.15), 0 0 100px rgba(0,0,0,0.05);
+          padding: 20mm 15mm;
           margin: 40px auto;
           font-family: 'Times New Roman', serif;
           font-size: 12pt;
@@ -576,10 +573,13 @@ function WorkspaceContent() {
           word-wrap: break-word;
           word-break: break-word;
           overflow: hidden;
+          transition: transform 0.2s ease-in-out;
         }
         .curriculum-content { text-align: justify; }
-        .curriculum-content table { border-collapse: collapse; width: 100%; border: 1px solid black; text-align: left; }
-        .curriculum-content th, .curriculum-content td { border: 1px solid black; padding: 8px; vertical-align: top; }
+        .curriculum-content p { margin-bottom: 1em; text-indent: 30px; }
+        .curriculum-content table { border-collapse: collapse; width: 100%; border: 1px solid black; margin-bottom: 1.5rem; }
+        .curriculum-content th { background-color: #f2f2f2; border: 1px solid black; padding: 10px; font-weight: bold; text-align: center; }
+        .curriculum-content td { border: 1px solid black; padding: 10px; vertical-align: top; text-align: justify; }
         .curriculum-content [dir="rtl"] { direction: rtl; text-align: right; }
         
         .markdown-chat h1, .markdown-chat h2, .markdown-chat h3 { font-weight: bold; margin-bottom: 0.5rem; margin-top: 1rem; }
