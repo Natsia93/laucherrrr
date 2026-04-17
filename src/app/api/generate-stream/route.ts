@@ -450,6 +450,7 @@ BAGIAN B. PROGRAM TAHUNAN:
   - Gunakan baris melintang: <tr style="background-color: #ADD8E6;"><td colspan="5" style="text-align: center; font-weight: bold;">BAB [X] : [NAMA BAB]</td></tr>
 
 ISI TABEL:
+- No: WAJIB direset mulai dari angka 1 di setiap BAB baru.
 - Alur Tujuan Pembelajaran: Gunakan bullet points untuk merinci langkah-langkah pembelajaran.
 - Materi: Tuliskan nama materi dengan format **Bold & Italic**.
 - Alokasi Waktu: Tuliskan angka + "JP".
@@ -537,6 +538,7 @@ BAGIAN B. PROGRAM SEMESTER:
   - Teks: "BAB [X] : [NAMA BAB]" (Bold, Center).
 
 ISI TABEL:
+- No: WAJIB direset mulai dari angka 1 di setiap BAB baru.
 - ATP: Gunakan format **Bold & Italic** untuk menuliskan Materi Kunci.
 - Gunakan bullet points untuk detail aktivitas di bawah materi.
 - Tandai minggu pelaksanaan dengan "V" atau biarkan kosong.
