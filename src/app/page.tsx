@@ -20,9 +20,26 @@ export default function Home() {
   const [docType, setDocType] = useState("");
   const [scrolled, setScrolled] = useState(false);
   const [wordIndex, setWordIndex] = useState(0);
+  const [isReady, setIsReady] = useState(false);
 
   // Menggunakan kata-kata yang relevan
   const heroWords = ["Prosem & Prota", "CP, ATP & KKTP", "Perangkat Ajar", "Lembar Kerja PD"];
+
+  useEffect(() => {
+    // Coordination with Preloader
+    const hasVisited = sessionStorage.getItem("hasVisited_App");
+    const isHomePage = window.location.pathname === "/"; 
+    const willShowPreloader = !hasVisited || isHomePage;
+
+    if (willShowPreloader) {
+      // Delay landing animations until preloader ripple starts revealing content
+      // Preloader timing: 3.2s stroke + ~0.3s gap = ~3.5s
+      const timer = setTimeout(() => setIsReady(true), 3500);
+      return () => clearTimeout(timer);
+    } else {
+      setIsReady(true);
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -176,7 +193,8 @@ export default function Home() {
         <div className="text-center space-y-6 max-w-5xl w-full flex flex-col items-center">
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={isReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+            transition={{ duration: 0.5 }}
             className="inline-flex items-center gap-2 bg-white dark:bg-[#1a2315] border border-[#dcdad1] dark:border-[#3f612d]/40 px-3 py-1.5 rounded-full text-[10px] sm:text-xs md:text-sm text-[#4d7537] dark:text-[#d4e4c8] shadow-sm mb-2"
           >
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#4d7537] dark:text-[#89b867]" />
@@ -186,8 +204,8 @@ export default function Home() {
           <div className="w-full flex flex-col items-center">
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
+              animate={isReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ delay: 0.1, duration: 0.8 }}
               className="font-bricolage text-3xl sm:text-5xl md:text-6xl font-normal tracking-tight text-neutral-900 dark:text-[#f4f3ed] flex flex-col md:flex-row items-center justify-center gap-y-2 md:gap-x-4 md:pl-20"
             >
               <span>Buat Dokumen</span>
@@ -210,8 +228,8 @@ export default function Home() {
           
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            animate={isReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
             className="font-sans text-neutral-600 dark:text-[#a2b591] text-lg md:text-xl font-light max-w-2xl text-center mx-auto"
           >
             Asisten AI perancang CP, ATP, KKTP, Program Tahunan, Program Semester, hingga Lembar Kerja Peserta Didik (LKPD). Terstandarisasi dan siap export ke Word.
@@ -221,8 +239,8 @@ export default function Home() {
         {/* Modern Prompt Input Box */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
+          animate={isReady ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
+          transition={{ delay: 0.3, duration: 0.8 }}
           className="mt-12 w-full max-w-3xl relative z-10"
         >
           {/* Main Box Area */}
@@ -291,8 +309,8 @@ export default function Home() {
         {/* Quick Filters */}
         <motion.div 
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
+          animate={isReady ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ delay: 0.4, duration: 0.8 }}
           className="flex flex-wrap justify-center gap-3 mt-8"
         >
           {[
