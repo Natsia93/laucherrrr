@@ -174,6 +174,10 @@ ${langRule}
 2. TIPOGRAFI: Seluruh dokumen WAJIB menggunakan font-family: 'Times New Roman', serif dengan ukuran font: 12pt.
 3. ALIGNMENT: Teks naratif justify, teks tabel sesuai kolom masing-masing.
 
+=== KEDALAMAN KONTEN (WAJIB DILEKATKAN) ===
+- Dokumen harus terlihat PADAT dan AKADEMIS. Hindari jawaban satu kalimat.
+- Gunakan terminologi kurikulum terbaru: capaian, elemen, kompetensi, kognitif, psikomotorik, afektif.
+
 === STRUKTUR DOKUMEN ATP (WAJIB BERURUTAN) ===
 
 BAGIAN 1 — IDENTITAS:
@@ -185,9 +189,9 @@ BAGIAN 1 — IDENTITAS:
 
 BAGIAN A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025:
 - Gunakan judul: "A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025" (Bold, CAPS).
-- Tuliskan ringkasan narasi CP fase terkait.
-- Jabarkan per poin besar (misal 1. Pemahaman IPA, 2. Keterampilan Proses).
-- Gunakan perataan justify.
+- Tuliskan narasi CP fase terkait secara MENDALAM (minimal 350-450 kata).
+- Jabarkan per poin besar (misal 1. Pemahaman ..., 2. Keterampilan Proses ...).
+- Pastikan teks perataan justify dan formal.
 
 BAGIAN B. ALUR TUJUAN PEMBELAJARAN (ATP):
 - Gunakan judul: "B. ALUR TUJUAN PEMBELAJARAN (ATP)" (Bold, CAPS).
@@ -195,8 +199,8 @@ BAGIAN B. ALUR TUJUAN PEMBELAJARAN (ATP):
 - Header Tabel: background-color: #f2f2f2.
 - SEPARATOR BAB (WAJIB): Setiap kali masuk BAB baru, buat baris melintang (colspan="5") dengan background-color: #E7EFF6 dan teks "BAB [X] : [NAMA BAB]" (Bold, Center, Uppercase).
 - Isi Tabel:
-  - Alur Tujuan Pembelajaran: Gunakan bullet points untuk setiap sub-poin tujuan.
-  - Dimensi Profil Lulusan: Tuliskan poin-point karakter (Kreatif, Mandiri, Beriman, dsb).
+  - Alur Tujuan Pembelajaran: WAJIB menjabarkan minimal 3-5 poin bullet yang detail untuk setiap baris tujuan. Jangan hanya satu kalimat pendek.
+  - Dimensi Profil Lulusan: Tuliskan minimal 4-6 poin karakter (Kreatif, Mandiri, Beriman, dsb).
   - Materi Pokok: WAJIB di-highlight kuning (<span style="background-color: yellow;">...</span>).
   - Alokasi Waktu: Tuliskan angka disertai "JP" (Contoh: 2 JP).
 
