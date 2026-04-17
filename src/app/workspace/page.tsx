@@ -441,11 +441,13 @@ function WorkspaceContent() {
   const exportToWord = () => {
     const isArabic = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
     
+    const isLandscape = docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA");
+    
     // Explicit style to match the web A4 paper look exactly
     const exportStyles = `
       @page {
-        size: A4;
-        margin: 20mm 15mm 20mm 15mm;
+        size: ${isLandscape ? 'A4 landscape' : 'A4'};
+        margin: ${isLandscape ? '15mm 15mm 15mm 15mm' : '20mm 15mm 20mm 15mm'};
       }
       body {
         font-family: 'Times New Roman', serif;
@@ -595,6 +597,11 @@ function WorkspaceContent() {
           overflow: hidden;
           transition: transform 0.2s ease-in-out;
         }
+        .a4-paper.landscape {
+          width: 297mm;
+          min-height: 210mm;
+          padding: 15mm 15mm;
+        }
         .curriculum-content { text-align: justify; }
         .curriculum-content p { margin-bottom: 0.8em; text-indent: 0.4in; }
         .curriculum-content table p { text-indent: 0 !important; margin: 0 !important; }
@@ -678,8 +685,13 @@ function WorkspaceContent() {
       <main className="flex-1 flex overflow-hidden min-h-0 relative">
         <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto p-8 md:p-12 text-center bg-background scroll-hide">
           <div 
-            className="a4-paper curriculum-content relative inline-block text-left w-full max-w-[210mm] origin-top transition-transform duration-200"
-            style={{ transform: `scale(${zoomLevel / 100})` }}
+            className={`a4-paper curriculum-content relative inline-block text-left origin-top transition-transform duration-200 ${
+              (docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA")) ? "landscape" : ""
+            }`}
+            style={{ 
+              transform: `scale(${zoomLevel / 100})`,
+              maxWidth: (docType.includes("Program Semester") || docType.includes("Program Tahunan") || docType.includes("PROSEM") || docType.includes("PROTA")) ? '297mm' : '210mm'
+            }}
           >
             <AnimatePresence mode="wait">
               {displayedContent ? (

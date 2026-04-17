@@ -439,37 +439,81 @@ ${SHARED_RULES}`,
     // PROSEM (Program Semester)
     // ──────────────────────────────────────
     "PROSEM": `Anda adalah AHLI MANAJEMEN KEGIATAN BELAJAR MENGAJAR (KBM) yang sangat teliti dalam distribusi waktu.
-Tugas Anda: Menyusun Program Semester (PROSEM) dengan distribusi MINGGUAN yang PRESISI dan sesuai kalender akademik.
+Tugas Anda: Menyusun Program Semester (PROSEM) dengan distribusi MINGGUAN yang PRESISI dan sesuai kalender akademik BSKAP 046/2025.
 
 KONTEKS DATA GURU:
 ${rawPrompt}
 
-=== STRUKTUR DOKUMEN PROSEM (WAJIB BERURUTAN & PRESISI) ===
+=== ATURAN LAYOUT LANDSCAPE (SANGAT PENTING) ===
+- Dokumen ini dikerjakan dalam format LANDSCAPE.
+- Gunakan tabel yang sangat lebar. Setiap bulan dibagi menjadi 5 kolom minggu (total 30 kolom untuk bulan).
 
-BAGIAN 1 — KOP & IDENTITAS:
-- KOP Surat sekolah.
-- Judul: "PROGRAM SEMESTER (PROSEM)" — centered, bold, 14pt.
-- Tabel Identitas (tanpa border):
-  Satuan Pendidikan, Mata Pelajaran, Kelas/Semester, Fase, Tahun Pelajaran.
-  Alokasi JP per Minggu: [dari konteks].
+=== STRUKTUR DOKUMEN PROSEM (WAJIB BERURUTAN) ===
 
-BAGIAN 2 — TABEL DISTRIBUSI PROSEM:
-Ini adalah INTI dokumen. Buat tabel LEBAR (landscape-style) dengan struktur:
+BAGIAN 1 — HEADER BERWARNA:
+- Buat header menggunakan tabel:
+  <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1.5pt solid black; table-layout: fixed;">
+    <tr>
+      <td style="background-color: #E1D5E7; padding: 12px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+        <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif;">PROGRAM SEMESTER (PROSEM)</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #F3E5F5; padding: 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+        <p style="font-weight: bold; margin: 0; font-size: 11pt; font-family: 'Times New Roman', serif;">MATA PELAJARAN : [MAPEL DALAM CAPITAL]</p>
+      </td>
+    </tr>
+  </table>
 
-KOLOM TABEL:
-| No | Materi / ATP | JP | Bulan 1 (4-5 minggu) | Bulan 2 (4-5 minggu) | ... sampai Bulan 6 | Ket |
+BAGIAN 2 — IDENTITAS TABEL:
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
+  <tr>
+    <td style="width: 160px; font-weight: bold; padding: 4px 0;">Nama Sekolah</td>
+    <td style="width: 20px;">:</td>
+    <td>............................................................</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold; padding: 4px 0;">Mata Pelajaran</td>
+    <td>:</td>
+    <td>[Mapel]</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold; padding: 4px 0;">Kelas / Semester</td>
+    <td>:</td>
+    <td>[Kelas] / [Ganjil/Genap]</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold; padding: 4px 0;">Tahun Pelajaran</td>
+    <td>:</td>
+    <td>20... / 20...</td>
+  </tr>
+</table>
 
-DETAIL KOLOM BULAN:
-- Setiap kolom "Bulan" dipecah menjadi sub-kolom MINGGU (Mg 1, Mg 2, Mg 3, Mg 4, [Mg 5 jika ada]).
-- Contoh header untuk Semester Ganjil:
-  | No | Materi/ATP | JP | Juli (Mg1-Mg4) | Agustus (Mg1-Mg4) | September (Mg1-Mg4) | Oktober (Mg1-Mg5) | November (Mg1-Mg4) | Desember (Mg1-Mg4) | Ket |
-- Contoh header untuk Semester Genap:
-  | No | Materi/ATP | JP | Januari (Mg1-Mg4) | Februari (Mg1-Mg4) | Maret (Mg1-Mg5) | April (Mg1-Mg4) | Mei (Mg1-Mg4) | Juni (Mg1-Mg4) | Ket |
+BAGIAN A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025:
+- Judul: "A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025" (background: #f2f2f2, bold, padding: 5px).
+- Jabarkan CP Fase terkait secara detail (Pemahaman & Keterampilan Proses).
+- Gunakan bullet points untuk Keterampilan Proses (Mengamati, Mempertanyakan, dll).
+
+BAGIAN B. PROGRAM SEMESTER:
+- Judul: "B. PROGRAM SEMESTER" (bold, background: #f2f2f2, padding: 5px).
+- Buat TABEL MINGGUAN (LANDSCAPE) dengan TOTAL 33 KOLOM.
+- HEADER TABEL (SANGAT KRUSIAL):
+  - Row 1: 
+    • No (rowspan="2")
+    • Alur dan Tujuan Pembelajaran (rowspan="2")
+    • Alokasi Waktu (rowspan="2")
+    • [Nama Bulan 1 s/d 6] (masing-masing colspan="5").
+  - Row 2:
+    • Angka minggu 1, 2, 3, 4, 5 yang berulang untuk setiap bulan (total 30 sel <td>).
+  - STYLING HEADER: Row 1 background #D9D9D9, Row 2 background #FCE4D6.
+- SEPARATOR BAB:
+  - Gunakan baris melintang (colspan="33") dengan background-color: #ADD8E6 (Light Blue).
+  - Teks: "BAB [X] : [NAMA BAB]" (Bold, Center).
 
 ISI TABEL:
-- Tandai dengan "V" (atau "✓") pada sel minggu di mana materi tersebut diajarkan.
-- Setiap materi harus menempati jumlah minggu yang KONSISTEN dengan alokasi JP-nya.
-  Rumus: Jumlah Minggu = JP Materi ÷ JP per Minggu.
+- ATP: Gunakan <span style="background-color: yellow; font-weight: bold; font-style: italic;">Materi Kunci</span> untuk highlight materi.
+- Gunakan bullet points untuk detail aktivitas di bawah materi.
+- Tandai minggu pelaksanaan dengan "V" atau biarkan kosong.
 - Baris khusus (TANPA nomor, background #f0f0f0 atau bold):
   • STS (Sumatif Tengah Semester) — biasanya di pertengahan semester (sekitar minggu 8-9).
   • SAS (Sumatif Akhir Semester) — di minggu terakhir semester.
@@ -488,7 +532,7 @@ BAGIAN 4 — TANDA TANGAN:
 - Karena tabel sangat lebar, gunakan font-size: 8pt atau 9pt agar muat.
 - Header minggu (Mg1, Mg2...) bisa dirotasi atau disingkat.
 - Gunakan <th> untuk header dan <td> untuk data.
-- Setiap sel minggu: width minimal 20px, text-align: center.
+- Setiap sel minggu: width minimal 20px, text-align: center, padding: 4px 1px !important.
 
 ${additionalRules}
 ${SHARED_RULES}`,
