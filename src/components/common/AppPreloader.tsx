@@ -73,11 +73,11 @@ export default function AppPreloader() {
           }
         });
 
-        // 1. Drawing Animation - Slower and Smoother
+        // 1. Drawing Animation - Smoother, more natural start
         tl.to(path, {
           strokeDashoffset: 0,
-          duration: 3.8, // Increased duration for smoothness
-          ease: "expo.inOut", // More premium parabolic curve
+          duration: 3.2, 
+          ease: "power2.inOut", 
         });
 
         // 2. Filling Animation
@@ -92,7 +92,7 @@ export default function AppPreloader() {
           WebkitClipPath: "inset(0% 0 0 0)",
           duration: 1.2, 
           ease: "power4.out"
-        }, "-=1.2"); // Start earlier for seamless blend
+        }, "-=1.0"); 
         
         // 3. Fade Out Stroke
         tl.to(path, {
@@ -120,10 +120,10 @@ export default function AppPreloader() {
                     <rect width="100%" height="100%" fill="white" />
                     <circle ref={circleRef} cx="50%" cy="50%" r="0" fill="black" />
                 </mask>
-                {/* Dark Theme: Black to Dark Green Gradient */}
-                <radialGradient id="bgGradient" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
-                    <stop offset="0%" stopColor="#080b06" />
-                    <stop offset="100%" stopColor="#020401" />
+                {/* Forest Green Theme: #2C471C dominant to #10180C */}
+                <radialGradient id="bgGradient" cx="50%" cy="50%" r="75%" fx="50%" fy="50%">
+                    <stop offset="0%" stopColor="#2C471C" />
+                    <stop offset="100%" stopColor="#10180C" />
                 </radialGradient>
             </defs>
             <rect 
