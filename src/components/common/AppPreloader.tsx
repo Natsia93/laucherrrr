@@ -138,7 +138,7 @@ export default function AppPreloader() {
         ref={logoMainRef}
         className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
       >
-          <div className="relative w-24 h-24 md:w-40 md:h-40">
+          <div className="relative w-16 h-16 md:w-28 md:h-28">
             {/* Outline Stroke Layer */}
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
