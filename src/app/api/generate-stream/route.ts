@@ -89,6 +89,11 @@ const SHARED_RULES = `
 6. Jika user memberikan daftar BAB/materi, gunakan PERSIS sesuai yang diberikan. JANGAN menambah atau mengarang BAB baru.
 7. Alokasi JP harus logis dan konsisten. Total JP di tabel harus sesuai dengan yang dinyatakan user.
 
+=== MENGHINDARI BUG STREAMING (PENTING) ===
+- DILARANG KERAS menggunakan HTML entities seperti "&nbsp;", "&amp;", "&quot;", dan entity lainnya yang dimulai dengan simbol "&". 
+- Gunakan karakter spasi biasa atau properti CSS (padding/margin) untuk pengaturan jarak.
+- Hal ini untuk mencegah simbol "&" muncul secara anomali dan "bergerak" di layar saat proses streaming teks berlangsung.
+
 ${KOP_TEMPLATE}
 ${SIGNATURE_TEMPLATE}`;
 
