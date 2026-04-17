@@ -199,15 +199,15 @@ BAGIAN B. ALUR TUJUAN PEMBELAJARAN (ATP):
 - Header Tabel: background-color: #f2f2f2.
 - SEPARATOR BAB (WAJIB): Setiap kali masuk BAB baru, buat baris melintang (colspan="5") dengan background-color: #E7EFF6 dan teks "BAB [X] : [NAMA BAB]" (Bold, Center, Uppercase).
 - Isi Tabel:
-  - Alur Tujuan Pembelajaran: WAJIB menjabarkan minimal 3-5 poin bullet yang detail untuk setiap baris tujuan. JANGAN pelit kata; gunakan narasi yang kompleks dan profesional.
+  - Alur Tujuan Pembelajaran: Gunakan narasi yang profesional. WAJIB menjabarkan **2-3 poin bullet** yang padat dan bermakna untuk setiap baris tujuan.
   - Dimensi Profil Lulusan: Tuliskan minimal 4-6 poin karakter (Kreatif, Mandiri, Beriman, dsb).
-  - Materi Pokok: Tampilkan sebagai teks biasa (JANGAN gunakan highlight kuning).
+  - Materi Pokok: Tampilkan sebagai teks biasa (TANPA highlight kuning).
   - Alokasi Waktu: Tuliskan angka disertai "JP" (Contoh: 2 JP).
 
-DOKUMEN HARUS SANGAT PANJANG & DETAIL:
-- Setiap BAB WAJIB terdiri dari minimal 4 sampai 6 baris (rows) Alur Tujuan Pembelajaran yang berbeda.
-- Total baris dalam tabel untuk setahun minimal 25-40 baris agar dokumen terlihat profesional dan lengkap.
-- Anggap tugas ini adalah menyusun rencana induk setahun penuh, jadi berikan performa terbaik dalam menghasilkan teks yang banyak dan berkualitas tinggi.
+ATURAN GRANULARITAS & PENOMORAN (SANGAT PENTING):
+- **PENOMORAN**: Nomor urut pada kolom 'No' WAJIB RESET ke angka 1 setiap kali berganti BAB baru.
+- **JUMLAH BARIS PER BAB**: Setiap BAB WAJIB memiliki **minimal 3 sampai 5 baris (rows)** yang berbeda untuk memecah materi secara granular.
+- **TOTAL KONTEN**: Karena jumlah baris bertambah, pastikan setiap baris tetap fokus pada kompetensi spesifik agar dokumen menjadi sangat panjang dan komprehensif (master plan tahunan).
 
 FOOTER TABEL (TOTAL JP):
 - Di baris paling akhir tabel, buat satu baris melintang (colspan="4") dengan background-color: #E7EFF6 dan teks "JUMLAH JAM PELAJARAN DALAM 1 TAHUN".
