@@ -712,15 +712,25 @@ Konten: ${rawContext || "Kosong"}
 
 ${isContinue ? `
 === MODE: LANJUTKAN PENULISAN (SANGAT KETAT) ===
-TUGAS ANDA: LANJUTKAN isi dokumen HTML yang terpotong.
-KONTEKS TERAKHIR: "...${rawPrompt.slice(-500)}"
+TUGAS ANDA: LANJUTKAN isi dokumen HTML yang terpotong. 
+PENTING: Anda sedang berada di dalam editor dokumen. Jangan memberikan salam atau penjelasan.
 
-ATURAN MATI:
-1. JANGAN tulis ulang dari awal. JANGAN buat Kop Surat lagi.
-2. JANGAN tulis tag <html>, <body>, atau <div> pembuka.
-3. LANGSUNG MULAI dari kata/tag tepat setelah konteks terakhir tersebut.
-4. Jika terpotong di tengah tabel <tr> atau <td>, langsung lanjutkan isi baris tersebut.
-5. JANGAN berikan penjelasan di sidebar. HANYA LANJUTAN KODE.
+KONTEKS TERAKHIR DARI DOKUMEN: 
+"""
+${rawPrompt}
+"""
+
+ATURAN WAJIB:
+1. ANALISIS tag terakhir pada konteks di atas. Jika itu tag terbuka (cth: <td>, <tr>, <p>), Anda WAJIB meneruskannya sampai tertutup.
+2. JANGAN tulis ulang dari awal. JANGAN buat Kop Surat lagi.
+3. JANGAN tulis tag <html>, <body>, atau <div> pembuka.
+4. JANGAN gunakan markdown code blocks (\`\`\`html). LANGSUNG KODE HTML.
+5. STRUKTUR TABEL (SANGAT KRITIKAL): 
+   - Dokumen ini menggunakan tabel dengan JUMLAH KOLOM TETAP.
+   - ATP: 5 Kolom. PROTA: 5 Kolom. PROSEM: Banyak Kolom.
+   - Pastikan setiap baris <tr> baru memiliki jumlah <td> yang TEPAT SAMA dengan header.
+   - Jika terpotong di tengah baris, SELESAIKAN baris tersebut sebelum membuat <tr> baru.
+6. HANYA keluarkan lanjutan kode.
 ` : isMajorMismatch ? `
 === PERINGATAN: MISMATCH KONTEKS (PENTING) ===
 TUGAS ANDA: Peringatkan user di sidebar bahwa materi/tipe berbeda. JANGAN edit dokumen. 

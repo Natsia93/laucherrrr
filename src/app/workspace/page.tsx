@@ -417,7 +417,7 @@ function WorkspaceContent() {
     }
 
     const contextPrompt = isContinue 
-      ? `INI ADALAH BAGIAN AKHIR DARI DRAF SEBELUMNYA:\n\n[ ... ${docContent.slice(-1500)} ]\n\nTUGAS ANDA: LANJUTKAN DRAF HTML TERSEBUT DARI TITIK TERAKHIR.`
+      ? docContent.slice(-2000) // Send enough context to see the table structure
       : isAssistantMode 
         ? finalPrompt
         : `Revisi draf: ${finalPrompt}. Tetap pada jenis dokumen ${docType}.`;
@@ -430,7 +430,8 @@ function WorkspaceContent() {
     setAttachments([]);
     
     if (isContinue) {
-      contentRef.current = docContent.replace(/(<\/td>|<\/tr>|<\/tbody>|<\/table>|<\/div>|<\/body>|<\/html>|\s+)$/gi, " ");
+      // Just keep as is, the AI will analyze the last tag
+      contentRef.current = docContent;
     }
     
     await streamGenerate(contextPrompt, isContinue, contentRef.current, isAssistantMode, assistantMode, isContinue);
