@@ -41,17 +41,17 @@ Setelah KOP, tuliskan judul dokumen (misal: "CAPAIAN PEMBELAJARAN MATA PELAJARAN
 // ── TANDA TANGAN TEMPLATE ──
 const SIGNATURE_TEMPLATE = `
 === TEMPLATE TANDA TANGAN (WAJIB DI AKHIR DOKUMEN) ===
-<table border="0" cellspacing="0" cellpadding="0" style="width: 100%; border: none; border-collapse: collapse; margin-top: 50px; font-family: 'Times New Roman', serif; table-layout: fixed;">
+<table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border: 1px solid black; border-collapse: collapse; margin-top: 50px; font-family: 'Times New Roman', serif; table-layout: fixed;">
   <tr>
-    <td style="width: 50%; text-align: center; vertical-align: top; padding: 10px; border: none;">
+    <td style="width: 50%; text-align: center; vertical-align: top; padding: 15px; border: 1px solid black;">
       <p style="margin: 0;">Mengetahui,</p>
-      <p style="font-weight: bold; margin: 0 0 60px 0;">Kepala Sekolah</p>
+      <p style="font-weight: bold; margin: 0 0 70px 0;">Kepala Sekolah</p>
       <p style="font-weight: bold; text-decoration: underline; margin: 0;">(...................................)</p>
       <p style="margin: 5px 0 0 0;">NIP. ................................</p>
     </td>
-    <td style="width: 50%; text-align: center; vertical-align: top; padding: 10px; border: none;">
+    <td style="width: 50%; text-align: center; vertical-align: top; padding: 15px; border: 1px solid black;">
       <p style="margin: 0;">.................., .................. 20....</p>
-      <p style="font-weight: bold; margin: 0 0 60px 0;">Guru Mata Pelajaran</p>
+      <p style="font-weight: bold; margin: 0 0 70px 0;">Guru Mata Pelajaran</p>
       <p style="font-weight: bold; text-decoration: underline; margin: 0;">(...................................)</p>
       <p style="margin: 5px 0 0 0;">NIP. ................................</p>
     </td>
@@ -209,14 +209,15 @@ BAGIAN B. ALUR TUJUAN PEMBELAJARAN (ATP):
   - Materi Pokok: Tampilkan sebagai teks biasa (TANPA highlight kuning).
   - Alokasi Waktu: Tuliskan angka disertai "JP" (Contoh: 2 JP).
 
-ATURAN GRANULARITAS & PENOMORAN (SANGAT PENTING):
-- **PENOMORAN**: Nomor urut pada kolom 'No' WAJIB RESET ke angka 1 setiap kali berganti BAB baru.
-- **JUMLAH BARIS PER BAB**: Setiap BAB WAJIB memiliki **minimal 3 sampai 5 baris (rows)** yang berbeda untuk memecah materi secara granular.
-- **TOTAL KONTEN**: Karena jumlah baris bertambah, pastikan setiap baris tetap fokus pada kompetensi spesifik agar dokumen menjadi sangat panjang dan komprehensif (master plan tahunan).
+FOOTER TABEL (TOTAL JP - WAJIB DI DALAM TABEL):
+- Di baris paling akhir tabel, buat satu baris khusus:
+  - Kolom 1-4 (colspan="4"): background-color: #E7EFF6; teks "JUMLAH JAM PELAJARAN DALAM 1 TAHUN" (Bold, Center).
+  - Kolom 5: background-color: #E7EFF6; teks total JP (Bold, Center, contoh: 144 JP).
+- **DILARANG KERAS** membuat bagian "TOTAL ALOKASI WAKTU" terpisah di luar tabel.
 
-FOOTER TABEL (TOTAL JP):
-- Di baris paling akhir tabel, buat satu baris melintang (colspan="4") dengan background-color: #E7EFF6 dan teks "JUMLAH JAM PELAJARAN DALAM 1 TAHUN".
-- Di kolom terakhir (Alokasi Waktu), tuliskan total akumulasi JP tahunan (Contoh: 144 JP).
+ATURAN GRANULARITAS & PENOMORAN:
+- **PENOMORAN**: Nomor urut pada kolom 'No' WAJIB RESET ke angka 1 setiap kali berganti BAB baru.
+- **JUMLAH BARIS PER BAB**: Setiap BAB WAJIB memiliki **minimal 3 sampai 5 baris (rows)** yang berbeda.
 
 BAGIAN 5 — TANDA TANGAN:
 - Gunakan template tanda tangan standar.
