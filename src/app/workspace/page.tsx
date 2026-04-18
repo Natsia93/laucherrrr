@@ -535,6 +535,7 @@ function WorkspaceContent() {
       }
       .doc-wrapper {
         width: 100%;
+        max-width: 100%;
       }
       p {
         margin: 0 0 8pt 0;
@@ -546,7 +547,9 @@ function WorkspaceContent() {
         text-indent: 0.4in;
       }
       table {
-        width: 100%;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
         border-collapse: collapse;
         margin-bottom: 15pt;
         mso-table-lspace: 0pt;
@@ -599,7 +602,10 @@ function WorkspaceContent() {
         <div class="doc-wrapper" ${isArabic ? 'dir="rtl"' : 'dir="ltr"'}>
     `;
     const footer = "</div></body></html>";
-    const sourceHTML = header + docContent + footer;
+    // Force tables to span 100% width for Word export compatibility
+    const processedContent = docContent.replace(/<table/gi, '<table width="100%"');
+    
+    const sourceHTML = header + processedContent + footer;
     
     const blob = new Blob(['\ufeff', sourceHTML], {
       type: 'application/msword'

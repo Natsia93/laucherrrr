@@ -125,7 +125,7 @@ ${langRule}
 
 === LAYOUT VISUAL (WAJIB DILEKATKAN) ===
 1. HEADER UTAMA: Buat kotak header menggunakan <table> dengan dua baris warna berbeda:
-   <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
+   <table border="1" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
      <tr>
        <td style="background-color: #C5B4E3; padding: 12px 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
          <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif; color: black !important;">ALUR TUJUAN PEMBELAJARAN (ATP)</p>
@@ -149,7 +149,7 @@ ${langRule}
 
 BAGIAN 1 — HEADER BERWARNA:
 - Buat header menggunakan <table> dengan dua baris warna berbeda:
-   <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
+   <table border="1" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
      <tr>
        <td style="background-color: #C5B4E3; padding: 12px 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
          <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif; color: black !important;">ALUR TUJUAN PEMBELAJARAN (ATP)</p>
@@ -164,7 +164,7 @@ BAGIAN 1 — HEADER BERWARNA:
 
 BAGIAN 2 — IDENTITAS (TANPA JUDUL TEKS "BAGIAN 2"):
 - Gunakan tabel borderless (border="0") agar titik-titik dan label sejajar sempurna:
-  <table border="0" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
+  <table border="0" width="100%" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
     <tr>
       <td style="width: 160px; font-weight: bold; padding: 4px 0;">Nama Sekolah</td>
       <td style="width: 20px;">:</td>
@@ -250,7 +250,7 @@ Baca KONTEKS DATA GURU di atas dengan TELITI. Cari informasi:
 
 BAGIAN 1 — HEADER BERWARNA (GANTI KOP):
 - Buat header menggunakan tabel lavender:
-   <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
+   <table border="1" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
      <tr>
        <td style="background-color: #C5B4E3; padding: 12px 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
          <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif; color: black !important;">LEMBAR KERJA PESERTA DIDIK (LKPD)</p>
@@ -308,7 +308,7 @@ ${langRule}
 === LAYOUT VISUAL (WAJIB DILEKATKAN) ===
 1. HEADER UTAMA: Buat kotak header menggunakan <table> dengan border="1" agar Word mendeteksi border-nya.
    Gunakan dua baris dengan warna berbeda:
-   <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
+   <table border="1" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
      <tr>
        <td style="background-color: #C5B4E3; padding: 12px 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
          <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif; color: black !important;">CAPAIAN PEMBELAJARAN (NOMOR 046/H/KR/2025)</p>
@@ -328,7 +328,7 @@ ${langRule}
 
 BAGIAN 1 — HEADER BERWARNA:
 - Buat header menggunakan tabel lavender:
-   <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
+   <table border="1" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
      <tr>
        <td style="background-color: #C5B4E3; padding: 12px 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
          <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif; color: black !important;">CAPAIAN PEMBELAJARAN (NOMOR 046/H/KR/2025)</p>
@@ -399,7 +399,7 @@ ${rawPrompt}
 
 BAGIAN 1 — HEADER BERWARNA:
 - Buat header menggunakan tabel:
-  <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1.5pt solid black; table-layout: fixed;">
+  <table border="1" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1.5pt solid black; table-layout: fixed;">
     <tr>
       <td style="background-color: #C5B4E3; padding: 12px; text-align: center; border: 1pt solid black; vertical-align: middle;">
         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif;">PROGRAM TAHUNAN (PROTA)</p>
@@ -413,7 +413,7 @@ BAGIAN 1 — HEADER BERWARNA:
   </table>
 
 BAGIAN 2 — IDENTITAS TABEL:
-<table border="0" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
+<table border="0" width="100%" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
   <tr>
     <td style="width: 160px; font-weight: bold; padding: 4px 0;">Nama Sekolah</td>
     <td style="width: 20px;">:</td>
@@ -483,7 +483,7 @@ ${rawPrompt}
 
 BAGIAN 1 — HEADER BERWARNA:
 - Buat header menggunakan tabel:
-  <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1.5pt solid black; table-layout: fixed;">
+  <table border="1" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1.5pt solid black; table-layout: fixed;">
     <tr>
       <td style="background-color: #C5B4E3; padding: 12px; text-align: center; border: 1pt solid black; vertical-align: middle;">
         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif;">PROGRAM SEMESTER (PROSEM)</p>
@@ -497,7 +497,7 @@ BAGIAN 1 — HEADER BERWARNA:
   </table>
 
 BAGIAN 2 — IDENTITAS TABEL:
-<table border="0" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
+<table border="0" width="100%" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
   <tr>
     <td style="width: 160px; font-weight: bold; padding: 4px 0;">Nama Sekolah</td>
     <td style="width: 20px;">:</td>
@@ -584,7 +584,7 @@ ${rawPrompt}
 
 BAGIAN 1 — HEADER BERWARNA:
 - Buat header menggunakan tabel:
-  <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1.5pt solid black; table-layout: fixed;">
+  <table border="1" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1.5pt solid black; table-layout: fixed;">
     <tr>
       <td style="background-color: #E1D5E7; padding: 12px; text-align: center; border: 1pt solid black; vertical-align: middle;">
         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif;">KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN (KKTP)</p>
@@ -598,7 +598,7 @@ BAGIAN 1 — HEADER BERWARNA:
   </table>
 
 BAGIAN 2 — IDENTITAS TABEL:
-<table border="0" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
+<table border="0" width="100%" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
   <tr>
     <td style="width: 160px; font-weight: bold; padding: 4px 0;">Nama Sekolah</td>
     <td style="width: 20px;">:</td>
