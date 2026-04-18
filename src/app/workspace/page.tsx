@@ -693,6 +693,8 @@ function WorkspaceContent() {
         .curriculum-content { text-align: justify; }
         .curriculum-content p { margin-bottom: 0.8em; text-indent: 0.4in; }
         .curriculum-content table p { text-indent: 0 !important; margin: 0 !important; }
+        .curriculum-content ol, .curriculum-content ul { padding-left: 1.8rem; margin-bottom: 1rem; }
+        .curriculum-content li { margin-bottom: 0.5rem; }
         .curriculum-content table { border-collapse: collapse; width: 100%; border: 1px solid black; margin-bottom: 1.5rem; table-layout: fixed; }
         .curriculum-content table:not([border="0"]) th { background-color: #f2f2f2; border: 1px solid black; padding: 12px 10px; font-weight: bold; text-align: center; font-size: 11pt; }
         .curriculum-content table:not([border="0"]) td { border: 1px solid black; padding: 12px 10px; vertical-align: top; text-align: justify; font-size: 11pt; }
@@ -872,7 +874,7 @@ function WorkspaceContent() {
             >
               <Button 
                 onClick={stopGeneration} 
-                className="pointer-events-auto px-6 py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold shadow-2xl shadow-red-500/20 border-none transition-all active:scale-95 flex items-center gap-2"
+                className="pointer-events-auto px-6 py-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold shadow-2xl shadow-red-500/20 border-none transition-all active:scale-95 flex items-center gap-2"
               >
                 <Square className="w-5 h-5 fill-white" /> Hentikan Generate
               </Button>
@@ -889,7 +891,7 @@ function WorkspaceContent() {
               {displayedContent && (
                 <Button 
                   onClick={() => handleSendMessage(true)} 
-                  className="pointer-events-auto px-8 py-4 bg-[#4d7537] hover:bg-[#5a8b41] text-white rounded-full font-bold shadow-2xl shadow-[#4d7537]/20 border-none transition-all active:scale-95 flex items-center gap-2"
+                  className="pointer-events-auto px-8 py-4 bg-[#4d7537] hover:bg-[#5a8b41] text-white rounded-xl font-bold shadow-2xl shadow-[#4d7537]/20 border-none transition-all active:scale-95 flex items-center gap-2"
                 >
                   Lanjutkan Generate
                 </Button>
@@ -897,7 +899,7 @@ function WorkspaceContent() {
               <Button 
                 onClick={handleRestart} 
                 variant="outline"
-                className="pointer-events-auto px-8 py-4 bg-white dark:bg-card hover:bg-neutral-100 dark:hover:bg-secondary text-foreground rounded-full font-bold shadow-2xl border border-border transition-all active:scale-95 flex items-center gap-2"
+                className="pointer-events-auto px-8 py-4 bg-white dark:bg-card hover:bg-neutral-100 dark:hover:bg-secondary text-foreground rounded-xl font-bold shadow-2xl border border-border transition-all active:scale-95 flex items-center gap-2"
               >
                 <RotateCcw className="w-4 h-4" /> Mulai dari Awal
               </Button>
