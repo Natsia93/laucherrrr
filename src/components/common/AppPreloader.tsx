@@ -27,10 +27,7 @@ export default function AppPreloader() {
   const circleRef = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
-    if (!show) {
-      (window as any).__HAS_ENTERED_APP__ = true;
-      return;
-    }
+    if (!show) return;
 
     (window as any).__HAS_ENTERED_APP__ = true;
     document.body.style.overflow = "hidden";
@@ -114,7 +111,7 @@ export default function AppPreloader() {
     });
 
     return () => ctx.revert();
-  }, []);
+  }, [show]);
 
   if (!show) return null;
 
