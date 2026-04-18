@@ -82,20 +82,20 @@ export default function LoginPage() {
         <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-[900px] h-[600px] bg-[#4d7537]/25 dark:bg-[#4d7537]/40 rounded-full blur-[120px] opacity-80"></div>
       </div>
       
-      {/* Centered Branding Above Card */}
-      <Link href="/" className="mb-8 flex flex-col items-center gap-3 hover:opacity-90 transition-all group relative z-10">
-        <div className="relative w-14 h-14 drop-shadow-[0_0_15px_rgba(77,117,55,0.3)]">
-          <Image 
-            src="/logo/Logo Hijau.svg" 
-            alt="Dekstorio Logo" 
-            fill
-            className="object-cover"
-          />
+      <Card className="w-full max-w-md bg-white/90 dark:bg-[#10140d]/80 border-[#dcdad1] dark:border-[#3f612d]/30 shadow-none relative z-10 backdrop-blur-xl pt-8">
+        <div className="flex justify-center mb-2">
+          <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-all group">
+            <div className="relative w-10 h-10 drop-shadow-[0_0_10px_rgba(77,117,55,0.2)] transition-transform group-hover:scale-110">
+              <Image 
+                src="/logo/Logo Hijau.svg" 
+                alt="Dekstorio Logo" 
+                fill
+                className="object-cover"
+              />
+            </div>
+            <span className="font-bricolage font-bold text-2xl tracking-tight text-[#1a2315] dark:text-[#f4f3ed]">Dekstorio</span>
+          </Link>
         </div>
-        <span className="font-bricolage font-bold text-3xl tracking-tight text-[#1a2315] dark:text-[#f4f3ed]">Dekstorio</span>
-      </Link>
-
-      <Card className="w-full max-w-md bg-white/90 dark:bg-[#10140d]/80 border-[#dcdad1] dark:border-[#3f612d]/30 shadow-none relative z-10 backdrop-blur-xl">
         <CardHeader className="space-y-2 text-center pb-6">
           <CardTitle className="font-bricolage text-2xl font-normal tracking-tight text-[#1a2315] dark:text-[#f4f3ed]">Selamat Datang Kembali</CardTitle>
           <CardDescription className="text-neutral-600 dark:text-[#a2b591]">
