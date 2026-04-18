@@ -58,9 +58,9 @@ function GenerateContent() {
     },
     {
       id: 1005,
-      question: "Berapa alokasi Jam Pelajaran (JP) yang tersedia?",
+      question: "Berapa alokasi Jam Pelajaran (JP) dalam SATU BAB? (Misal: 9 JP, AI akan membagi jadi 3+4+2 per baris)",
       type: "chips",
-      options: ["2 JP", "4 JP", "8 JP", "12 JP", "Sesuai Kurikulum"],
+      options: ["4 JP", "6 JP", "9 JP", "12 JP", "Sesuai Kurikulum"],
       category: "mandatory"
     }
   ];
@@ -80,6 +80,23 @@ function GenerateContent() {
         if (["Capaian Pembelajaran (CP)", "CP"].includes(docType)) {
            // CP tidak butuh JP (1005) dan tidak butuh Semester (1004)
            initialQuestions = initialQuestions.filter(q => q.id !== 1005);
+        }
+
+        if (docType === "PROSEM") {
+           initialQuestions.push({
+              id: 1006,
+              question: "Program Semester ini dimulai dari bulan apa?",
+              type: "chips",
+              options: ["Juli (Semester Ganjil)", "Januari (Semester Genap)"],
+              category: "mandatory"
+           });
+           initialQuestions.push({
+              id: 1007,
+              question: "Program Semester ini berakhir di bulan apa?",
+              type: "chips",
+              options: ["Desember", "Juni"],
+              category: "mandatory"
+           });
         }
 
         if (docType === "KKTP") {
@@ -171,6 +188,23 @@ function GenerateContent() {
         
         if (["Capaian Pembelajaran (CP)", "CP"].includes(docType)) {
            fallback = fallback.filter(q => q.id !== 1005);
+        }
+
+        if (docType === "PROSEM") {
+            fallback.push({
+               id: 1006,
+               question: "Program Semester ini dimulai dari bulan apa?",
+               type: "chips",
+               options: ["Juli (Semester Ganjil)", "Januari (Semester Genap)"],
+               category: "mandatory"
+            });
+            fallback.push({
+               id: 1007,
+               question: "Program Semester ini berakhir di bulan apa?",
+               type: "chips",
+               options: ["Desember", "Juni"],
+               category: "mandatory"
+            });
         }
 
         if (["Alur Tujuan Pembelajaran (ATP)", "ATP", "KKTP"].includes(docType)) {

@@ -231,7 +231,7 @@ BAGIAN B. ALUR TUJUAN PEMBELAJARAN (ATP):
   - Alur Tujuan Pembelajaran: Gunakan narasi yang profesional. WAJIB menjabarkan **2-3 poin bullet** yang padat dan bermakna untuk setiap baris tujuan.
   - Dimensi Profil Lulusan: Tuliskan minimal 4-6 poin karakter (Kreatif, Mandiri, Beriman, dsb).
   - Materi Pokok: Tampilkan sebagai teks biasa (TANPA highlight kuning).
-  - Alokasi Waktu: Tuliskan angka disertai "JP" (Contoh: 2 JP).
+  - ALOKASI WAKTU (JP): Data input yang masuk (misal "9 JP") adalah total untuk SATU BAB. Anda WAJIB membaginya ke baris-baris (Materi Pokok) di bawah BAB tersebut. (Misal: baris pertama 3 JP, baris kedua 4 JP, baris ketiga 2 JP). JANGAN biarkan baris kosong tanpa JP.
 
 FOOTER TABEL (TOTAL JP - WAJIB DI DALAM TABEL):
 - Di baris paling akhir tabel, buat satu baris khusus:
@@ -457,7 +457,7 @@ ISI TABEL:
 - No: WAJIB direset mulai dari angka 1 di setiap BAB baru.
 - Alur Tujuan Pembelajaran: Gunakan bullet points untuk merinci langkah-langkah pembelajaran.
 - Materi: Tuliskan nama materi dengan format **Bold & Italic**.
-- Alokasi Waktu: Tuliskan angka + "JP".
+- ALOKASI WAKTU (JP): Data input yang masuk (misal "9 JP") adalah total untuk SATU BAB. Anda WAJIB membaginya ke baris-baris materi di bawah BAB tersebut. (Misal: baris pertama 3 JP, baris kedua 4 JP, baris ketiga 2 JP). JANGAN biarkan baris kosong tanpa JP.
 - Semester: Tuliskan "I (Ganjil)" atau "II (Genap)".
 
 BAGIAN 4 — TANDA TANGAN:
@@ -527,25 +527,27 @@ BAGIAN A. CAPAIAN PEMBELAJARAN (CP) NOMOR : 046 TAHUN 2025:
 
 BAGIAN B. PROGRAM SEMESTER:
 - Judul: "B. PROGRAM SEMESTER" (bold, background: #f2f2f2, padding: 5px).
-- Buat TABEL MINGGUAN (LANDSCAPE) dengan TOTAL 33 KOLOM.
-- HEADER TABEL (SANGAT KRUSIAL - GUNAKAN WIDTH SPESIFIK):
+- Buat TABEL MINGGUAN (LANDSCAPE).
+- HEADER TABEL (SANGAT KRUSIAL):
   - Row 1: 
     • No (rowspan="2", width: 30px, background: #FCE4D6)
     • Alur dan Tujuan Pembelajaran (rowspan="2", width: 320px, background: #C5B4E3)
     • Alokasi Waktu (rowspan="2", width: 50px, background: #FCE4D6)
-    • [Nama Bulan 1 s/d 6] (masing-masing colspan="5", background: #C5B4E3).
+    • BACA data dari konteks pertanyaan "dimulai dari bulan apa?" sampai "berakhir di bulan apa?". Buat <th> untuk SETIAP bulan tersebut secara berurutan. (Misal: Juli, Agustus, September... atau Januari, Februari...).
+    • Jika tidak disebutkan, defaultnya 6 bulan sesuai semester. Masing-masing bulan colspan="5", background: #C5B4E3.
   - Row 2:
-    • Angka minggu 1, 2, 3, 4, 5 yang berulang (30 sel <td>, width: 22px, background: #FCE4D6).
+    • Angka minggu 1, 2, 3, 4, 5 yang berulang (5 sel per bulan, width: 22px, background: #FCE4D6).
   - STYLING HEADER: Gunakan font-size: 9pt, text-align: center, font-weight: bold, border: 1px solid black.
 - SEPARATOR BAB:
-  - Gunakan baris melintang (colspan="33") dengan background-color: #ADD8E6 (Light Blue).
+  - Gunakan baris melintang (colspan SELURUH KOLOM) dengan background-color: #ADD8E6 (Light Blue).
   - Teks: "BAB [X] : [NAMA BAB]" (Bold, Center, padding: 8px).
 
 ISI TABEL:
 - No: WAJIB direset mulai dari angka 1 di setiap BAB baru.
 - ATP: Gunakan format ***Bold & Italic*** untuk menuliskan Materi Kunci (DILARANG menggunakan highlight kuning).
 - Gunakan bullet points untuk detail aktivitas di bawah materi.
-- Tandai minggu pelaksanaan dengan "V" atau biarkan kosong.
+- ALOKASI WAKTU (JP): Data input yang masuk (misal "9 JP") adalah total untuk SATU BAB. Anda WAJIB membaginya ke baris-baris (Materi Kunci) di bawah BAB tersebut. (Misal: baris pertama 3 JP, baris kedua 4 JP, baris ketiga 2 JP). JANGAN biarkan baris kosong tanpa JP.
+- Biarkan kolom minggu (1-5) KOSONG sepenuhnya. Jangan tambahkan "V", tanda centang, atau teks apapun, karena akan diisi manual oleh guru.
 - Baris khusus (TANPA nomor, background #f0f0f0 atau bold):
   • STS (Sumatif Tengah Semester) — biasanya di pertengahan semester (sekitar minggu 8-9).
   • SAS (Sumatif Akhir Semester) — di minggu terakhir semester.
@@ -899,7 +901,7 @@ export async function POST(req: Request) {
   - DILARANG KERAS menambahkan kolom bulan baru yang TIDAK ADA di header tabel (misalnya jika header hanya sampai Desember, JANGAN tambahkan Januari dst).
   - DILARANG KERAS mengubah struktur tabel atau menambah kolom baru. Hanya ISI BARIS BARU.
   - Font 8-9pt. Separator BAB: colspan sesuai total kolom, bg #ADD8E6.
-  - Tandai minggu pelaksanaan dengan "V". Kolom yang tidak digunakan biarkan KOSONG (<td style="..."></td>).`
+  - Biarkan kolom minggu KOSONG sepenuhnya (<td style="..."></td>). Jangan isi dengan "V" atau tanda centang.`
                 : type === 'PROTA' ? `- PROTA: tabel LANDSCAPE 5 KOLOM. Setiap <tr> WAJIB 5 <td>. Header: bg #FCE4D6. Separator BAB: bg #ADD8E6, colspan="5". No RESET per BAB.`
                 : type === 'ATP' ? `- ATP: tabel 5 KOLOM. Setiap <tr> WAJIB 5 <td>. Header: bg #FCE4D6. Separator BAB: bg #E7EFF6, colspan="5". No RESET per BAB.`
                 : type === 'KKTP' ? `- KKTP: tabel 6 KOLOM. Setiap <tr> WAJIB 6 <td>. Header: bg #E1D5E7. Separator BAB: bg #F9CB9C, colspan="6". No RESET per BAB.`
