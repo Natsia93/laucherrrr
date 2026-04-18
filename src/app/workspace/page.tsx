@@ -257,12 +257,22 @@ function WorkspaceContent() {
               }
             }
 
-            if (data.type === "chat") {
+            if (data.type === "chat" || (isPatchMode && data.type === "content")) {
               setMessages(prev => {
                 const newMessages = [...prev];
-                const last = newMessages[newMessages.length - 1];
-                if (last && last.role === "ai") {
-                  last.text += data.text;
+                // Find or create the current AI streaming message
+                let lastIndex = -1;
+                for (let i = newMessages.length - 1; i >= 0; i--) {
+                  if (newMessages[i].role === "ai" && !newMessages[i].text.startsWith("✅") && !newMessages[i].text.startsWith("⏳")) {
+                    lastIndex = i;
+                    break;
+                  }
+                }
+
+                if (lastIndex !== -1) {
+                  newMessages[lastIndex].text += data.text;
+                } else {
+                  newMessages.push({ role: "ai", text: data.text });
                 }
                 return newMessages;
               });
@@ -800,9 +810,20 @@ function WorkspaceContent() {
               >
                 <AnimatePresence mode="wait">
                   {displayedContent ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
-                      dangerouslySetInnerHTML={{ __html: displayedContent.trim().startsWith("<") ? displayedContent : (marked.parse(displayedContent) as string) }} 
-                    />
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative">
+                      {loading && assistantMode === 'edit' && (
+                        <div className="absolute inset-0 bg-background/5 backdrop-blur-[1px] z-[5] flex items-center justify-center rounded-lg pointer-events-none">
+                          <div className="bg-card/90 border border-border px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in zoom-in duration-300">
+                             <div className="relative flex items-center justify-center">
+                               <Loader2 className="w-5 h-5 animate-spin text-[#4d7537]" />
+                               <div className="absolute inset-0 bg-[#4d7537]/20 rounded-full blur-md animate-pulse" />
+                             </div>
+                             <span className="text-[13px] font-bold text-foreground font-bricolage tracking-tight">AI sedang merancang revisi...</span>
+                          </div>
+                        </div>
+                      )}
+                      <div dangerouslySetInnerHTML={{ __html: displayedContent.trim().startsWith("<") ? displayedContent : (marked.parse(displayedContent) as string) }} />
+                    </motion.div>
                   ) : loading ? renderProgressIndicator() : (
                     <div className="flex flex-col items-center justify-center min-h-[900px] opacity-10 py-20">
                       <div className="relative w-16 h-16 mb-4">

@@ -957,13 +957,11 @@ TUGAS ANDA:
 Pilih salah satu metode output berdasarkan kerumitan revisi:
 
 1. JIKA REVISI MINOR (Ganti kata, tambah baris tabel, tambah kolom, perbarui informasi spesifik, perbaiki typo):
-   - JANGAN kirim ulang seluruh dokumen.
-   - Gunakan format [SMART_PATCH] untuk menghemat token.
-   - Format:
-     [SMART_PATCH_START]
-     SEARCH: [Kutipan kode HTML asli yang ingin diganti. Harus cukup panjang agar unik dan akurat.]
-     REPLACE: [Kode HTML baru yang menggantikannya.]
-     [SMART_PATCH_END]
+   - TUGAS ANDA: Gunakan format [SMART_PATCH] untuk melakukan revisi atau penambahan materi. JANGAN menulis ulang seluruh dokumen.
+   - ATURAN [SMART_PATCH]:
+     1. Gunakan [PATCH_START] SEARCH: <teks_lama> REPLACE: <teks_baru> [PATCH_END].
+     2. SEARCH harus UNIK dan PERSIS sama dengan draf. Jika ingin menambah di akhir, SEARCH bagian akhir draf.
+     3. JIKA SEARCH gagal ditemukan karena teks draf terlalu panjang, COBA gunakan satu paragraf atau satu baris unik saja sebagai SEARCH.
    - Anda boleh mengirimkan lebih dari satu [SMART_PATCH] jika ada beberapa titik yang diubah.
    - JANGAN berikan penjelasan apapun di luar blok ini.
 
