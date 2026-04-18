@@ -13,7 +13,7 @@ import {
   PenTool, Save, Clock, Zap, Folder, XCircle,
   ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen,
   Plus, ArrowRight, Send, X, Paperclip, FileText as FileIcon,
-  MessageSquare, FileEdit
+  MessageSquare, FileEdit, Square, RotateCcw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,7 @@ function WorkspaceContent() {
   const [isCutOff, setIsCutOff] = useState(false);
   const [progressStage, setProgressStage] = useState(-1);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [isStopped, setIsStopped] = useState(false);
   const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
   
   // Load messages from sessionStorage on mount (to survive refresh)
@@ -107,9 +108,10 @@ function WorkspaceContent() {
       setAbortController(null);
       setLoading(false);
       setProgressStage(-1);
+      setIsStopped(true);
       setMessages(prev => [
         ...prev.filter(m => !m.text.startsWith("⏳")), 
-        { role: "ai", text: "⏹️ Proses pembuatan dokumen telah dihentikan oleh Anda." }
+        { role: "ai", text: "⏹️ Proses telah dihentikan oleh Anda." }
       ]);
     }
   };
@@ -137,6 +139,7 @@ function WorkspaceContent() {
     const currentMode = forcedMode || assistantMode;
     const isAssistantRevision = isAssistantMode && currentMode === 'edit';
     setIsCutOff(false);
+    setIsStopped(false);
 
     if (!isAssistantMode) setProgressStage(0);
     setElapsedTime(0);
@@ -418,6 +421,18 @@ function WorkspaceContent() {
       streamGenerate(initialPrompt);
     }
   }, [initialPrompt, context, docType, docId, streamGenerate]);
+
+  const handleRestart = () => {
+    setIsStopped(false);
+    if (context) {
+      const prompt = `Wawancara: ${context.replace(/ _\|\|_ /g, ". ")}. Buatkan dokumen ${docType} LENGKAP.`;
+      streamGenerate(prompt, false, context);
+    } else if (initialPrompt) {
+      streamGenerate(initialPrompt);
+    } else if (docId) {
+      streamGenerate(`Buat ulang dokumen ${docType} ini dari awal sesuai format standar.`, false, contentRef.current, true, 'edit');
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -826,7 +841,7 @@ function WorkspaceContent() {
 
         {/* Floating Continue Button — always visible at bottom of doc area */}
         <AnimatePresence>
-          {!loading && isGenerated && displayedContent && isCutOff && (
+          {!loading && isGenerated && displayedContent && isCutOff && !isStopped && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -841,6 +856,47 @@ function WorkspaceContent() {
               </Button>
             </motion.div>
           )}
+
+          {loading && displayedContent && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className={`absolute bottom-8 left-0 z-30 flex justify-center pointer-events-none ${!isSidebarCollapsed ? 'md:right-[420px]' : ''} right-0`}
+            >
+              <Button 
+                onClick={stopGeneration} 
+                className="pointer-events-auto px-6 py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold shadow-2xl shadow-red-500/20 border-none transition-all active:scale-95 flex items-center gap-2"
+              >
+                <Square className="w-5 h-5 fill-white" /> Hentikan Generate
+              </Button>
+            </motion.div>
+          )}
+
+          {isStopped && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className={`absolute bottom-8 left-0 z-30 flex flex-col md:flex-row items-center justify-center gap-4 pointer-events-none ${!isSidebarCollapsed ? 'md:right-[420px]' : ''} right-0`}
+            >
+              {displayedContent && (
+                <Button 
+                  onClick={() => handleSendMessage(true)} 
+                  className="pointer-events-auto px-8 py-4 bg-[#4d7537] hover:bg-[#5a8b41] text-white rounded-full font-bold shadow-2xl shadow-[#4d7537]/20 border-none transition-all active:scale-95 flex items-center gap-2"
+                >
+                  Lanjutkan Generate
+                </Button>
+              )}
+              <Button 
+                onClick={handleRestart} 
+                variant="outline"
+                className="pointer-events-auto px-8 py-4 bg-white dark:bg-card hover:bg-neutral-100 dark:hover:bg-secondary text-foreground rounded-full font-bold shadow-2xl border border-border transition-all active:scale-95 flex items-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" /> Mulai dari Awal
+              </Button>
+            </motion.div>
+          )}
         </AnimatePresence>
 
         {/* Sidebar */}
@@ -848,8 +904,19 @@ function WorkspaceContent() {
           isSidebarOpen ? 'translate-x-0 w-full' : 'translate-x-full w-full md:translate-x-0'
         } ${isSidebarCollapsed ? 'md:w-0 md:border-l-0 md:overflow-hidden' : 'md:w-[420px]'}`}>
           <div className="py-3 px-5 border-b border-border bg-secondary/50 flex items-center justify-between">
-            <h2 className="font-bold text-lg text-foreground font-bricolage flex items-center gap-2"><Sparkles className="w-5 h-5 text-[#4d7537]" /> AI Assistant</h2>
+            <h2 className="font-bold text-lg text-foreground font-bricolage flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-[#4d7537]" /> AI Assistant
+            </h2>
             <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => { setMessages([]); clearSessionChat(); }}
+                className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                title="Reset Chat"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </Button>
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -965,19 +1032,29 @@ function WorkspaceContent() {
                       size="icon" 
                       onClick={() => fileInputRef.current?.click()} 
                       className="h-9 w-9 text-muted-foreground hover:text-[#4d7537] hover:bg-[#4d7537]/10 rounded-xl"
-                      disabled={isUploading}
+                      disabled={loading || isUploading}
                     >
                       {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
                     </Button>
                   </div>
                   
-                  <Button 
-                    onClick={() => handleSendMessage()} 
-                    disabled={loading || (!chatInput.trim() && attachments.length === 0)} 
-                    className={`h-9 w-9 rounded-lg transition-all ${chatInput.trim() || attachments.length > 0 ? 'bg-[#4d7537] text-white shadow-lg scale-100' : 'bg-transparent text-muted-foreground scale-90 opacity-40'}`}
-                  >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
-                  </Button>
+                  {loading ? (
+                    <Button 
+                      onClick={stopGeneration}
+                      className="h-9 w-9 p-0 flex items-center justify-center rounded-lg transition-all bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white"
+                      title="Hentikan"
+                    >
+                      <Square className="w-4 h-4 fill-current" />
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={() => handleSendMessage()} 
+                      disabled={(!chatInput.trim() && attachments.length === 0)} 
+                      className={`h-9 w-9 rounded-lg transition-all ${chatInput.trim() || attachments.length > 0 ? 'bg-[#4d7537] text-white shadow-lg scale-100' : 'bg-transparent text-muted-foreground scale-90 opacity-40'}`}
+                    >
+                      <ArrowRight className="w-5 h-5" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
