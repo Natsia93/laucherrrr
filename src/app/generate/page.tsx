@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 interface Question {
   id: number;
   question: string;
-  type: "chips" | "multi-chips" | "text" | "file";
+  type: "chips" | "multi-chips" | "text" | "file" | "month-range";
   options?: string[];
   placeholder?: string;
   category: string;
@@ -85,16 +85,8 @@ function GenerateContent() {
         if (docType === "PROSEM") {
            initialQuestions.push({
               id: 1006,
-              question: "Program Semester ini dimulai dari bulan apa?",
-              type: "chips",
-              options: ["Juli (Semester Ganjil)", "Januari (Semester Genap)"],
-              category: "mandatory"
-           });
-           initialQuestions.push({
-              id: 1007,
-              question: "Program Semester ini berakhir di bulan apa?",
-              type: "chips",
-              options: ["Desember", "Juni"],
+              question: "Rentang Bulan Pelaksanaan Program Semester?",
+              type: "month-range",
               category: "mandatory"
            });
         }
@@ -193,16 +185,8 @@ function GenerateContent() {
         if (docType === "PROSEM") {
             fallback.push({
                id: 1006,
-               question: "Program Semester ini dimulai dari bulan apa?",
-               type: "chips",
-               options: ["Juli (Semester Ganjil)", "Januari (Semester Genap)"],
-               category: "mandatory"
-            });
-            fallback.push({
-               id: 1007,
-               question: "Program Semester ini berakhir di bulan apa?",
-               type: "chips",
-               options: ["Desember", "Juni"],
+               question: "Rentang Bulan Pelaksanaan Program Semester?",
+               type: "month-range",
                category: "mandatory"
             });
         }
@@ -511,6 +495,60 @@ function GenerateContent() {
                              />
                           </motion.div>
                         )}
+                     </div>
+                    ) : q.type === "month-range" ? (
+                     <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                           <label className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-2 block">Bulan Mulai</label>
+                           <select 
+                             className="w-full bg-card border border-border h-14 rounded-md px-4 focus-visible:ring-[#4d7537] outline-none"
+                             value={(answers[q.id] || "").split(" sampai ")[0] || ""}
+                             onChange={(e) => {
+                               const currentEnd = (answers[q.id] || "").split(" sampai ")[1] || "Desember";
+                               handleAnswer(q.id, `${e.target.value} sampai ${currentEnd}`);
+                             }}
+                           >
+                             <option value="" disabled>Pilih Bulan</option>
+                             <option value="Juli">Juli (Awal Smt Ganjil)</option>
+                             <option value="Agustus">Agustus</option>
+                             <option value="September">September</option>
+                             <option value="Oktober">Oktober</option>
+                             <option value="November">November</option>
+                             <option value="Desember">Desember</option>
+                             <option value="Januari">Januari (Awal Smt Genap)</option>
+                             <option value="Februari">Februari</option>
+                             <option value="Maret">Maret</option>
+                             <option value="April">April</option>
+                             <option value="Mei">Mei</option>
+                             <option value="Juni">Juni</option>
+                           </select>
+                        </div>
+                        <div className="w-8 flex justify-center text-muted-foreground mt-6"><ArrowRight className="w-5 h-5" /></div>
+                        <div className="flex-1">
+                           <label className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-2 block">Bulan Berakhir</label>
+                           <select 
+                             className="w-full bg-card border border-border h-14 rounded-md px-4 focus-visible:ring-[#4d7537] outline-none"
+                             value={(answers[q.id] || "").split(" sampai ")[1] || ""}
+                             onChange={(e) => {
+                               const currentStart = (answers[q.id] || "").split(" sampai ")[0] || "Juli";
+                               handleAnswer(q.id, `${currentStart} sampai ${e.target.value}`);
+                             }}
+                           >
+                             <option value="" disabled>Pilih Bulan</option>
+                             <option value="Juli">Juli</option>
+                             <option value="Agustus">Agustus</option>
+                             <option value="September">September</option>
+                             <option value="Oktober">Oktober</option>
+                             <option value="November">November</option>
+                             <option value="Desember">Desember (Akhir Smt Ganjil)</option>
+                             <option value="Januari">Januari</option>
+                             <option value="Februari">Februari</option>
+                             <option value="Maret">Maret</option>
+                             <option value="April">April</option>
+                             <option value="Mei">Mei</option>
+                             <option value="Juni">Juni (Akhir Smt Genap)</option>
+                           </select>
+                        </div>
                      </div>
                    ) : q.type === "file" ? (
                      <div className="space-y-4">

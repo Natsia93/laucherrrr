@@ -533,7 +533,7 @@ BAGIAN B. PROGRAM SEMESTER:
     • No (rowspan="2", width: 30px, background: #FCE4D6)
     • Alur dan Tujuan Pembelajaran (rowspan="2", width: 320px, background: #C5B4E3)
     • Alokasi Waktu (rowspan="2", width: 50px, background: #FCE4D6)
-    • BACA data dari konteks pertanyaan "dimulai dari bulan apa?" sampai "berakhir di bulan apa?". Buat <th> untuk SETIAP bulan tersebut secara berurutan. (Misal: Juli, Agustus, September... atau Januari, Februari...).
+    • BACA data dari konteks pertanyaan "Rentang Bulan Pelaksanaan Program Semester?". Buat <th> untuk SETIAP bulan dalam rentang tersebut secara berurutan. (Misal: dari Juli sampai Desember, buat 6 bulan berturut-turut).
     • Jika tidak disebutkan, defaultnya 6 bulan sesuai semester. Masing-masing bulan colspan="5", background: #C5B4E3.
   - Row 2:
     • Angka minggu 1, 2, 3, 4, 5 yang berulang (5 sel per bulan, width: 22px, background: #FCE4D6).
