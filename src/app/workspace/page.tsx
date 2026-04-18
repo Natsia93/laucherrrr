@@ -797,11 +797,10 @@ function WorkspaceContent() {
               className="relative transition-all duration-200"
               style={{ 
                 width: `${(isLandscapeType ? 297 : 210) * ((zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0))}mm`,
-                height: `${(isLandscapeType ? 210 : 297) * ((zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0))}mm`,
               }}
             >
               <div 
-                className={`a4-paper curriculum-content absolute top-0 left-0 origin-top-left transition-all duration-200 border border-border shadow-2xl ${
+                className={`a4-paper curriculum-content relative origin-top-left transition-all duration-200 border border-border shadow-2xl ${
                   isLandscapeType ? "landscape" : ""
                 }`}
                 style={{ 
@@ -838,30 +837,23 @@ function WorkspaceContent() {
                     </div>
                   )}
                 </AnimatePresence>
+
+                {/* Completion Indicator INSIDE the scaled paper to avoid overlap */}
+                {!loading && isGenerated && displayedContent && !isCutOff && isDocumentComplete(displayedContent) && (
+                  <div className="mt-16 pb-8 w-full flex flex-col items-center border-t border-dashed border-border/30 pt-8">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }} 
+                      animate={{ opacity: 1, y: 0 }} 
+                    >
+                      <div className="flex items-center gap-2.5 bg-[#4d7537]/10 border border-[#4d7537]/30 text-[#4d7537] dark:text-[#7cb860] px-6 py-3 rounded-xl text-sm font-semibold shadow-sm">
+                        <CheckCircle2 className="w-5 h-5" />
+                        Dokumen telah selesai dibuat secara lengkap.
+                      </div>
+                    </motion.div>
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Document Completion Indicator (in-document, non-floating) */}
-            {!loading && isGenerated && displayedContent && !isCutOff && isDocumentComplete(displayedContent) && (
-              <div 
-                className="mt-12 w-full flex flex-col items-center"
-                style={{ 
-                  transform: `scale(${(zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0)})`, 
-                  transformOrigin: 'top center'
-                }}
-              >
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  className="mb-12"
-                >
-                  <div className="flex items-center gap-2.5 bg-[#4d7537]/10 border border-[#4d7537]/30 text-[#4d7537] dark:text-[#7cb860] px-6 py-3 rounded-xl text-sm font-semibold shadow-sm">
-                    <CheckCircle2 className="w-5 h-5" />
-                    Dokumen telah selesai dibuat secara lengkap.
-                  </div>
-                </motion.div>
-              </div>
-            )}
           </div>
 
           {/* Extra bottom space for scrolling */}
