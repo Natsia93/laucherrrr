@@ -117,6 +117,15 @@ function WorkspaceContent() {
     }
   };
 
+  // Check if document is structurally complete (has signature section)
+  const isDocumentComplete = useCallback((content: string): boolean => {
+    if (!content || content.length < 500) return false;
+    const hasSignature = /(?:Kepala\s*Sekolah|Guru\s*Mata\s*Pelajaran|NIP\s*[\.:])/.test(content);
+    const trimmed = content.trim();
+    const hasProperEnding = trimmed.endsWith('</table>') || trimmed.endsWith('</div>');
+    return hasSignature && hasProperEnding;
+  }, []);
+
   const streamGenerate = useCallback(async (rawPrompt: string, appendToExisting = false, rawContext?: string, isAssistantMode = false, forcedMode?: 'chat' | 'edit', isContinue = false) => {
     setLoading(true);
     
@@ -348,14 +357,10 @@ function WorkspaceContent() {
       setProgressStage(-1);
       setAbortController(null);
       
-      // Auto-detect cut off if not explicitly signaled
-      if (contentRef.current.length > 1000) {
-        const lastTarget = contentRef.current.trim();
-        const hasOpenTag = lastTarget.lastIndexOf("<") > lastTarget.lastIndexOf(">");
-        const isTableIncomplete = lastTarget.includes("<table") && !lastTarget.endsWith("</table>");
-        const isDivIncomplete = lastTarget.includes("<div") && !lastTarget.endsWith("</div>");
-        
-        if (hasOpenTag || isTableIncomplete || isDivIncomplete) {
+      // Smart document completeness detection
+      if (contentRef.current.length > 500) {
+        const complete = isDocumentComplete(contentRef.current);
+        if (!complete) {
           setIsCutOff(true);
         }
       }
@@ -774,20 +779,33 @@ function WorkspaceContent() {
           </div>
         </div>
 
-          {/* Continue Button below document - Show whenever cut off */}
-          {isCutOff && !loading && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }} 
-              animate={{ opacity: 1, scale: 1 }} 
-              className="mt-8 mb-12 flex justify-center"
-            >
-              <Button 
-                onClick={() => handleSendMessage(true)} 
-                className="px-12 py-6 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-xl font-bold shadow-xl shadow-[#4d7537]/20 border-none transition-all active:scale-95 flex items-center gap-3"
+          {/* Document Status: Continue Button OR Completion Indicator */}
+          {!loading && isGenerated && displayedContent && (
+            isCutOff ? (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                className="mt-8 mb-12 flex justify-center"
               >
-                <Sparkles className="w-5 h-5 animate-pulse" /> AI Terhenti? Lanjutkan Penulisan
-              </Button>
-            </motion.div>
+                <Button 
+                  onClick={() => handleSendMessage(true)} 
+                  className="px-12 py-6 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-xl font-bold shadow-xl shadow-[#4d7537]/20 border-none transition-all active:scale-95 flex items-center gap-3"
+                >
+                  <Sparkles className="w-5 h-5 animate-pulse" /> Dokumen Belum Selesai — Lanjutkan Penulisan
+                </Button>
+              </motion.div>
+            ) : isDocumentComplete(displayedContent) ? (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                className="mt-8 mb-12 flex justify-center"
+              >
+                <div className="flex items-center gap-2.5 bg-[#4d7537]/10 border border-[#4d7537]/30 text-[#4d7537] dark:text-[#7cb860] px-6 py-3 rounded-xl text-sm font-semibold shadow-sm">
+                  <CheckCircle2 className="w-5 h-5" />
+                  Dokumen telah selesai dibuat secara lengkap.
+                </div>
+              </motion.div>
+            ) : null
           )}
 
           {/* Extra bottom space for scrolling */}

@@ -769,6 +769,16 @@ function cleanAIOutput(text: string): string {
   return cleaned;
 }
 
+// Check if a generated document is structurally complete
+// A complete curriculum document MUST have a signature section at the end
+function isDocumentStructurallyComplete(content: string): boolean {
+  if (!content || content.length < 500) return false;
+  const hasSignature = /(?:Kepala\s*Sekolah|Guru\s*Mata\s*Pelajaran|NIP\s*[\.:])/.test(content);
+  const trimmed = content.trim();
+  const hasProperEnding = trimmed.endsWith('</table>') || trimmed.endsWith('</div>');
+  return hasSignature && hasProperEnding;
+}
+
 export async function POST(req: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
@@ -928,7 +938,12 @@ TUGAS ANDA:
                   send({ type: finalType, text }); 
                 }
              }
-             if (lastFinishReason === "length") send({ type: "status", isCutOff: true });
+             if (lastFinishReason === "length") {
+               send({ type: "status", isCutOff: true });
+             } else if (!isAssistant && !isDocumentStructurallyComplete(fullText)) {
+               // AI stopped but document is incomplete (no signature section)
+               send({ type: "status", isCutOff: true });
+             }
              return true;
           };
 
@@ -969,18 +984,21 @@ TUGAS ANDA:
                     send({ type: finalType, text }); 
                   }
                 }
-                try {
-                  const finalResp = await result.response;
-                  const reason = finalResp.candidates?.[0]?.finishReason as string;
-                  if (reason === "LENGTH" || reason === "MAX_TOKENS") {
-                    send({ type: "status", isCutOff: true });
-                  }
-                } catch (e) { console.error("Gemini sync err:", e); }
+                 try {
+                   const finalResp = await result.response;
+                   const reason = finalResp.candidates?.[0]?.finishReason as string;
+                   if (reason === "LENGTH" || reason === "MAX_TOKENS" || !isDocumentStructurallyComplete(fullText)) {
+                     send({ type: "status", isCutOff: true });
+                   }
+                 } catch (e) { console.error("Gemini sync err:", e); }
              } else {
                const result = await model.generateContentStream(systemPrompt + "\n\nUser Instructions: " + rawPrompt);
                for await (const chunk of result.stream) {
                  const text = chunk.text();
                  if (text) { fullText += text; send({ type: "chunk", text }); }
+               }
+               if (!isDocumentStructurallyComplete(fullText)) {
+                 send({ type: "status", isCutOff: true });
                }
              }
              return true;
