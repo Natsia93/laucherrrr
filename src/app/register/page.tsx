@@ -53,12 +53,13 @@ export default function RegisterPage() {
       <div className="absolute inset-0 z-0 pointer-events-none">
         {/* Rectangular Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808015_1px,transparent_1px),linear-gradient(to_bottom,#80808015_1px,transparent_1px)] bg-[size:160px_80px]"></div>
-        {/* Glow */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-1/3 w-[600px] h-[400px] bg-[#4d7537]/10 dark:bg-[#3f612d]/20 rounded-full blur-[120px]"></div>
+        {/* Glow - Significantly enhanced for visibility on all devices */}
+        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-[900px] h-[600px] bg-[#4d7537]/25 dark:bg-[#4d7537]/40 rounded-full blur-[120px] opacity-80"></div>
       </div>
       
-      <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 hover:opacity-80 transition-opacity">
-        <div className="relative w-8 h-8 rounded overflow-hidden">
+      {/* Centered Branding Above Card */}
+      <Link href="/" className="mb-8 flex flex-col items-center gap-3 hover:opacity-90 transition-all group relative z-10">
+        <div className="relative w-14 h-14 drop-shadow-[0_0_15px_rgba(77,117,55,0.3)]">
           <Image 
             src="/logo/Logo Hijau.svg" 
             alt="Dekstorio Logo" 
@@ -66,14 +67,11 @@ export default function RegisterPage() {
             className="object-cover"
           />
         </div>
-        <span className="font-bricolage font-semibold text-lg tracking-tight text-[#1a2315] dark:text-[#f4f3ed]">Dekstorio</span>
+        <span className="font-bricolage font-bold text-3xl tracking-tight text-[#1a2315] dark:text-[#f4f3ed]">Dekstorio</span>
       </Link>
 
       <Card className="w-full max-w-md bg-white/90 dark:bg-[#10140d]/80 border-[#dcdad1] dark:border-[#3f612d]/30 shadow-none relative z-10 backdrop-blur-xl">
         <CardHeader className="space-y-2 text-center pb-6">
-          <div className="mx-auto w-12 h-12 bg-[#f4f3ed] dark:bg-[#1a2315] border border-[#dcdad1] dark:border-[#3f612d]/40 rounded-2xl flex items-center justify-center mb-4">
-            <UserPlus className="w-6 h-6 text-[#4d7537] dark:text-[#89b867]" />
-          </div>
           <CardTitle className="font-bricolage text-2xl font-normal tracking-tight text-[#1a2315] dark:text-[#f4f3ed]">Buat Akun Baru</CardTitle>
           <CardDescription className="text-neutral-600 dark:text-[#a2b591]">
             Bergabunglah untuk mulai menggunakan AI Generator Kurikulum.

@@ -97,8 +97,8 @@ export default function Home() {
       <div className="absolute inset-0 z-0 pointer-events-none">
         {/* Rectangular Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808015_1px,transparent_1px),linear-gradient(to_bottom,#80808015_1px,transparent_1px)] bg-[size:160px_80px]"></div>
-        {/* Glow */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-40 w-[600px] h-[400px] bg-[#4d7537]/10 dark:bg-[#3f612d]/20 rounded-full blur-[120px]"></div>
+        {/* Glow - Significantly enhanced for visibility on all devices */}
+        <div className="absolute left-1/2 -translate-x-1/2 top-40 w-[1000px] h-[600px] bg-[#4d7537]/25 dark:bg-[#4d7537]/35 rounded-full blur-[120px] opacity-70"></div>
       </div>
 
       {/* Navbar */}
