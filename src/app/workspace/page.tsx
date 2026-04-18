@@ -753,44 +753,59 @@ function WorkspaceContent() {
       </nav>
 
       <main className="flex-1 flex overflow-hidden min-h-0 relative">
-        <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto overflow-x-auto p-4 md:p-12 bg-secondary/20">
-          <div className="min-w-max flex flex-col items-center py-4">
+        <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto overflow-x-auto p-4 md:p-12 bg-[#e5e5e0] dark:bg-[#050704]/50">
+          {/* Constrained Document Wrapper (The Plot) */}
+          <div 
+            className="mx-auto flex flex-col items-center py-4"
+            style={{ 
+              width: "fit-content",
+              minWidth: "100%"
+            }}
+          >
+            {/* The Scaled Paper Container */}
             <div 
-              className={`a4-paper curriculum-content relative text-left origin-top transition-all duration-200 ${
-                isLandscapeType ? "landscape" : ""
-              }`}
+              className="relative transition-all duration-200"
               style={{ 
-                transform: `scale(${(zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0)})`,
-                maxWidth: isLandscapeType ? '297mm' : '210mm'
+                width: `${(isLandscapeType ? 297 : 210) * ((zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0))}mm`,
+                height: `${(isLandscapeType ? 210 : 297) * ((zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0))}mm`,
               }}
             >
-            <AnimatePresence mode="wait">
-              {displayedContent ? (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
-                  dangerouslySetInnerHTML={{ __html: displayedContent.trim().startsWith("<") ? displayedContent : (marked.parse(displayedContent) as string) }} 
-                />
-              ) : loading ? renderProgressIndicator() : (
-                <div className="flex flex-col items-center justify-center min-h-[900px] opacity-10 py-20">
-                   <div className="relative w-16 h-16 mb-4">
-                     <Image 
-                       src="/logo/Logo Hijau.svg" 
-                       alt="Dekstorio Logo" 
-                       fill
-                       className="object-cover"
-                     />
-                   </div>
-                   <p className="text-xl font-bold">Menunggu Konteks...</p>
-                </div>
-              )}
-            </AnimatePresence>
+              <div 
+                className={`a4-paper curriculum-content absolute top-0 left-0 origin-top-left transition-all duration-200 border border-border shadow-2xl ${
+                  isLandscapeType ? "landscape" : ""
+                }`}
+                style={{ 
+                  transform: `scale(${(zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0)})`,
+                }}
+              >
+                <AnimatePresence mode="wait">
+                  {displayedContent ? (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
+                      dangerouslySetInnerHTML={{ __html: displayedContent.trim().startsWith("<") ? displayedContent : (marked.parse(displayedContent) as string) }} 
+                    />
+                  ) : loading ? renderProgressIndicator() : (
+                    <div className="flex flex-col items-center justify-center min-h-[900px] opacity-10 py-20">
+                      <div className="relative w-16 h-16 mb-4">
+                        <Image 
+                          src="/logo/Logo Hijau.svg" 
+                          alt="Dekstorio Logo" 
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <p className="text-xl font-bold">Menunggu Konteks...</p>
+                    </div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
 
             {/* Document Status: Continue Button OR Completion Indicator */}
             <div 
-              className="w-full flex flex-col items-center transition-all duration-200"
+              className="mt-12 w-full flex flex-col items-center transition-all duration-200"
               style={{ 
-                marginTop: isLandscapeType ? '-30mm' : '0', // Adjust for scale offset if needed
-                transform: `scale(${zoomLevel / 100})`, // Button follows general zoom scale only
+                transform: `scale(${zoomLevel / 100})`, // Scale labels/buttons with zoom
+                transformOrigin: 'top center'
               }}
             >
               {!loading && isGenerated && displayedContent && (
@@ -798,7 +813,7 @@ function WorkspaceContent() {
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }} 
                     animate={{ opacity: 1, scale: 1 }} 
-                    className="mt-12 mb-12"
+                    className="mb-12"
                   >
                     <Button 
                       onClick={() => handleSendMessage(true)} 
@@ -811,7 +826,7 @@ function WorkspaceContent() {
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }} 
                     animate={{ opacity: 1, y: 0 }} 
-                    className="mt-12 mb-12"
+                    className="mb-12"
                   >
                     <div className="flex items-center gap-2.5 bg-[#4d7537]/10 border border-[#4d7537]/30 text-[#4d7537] dark:text-[#7cb860] px-6 py-3 rounded-xl text-sm font-semibold shadow-sm">
                       <CheckCircle2 className="w-5 h-5" />
