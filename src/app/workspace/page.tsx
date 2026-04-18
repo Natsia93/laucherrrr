@@ -80,12 +80,9 @@ function WorkspaceContent() {
   const [zoomLevel, setZoomLevel] = useState(100);
 
   useEffect(() => {
-    const isLandscape = activeDocType.includes("Program Semester") || activeDocType.includes("Program Tahunan") || activeDocType.includes("PROSEM") || activeDocType.includes("PROTA");
-    if (isLandscape) {
-      setZoomLevel(80);
-    } else {
-      setZoomLevel(100);
-    }
+    // We always want the UI to show 100% as default, 
+    // the visual scaling to 80% for landscape is handled in the transform logic.
+    setZoomLevel(100);
   }, [activeDocType]);
   const [attachments, setAttachments] = useState<{name: string, content: string, type: string}[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -657,7 +654,7 @@ function WorkspaceContent() {
           color: black !important;
           box-shadow: 0 10px 30px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.05);
           padding: 20mm 15mm;
-          margin: 40px auto;
+          margin: 0 auto;
           font-family: 'Times New Roman', serif;
           font-size: 12pt;
           line-height: 1.3;
@@ -804,7 +801,7 @@ function WorkspaceContent() {
             <div 
               className="mt-12 w-full flex flex-col items-center transition-all duration-200"
               style={{ 
-                transform: `scale(${zoomLevel / 100})`, // Scale labels/buttons with zoom
+                transform: `scale(${(zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0)})`, 
                 transformOrigin: 'top center'
               }}
             >
