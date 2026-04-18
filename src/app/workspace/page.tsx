@@ -835,9 +835,9 @@ function WorkspaceContent() {
             >
               <Button 
                 onClick={() => handleSendMessage(true)} 
-                className="pointer-events-auto px-10 py-5 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-xl font-bold shadow-2xl shadow-[#4d7537]/30 border-none transition-all active:scale-95 flex items-center gap-3"
+                className="pointer-events-auto px-10 py-5 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-lg font-bold shadow-2xl shadow-[#4d7537]/30 border-none transition-all active:scale-95"
               >
-                <Sparkles className="w-5 h-5 animate-pulse" /> Dokumen Belum Selesai — Lanjutkan Penulisan
+                Dokumen Belum Selesai — Lanjutkan Penulisan
               </Button>
             </motion.div>
           )}

@@ -831,19 +831,43 @@ export async function POST(req: Request) {
               let structuralAnalysis = "";
               let smartContext = fullDoc;
               
+              let columnCount = 0;
               if (fullDoc && fullDoc.length > 0) {
                 const babMatches = [...fullDoc.matchAll(/BAB\s+[\dIVXivx]+\s*[:\s]*([^<\n]{3,60})/gi)];
                 const lastBab = babMatches.length > 0 ? babMatches[babMatches.length - 1][0].trim() : "tidak terdeteksi";
                 
-                const headerRowMatch = fullDoc.match(/<tr[^>]*>(?:\s*<t[hd][^>]*>[\s\S]*?<\/t[hd]>\s*)+<\/tr>/i);
-                let columnCount = 0;
-                if (headerRowMatch) {
-                  const cellMatches = headerRowMatch[0].match(/<t[hd]/gi);
-                  columnCount = cellMatches ? cellMatches.length : 0;
+                // Extract ALL header rows to understand table structure
+                const allHeaderRows = fullDoc.match(/<tr[^>]*>(?:\s*<t[hd][^>]*>[\s\S]*?<\/t[hd]>\s*)+<\/tr>/gi) || [];
+                let headerColumnNames: string[] = [];
+                
+                // Calculate total columns accounting for colspan
+                if (allHeaderRows.length > 0) {
+                  // Use first header row to count total columns (with colspan)
+                  const firstRow = allHeaderRows[0];
+                  const cellsInRow = [...firstRow.matchAll(/<t[hd][^>]*(?:colspan="(\d+)")?[^>]*>([\s\S]*?)<\/t[hd]>/gi)];
+                  for (const cell of cellsInRow) {
+                    const colspan = cell[1] ? parseInt(cell[1]) : 1;
+                    columnCount += colspan;
+                    // Extract text content for column name
+                    const textContent = cell[2].replace(/<[^>]+>/g, '').trim();
+                    if (textContent) headerColumnNames.push(textContent);
+                  }
                 }
+                
+                // Fallback: check colspan hints
                 const colspanMatches = [...fullDoc.matchAll(/colspan="(\d+)"/gi)];
-                const maxColspan = colspanMatches.length > 0 ? Math.max(...colspanMatches.map(m => parseInt(m[1]))) : 0;
+                const maxColspan = colspanMatches.length > 0 ? Math.max(...colspanMatches.map((m: any) => parseInt(m[1]))) : 0;
                 if (maxColspan > columnCount) columnCount = maxColspan;
+                
+                // Extract month headers specifically for PROSEM
+                let monthHeaders = "";
+                if (type === 'PROSEM') {
+                  const monthMatches = fullDoc.match(/(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)/gi) || [];
+                  const uniqueMonths = [...new Set(monthMatches.map((m: any) => m.charAt(0).toUpperCase() + m.slice(1).toLowerCase()))];
+                  if (uniqueMonths.length > 0) {
+                    monthHeaders = `\n- Bulan yang ada di header: ${uniqueMonths.join(', ')}`;
+                  }
+                }
                 
                 const tail100 = fullDoc.trim().slice(-100);
                 const hasOpenTag = /<[^/][^>]*$/.test(tail100);
@@ -854,9 +878,10 @@ export async function POST(req: Request) {
                 structuralAnalysis = `ANALISIS STRUKTURAL OTOMATIS:
 - Jenis Dokumen: ${type}
 - Total karakter dokumen: ${fullDoc.length}
-- BAB terdeteksi (${babMatches.length}): ${babMatches.map(m => m[0].trim()).slice(-5).join(' | ') || 'tidak ada'}
+- BAB terdeteksi (${babMatches.length}): ${babMatches.map((m: any) => m[0].trim()).slice(-5).join(' | ') || 'tidak ada'}
 - BAB terakhir: ${lastBab}
 - Jumlah kolom tabel utama: ${columnCount || 'tidak terdeteksi'}
+- Header kolom: ${headerColumnNames.slice(0, 10).join(' | ') || 'tidak terdeteksi'}${monthHeaders}
 - Jumlah baris di tabel terakhir: ${rowCount}
 - Ada tag HTML yang belum ditutup: ${hasOpenTag ? 'YA - TUTUP DULU!' : 'Tidak'}
 - 100 karakter terakhir: """${tail100}"""`;
@@ -868,7 +893,13 @@ export async function POST(req: Request) {
                 }
               }
               
-              const layoutGuide = type === 'PROSEM' ? `- PROSEM: tabel LANDSCAPE 33 KOLOM. Setiap <tr> WAJIB 33 <td>. Font 8-9pt. Separator BAB: colspan="33", bg #ADD8E6.`
+              const layoutGuide = type === 'PROSEM' ? `- PROSEM: tabel LANDSCAPE dengan JUMLAH KOLOM TETAP sesuai header.
+  - LIHAT "Jumlah kolom tabel utama" dan "Header kolom" di ANALISIS STRUKTURAL — ini adalah jumlah kolom FINAL.
+  - Setiap baris <tr> WAJIB memiliki TEPAT ${columnCount || 33} <td> (atau colspan yang setara). TIDAK KURANG, TIDAK LEBIH.
+  - DILARANG KERAS menambahkan kolom bulan baru yang TIDAK ADA di header tabel (misalnya jika header hanya sampai Desember, JANGAN tambahkan Januari dst).
+  - DILARANG KERAS mengubah struktur tabel atau menambah kolom baru. Hanya ISI BARIS BARU.
+  - Font 8-9pt. Separator BAB: colspan sesuai total kolom, bg #ADD8E6.
+  - Tandai minggu pelaksanaan dengan "V". Kolom yang tidak digunakan biarkan KOSONG (<td style="..."></td>).`
                 : type === 'PROTA' ? `- PROTA: tabel LANDSCAPE 5 KOLOM. Setiap <tr> WAJIB 5 <td>. Header: bg #FCE4D6. Separator BAB: bg #ADD8E6, colspan="5". No RESET per BAB.`
                 : type === 'ATP' ? `- ATP: tabel 5 KOLOM. Setiap <tr> WAJIB 5 <td>. Header: bg #FCE4D6. Separator BAB: bg #E7EFF6, colspan="5". No RESET per BAB.`
                 : type === 'KKTP' ? `- KKTP: tabel 6 KOLOM. Setiap <tr> WAJIB 6 <td>. Header: bg #E1D5E7. Separator BAB: bg #F9CB9C, colspan="6". No RESET per BAB.`
