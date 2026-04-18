@@ -38,6 +38,7 @@ function WorkspaceContent() {
   const model = searchParams.get("model") || "deepseek";
   const docId = searchParams.get("id");
 
+  const [activeDocId, setActiveDocId] = useState(docId);
   const [activeDocType, setActiveDocType] = useState(docType);
   const [chatInput, setChatInput] = useState("");
   const [assistantMode, setAssistantMode] = useState<'chat' | 'edit'>('chat');
@@ -296,9 +297,19 @@ function WorkspaceContent() {
               if (!isAssistantMode) {
                 if (data.title) setDocTitle(data.title);
                 if (data.docId) {
+                  setActiveDocId(data.docId);
                   const newUrl = `${window.location.pathname}?id=${data.docId}`;
                   window.history.replaceState({ ...window.history.state, path: newUrl }, '', newUrl);
                 }
+              }
+
+              // AUTO-SAVE for Assistant Mode (Revisions & Continuations)
+              if (isAssistantMode && activeDocId) {
+                fetch(`/api/documents/${activeDocId}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ content: contentRef.current })
+                }).catch(err => console.error("Failed to auto-save revision:", err));
               }
             }
 
