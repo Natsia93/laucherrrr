@@ -17,47 +17,9 @@ const deepseek = new OpenAI({
 // SYSTEM PROMPT FACTORY — "OTAK AI" v2.0
 // ============================================
 
-// ── KOP SURAT TEMPLATE ──
-const KOP_TEMPLATE = `
-=== TEMPLATE KOP SURAT (WAJIB DI AWAL DOKUMEN) ===
-Buat KOP menggunakan <table border="0" cellspacing="0" cellpadding="0" style="width: 100%; border: none; border-collapse: collapse; table-layout: fixed;">
-  <tr>
-    <td style="width: 15%; text-align: center; border: none; vertical-align: middle;">
-      [LOGO]
-    </td>
-    <td style="width: 85%; text-align: center; border: none; vertical-align: middle;">
-      <p style="margin: 0; font-size: 11pt; font-weight: bold; text-align: center;">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</p>
-      <p style="margin: 0; font-size: 11pt; font-weight: bold; text-align: center;">DIREKTORAT JENDERAL PENDIDIKAN ANAK USIA DINI,</p>
-      <p style="margin: 0; font-size: 11pt; font-weight: bold; text-align: center;">PENDIDIKAN DASAR, DAN PENDIDIKAN MENENGAH</p>
-      <p style="margin: 2px 0; font-size: 13pt; font-weight: bold; text-align: center;">[NAMA SEKOLAH]</p>
-      <p style="margin: 0; font-size: 8pt; text-align: center;">Alamat: [Isi Manual], Email: [Isi Manual], Website: [Isi Manual]</p>
-    </td>
-  </tr>
-</table>
-<div style="border-bottom: 3px double black; margin: 10px 0 20px 0;"></div>
-Setelah KOP, tuliskan judul dokumen (misal: "CAPAIAN PEMBELAJARAN MATA PELAJARAN...") di tengah (centered, bold, font-size: 12pt).
-`;
-
-// ── TANDA TANGAN TEMPLATE ──
-const SIGNATURE_TEMPLATE = `
-=== TEMPLATE TANDA TANGAN (WAJIB DI AKHIR DOKUMEN) ===
-<table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border: 1px solid black; border-collapse: collapse; margin-top: 50px; font-family: 'Times New Roman', serif; table-layout: fixed;">
-  <tr>
-    <td style="width: 50%; text-align: center; vertical-align: top; padding: 15px; border: 1px solid black;">
-      <p style="margin: 0;">Mengetahui,</p>
-      <p style="font-weight: bold; margin: 0 0 70px 0;">Kepala Sekolah</p>
-      <p style="font-weight: bold; text-decoration: underline; margin: 0;">(...................................)</p>
-      <p style="margin: 5px 0 0 0;">NIP. ................................</p>
-    </td>
-    <td style="width: 50%; text-align: center; vertical-align: top; padding: 15px; border: 1px solid black;">
-      <p style="margin: 0;">.................., .................. 20....</p>
-      <p style="font-weight: bold; margin: 0 0 70px 0;">Guru Mata Pelajaran</p>
-      <p style="font-weight: bold; text-decoration: underline; margin: 0;">(...................................)</p>
-      <p style="margin: 5px 0 0 0;">NIP. ................................</p>
-    </td>
-  </tr>
-</table>
-PENTING: DILARANG mengarang NAMA ORANG atau NIP. Gunakan titik-titik seperti di atas jika nama tidak diberikan oleh user.`;
+// KOP SURAT and SIGNATURE removed as requested by user
+const KOP_TEMPLATE = "";
+const SIGNATURE_TEMPLATE = "";
 
 // ── SHARED RULES (berlaku untuk SEMUA tipe dokumen) ──
 const SHARED_RULES = `
@@ -93,9 +55,9 @@ const SHARED_RULES = `
 - DILARANG KERAS menggunakan HTML entities seperti "&nbsp;", "&amp;", "&quot;", dan entity lainnya yang dimulai dengan simbol "&". 
 - Gunakan karakter spasi biasa atau properti CSS (padding/margin) untuk pengaturan jarak.
 - Hal ini untuk mencegah simbol "&" muncul secara anomali dan "bergerak" di layar saat proses streaming teks berlangsung.
+`;
+// Note: KOP and SIGNATURE templates are empty strings, so they add nothing.
 
-${KOP_TEMPLATE}
-${SIGNATURE_TEMPLATE}`;
 
 // ── MATH RULES (khusus mapel Matematika) ──
 const MATH_RULES = `
@@ -185,7 +147,22 @@ ${langRule}
 
 === STRUKTUR DOKUMEN ATP (WAJIB BERURUTAN) ===
 
-BAGIAN 1 — IDENTITAS (TANPA JUDUL TEKS "BAGIAN 1"):
+BAGIAN 1 — HEADER BERWARNA:
+- Buat header menggunakan <table> dengan dua baris warna berbeda:
+   <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
+     <tr>
+       <td style="background-color: #C5B4E3; padding: 12px 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif; color: black !important;">ALUR TUJUAN PEMBELAJARAN (ATP)</p>
+       </td>
+     </tr>
+     <tr>
+       <td style="background-color: #E1D5E7; padding: 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+         <p style="font-weight: bold; margin: 0; font-size: 11pt; font-family: 'Times New Roman', serif; color: black !important;">MATA PELAJARAN : [NAMA MATA PELAJARAN DALAM CAPITAL]</p>
+       </td>
+     </tr>
+   </table>
+
+BAGIAN 2 — IDENTITAS (TANPA JUDUL TEKS "BAGIAN 2"):
 - Gunakan tabel borderless (border="0") agar titik-titik dan label sejajar sempurna:
   <table border="0" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
     <tr>
@@ -243,8 +220,8 @@ ATURAN GRANULARITAS & PENOMORAN:
 - **PENOMORAN**: Nomor urut pada kolom 'No' WAJIB RESET ke angka 1 setiap kali berganti BAB baru. JANGAN sampai wrap (harus 1 baris).
 - **JUMLAH BARIS PER BAB**: Setiap BAB WAJIB memiliki **minimal 3 sampai 5 baris (rows)** yang berbeda.
 
-BAGIAN 5 — TANDA TANGAN:
-- Gunakan template tanda tangan standar.
+BAGIAN 5 — Tanda Tangan: (BAGIAN INI DIHAPUS, JANGAN DIHASILKAN)
+
 
 ${additionalRules}
 ${SHARED_RULES}`,
@@ -271,12 +248,20 @@ Baca KONTEKS DATA GURU di atas dengan TELITI. Cari informasi:
 
 === STRUKTUR DOKUMEN LKPD (WAJIB BERURUTAN) ===
 
-BAGIAN 1 — KOP FORMAL:
-- Buat header dengan border box yang berisi:
-  | Logo Sekolah | LEMBAR KERJA PESERTA DIDIK (LKPD) |
-  |              | Mata Pelajaran: ...                 |
-  |              | Satuan Pendidikan: ...              |
-  |              | Tahun Pelajaran: ...                |
+BAGIAN 1 — HEADER BERWARNA (GANTI KOP):
+- Buat header menggunakan tabel lavender:
+   <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
+     <tr>
+       <td style="background-color: #C5B4E3; padding: 12px 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif; color: black !important;">LEMBAR KERJA PESERTA DIDIK (LKPD)</p>
+       </td>
+     </tr>
+     <tr>
+       <td style="background-color: #E1D5E7; padding: 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+         <p style="font-weight: bold; margin: 0; font-size: 11pt; font-family: 'Times New Roman', serif; color: black !important;">MATA PELAJARAN : [MAPEL]</p>
+       </td>
+     </tr>
+   </table>
 
 BAGIAN 2 — IDENTITAS SISWA:
 - Tabel identitas (border, 3 baris): Nama Peserta Didik, Kelas / No. Absen, Tanggal Pengerjaan.
@@ -341,6 +326,21 @@ ${langRule}
 
 === STRUKTUR DOKUMEN CP (WAJIB BERURUTAN) ===
 
+BAGIAN 1 — HEADER BERWARNA:
+- Buat header menggunakan tabel lavender:
+   <table border="1" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
+     <tr>
+       <td style="background-color: #C5B4E3; padding: 12px 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif; color: black !important;">CAPAIAN PEMBELAJARAN (NOMOR 046/H/KR/2025)</p>
+       </td>
+     </tr>
+     <tr>
+       <td style="background-color: #E1D5E7; padding: 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+         <p style="font-weight: bold; margin: 0; font-size: 11pt; font-family: 'Times New Roman', serif; color: black !important;">MATA PELAJARAN : [MAPEL]</p>
+       </td>
+     </tr>
+   </table>
+
 BAGIAN A. RASIONAL:
 - Judul: "A. RASIONAL" (Bold, Left Align).
 - Uraikan alasan mendalam pentingnya mata pelajaran ini.
@@ -377,8 +377,8 @@ BAGIAN D. CAPAIAN PEMBELAJARAN FASE [X]:
 - Untuk elemen Keterampilan Proses, gunakan bullet points.
 - Format khusus list: **Nama Poin :** (Tebalkan nama poin, diikuti titik dua).
 
-BAGIAN 5 — TANDA TANGAN:
-- Gunakan template tanda tangan standar.
+BAGIAN 5 — Tanda Tangan: (BAGIAN INI DIHAPUS, JANGAN DIHASILKAN)
+
 
 ${additionalRules}
 ${SHARED_RULES}`,
@@ -460,8 +460,8 @@ ISI TABEL:
 - ALOKASI WAKTU (JP): Data input yang masuk (misal "9 JP") adalah total untuk SATU BAB. Anda WAJIB membaginya ke baris-baris materi di bawah BAB tersebut. (Misal: baris pertama 3 JP, baris kedua 4 JP, baris ketiga 2 JP). JANGAN biarkan baris kosong tanpa JP.
 - Semester: Tuliskan "I (Ganjil)" atau "II (Genap)".
 
-BAGIAN 4 — TANDA TANGAN:
-- Gunakan template tanda tangan standar.
+BAGIAN 4 — Tanda Tangan: (BAGIAN INI DIHAPUS, JANGAN DIHASILKAN)
+
 
 ${additionalRules}
 ${SHARED_RULES}`,
@@ -559,8 +559,8 @@ BAGIAN 3 — CATATAN:
   • Total JP efektif: [hitung]
   • Minggu tidak efektif: [jika ada, misal libur nasional]
 
-BAGIAN 4 — TANDA TANGAN:
-- Gunakan template tanda tangan standar.
+BAGIAN 4 — Tanda Tangan: (BAGIAN INI DIHAPUS, JANGAN DIHASILKAN)
+
 
 === TIPS TEKNIS TABEL PROSEM ===
 - Karena tabel sangat lebar, gunakan font-size: 8pt atau 9pt agar muat.
@@ -655,8 +655,8 @@ ISI TABEL:
   • Gunakan bullet points untuk rincian indikator di bawahnya.
 - Biarkan kolom interval kosong (akan diisi manual oleh guru).
 
-BAGIAN 4 — TANDA TANGAN:
-- Gunakan template tanda tangan standar.
+BAGIAN 4 — Tanda Tangan: (BAGIAN INI DIHAPUS, JANGAN DIHASILKAN)
+
 
 ${additionalRules}
 ${SHARED_RULES}`,
@@ -775,10 +775,9 @@ function cleanAIOutput(text: string): string {
 // A complete curriculum document MUST have a signature section at the end
 function isDocumentStructurallyComplete(content: string): boolean {
   if (!content || content.length < 500) return false;
-  const hasSignature = /(?:Kepala\s*Sekolah|Guru\s*Mata\s*Pelajaran|NIP\s*[\.:])/.test(content);
   const trimmed = content.trim();
   const hasProperEnding = trimmed.endsWith('</table>') || trimmed.endsWith('</div>');
-  return hasSignature && hasProperEnding;
+  return hasProperEnding;
 }
 
 export async function POST(req: Request) {
@@ -934,8 +933,7 @@ ATURAN WAJIB KONTINUASI:
 
 ${layoutGuide}
 
-11. AKHIRI dokumen dengan TANDA TANGAN jika sudah tidak ada materi/BAB yang tersisa.
-12. HANYA keluarkan lanjutan kode HTML MURNI. Karakter pertama output HARUS berupa tag HTML.
+11. HANYA keluarkan lanjutan kode HTML MURNI. Karakter pertama output HARUS berupa tag HTML.
 `;
             }
 
@@ -969,7 +967,7 @@ Pilih salah satu metode output berdasarkan kerumitan revisi:
    - JANGAN berikan penjelasan apapun di luar blok ini.
 
 2. JIKA REVISI MAJOR (Struktur berubah total, ganti tipe dokumen, atau revisi yang mencakup >50% dokumen):
-   - Hasilkan kembali SELURUH kode HTML dari awal (KOP) sampai akhir (Tanda Tangan).
+   - Hasilkan kembali SELURUH kode HTML dari awal (Header Dokumen) sampai akhir.
    - Langsung mulai dengan <div>.
    - Tanpa markdown code blocks.
 

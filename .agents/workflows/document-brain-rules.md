@@ -56,17 +56,10 @@ Untuk modul yang memiliki tabel per-BAB (`ATP`, `PROTA`, `PROSEM`, `KKTP`):
 - **DILARANG** menggunakan highlight kuning (`background-color: yellow`) di semua modul.
 - Materi kunci dituliskan dalam format **Bold & Italic** saja.
 
-### 7. KOP Surat
-- Semua dokumen WAJIB dimulai dengan KOP surat yang berisi:
-  - Logo di kiri (15%), Teks instansi di kanan (85%).
-  - Garis double (`border-bottom: 3px double black`).
-- [LOGO], [NAMA SEKOLAH], Alamat, Email, Website menggunakan placeholder `[Isi Manual]`.
+### 7. KOP & Tanda Tangan (DIREMOVED)
+- **DILARANG** menghasilkan KOP Surat (logo, kementerian, dll) dan Tanda Tangan (Kepala Sekolah/Guru) secara otomatis.
+- Dokumen harus langsung dimulai dengan **Header Berwarna** (Modul & Mata Pelajaran).
 
-### 8. Tanda Tangan
-- Semua dokumen WAJIB diakhiri dengan tabel tanda tangan 2 kolom:
-  - Kolom kiri: Kepala Sekolah.
-  - Kolom kanan: Guru Mata Pelajaran.
-- DILARANG KERAS mengarang nama orang atau NIP.
 
 ### 9. Anti-Hallucination
 - DILARANG mengarang: Nama Sekolah, Nama Guru, Nama Kepala Sekolah, Alamat, Email, Website, NIP.
@@ -117,7 +110,7 @@ Untuk modul yang memiliki tabel per-BAB (`ATP`, `PROTA`, `PROSEM`, `KKTP`):
 - Kolom interval DIBIARKAN KOSONG (diisi guru manual).
 
 ### LKPD
-- Struktur: KOP Formal, Identitas Siswa, Judul Materi, Petunjuk Kerja, Ringkasan Materi, Soal, Kunci Jawaban.
+- Struktur: Identitas Siswa, Judul Materi, Petunjuk Kerja, Ringkasan Materi, Soal, Kunci Jawaban. (TANPA KOP FORMAL).
 - Jumlah soal WAJIB TEPAT sesuai input user (PG, Jawaban Singkat, Esai).
 - Nomor soal KONTINU (tidak reset antar tipe soal).
 - PG: Gunakan `<ol type="A">` untuk opsi.
