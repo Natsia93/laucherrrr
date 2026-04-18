@@ -5,22 +5,20 @@ import gsap from "gsap";
 import Image from "next/image";
 
 export default function AppPreloader() {
-  const [show, setShow] = useState(() => {
-    if (typeof window === "undefined") return true; 
+  const [show, setShow] = useState(false);
 
+  useEffect(() => {
     // Detect if this is the very first mount of the layout (app entry)
     const hasEntered = (window as any).__HAS_ENTERED_APP__;
     const isHomePage = window.location.pathname === "/"; 
     
-    // Only show preloader if it's the landing page and we haven't entered via another page
-    const shouldShow = isHomePage && !hasEntered;
-    
-    if (shouldShow) {
+    if (isHomePage && !hasEntered) {
+      setShow(true);
       (window as any).__PRELOADER_ACTIVE__ = true;
+    } else {
+      (window as any).__HAS_ENTERED_APP__ = true;
     }
-    
-    return shouldShow;
-  });
+  }, []);
 
   const pathRef = useRef<SVGPathElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
