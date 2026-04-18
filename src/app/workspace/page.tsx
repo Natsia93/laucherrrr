@@ -459,7 +459,7 @@ function WorkspaceContent() {
     const isArabicDoc = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
     
     const textToSend = isContinue 
-      ? `INI ADALAH KONTINUASI (LANJUTAN) DARI DRAF SEBELUMNYA. TUGAS ANDA HANYA MENERUSKAN ISI HTML YANG TERPOTONG.`
+      ? `INI ADALAH KONTINUASI (LANJUTAN) DARI DRAF SEBELUMNYA. Jenis dokumen: ${docType}. TUGAS ANDA HANYA MENERUSKAN ISI HTML YANG TERPOTONG. IKUTI LAYOUT DAN FORMAT TABEL YANG SUDAH ADA.`
       : chatInput;
       
     if (!textToSend.trim() && attachments.length === 0) return;
@@ -476,7 +476,7 @@ function WorkspaceContent() {
     }
 
     const contextPrompt = isContinue 
-      ? docContent.slice(-2000) // Send enough context to see the table structure
+      ? finalPrompt  // Send the full instruction, context will be the full document
       : isAssistantMode 
         ? finalPrompt
         : `Revisi draf: ${finalPrompt}. Tetap pada jenis dokumen ${docType}.`;
@@ -489,7 +489,7 @@ function WorkspaceContent() {
     setAttachments([]);
     
     if (isContinue) {
-      // Just keep as is, the AI will analyze the last tag
+      // Keep the full document content for continuation
       contentRef.current = docContent;
     }
     

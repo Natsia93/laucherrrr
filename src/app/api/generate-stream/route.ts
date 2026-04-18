@@ -837,22 +837,53 @@ ${isContinue ? `
 TUGAS ANDA: LANJUTKAN isi dokumen HTML yang terpotong. 
 PENTING: Anda sedang berada di dalam editor dokumen. Jangan memberikan salam atau penjelasan.
 
-KONTEKS TERAKHIR DARI DOKUMEN: 
+SELURUH DOKUMEN YANG SUDAH DITULIS (UNTUK DIANALISIS): 
 """
-${rawPrompt}
+${rawContext || rawPrompt}
 """
 
-ATURAN WAJIB:
-1. ANALISIS tag terakhir pada konteks di atas. Jika itu tag terbuka (cth: <td>, <tr>, <p>), Anda WAJIB meneruskannya sampai tertutup.
-2. JANGAN tulis ulang dari awal. JANGAN buat Kop Surat lagi.
-3. JANGAN tulis tag <html>, <body>, atau <div> pembuka.
-4. JANGAN gunakan markdown code blocks (\`\`\`html). LANGSUNG KODE HTML.
-5. STRUKTUR TABEL (SANGAT KRITIKAL): 
-   - Dokumen ini menggunakan tabel dengan JUMLAH KOLOM TETAP.
-   - ATP: 5 Kolom. PROTA: 5 Kolom. PROSEM: Banyak Kolom.
-   - Pastikan setiap baris <tr> baru memiliki jumlah <td> yang TEPAT SAMA dengan header.
-   - Jika terpotong di tengah baris, SELESAIKAN baris tersebut sebelum membuat <tr> baru.
-6. HANYA keluarkan lanjutan kode.
+ATURAN WAJIB KONTINUASI:
+1. BACA DAN ANALISIS seluruh konten dokumen di atas dengan cermat sebelum menulis apapun.
+2. IDENTIFIKASI jenis dokumen ini: ${type}. Kenali layout-nya.
+3. IDENTIFIKASI struktur tabel terakhir yang sedang aktif:
+   - Berapa jumlah kolom? Apa isi header kolom tersebut?
+   - Berapa baris yang sudah diisi? Baris terakhir sampai di mana?
+   - Apakah tag HTML terakhir terbuka (misalnya <td> belum ditutup)?
+4. LANJUTKAN PERSIS dari karakter terakhir. Jika tag terbuka, tutup dulu. Jika baris tabel belum selesai, selesaikan dulu.
+5. JANGAN tulis ulang dari awal. JANGAN buat KOP SURAT lagi. JANGAN duplikasi konten yang sudah ada.
+6. JANGAN tulis tag <html>, <body>, atau <div> pembuka baru.
+7. JANGAN gunakan markdown code blocks (\`\`\`html). LANGSUNG KODE HTML.
+8. JANGAN menggunakan format SMART_PATCH. LANGSUNG keluarkan lanjutan kode HTML.
+
+PANDUAN LAYOUT PER JENIS DOKUMEN:
+${type === 'ATP' ? `- ATP memiliki tabel utama dengan 5 KOLOM: No | Tujuan Pembelajaran | Alur Tujuan Pembelajaran | JP | Profil Pelajar Pancasila
+- Setiap BAB dimulai dengan baris header berwarna (#C5B4E3 / lavender)
+- Setiap baris <tr> WAJIB memiliki tepat 5 <td>
+- Pertahankan nomor urut yang berkelanjutan dari baris sebelumnya` 
+: type === 'PROTA' ? `- PROTA (Program Tahunan) memiliki tabel utama dengan 5 KOLOM: No | Kompetensi Dasar / Materi Pokok | Tema/Materi Pokok | JP | Keterangan (Semester/Bulan)
+- Setiap BAB dimulai dengan baris header berwarna (biasanya teal/cyan)
+- Setiap baris <tr> WAJIB memiliki tepat 5 <td> atau sesuai colspan yang ada
+- Pertahankan nomor urut yang berkelanjutan dari baris sebelumnya` 
+: type === 'PROSEM' ? `- PROSEM (Program Semester) memiliki tabel LANDSCAPE dengan BANYAK KOLOM:
+  No | Kompetensi Dasar | Materi Pokok | JP | lalu kolom-kolom Bulan (Jan-Jun atau Jul-Des)
+- Setiap baris <tr> WAJIB memiliki jumlah <td> yang SAMA dengan baris header
+- Pertahankan nomor urut yang berkelanjutan dari baris sebelumnya
+- WAJIB isi kolom bulan dengan tanda centang (✓) sesuai alokasi waktu` 
+: type === 'KKTP' ? `- KKTP memiliki tabel PORTRAIT dengan kolom: No | Tujuan Pembelajaran | Kriteria | Bukti/Asesmen
+- Setiap baris <tr> WAJIB memiliki jumlah <td> yang sesuai dengan header
+- Pertahankan nomor urut yang berkelanjutan dari baris sebelumnya`
+: type === 'CP' ? `- CP (Capaian Pembelajaran) cenderung naratif, bukan tabel
+- Pertahankan format paragraf <p> dengan text-align: justify dan text-indent
+- Lanjutkan fase/elemen yang belum selesai`
+: type === 'LKPD' ? `- LKPD (Lembar Kerja Peserta Didik) memiliki berbagai bagian: soal, tabel, gambar
+- Pertahankan format soal (numbered list, pilihan ganda dengan <ol type="A">)
+- Lanjutkan dari nomor soal terakhir yang ada`
+: `- Pertahankan format dan gaya tabel/paragraf yang sudah ada di dokumen
+- Pastikan setiap <tr> memiliki jumlah <td> yang konsisten dengan header`}
+
+9. AKHIRI dokumen dengan TANDA TANGAN jika sudah tidak ada materi yang tersisa:
+   Gunakan template tanda tangan standar (Mengetahui, Kepala Sekolah / Guru Mata Pelajaran dengan NIP titik-titik).
+10. HANYA keluarkan lanjutan kode HTML.
 ` : isMajorMismatch ? `
 === PERINGATAN: MISMATCH KONTEKS (PENTING) ===
 TUGAS ANDA: Peringatkan user di sidebar bahwa materi/tipe berbeda. JANGAN edit dokumen. 
