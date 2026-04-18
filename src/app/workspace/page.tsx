@@ -51,6 +51,25 @@ function WorkspaceContent() {
   const [progressStage, setProgressStage] = useState(-1);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
+  
+  // Load messages from sessionStorage on mount (to survive refresh)
+  useEffect(() => {
+    const savedChat = sessionStorage.getItem(`chat_history_${docId || 'temp'}`);
+    if (savedChat) {
+      try {
+        setMessages(JSON.parse(savedChat));
+      } catch (e) {
+        console.error("Failed to parse saved chat", e);
+      }
+    }
+  }, [docId]);
+
+  // Save messages to sessionStorage whenever they change
+  useEffect(() => {
+    if (messages.length > 0) {
+      sessionStorage.setItem(`chat_history_${activeDocId || docId || 'temp'}`, JSON.stringify(messages));
+    }
+  }, [messages, activeDocId, docId]);
   const hasStarted = useRef(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -609,6 +628,11 @@ function WorkspaceContent() {
     </motion.div>
   );
 
+  const clearSessionChat = useCallback(() => {
+    const id = activeDocId || docId || 'temp';
+    sessionStorage.removeItem(`chat_history_${id}`);
+  }, [activeDocId, docId]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col h-screen overflow-hidden text-foreground">
       <style>{`
@@ -653,7 +677,7 @@ function WorkspaceContent() {
 
       <nav className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50 transition-colors duration-300 shrink-0 relative">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground hover:bg-secondary"><ChevronLeft className="w-5 h-5" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => { clearSessionChat(); router.back(); }} className="text-muted-foreground hover:bg-secondary"><ChevronLeft className="w-5 h-5" /></Button>
           <Link href="/" className="flex items-center gap-2">
             <div className="relative w-8 h-8 rounded overflow-hidden">
               <Image 
@@ -676,7 +700,7 @@ function WorkspaceContent() {
 
         {/* Center Toggle Navigation — layout matched, but colors back to grey */}
         <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-secondary/80 backdrop-blur-md rounded-lg p-1 border border-border">
-          <Link href="/dashboard">
+          <Link href="/dashboard" onClick={clearSessionChat}>
             <Button 
               variant="ghost" 
               size="sm" 
