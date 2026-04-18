@@ -933,7 +933,8 @@ ATURAN WAJIB KONTINUASI:
 
 ${layoutGuide}
 
-11. HANYA keluarkan lanjutan kode HTML MURNI. Karakter pertama output HARUS berupa tag HTML.
+11. JIKA dokumen sebelumnya diakhiri dengan </table> tetapi materi belum selesai, ANDA WAJIB memulai output dengan tag <table> baru yang memiliki struktur kolom yang SAMA.
+12. HANYA keluarkan lanjutan kode HTML MURNI. Karakter pertama output HARUS berupa tag HTML.
 `;
             }
 

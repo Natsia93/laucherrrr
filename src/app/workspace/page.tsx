@@ -116,13 +116,13 @@ function WorkspaceContent() {
     }
   };
 
-  // Check if document is structurally complete (has signature section)
+  // Check if document is structurally complete (properly ended)
   const isDocumentComplete = useCallback((content: string): boolean => {
     if (!content || content.length < 500) return false;
-    const hasSignature = /(?:Kepala\s*Sekolah|Guru\s*Mata\s*Pelajaran|NIP\s*[\.:])/.test(content);
     const trimmed = content.trim();
+    // A document is complete if it ends with a closing table or div tag
     const hasProperEnding = trimmed.endsWith('</table>') || trimmed.endsWith('</div>');
-    return hasSignature && hasProperEnding;
+    return hasProperEnding;
   }, []);
 
   const isLandscapeType = useMemo(() => {
