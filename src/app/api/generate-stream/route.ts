@@ -824,6 +824,88 @@ export async function POST(req: Request) {
               }
             }
 
+            // === SMART CONTINUATION CONTEXT PROCESSING ===
+            let continuationBlock = "";
+            if (isContinue) {
+              const fullDoc = rawContext || rawPrompt;
+              let structuralAnalysis = "";
+              let smartContext = fullDoc;
+              
+              if (fullDoc && fullDoc.length > 0) {
+                const babMatches = [...fullDoc.matchAll(/BAB\s+[\dIVXivx]+\s*[:\s]*([^<\n]{3,60})/gi)];
+                const lastBab = babMatches.length > 0 ? babMatches[babMatches.length - 1][0].trim() : "tidak terdeteksi";
+                
+                const headerRowMatch = fullDoc.match(/<tr[^>]*>(?:\s*<t[hd][^>]*>[\s\S]*?<\/t[hd]>\s*)+<\/tr>/i);
+                let columnCount = 0;
+                if (headerRowMatch) {
+                  const cellMatches = headerRowMatch[0].match(/<t[hd]/gi);
+                  columnCount = cellMatches ? cellMatches.length : 0;
+                }
+                const colspanMatches = [...fullDoc.matchAll(/colspan="(\d+)"/gi)];
+                const maxColspan = colspanMatches.length > 0 ? Math.max(...colspanMatches.map(m => parseInt(m[1]))) : 0;
+                if (maxColspan > columnCount) columnCount = maxColspan;
+                
+                const tail100 = fullDoc.trim().slice(-100);
+                const hasOpenTag = /<[^/][^>]*$/.test(tail100);
+                
+                const lastTableMatch = fullDoc.match(/<table[\s\S]*$/i);
+                const rowCount = lastTableMatch ? (lastTableMatch[0].match(/<tr/gi) || []).length : 0;
+                
+                structuralAnalysis = `ANALISIS STRUKTURAL OTOMATIS:
+- Jenis Dokumen: ${type}
+- Total karakter dokumen: ${fullDoc.length}
+- BAB terdeteksi (${babMatches.length}): ${babMatches.map(m => m[0].trim()).slice(-5).join(' | ') || 'tidak ada'}
+- BAB terakhir: ${lastBab}
+- Jumlah kolom tabel utama: ${columnCount || 'tidak terdeteksi'}
+- Jumlah baris di tabel terakhir: ${rowCount}
+- Ada tag HTML yang belum ditutup: ${hasOpenTag ? 'YA - TUTUP DULU!' : 'Tidak'}
+- 100 karakter terakhir: """${tail100}"""`;
+
+                if (fullDoc.length > 7000) {
+                  const head = fullDoc.substring(0, 1500);
+                  const tailDoc = fullDoc.substring(fullDoc.length - 5000);
+                  smartContext = `${head}\n\n<!-- ... ${fullDoc.length - 6500} karakter konten tengah dipotong ... -->\n\n${tailDoc}`;
+                }
+              }
+              
+              const layoutGuide = type === 'PROSEM' ? `- PROSEM: tabel LANDSCAPE 33 KOLOM. Setiap <tr> WAJIB 33 <td>. Font 8-9pt. Separator BAB: colspan="33", bg #ADD8E6.`
+                : type === 'PROTA' ? `- PROTA: tabel LANDSCAPE 5 KOLOM. Setiap <tr> WAJIB 5 <td>. Header: bg #FCE4D6. Separator BAB: bg #ADD8E6, colspan="5". No RESET per BAB.`
+                : type === 'ATP' ? `- ATP: tabel 5 KOLOM. Setiap <tr> WAJIB 5 <td>. Header: bg #FCE4D6. Separator BAB: bg #E7EFF6, colspan="5". No RESET per BAB.`
+                : type === 'KKTP' ? `- KKTP: tabel 6 KOLOM. Setiap <tr> WAJIB 6 <td>. Header: bg #E1D5E7. Separator BAB: bg #F9CB9C, colspan="6". No RESET per BAB.`
+                : type === 'LKPD' ? `- LKPD: Format soal numbered list, PG dengan <ol type="A">. Lanjutkan dari nomor soal terakhir.`
+                : type === 'CP' ? `- CP: Format naratif <p> dengan text-align: justify. Lanjutkan fase/elemen yang belum selesai.`
+                : `- Pertahankan format dan gaya yang sudah ada. Pastikan konsistensi kolom.`;
+              
+              continuationBlock = `
+=== MODE: LANJUTKAN PENULISAN (SANGAT KETAT) ===
+TUGAS ANDA: LANJUTKAN isi dokumen HTML yang terpotong. Output Anda akan LANGSUNG DITEMPELKAN ke akhir dokumen.
+
+${structuralAnalysis}
+
+DOKUMEN YANG SUDAH DITULIS (AWAL + AKHIR):
+"""
+${smartContext}
+"""
+
+ATURAN WAJIB KONTINUASI:
+1. BACA ANALISIS STRUKTURAL di atas. Ini menunjukkan kondisi dokumen saat ini.
+2. LIHAT "100 karakter terakhir" - ini titik PERSIS di mana Anda harus melanjutkan.
+3. Jika ada tag HTML terbuka, TUTUP DULU sebelum menulis konten baru.
+4. SETIAP BARIS <tr> WAJIB memiliki jumlah <td> PERSIS SAMA dengan baris header tabel.
+5. PERTAHANKAN style inline yang sama (warna, font-size, padding, border) seperti baris sebelumnya.
+6. JANGAN tulis ulang dari awal. JANGAN duplikasi konten/BAB yang sudah ada.
+7. JANGAN tulis tag <html>, <body>, atau <div> pembuka baru.
+8. JANGAN gunakan markdown code blocks. LANGSUNG KODE HTML.
+9. JANGAN menggunakan format SMART_PATCH. LANGSUNG keluarkan lanjutan kode HTML.
+10. Nomor urut "No" WAJIB MELANJUTKAN dari baris terakhir (JANGAN reset kecuali ganti BAB).
+
+${layoutGuide}
+
+11. AKHIRI dokumen dengan TANDA TANGAN jika sudah tidak ada materi/BAB yang tersisa.
+12. HANYA keluarkan lanjutan kode HTML MURNI. Karakter pertama output HARUS berupa tag HTML.
+`;
+            }
+
             systemPrompt = `Anda adalah Dekstorio AI Assistant — asisten cerdas premium untuk pendidik Indonesia.
 WAKTU SAAT INI: ${currentDate}.
 
@@ -832,59 +914,7 @@ DOKUMEN SAAT INI DI EDITOR:
 Jenis: ${type}
 Konten: ${rawContext || "Kosong"}
 
-${isContinue ? `
-=== MODE: LANJUTKAN PENULISAN (SANGAT KETAT) ===
-TUGAS ANDA: LANJUTKAN isi dokumen HTML yang terpotong. 
-PENTING: Anda sedang berada di dalam editor dokumen. Jangan memberikan salam atau penjelasan.
-
-SELURUH DOKUMEN YANG SUDAH DITULIS (UNTUK DIANALISIS): 
-"""
-${rawContext || rawPrompt}
-"""
-
-ATURAN WAJIB KONTINUASI:
-1. BACA DAN ANALISIS seluruh konten dokumen di atas dengan cermat sebelum menulis apapun.
-2. IDENTIFIKASI jenis dokumen ini: ${type}. Kenali layout-nya.
-3. IDENTIFIKASI struktur tabel terakhir yang sedang aktif:
-   - Berapa jumlah kolom? Apa isi header kolom tersebut?
-   - Berapa baris yang sudah diisi? Baris terakhir sampai di mana?
-   - Apakah tag HTML terakhir terbuka (misalnya <td> belum ditutup)?
-4. LANJUTKAN PERSIS dari karakter terakhir. Jika tag terbuka, tutup dulu. Jika baris tabel belum selesai, selesaikan dulu.
-5. JANGAN tulis ulang dari awal. JANGAN buat KOP SURAT lagi. JANGAN duplikasi konten yang sudah ada.
-6. JANGAN tulis tag <html>, <body>, atau <div> pembuka baru.
-7. JANGAN gunakan markdown code blocks (\`\`\`html). LANGSUNG KODE HTML.
-8. JANGAN menggunakan format SMART_PATCH. LANGSUNG keluarkan lanjutan kode HTML.
-
-PANDUAN LAYOUT PER JENIS DOKUMEN:
-${type === 'ATP' ? `- ATP memiliki tabel utama dengan 5 KOLOM: No | Tujuan Pembelajaran | Alur Tujuan Pembelajaran | JP | Profil Pelajar Pancasila
-- Setiap BAB dimulai dengan baris header berwarna (#C5B4E3 / lavender)
-- Setiap baris <tr> WAJIB memiliki tepat 5 <td>
-- Pertahankan nomor urut yang berkelanjutan dari baris sebelumnya` 
-: type === 'PROTA' ? `- PROTA (Program Tahunan) memiliki tabel utama dengan 5 KOLOM: No | Kompetensi Dasar / Materi Pokok | Tema/Materi Pokok | JP | Keterangan (Semester/Bulan)
-- Setiap BAB dimulai dengan baris header berwarna (biasanya teal/cyan)
-- Setiap baris <tr> WAJIB memiliki tepat 5 <td> atau sesuai colspan yang ada
-- Pertahankan nomor urut yang berkelanjutan dari baris sebelumnya` 
-: type === 'PROSEM' ? `- PROSEM (Program Semester) memiliki tabel LANDSCAPE dengan BANYAK KOLOM:
-  No | Kompetensi Dasar | Materi Pokok | JP | lalu kolom-kolom Bulan (Jan-Jun atau Jul-Des)
-- Setiap baris <tr> WAJIB memiliki jumlah <td> yang SAMA dengan baris header
-- Pertahankan nomor urut yang berkelanjutan dari baris sebelumnya
-- WAJIB isi kolom bulan dengan tanda centang (✓) sesuai alokasi waktu` 
-: type === 'KKTP' ? `- KKTP memiliki tabel PORTRAIT dengan kolom: No | Tujuan Pembelajaran | Kriteria | Bukti/Asesmen
-- Setiap baris <tr> WAJIB memiliki jumlah <td> yang sesuai dengan header
-- Pertahankan nomor urut yang berkelanjutan dari baris sebelumnya`
-: type === 'CP' ? `- CP (Capaian Pembelajaran) cenderung naratif, bukan tabel
-- Pertahankan format paragraf <p> dengan text-align: justify dan text-indent
-- Lanjutkan fase/elemen yang belum selesai`
-: type === 'LKPD' ? `- LKPD (Lembar Kerja Peserta Didik) memiliki berbagai bagian: soal, tabel, gambar
-- Pertahankan format soal (numbered list, pilihan ganda dengan <ol type="A">)
-- Lanjutkan dari nomor soal terakhir yang ada`
-: `- Pertahankan format dan gaya tabel/paragraf yang sudah ada di dokumen
-- Pastikan setiap <tr> memiliki jumlah <td> yang konsisten dengan header`}
-
-9. AKHIRI dokumen dengan TANDA TANGAN jika sudah tidak ada materi yang tersisa:
-   Gunakan template tanda tangan standar (Mengetahui, Kepala Sekolah / Guru Mata Pelajaran dengan NIP titik-titik).
-10. HANYA keluarkan lanjutan kode HTML.
-` : isMajorMismatch ? `
+${isContinue ? continuationBlock : isMajorMismatch ? `
 === PERINGATAN: MISMATCH KONTEKS (PENTING) ===
 TUGAS ANDA: Peringatkan user di sidebar bahwa materi/tipe berbeda. JANGAN edit dokumen. 
 ` : willEditDocument ? `

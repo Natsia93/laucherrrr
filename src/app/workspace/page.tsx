@@ -205,7 +205,7 @@ function WorkspaceContent() {
               if (data.isCutOff) setIsCutOff(true);
             }
             if (data.type === "chunk") {
-              if (!hasDecidedMode && isAssistantRevision) {
+              if (!hasDecidedMode && isAssistantRevision && !isContinue) {
                 decisionBuffer += data.text;
                 
                 const patchRegex = /\[(?:SMART_?)?PATCH_START\]/i;
@@ -750,7 +750,7 @@ function WorkspaceContent() {
       </nav>
 
       <main className="flex-1 flex overflow-hidden min-h-0 relative">
-        <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto overflow-x-auto p-4 md:p-12 bg-[#e5e5e0] dark:bg-[#050704]/50">
+        <div ref={docAreaRef} data-lenis-prevent="true" className={`flex-1 h-full overflow-y-auto overflow-x-auto p-4 md:py-12 bg-[#e5e5e0] dark:bg-[#050704]/50 ${isLandscapeType ? 'md:px-4' : 'md:pl-8 md:pr-16'}`}>
           {/* Constrained Document Wrapper (The Plot) */}
           <div 
             className="mx-auto flex flex-col items-center py-4"
@@ -797,47 +797,51 @@ function WorkspaceContent() {
               </div>
             </div>
 
-            {/* Document Status: Continue Button OR Completion Indicator */}
-            <div 
-              className="mt-12 w-full flex flex-col items-center transition-all duration-200"
-              style={{ 
-                transform: `scale(${(zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0)})`, 
-                transformOrigin: 'top center'
-              }}
-            >
-              {!loading && isGenerated && displayedContent && (
-                isCutOff ? (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }} 
-                    animate={{ opacity: 1, scale: 1 }} 
-                    className="mb-12"
-                  >
-                    <Button 
-                      onClick={() => handleSendMessage(true)} 
-                      className="px-12 py-6 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-xl font-bold shadow-xl shadow-[#4d7537]/20 border-none transition-all active:scale-95 flex items-center gap-3"
-                    >
-                      <Sparkles className="w-5 h-5 animate-pulse" /> Dokumen Belum Selesai — Lanjutkan Penulisan
-                    </Button>
-                  </motion.div>
-                ) : isDocumentComplete(displayedContent) ? (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    className="mb-12"
-                  >
-                    <div className="flex items-center gap-2.5 bg-[#4d7537]/10 border border-[#4d7537]/30 text-[#4d7537] dark:text-[#7cb860] px-6 py-3 rounded-xl text-sm font-semibold shadow-sm">
-                      <CheckCircle2 className="w-5 h-5" />
-                      Dokumen telah selesai dibuat secara lengkap.
-                    </div>
-                  </motion.div>
-                ) : null
-              )}
-            </div>
+            {/* Document Completion Indicator (in-document, non-floating) */}
+            {!loading && isGenerated && displayedContent && !isCutOff && isDocumentComplete(displayedContent) && (
+              <div 
+                className="mt-12 w-full flex flex-col items-center"
+                style={{ 
+                  transform: `scale(${(zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0)})`, 
+                  transformOrigin: 'top center'
+                }}
+              >
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  className="mb-12"
+                >
+                  <div className="flex items-center gap-2.5 bg-[#4d7537]/10 border border-[#4d7537]/30 text-[#4d7537] dark:text-[#7cb860] px-6 py-3 rounded-xl text-sm font-semibold shadow-sm">
+                    <CheckCircle2 className="w-5 h-5" />
+                    Dokumen telah selesai dibuat secara lengkap.
+                  </div>
+                </motion.div>
+              </div>
+            )}
           </div>
 
           {/* Extra bottom space for scrolling */}
           {displayedContent && <div className="h-64" />}
         </div>
+
+        {/* Floating Continue Button — always visible at bottom of doc area */}
+        <AnimatePresence>
+          {!loading && isGenerated && displayedContent && isCutOff && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className={`absolute bottom-8 left-0 z-30 flex justify-center pointer-events-none ${!isSidebarCollapsed ? 'md:right-[420px]' : ''} right-0`}
+            >
+              <Button 
+                onClick={() => handleSendMessage(true)} 
+                className="pointer-events-auto px-10 py-5 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-xl font-bold shadow-2xl shadow-[#4d7537]/30 border-none transition-all active:scale-95 flex items-center gap-3"
+              >
+                <Sparkles className="w-5 h-5 animate-pulse" /> Dokumen Belum Selesai — Lanjutkan Penulisan
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Sidebar */}
         <div className={`fixed inset-0 z-[100] md:relative md:inset-auto md:z-10 h-full border-l border-border bg-card flex flex-col transition-all duration-300 ${
