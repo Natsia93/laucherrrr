@@ -24,7 +24,7 @@ export default function Home() {
   const [isReady, setIsReady] = useState(false);
 
   // Menggunakan kata-kata yang relevan
-  const heroWords = ["Prosem & Prota", "CP, ATP & KKTP", "Desain Evaluasi"];
+  const heroWords = ["Prosem & Prota", "CP, ATP & KKTP", "Desain Evaluasi", "Lembar Kerja PD"];
 
   useEffect(() => {
     // Detect if this is a hard entry (reload/first visit) or client-side navigation
