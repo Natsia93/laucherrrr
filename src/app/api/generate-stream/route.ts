@@ -810,7 +810,12 @@ function extractTitle(type: string, rawPrompt: string): string {
   const finalKelas = isMeaningless(kelas) ? "-" : kelas;
   const finalMateri = isMeaningless(materi) ? "" : materi;
 
-  let title = `${type} - Kelas ${finalKelas} - Mapel ${finalMapel}`;
+  let displayType = type;
+  if (type.includes("KISI-KISI") || type.includes("Desain Evaluasi")) {
+    displayType = "ASESMEN";
+  }
+
+  let title = `${displayType} - Kelas ${finalKelas} - Mapel ${finalMapel}`;
   if (finalMateri) title += ` - ${finalMateri}`;
   
   return title;

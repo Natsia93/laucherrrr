@@ -214,10 +214,12 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
                       <div className="shrink-0 w-8 h-8 rounded bg-neutral-100 dark:bg-[#1a2315] flex items-center justify-center border border-neutral-200 dark:border-[#3f612d]/30 group-hover/title:border-[#4d7537]/50 dark:group-hover/title:border-[#6b9d4f]/50 transition-colors">
                         <FileText className="w-4 h-4 text-[#4d7537] dark:text-[#89b867]" />
                       </div>
-                      <span className="translate-y-[1px] truncate group-hover/title:text-[#4d7537] dark:group-hover/title:text-[#89b867] transition-colors">{doc.title}</span>
+                      <span className="translate-y-[1px] truncate group-hover/title:text-[#4d7537] dark:group-hover/title:text-[#89b867] transition-colors">
+                        {doc.title.replace("KISI-KISI", "ASESMEN").replace("Desain Evaluasi", "ASESMEN")}
+                      </span>
                     </TableCell>
                     <TableCell className="text-neutral-500 dark:text-[#a2b591] text-sm font-sans px-4">
-                      {doc.type}
+                      {doc.type.replace("KISI-KISI", "ASESMEN").replace("Desain Evaluasi", "ASESMEN")}
                     </TableCell>
                     <TableCell className="text-neutral-500 dark:text-[#a2b591] text-sm font-sans px-4">{doc.date}</TableCell>
                     <TableCell className="text-neutral-500 dark:text-[#a2b591] text-sm font-sans px-4">{doc.size}</TableCell>

@@ -51,7 +51,9 @@ export function DashboardFilter({ availableCategories }: DashboardFilterProps) {
   };
 
   // Label display logic
-  const labelText = currentCategory || "Semua";
+  const labelText = (currentCategory === "KISI-KISI" || currentCategory === "Desain Evaluasi") 
+    ? "ASESMEN" 
+    : (currentCategory || "Semua");
 
   return (
     <Button 
