@@ -13,6 +13,7 @@ const SEQUENCE: { id: string | null; matches: string[] }[] = [
   { id: "KKTP", matches: ["KKTP"] },
   { id: "PROSEM", matches: ["PROSEM", "Program Semester"] },
   { id: "PROTA", matches: ["PROTA", "Program Tahunan"] },
+  { id: "KISI-KISI", matches: ["KISI-KISI", "Desain Evaluasi", "ASESMEN"] },
   { id: null, matches: [] } // null represents "Semua / All"
 ];
 
