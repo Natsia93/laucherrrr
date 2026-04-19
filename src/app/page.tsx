@@ -326,6 +326,7 @@ export default function Home() {
             { label: "Prosem", value: "PROSEM" },
             { label: "Prota", value: "PROTA" },
             { label: "KKTP", value: "KKTP" },
+            { label: "LKPD", value: "LKPD" },
             { label: "Kisi Asesmen", value: "KISI-KISI" },
           ].map((tag) => (
             <button 
