@@ -723,29 +723,30 @@ function WorkspaceContent() {
         }
 
         .page-separator {
-          width: 100%;
-          height: 20px;
-          background: #e5e5e0; /* Match workspace background */
-          box-shadow: inset 0 5px 10px rgba(0,0,0,0.05), inset 0 -5px 10px rgba(0,0,0,0.05);
+          width: calc(100% + 40mm); /* Stretch beyond paper edges */
+          left: -20mm;
+          height: 16px;
+          background: #e5e5e0;
+          box-shadow: inset 0 2px 5px rgba(0,0,0,0.03), inset 0 -2px 5px rgba(0,0,0,0.03);
           position: absolute;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
-        /* Crop Marks (Siku L) */
-        .crop-mark {
-          position: absolute;
-          width: 20px;
-          height: 20px;
-          border-color: #ccc;
-          border-style: solid;
-          pointer-events: none;
+        .page-number-hint {
+          background: #d4d4cd;
+          color: #888;
+          font-family: 'Inter', sans-serif;
+          font-size: 10px;
+          font-weight: bold;
+          padding: 2px 8px;
+          border-radius: 10px;
+          transform: translateY(-1px);
         }
-        .crop-mark-tl { border-width: 1px 0 0 1px; left: 10px; top: 10px; }
-        .crop-mark-tr { border-width: 1px 1px 0 0; right: 10px; top: 10px; }
-        .crop-mark-bl { border-width: 0 0 1px 1px; left: 10px; bottom: 10px; }
-        .crop-mark-br { border-width: 0 1px 1px 0; right: 10px; bottom: 10px; }
 
         .dark .page-separator { background: #050704; }
-        .dark .crop-mark { border-color: #333; }
+        .dark .page-number-hint { background: #1a1a1a; color: #555; }
         
         .markdown-chat h1, .markdown-chat h2, .markdown-chat h3 { font-weight: bold; margin-bottom: 0.5rem; margin-top: 1rem; }
         .markdown-chat p { margin-bottom: 0.75rem; }
@@ -844,22 +845,28 @@ function WorkspaceContent() {
                 }}
               >
                 {/* Page Separators & Marks Overlay */}
-                <div className="page-overlay">
-                  {/* Render visual gaps for up to 20 pages */}
-                  {Array.from({ length: 20 }).map((_, i) => (
+                <div className="page-overlay no-print">
+                  {/* Render visual gaps for up to 30 pages */}
+                  {Array.from({ length: 30 }).map((_, i) => (
                     <React.Fragment key={i}>
-                      {/* The Gap */}
+                      {/* The Gap & Page Number */}
                       {i > 0 && (
                         <div 
                           className="page-separator" 
-                          style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm - 10px)` }} 
-                        />
+                          style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm - 8px)` }} 
+                        >
+                          <span className="page-number-hint">HALAMAN {i + 1}</span>
+                        </div>
                       )}
                       {/* Crop Marks for each page */}
-                      <div className="crop-mark crop-mark-tl" style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm + 10px)` }} />
-                      <div className="crop-mark crop-mark-tr" style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm + 10px)` }} />
-                      <div className="crop-mark crop-mark-bl" style={{ top: `calc(${(i + 1) * (isLandscapeType ? 210 : 297)}mm - 30px)` }} />
-                      <div className="crop-mark crop-mark-br" style={{ top: `calc(${(i + 1) * (isLandscapeType ? 210 : 297)}mm - 30px)` }} />
+                      {/* TL */}
+                      <div className="absolute w-[20px] h-[20px] border-t border-l border-[#ccc] dark:border-[#333]" style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm + 15mm)`, left: '15mm' }} />
+                      {/* TR */}
+                      <div className="absolute w-[20px] h-[20px] border-t border-r border-[#ccc] dark:border-[#333]" style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm + 15mm)`, right: '15mm' }} />
+                      {/* BL */}
+                      <div className="absolute w-[20px] h-[20px] border-b border-l border-[#ccc] dark:border-[#333]" style={{ top: `calc(${(i + 1) * (isLandscapeType ? 210 : 297)}mm - 15mm)`, left: '15mm' }} />
+                      {/* BR */}
+                      <div className="absolute w-[20px] h-[20px] border-b border-r border-[#ccc] dark:border-[#333]" style={{ top: `calc(${(i + 1) * (isLandscapeType ? 210 : 297)}mm - 15mm)`, right: '15mm' }} />
                     </React.Fragment>
                   ))}
                 </div>
