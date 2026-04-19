@@ -93,10 +93,14 @@ function WorkspaceContent() {
     // Dynamically calculate page count based on content height
     if (!docContentRef.current) return;
     
-    const pageHeight = (isLandscapeType ? 210 : 297) * 3.78; // 1mm ≈ 3.78px
+    // Use high precision for mm to px conversion (96 DPI standard)
+    const mmToPx = 3.7795275591;
+    const pageHeight = (isLandscapeType ? 210 : 297) * mmToPx; 
+    
     const observer = new ResizeObserver((entries) => {
       for (let entry of entries) {
-        const height = entry.target.scrollHeight;
+        // Use scrollHeight for accurate content measurement
+        const height = docContentRef.current?.scrollHeight || entry.contentRect.height;
         const count = Math.ceil(height / pageHeight) || 1;
         setPageCount(count);
       }
@@ -840,24 +844,24 @@ function WorkspaceContent() {
       </nav>
 
       <main className="flex-1 flex overflow-hidden min-h-0 relative">
-        <div ref={docAreaRef} data-lenis-prevent="true" className={`flex-1 h-full overflow-y-auto overflow-x-auto p-4 md:py-12 bg-[#e5e5e0] dark:bg-[#050704]/50 ${isLandscapeType ? 'md:px-4' : 'md:pl-8 md:pr-16'}`}>
-          {/* Constrained Document Wrapper (The Plot) */}
+        <div ref={docAreaRef} data-lenis-prevent="true" className={`flex-1 h-full overflow-y-auto overflow-x-auto p-4 md:py-12 bg-[#e5e5e0] dark:bg-[#050704]/50 ${isLandscapeType ? 'md:px-12' : 'md:pl-8 md:pr-16'}`}>
+          {/* Constrained Document Wrapper */}
           <div 
-            className="mx-auto flex flex-col items-center py-4"
+            className={`flex flex-col py-4 ${isLandscapeType ? 'items-start' : 'items-center mx-auto'}`}
             style={{ 
               width: "fit-content",
-              minWidth: "100%"
+              minWidth: isLandscapeType ? "auto" : "100%"
             }}
           >
             {/* The Scaled Paper Container */}
             <div 
               className="relative transition-all duration-200"
               style={{ 
-                width: `${(isLandscapeType ? 297 : 210) * ((zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0))}mm`,
+                width: `${(isLandscapeType ? 297 : 210) * (zoomLevel / 100)}mm`,
               }}
             >
               <div 
-                className={`a4-paper curriculum-content relative origin-top transition-all duration-200 border border-border/40 shadow-2xl ${isLandscapeType ? 'landscape' : ''}`}
+                className={`a4-paper curriculum-content relative origin-top-left transition-all duration-200 border border-border/40 shadow-2xl ${isLandscapeType ? 'landscape' : ''}`}
                 style={{ 
                   transform: `scale(${zoomLevel / 100})`,
                   marginBottom: `${(-(isLandscapeType ? 210 : 297) * (1 - (zoomLevel / 100)))}mm`
