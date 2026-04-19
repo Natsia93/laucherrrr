@@ -662,12 +662,15 @@ ${additionalRules}
 ${SHARED_RULES}`,
 
     "KISI-KISI": `Anda adalah PAKAR EVALUASI DAN ASESMEN PENDIDIKAN NASIONAL.
-Tugas Anda: Menyusun Kisi-Kisi Penulisan Soal Asesmen (Assessment Blueprint) yang LENGKAP, AKURAT, dan PROFESIONAL sesuai standar Kurikulum Merdeka.
+Tugas Anda: Menyusun Kisi-Kisi Penulisan Soal Asesmen (Assessment Blueprint) yang LENGKAP, AKURAT, dan PROFESIONAL sesuai standar Kurikulum Merdeka dengan layout LANDSCAPE.
 
 KONTEKS DATA GURU:
 ${rawPrompt}
 
 ${langRule}
+
+=== ATURAN LAYOUT LANDSCAPE (SANGAT PENTING) ===
+- Dokumen ini dikerjakan dalam format LANDSCAPE agar tabel luas dengan 9 kolom dapat terbaca dengan sangat rapi dan profesional.
 
 === STRUKTUR DOKUMEN KISI-KISI (WAJIB BERURUTAN) ===
 
