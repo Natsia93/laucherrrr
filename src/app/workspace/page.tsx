@@ -708,8 +708,44 @@ function WorkspaceContent() {
         .curriculum-content table { border-collapse: collapse; width: 100%; border: 1px solid black; margin-bottom: 1.5rem; table-layout: fixed; }
         .curriculum-content table:not([border="0"]) th { background-color: #f2f2f2; border: 1px solid black; padding: 12px 10px; font-weight: bold; text-align: center; font-size: 11pt; }
         .curriculum-content table:not([border="0"]) td { border: 1px solid black; padding: 12px 10px; vertical-align: top; text-align: justify; font-size: 11pt; }
-        .curriculum-content table[border="0"], .curriculum-content table[border="0"] td, .curriculum-content table[border="0"] th { border: none !important; }
-        .curriculum-content [dir="rtl"] { direction: rtl; text-align: right; }
+        .a4-paper table[border="0"], .a4-paper table[border="0"] td, .a4-paper table[border="0"] th { border: none !important; }
+        .a4-paper [dir="rtl"] { direction: rtl; text-align: right; }
+        
+        /* Multi-page Visual Simulation */
+        .page-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          pointer-events: none;
+          z-index: 10;
+        }
+
+        .page-separator {
+          width: 100%;
+          height: 20px;
+          background: #e5e5e0; /* Match workspace background */
+          box-shadow: inset 0 5px 10px rgba(0,0,0,0.05), inset 0 -5px 10px rgba(0,0,0,0.05);
+          position: absolute;
+        }
+
+        /* Crop Marks (Siku L) */
+        .crop-mark {
+          position: absolute;
+          width: 20px;
+          height: 20px;
+          border-color: #ccc;
+          border-style: solid;
+          pointer-events: none;
+        }
+        .crop-mark-tl { border-width: 1px 0 0 1px; left: 10px; top: 10px; }
+        .crop-mark-tr { border-width: 1px 1px 0 0; right: 10px; top: 10px; }
+        .crop-mark-bl { border-width: 0 0 1px 1px; left: 10px; bottom: 10px; }
+        .crop-mark-br { border-width: 0 1px 1px 0; right: 10px; bottom: 10px; }
+
+        .dark .page-separator { background: #050704; }
+        .dark .crop-mark { border-color: #333; }
         
         .markdown-chat h1, .markdown-chat h2, .markdown-chat h3 { font-weight: bold; margin-bottom: 0.5rem; margin-top: 1rem; }
         .markdown-chat p { margin-bottom: 0.75rem; }
@@ -800,16 +836,37 @@ function WorkspaceContent() {
               }}
             >
               <div 
-                className={`a4-paper curriculum-content relative origin-top-left transition-all duration-200 border border-border shadow-2xl ${
-                  isLandscapeType ? "landscape" : ""
-                }`}
+                className={`a4-paper curriculum-content relative ${isLandscapeType ? 'landscape' : ''}`}
                 style={{ 
-                  transform: `scale(${(zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0)})`,
+                  transform: `scale(${zoomLevel / 100})`,
+                  transformOrigin: "top center",
+                  marginBottom: `${(-(isLandscapeType ? 210 : 297) * (1 - (zoomLevel / 100)))}mm`
                 }}
               >
+                {/* Page Separators & Marks Overlay */}
+                <div className="page-overlay">
+                  {/* Render visual gaps for up to 20 pages */}
+                  {Array.from({ length: 20 }).map((_, i) => (
+                    <React.Fragment key={i}>
+                      {/* The Gap */}
+                      {i > 0 && (
+                        <div 
+                          className="page-separator" 
+                          style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm - 10px)` }} 
+                        />
+                      )}
+                      {/* Crop Marks for each page */}
+                      <div className="crop-mark crop-mark-tl" style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm + 10px)` }} />
+                      <div className="crop-mark crop-mark-tr" style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm + 10px)` }} />
+                      <div className="crop-mark crop-mark-bl" style={{ top: `calc(${(i + 1) * (isLandscapeType ? 210 : 297)}mm - 30px)` }} />
+                      <div className="crop-mark crop-mark-br" style={{ top: `calc(${(i + 1) * (isLandscapeType ? 210 : 297)}mm - 30px)` }} />
+                    </React.Fragment>
+                  ))}
+                </div>
+
                 <AnimatePresence mode="wait">
                   {displayedContent ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative z-0">
                       {loading && assistantMode === 'edit' && (
                         <div className="absolute inset-0 bg-background/5 backdrop-blur-[1px] z-[5] flex items-center justify-center rounded-lg pointer-events-none">
                           <div className="bg-card/90 border border-border px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in zoom-in duration-300">
