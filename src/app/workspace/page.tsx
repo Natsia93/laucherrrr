@@ -847,34 +847,28 @@ function WorkspaceContent() {
         <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto overflow-x-auto p-4 md:py-12 bg-[#e5e5e0] dark:bg-[#050704]/50 md:px-8">
           {/* Constrained Document Wrapper */}
           <div 
-            className={`flex-1 flex flex-col py-4 ${isLandscapeType ? 'items-start md:pl-6' : 'items-center mx-auto'}`}
+            className="flex-1 flex flex-col items-center mx-auto py-4"
             style={{ 
-              width: "100%",
-              maxWidth: "100%",
-              overflow: "visible"
+              width: "fit-content",
+              minWidth: "100%",
             }}
           >
-            {/* The Scaled Paper Container - Responsive Width for Landscape */}
+            {/* The Scaled Paper Container */}
             <div 
               className="relative transition-all duration-200"
               style={{ 
-                width: isLandscapeType ? "min(100%, 237.6mm)" : "calc(210mm * (zoomLevel / 100))",
-                height: isLandscapeType ? "min(70vh, 168mm)" : "auto", 
-                maxWidth: "100%",
-                overflow: "visible"
+                width: `${(isLandscapeType ? 297 : 210) * (zoomLevel / 100) * (isLandscapeType ? 0.75 : 1.0)}mm`,
+                height: `${(isLandscapeType ? 210 : 297) * (zoomLevel / 100) * (isLandscapeType ? 0.75 : 1.0)}mm`,
               }}
             >
               <div 
-                className={`a4-paper curriculum-content relative ${isLandscapeType ? 'origin-top-left landscape' : 'origin-top'} transition-all duration-200 border border-border/40 shadow-2xl`}
+                className={`a4-paper curriculum-content relative origin-top transition-all duration-200 border border-border/40 shadow-2xl ${isLandscapeType ? 'landscape' : ''}`}
                 style={{ 
-                  transform: isLandscapeType ? 
-                    `scale(min(${(zoomLevel / 100) * 0.8}, calc((100vw - 450px) / 1122.5)))` : 
-                    `scale(${zoomLevel / 100})`,
-                  position: isLandscapeType ? "absolute" : "relative",
+                  transform: `scale(${(zoomLevel / 100) * (isLandscapeType ? 0.75 : 1.0)})`,
+                  position: "absolute",
                   top: 0,
-                  left: 0,
-                  // Ensure it doesn't leave huge white space if height is large
-                  marginBottom: isLandscapeType ? "0" : `${(-(297) * (1 - (zoomLevel / 100)))}mm`
+                  left: "50%",
+                  translate: "-50% 0"
                 }}
               >
                 {/* Page Separators & Marks Overlay */}
