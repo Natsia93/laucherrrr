@@ -20,14 +20,14 @@ description: Aturan baku "Otak AI" Dekstorio — WAJIB dibaca sebelum mengubah a
 | **PROSEM** (Program Semester) | **Landscape** | **80%** | `route.ts` → `prompts["PROSEM"]` | `workspace/page.tsx` |
 | **KKTP** (Kriteria Ketercapaian TP) | Portrait | 100% | `route.ts` → `prompts["KKTP"]` | `workspace/page.tsx` |
 | **LKPD** (Lembar Kerja PD) | Portrait | 100% | `route.ts` → `prompts["LKPD"]` | `workspace/page.tsx` |
-| **KISI-KISI** (Kisi Asesmen) | **Landscape** | **80%** | `route.ts` → `prompts["KISI-KISI"]` | `workspace/page.tsx` |
+| **KISI-KISI** (Desain Evaluasi) | **Landscape** | **80%** | `route.ts` → `prompts["KISI-KISI"]` | `workspace/page.tsx` |
 
 ---
 
 ## 🔒 ATURAN YANG TIDAK BOLEH DIUBAH
 
 ### 1. Orientasi Dokumen
-- **Landscape**: `PROSEM`, `PROTA`, and `KISI-KISI`.
+- **Landscape**: `PROSEM`, `PROTA`, and `DESAIN EVALUASI` (KISI-KISI).
 - **Portrait**: Semua modul lainnya (`ATP`, `CP`, `KKTP`, `LKPD`).
 - Deteksi landscape di `workspace/page.tsx` menggunakan `activeDocType` (bukan `docType` dari URL) agar dokumen yang dimuat dari database tetap terdeteksi.
 
@@ -116,7 +116,7 @@ Untuk modul yang memiliki tabel per-BAB (`ATP`, `PROTA`, `PROSEM`, `KKTP`):
 - Nomor soal KONTINU (tidak reset antar tipe soal).
 - PG: Gunakan `<ol type="A">` untuk opsi.
 
-### KISI-KISI (Landscape)
+### DESAIN EVALUASI (Landscape)
 - Tabel: 9 kolom (No, Capaian, Kompetensi, Materi Pokok, Indikator Soal, Taksonomi, Bentuk Soal, Jumlah Soal, Nomor Soal).
 - Header Tabel: `background-color: #E1D5E7`.
 - Orientasi: **Landscape (80% Zoom)**.

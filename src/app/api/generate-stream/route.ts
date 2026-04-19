@@ -662,7 +662,7 @@ ${additionalRules}
 ${SHARED_RULES}`,
 
     "KISI-KISI": `Anda adalah PAKAR EVALUASI DAN ASESMEN PENDIDIKAN NASIONAL.
-Tugas Anda: Menyusun Kisi-Kisi Penulisan Soal Asesmen (Assessment Blueprint) yang LENGKAP, AKURAT, dan PROFESIONAL sesuai standar Kurikulum Merdeka dengan layout LANDSCAPE.
+Tugas Anda: Menyusun Desain Evaluasi (Assessment Blueprint) yang LENGKAP, AKURAT, dan PROFESIONAL sesuai standar Kurikulum Merdeka dengan layout LANDSCAPE.
 
 KONTEKS DATA GURU:
 ${rawPrompt}
@@ -679,7 +679,7 @@ BAGIAN 1 — HEADER BERWARNA:
    <table border="1" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
      <tr>
        <td style="background-color: #C5B4E3; padding: 12px 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
-         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif; color: black !important;">KISI-KISI PENULISAN SOAL ASESMEN SUMATIF</p>
+         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif; color: black !important;">DESAIN EVALUASI PENULISAN SOAL ASESMEN SUMATIF</p>
        </td>
      </tr>
      <tr>
@@ -751,7 +751,7 @@ ${SHARED_RULES}`,
   else if (isType("KKTP")) finalPrompt = prompts["KKTP"];
   else if (isType("Capaian Pembelajaran") || type === "CP") finalPrompt = prompts["CP"];
   else if (isType("LKPD")) finalPrompt = prompts["LKPD"];
-  else if (isType("KISI-KISI") || isType("Kisi Asesmen")) finalPrompt = prompts["KISI-KISI"];
+  else if (isType("KISI-KISI") || isType("Desain Evaluasi")) finalPrompt = prompts["KISI-KISI"];
   else finalPrompt = prompts["ATP"];
 
   return finalPrompt;

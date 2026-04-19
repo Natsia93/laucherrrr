@@ -24,7 +24,7 @@ export default function Home() {
   const [isReady, setIsReady] = useState(false);
 
   // Menggunakan kata-kata yang relevan
-  const heroWords = ["Prosem & Prota", "CP, ATP & KKTP", "Kisi Asesmen"];
+  const heroWords = ["Modul Ajar", "ATP", "Prota", "Prosem", "Desain Evaluasi"];
 
   useEffect(() => {
     // Detect if this is a hard entry (reload/first visit) or client-side navigation
@@ -56,7 +56,7 @@ export default function Home() {
     };
   }, [heroWords.length]);
 
-  const navigation = ["Beranda", "Modul Ajar", "CP & ATP", "Prosem/Prota", "Kisi Asesmen", "KKTP", "Harga", "Bantuan"];
+  const navigation = ["Beranda", "Modul Ajar", "CP & ATP", "Prosem/Prota", "Desain Evaluasi", "KKTP", "Harga", "Bantuan"];
 
   const sections = [
     {
@@ -295,7 +295,7 @@ export default function Home() {
                     <option value="PROSEM">Program Semester (PROSEM)</option>
                     <option value="LKPD">LKPD</option>
                     <option value="KKTP">KKTP</option>
-                    <option value="KISI-KISI">Kisi Asesmen</option>
+                    <option value="KISI-KISI">Desain Evaluasi</option>
                   </select>
                   <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400 pointer-events-none" />
                 </div>
@@ -327,7 +327,7 @@ export default function Home() {
             { label: "Prota", value: "PROTA" },
             { label: "KKTP", value: "KKTP" },
             { label: "LKPD", value: "LKPD" },
-            { label: "Kisi Asesmen", value: "KISI-KISI" },
+            { label: "Desain Evaluasi", value: "KISI-KISI" },
           ].map((tag) => (
             <button 
               key={tag.label} 

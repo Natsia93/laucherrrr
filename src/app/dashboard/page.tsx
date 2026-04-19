@@ -59,7 +59,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ sea
       } else if (categoryQuery === "PROSEM") {
         matchesCategory = doc.type === "PROSEM" || doc.type === "Program Semester";
       } else if (categoryQuery === "KISI-KISI") {
-        matchesCategory = doc.type === "KISI-KISI" || doc.type === "Kisi Asesmen";
+        matchesCategory = doc.type === "KISI-KISI" || doc.type === "Desain Evaluasi";
       } else {
         matchesCategory = doc.type === categoryQuery;
       }
