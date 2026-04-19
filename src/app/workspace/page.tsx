@@ -79,6 +79,32 @@ function WorkspaceContent() {
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [zoomLevel, setZoomLevel] = useState(100);
+  const [pageCount, setPageCount] = useState(1);
+  const docContentRef = useRef<HTMLDivElement>(null);
+
+  const isLandscapeType = useMemo(() => {
+    const type = activeDocType || docType || "";
+    return type.includes("Program Semester") || type.includes("Program Tahunan") || 
+           type.includes("PROSEM") || type.includes("PROTA") || type.includes("KISI-KISI") || type.includes("Kisi Asesmen") ||
+           (displayedContent && (displayedContent.includes('landscape') || displayedContent.includes('width: 297mm')));
+  }, [activeDocType, docType, displayedContent]);
+
+  useEffect(() => {
+    // Dynamically calculate page count based on content height
+    if (!docContentRef.current) return;
+    
+    const pageHeight = (isLandscapeType ? 210 : 297) * 3.78; // 1mm ≈ 3.78px
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const height = entry.target.scrollHeight;
+        const count = Math.ceil(height / pageHeight) || 1;
+        setPageCount(count);
+      }
+    });
+
+    observer.observe(docContentRef.current);
+    return () => observer.disconnect();
+  }, [isLandscapeType, displayedContent]);
 
   useEffect(() => {
     // We always want the UI to show 100% as default, 
@@ -124,13 +150,6 @@ function WorkspaceContent() {
     const hasProperEnding = trimmed.endsWith('</table>') || trimmed.endsWith('</div>');
     return hasProperEnding;
   }, []);
-
-  const isLandscapeType = useMemo(() => {
-    const type = activeDocType || docType || "";
-    return type.includes("Program Semester") || type.includes("Program Tahunan") || 
-           type.includes("PROSEM") || type.includes("PROTA") || type.includes("KISI-KISI") || type.includes("Kisi Asesmen") ||
-           (displayedContent && (displayedContent.includes('landscape') || displayedContent.includes('width: 297mm')));
-  }, [activeDocType, docType, displayedContent]);
 
   const streamGenerate = useCallback(async (rawPrompt: string, appendToExisting = false, rawContext?: string, isAssistantMode = false, forcedMode?: 'chat' | 'edit', isContinue = false) => {
     setLoading(true);
@@ -846,10 +865,10 @@ function WorkspaceContent() {
               >
                 {/* Page Separators & Marks Overlay */}
                 <div className="page-overlay no-print">
-                  {/* Render visual gaps for up to 30 pages */}
-                  {Array.from({ length: 30 }).map((_, i) => (
+                  {/* Render visual gaps only for pages that exist */}
+                  {Array.from({ length: pageCount }).map((_, i) => (
                     <React.Fragment key={i}>
-                      {/* The Line & Page Number */}
+                      {/* The Line & Page Number - Only show if there is a next page */}
                       {i > 0 && (
                         <div 
                           className="page-separator" 
@@ -869,7 +888,12 @@ function WorkspaceContent() {
 
                 <AnimatePresence mode="wait">
                   {displayedContent ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative z-0">
+                    <motion.div 
+                      ref={docContentRef}
+                      initial={{ opacity: 0 }} 
+                      animate={{ opacity: 1 }} 
+                      className="relative z-0"
+                    >
                       {loading && assistantMode === 'edit' && (
                         <div className="absolute inset-0 bg-background/5 backdrop-blur-[1px] z-[5] flex items-center justify-center rounded-lg pointer-events-none">
                           <div className="bg-card/90 border border-border px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in zoom-in duration-300">
