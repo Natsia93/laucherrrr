@@ -980,22 +980,30 @@ export async function POST(req: Request) {
                 }
               }
               
-              const layoutGuide = type === 'PROSEM' ? `- PROSEM: tabel LANDSCAPE dengan JUMLAH KOLOM TETAP sesuai header.
+              const isAsesmen = type.includes("KISI-KISI") || type.includes("Desain Evaluasi");
+              
+              const layoutGuide = isAsesmen ? `
+- LANJUTKAN TABEL ASESMEN:
+  1. Hubungkan langsung ke baris terakhir (<tr>) dari tabel yang sudah ada. JANGAN membuat <table> baru.
+  2. LANGSUNG buat baris baru (<tr>...</tr>).
+  3. LANJUTKAN PENOMORAN: Jika nomor soal terakhir adalah X (lihat di dokumen draf), mulai baris baru dengan nomor soal X+1.
+  4. Selesaikan hingga total soal mencapai target (misal: 20 soal).`
+                : type === 'PROSEM' ? `- PROSEM: tabel LANDSCAPE dengan JUMLAH KOLOM TETAP sesuai header.
   - LIHAT "Jumlah kolom tabel utama" dan "Header kolom" di ANALISIS STRUKTURAL — ini adalah jumlah kolom FINAL.
   - Setiap baris <tr> WAJIB memiliki TEPAT ${columnCount || 33} <td> (atau colspan yang setara). TIDAK KURANG, TIDAK LEBIH.
-  - DILARANG KERAS menambahkan kolom bulan baru yang TIDAK ADA di header tabel (misalnya jika header hanya sampai Desember, JANGAN tambahkan Januari dst).
+  - DILARANG KERAS menambahkan kolom bulan baru yang TIDAK ADA di header tabel.
   - DILARANG KERAS mengubah struktur tabel atau menambah kolom baru. Hanya ISI BARIS BARU.
   - Font 8-9pt. Separator BAB: colspan sesuai total kolom, bg #ADD8E6.
-  - Biarkan kolom minggu KOSONG sepenuhnya (<td style="..."></td>). Jangan isi dengan "V" atau tanda centang.`
+  - Biarkan kolom minggu KOSONG sepenuhnya (<td style="..."></td>).`
                 : type === 'PROTA' ? `- PROTA: tabel LANDSCAPE 5 KOLOM. Setiap <tr> WAJIB 5 <td>. Header: bg #FCE4D6. Separator BAB: bg #ADD8E6, colspan="5". No RESET per BAB.`
                 : type === 'ATP' ? `- ATP: tabel 5 KOLOM. Setiap <tr> WAJIB 5 <td>. Header: bg #FCE4D6. Separator BAB: bg #E7EFF6, colspan="5". No RESET per BAB.`
                 : type === 'KKTP' ? `- KKTP: tabel 6 KOLOM. Setiap <tr> WAJIB 6 <td>. Header: bg #E1D5E7. Separator BAB: bg #F9CB9C, colspan="6". No RESET per BAB.`
                 : type === 'LKPD' ? `- LKPD: Format soal numbered list, PG dengan <ol type="A">. Lanjutkan dari nomor soal terakhir.`
                 : type === 'CP' ? `- CP: Format naratif <p> dengan text-align: justify. Lanjutkan fase/elemen yang belum selesai.`
                 : `- Pertahankan format dan gaya yang sudah ada. Pastikan konsistensi kolom.`;
-              
+
               continuationBlock = `
-=== MODE: LANJUTKAN PENULISAN (SANGAT KETAT) ===
+=== MODE: LANJUTKAN PENULISAN (DIRECT APPEND) ===
 TUGAS ANDA: LANJUTKAN isi dokumen HTML yang terpotong. Output Anda akan LANGSUNG DITEMPELKAN ke akhir dokumen.
 
 ${structuralAnalysis}
@@ -1008,19 +1016,13 @@ ${smartContext}
 ATURAN WAJIB KONTINUASI:
 1. BACA ANALISIS STRUKTURAL di atas. Ini menunjukkan kondisi dokumen saat ini.
 2. LIHAT "100 karakter terakhir" - ini titik PERSIS di mana Anda harus melanjutkan.
-3. Jika ada tag HTML terbuka, TUTUP DULU sebelum menulis konten baru.
-4. SETIAP BARIS <tr> WAJIB memiliki jumlah <td> PERSIS SAMA dengan baris header tabel.
-5. PERTAHANKAN style inline yang sama (warna, font-size, padding, border) seperti baris sebelumnya.
-6. JANGAN tulis ulang dari awal. JANGAN duplikasi konten/BAB yang sudah ada.
-7. JANGAN tulis tag <html>, <body>, atau <div> pembuka baru.
-8. JANGAN gunakan markdown code blocks. LANGSUNG KODE HTML.
-9. JANGAN menggunakan format SMART_PATCH. LANGSUNG keluarkan lanjutan kode HTML.
-10. Nomor urut "No" WAJIB MELANJUTKAN dari baris terakhir (JANGAN reset kecuali ganti BAB).
+3. Jika ada tag HTML terbuka (misal: <tr> tanpa </tr>), TUTUP DULU tag tersebut sebelum menulis konten baru.
+4. JANGAN gunakan format [SMART_PATCH] atau [PATCH_START]. 
+5. JANGAN menulis ulang dari awal. LANGSUNG keluarkan lanjutan kode HTML.
+6. JANGAN gunakan markdown code blocks ( \`\`\` ). LANGSUNG kode HTML.
+7. JANGAN berikan penjelasan atau teks pembuka/penutup. Karakter pertama output HARUS berupa tag HTML.
 
 ${layoutGuide}
-
-11. JIKA dokumen sebelumnya diakhiri dengan </table> tetapi materi belum selesai, ANDA WAJIB memulai output dengan tag <table> baru yang memiliki struktur kolom yang SAMA.
-12. HANYA keluarkan lanjutan kode HTML MURNI. Karakter pertama output HARUS berupa tag HTML.
 `;
             }
 
