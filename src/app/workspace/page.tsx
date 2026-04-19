@@ -723,30 +723,31 @@ function WorkspaceContent() {
         }
 
         .page-separator {
-          width: calc(100% + 40mm); /* Stretch beyond paper edges */
-          left: -20mm;
-          height: 16px;
-          background: #e5e5e0;
-          box-shadow: inset 0 2px 5px rgba(0,0,0,0.03), inset 0 -2px 5px rgba(0,0,0,0.03);
+          width: calc(100% + 60px); 
+          left: -30px;
+          height: 1px;
+          border-top: 1px dashed #bbb;
           position: absolute;
           display: flex;
           align-items: center;
           justify-content: center;
+          z-index: 20;
         }
 
         .page-number-hint {
-          background: #d4d4cd;
-          color: #888;
+          background: #f4f3ed;
+          color: #999;
           font-family: 'Inter', sans-serif;
-          font-size: 10px;
+          font-size: 9px;
           font-weight: bold;
-          padding: 2px 8px;
-          border-radius: 10px;
-          transform: translateY(-1px);
+          padding: 0 10px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          transform: translateY(-50%);
         }
 
-        .dark .page-separator { background: #050704; }
-        .dark .page-number-hint { background: #1a1a1a; color: #555; }
+        .dark .page-separator { border-color: #333; }
+        .dark .page-number-hint { background: #080b06; border-color: #222; color: #444; }
         
         .markdown-chat h1, .markdown-chat h2, .markdown-chat h3 { font-weight: bold; margin-bottom: 0.5rem; margin-top: 1rem; }
         .markdown-chat p { margin-bottom: 0.75rem; }
@@ -837,10 +838,9 @@ function WorkspaceContent() {
               }}
             >
               <div 
-                className={`a4-paper curriculum-content relative ${isLandscapeType ? 'landscape' : ''}`}
+                className={`a4-paper curriculum-content relative origin-top transition-all duration-200 border border-border/40 shadow-2xl ${isLandscapeType ? 'landscape' : ''}`}
                 style={{ 
                   transform: `scale(${zoomLevel / 100})`,
-                  transformOrigin: "top center",
                   marginBottom: `${(-(isLandscapeType ? 210 : 297) * (1 - (zoomLevel / 100)))}mm`
                 }}
               >
@@ -849,24 +849,20 @@ function WorkspaceContent() {
                   {/* Render visual gaps for up to 30 pages */}
                   {Array.from({ length: 30 }).map((_, i) => (
                     <React.Fragment key={i}>
-                      {/* The Gap & Page Number */}
+                      {/* The Line & Page Number */}
                       {i > 0 && (
                         <div 
                           className="page-separator" 
-                          style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm - 8px)` }} 
+                          style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm)` }} 
                         >
                           <span className="page-number-hint">HALAMAN {i + 1}</span>
                         </div>
                       )}
                       {/* Crop Marks for each page */}
-                      {/* TL */}
-                      <div className="absolute w-[20px] h-[20px] border-t border-l border-[#ccc] dark:border-[#333]" style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm + 15mm)`, left: '15mm' }} />
-                      {/* TR */}
-                      <div className="absolute w-[20px] h-[20px] border-t border-r border-[#ccc] dark:border-[#333]" style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm + 15mm)`, right: '15mm' }} />
-                      {/* BL */}
-                      <div className="absolute w-[20px] h-[20px] border-b border-l border-[#ccc] dark:border-[#333]" style={{ top: `calc(${(i + 1) * (isLandscapeType ? 210 : 297)}mm - 15mm)`, left: '15mm' }} />
-                      {/* BR */}
-                      <div className="absolute w-[20px] h-[20px] border-b border-r border-[#ccc] dark:border-[#333]" style={{ top: `calc(${(i + 1) * (isLandscapeType ? 210 : 297)}mm - 15mm)`, right: '15mm' }} />
+                      <div className="absolute w-[15px] h-[15px] border-t border-l border-[#ccc] dark:border-[#333]/40" style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm + 15mm)`, left: '15mm' }} />
+                      <div className="absolute w-[15px] h-[15px] border-t border-r border-[#ccc] dark:border-[#333]/40" style={{ top: `calc(${i * (isLandscapeType ? 210 : 297)}mm + 15mm)`, right: '15mm' }} />
+                      <div className="absolute w-[15px] h-[15px] border-b border-l border-[#ccc] dark:border-[#333]/40" style={{ top: `calc(${(i + 1) * (isLandscapeType ? 210 : 297)}mm - 15mm)`, left: '15mm' }} />
+                      <div className="absolute w-[15px] h-[15px] border-b border-r border-[#ccc] dark:border-[#333]/40" style={{ top: `calc(${(i + 1) * (isLandscapeType ? 210 : 297)}mm - 15mm)`, right: '15mm' }} />
                     </React.Fragment>
                   ))}
                 </div>
