@@ -847,24 +847,28 @@ function WorkspaceContent() {
         <div ref={docAreaRef} data-lenis-prevent="true" className="flex-1 h-full overflow-y-auto overflow-x-auto p-4 md:py-12 bg-[#e5e5e0] dark:bg-[#050704]/50 md:px-8">
           {/* Constrained Document Wrapper */}
           <div 
-            className={`flex flex-col py-4 ${isLandscapeType ? 'items-start md:pl-12' : 'items-center mx-auto'}`}
+            className={`flex flex-col py-4 ${isLandscapeType ? 'items-start md:pl-6' : 'items-center mx-auto'}`}
             style={{ 
               width: "fit-content",
-              minWidth: isLandscapeType ? "auto" : "100%"
+              minWidth: isLandscapeType ? "0" : "100%"
             }}
           >
-            {/* The Scaled Paper Container */}
+            {/* The Scaled Paper Container - This container now strictly matches the scaled size */}
             <div 
               className="relative transition-all duration-200"
               style={{ 
-                width: `${(isLandscapeType ? 297 : 210) * (zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0)}mm`,
+                width: `calc(${(isLandscapeType ? 297 : 210) * (zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0)}mm)`,
+                height: `calc(${(isLandscapeType ? 210 : 297) * (zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0)}mm)`,
+                overflow: "visible"
               }}
             >
               <div 
                 className={`a4-paper curriculum-content relative ${isLandscapeType ? 'origin-top-left landscape' : 'origin-top'} transition-all duration-200 border border-border/40 shadow-2xl`}
                 style={{ 
                   transform: `scale(${(zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0)})`,
-                  marginBottom: `${(-(isLandscapeType ? 210 : 297) * (1 - ((zoomLevel / 100) * (isLandscapeType ? 0.8 : 1.0))))}mm`
+                  position: "absolute",
+                  top: 0,
+                  left: 0
                 }}
               >
                 {/* Page Separators & Marks Overlay */}
