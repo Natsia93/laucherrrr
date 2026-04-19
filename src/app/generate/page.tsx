@@ -142,6 +142,38 @@ function GenerateContent() {
            });
         }
 
+        if (docType === "KISI-KISI") {
+            initialQuestions = initialQuestions.filter(q => q.id !== 1005);
+            initialQuestions.push({
+               id: 1004,
+               question: "Pilih Semester yang ingin di-generate:",
+               type: "chips",
+               options: ["Semester Ganjil", "Semester Genap", "Ganjil & Genap"],
+               category: "mandatory"
+            });
+            initialQuestions.push({
+               id: 2002,
+               question: "Jumlah Soal Pilihan Ganda (PG):",
+               type: "chips",
+               options: ["0 Soal", "10 Soal", "20 Soal", "30 Soal"],
+               category: "data"
+            });
+            initialQuestions.push({
+               id: 3000,
+               question: "Jumlah Soal PG Kompleks:",
+               type: "chips",
+               options: ["0 Soal", "5 Soal", "10 Soal"],
+               category: "data"
+            });
+            initialQuestions.push({
+               id: 2004,
+               question: "Jumlah Soal Uraian/Esai:",
+               type: "chips",
+               options: ["0 Soal", "5 Soal", "10 Soal"],
+               category: "data"
+            });
+         }
+
         if (["Alur Tujuan Pembelajaran (ATP)", "ATP"].includes(docType)) {
            initialQuestions.push({
               id: 1004,
@@ -209,6 +241,14 @@ function GenerateContent() {
             fallback.push({ id: 2003, question: "Jumlah Soal Jawaban Singkat:", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal"], category: "data" });
             fallback.push({ id: 2004, question: "Jumlah Soal Esai:", type: "chips", options: ["0 Soal", "2 Soal", "5 Soal"], category: "data" });
         }
+
+        if (docType === "KISI-KISI") {
+             fallback = fallback.filter(q => q.id !== 1005);
+             fallback.push({ id: 1004, question: "Pilih Semester yang ingin di-generate:", type: "chips", options: ["Semester Ganjil", "Semester Genap", "Ganjil & Genap"], category: "mandatory" });
+             fallback.push({ id: 2002, question: "Jumlah Soal Pilihan Ganda (PG):", type: "chips", options: ["0 Soal", "10 Soal", "20 Soal", "30 Soal"], category: "data" });
+             fallback.push({ id: 3000, question: "Jumlah Soal PG Kompleks:", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal"], category: "data" });
+             fallback.push({ id: 2004, question: "Jumlah Soal Uraian/Esai:", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal"], category: "data" });
+         }
 
         if (!fallback.some(q => q.type === "file")) {
            fallback.push({

@@ -660,6 +660,83 @@ BAGIAN 4 — Tanda Tangan: (BAGIAN INI DIHAPUS, JANGAN DIHASILKAN)
 
 ${additionalRules}
 ${SHARED_RULES}`,
+
+    "KISI-KISI": `Anda adalah PAKAR EVALUASI DAN ASESMEN PENDIDIKAN NASIONAL.
+Tugas Anda: Menyusun Kisi-Kisi Penulisan Soal Asesmen (Assessment Blueprint) yang LENGKAP, AKURAT, dan PROFESIONAL sesuai standar Kurikulum Merdeka.
+
+KONTEKS DATA GURU:
+${rawPrompt}
+
+${langRule}
+
+=== STRUKTUR DOKUMEN KISI-KISI (WAJIB BERURUTAN) ===
+
+BAGIAN 1 — HEADER BERWARNA:
+- Buat header menggunakan tabel lavender:
+   <table border="1" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
+     <tr>
+       <td style="background-color: #C5B4E3; padding: 12px 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif; color: black !important;">KISI-KISI PENULISAN SOAL ASESMEN SUMATIF</p>
+       </td>
+     </tr>
+     <tr>
+       <td style="background-color: #E1D5E7; padding: 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+         <p style="font-weight: bold; margin: 0; font-size: 11pt; font-family: 'Times New Roman', serif; color: black !important;">MATA PELAJARAN : [MAPEL DALAM CAPITAL]</p>
+       </td>
+     </tr>
+   </table>
+
+BAGIAN 2 — IDENTITAS (TANPA JUDUL):
+- Gunakan tabel borderless (border="0"):
+  <table border="0" width="100%" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
+    <tr>
+      <td style="width: 160px; font-weight: bold; padding: 4px 0;">Mata Pelajaran</td>
+      <td style="width: 20px;">:</td>
+      <td>[Mapel]</td>
+    </tr>
+    <tr>
+      <td style="font-weight: bold; padding: 4px 0;">Kelas / Semester</td>
+      <td>:</td>
+      <td>[Kelas] / [Semester]</td>
+    </tr>
+    <tr>
+      <td style="font-weight: bold; padding: 4px 0;">Kurikulum</td>
+      <td>:</td>
+      <td>[Kurikulum dari Konteks atau Kurikulum Merdeka]</td>
+    </tr>
+    <tr>
+      <td style="font-weight: bold; padding: 4px 0;">Alokasi Waktu</td>
+      <td>:</td>
+      <td>.................... Menit</td>
+    </tr>
+  </table>
+
+BAGIAN 3 — REKAPITULASI JUMLAH SOAL (OPSIONAL):
+- Tampilkan ringkasan jumlah soal berdasarkan tipe (PG, PG Kompleks, Uraian) jika datanya tersedia.
+
+BAGIAN 4 — TABEL UTAMA KISI-KISI:
+- Buat tabel utama dengan 9 kolom:
+  1. No (4%)
+  2. Capaian Pembelajaran (18%)
+  3. Kompetensi (12%)
+  4. Materi Pokok (12%)
+  5. Indikator Soal (28%)
+  6. Taksonomi (8%)
+  7. Bentuk Soal (8%)
+  8. Jumlah Soal (5%)
+  9. Nomor Soal (5%)
+- Header Tabel: background-color: #E1D5E7; font-weight: bold; text-align: center; border: 1px solid black; padding: 10px 5px;
+
+=== KETENTUAN ISI TABEL (WAJIB) ===
+1. **Indikator Soal**: Harus spesifik mengikuti format: "Disajikan [stimulus], siswa dapat [kata kerja operasional] [materi] dengan tepat."
+2. **Taksonomi**: Gunakan level kognitif (C2, C3, atau C4) sesuai standar.
+3. **Kompetensi**: Jabarkan kemampuan spesifik yang diuji (misal: Menganalisis, Menyebutkan).
+4. **Bentuk Soal**: Gunakan singkatan PG, PGK, atau Uraian.
+5. **Materi Pokok**: Tuliskan dalam format **Bold & Italic** (Tanpa highlight kuning).
+6. **Penomoran**: Lanjutkan nomor soal secara kontinu.
+
+${additionalRules}
+${SHARED_RULES}`,
   };
 
   // ── MATCHING LOGIC ──
@@ -671,6 +748,7 @@ ${SHARED_RULES}`,
   else if (isType("KKTP")) finalPrompt = prompts["KKTP"];
   else if (isType("Capaian Pembelajaran") || type === "CP") finalPrompt = prompts["CP"];
   else if (isType("LKPD")) finalPrompt = prompts["LKPD"];
+  else if (isType("KISI-KISI") || isType("Kisi Asesmen")) finalPrompt = prompts["KISI-KISI"];
   else finalPrompt = prompts["ATP"];
 
   return finalPrompt;

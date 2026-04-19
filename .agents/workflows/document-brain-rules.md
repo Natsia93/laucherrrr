@@ -20,6 +20,7 @@ description: Aturan baku "Otak AI" Dekstorio — WAJIB dibaca sebelum mengubah a
 | **PROSEM** (Program Semester) | **Landscape** | **80%** | `route.ts` → `prompts["PROSEM"]` | `workspace/page.tsx` |
 | **KKTP** (Kriteria Ketercapaian TP) | Portrait | 100% | `route.ts` → `prompts["KKTP"]` | `workspace/page.tsx` |
 | **LKPD** (Lembar Kerja PD) | Portrait | 100% | `route.ts` → `prompts["LKPD"]` | `workspace/page.tsx` |
+| **KISI-KISI** (Kisi Asesmen) | Portrait | 100% | `route.ts` → `prompts["KISI-KISI"]` | `workspace/page.tsx` |
 
 ---
 
@@ -114,6 +115,12 @@ Untuk modul yang memiliki tabel per-BAB (`ATP`, `PROTA`, `PROSEM`, `KKTP`):
 - Jumlah soal WAJIB TEPAT sesuai input user (PG, Jawaban Singkat, Esai).
 - Nomor soal KONTINU (tidak reset antar tipe soal).
 - PG: Gunakan `<ol type="A">` untuk opsi.
+
+### KISI-KISI (Portrait)
+- Tabel: 9 kolom (No, Capaian, Kompetensi, Materi Pokok, Indikator Soal, Taksonomi, Bentuk Soal, Jumlah Soal, Nomor Soal).
+- Header Tabel: `background-color: #E1D5E7`.
+- Indikator Soal format: "Disajikan [stimulus], siswa dapat [KKO]...".
+- Metadata: Mapel, Kelas/Smt, Kurikulum, Alokasi Waktu.
 
 ---
 
