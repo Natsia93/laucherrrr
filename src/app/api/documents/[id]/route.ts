@@ -81,7 +81,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await req.json();
-    const { title, content, type } = body;
+    const { title, content, type, chatHistory } = body;
 
     const updateData: any = {};
     if (title) updateData.title = title;
@@ -90,6 +90,8 @@ export async function PATCH(
       updateData.size = `${(content.length / 1024).toFixed(1)} KB`;
     }
     if (type) updateData.type = type;
+    if (chatHistory !== undefined) updateData.chatHistory = chatHistory;
+    // @ts-ignore
     updateData.updatedAt = new Date();
 
     const result = await db.update(documents)

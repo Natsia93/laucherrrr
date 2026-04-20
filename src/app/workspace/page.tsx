@@ -444,6 +444,26 @@ function WorkspaceContent() {
     }
   }, [messages]);
 
+  // Auto-save chat history to database
+  useEffect(() => {
+    if (!activeDocId || messages.length <= 1) return;
+    
+    const saveChat = async () => {
+      try {
+        await fetch(`/api/documents/${activeDocId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chatHistory: messages })
+        });
+      } catch (err) {
+        console.error("Failed to save chat history");
+      }
+    };
+
+    const timer = setTimeout(saveChat, 3000); // 3s debounce
+    return () => clearTimeout(timer);
+  }, [messages, activeDocId]);
+
   useEffect(() => {
     if (hasStarted.current) return;
     hasStarted.current = true;
@@ -469,7 +489,12 @@ function WorkspaceContent() {
           if (data.type) setActiveDocType(data.type);
           contentRef.current = data.content;
           setIsGenerated(true);
-          setMessages([{ role: "ai", text: `✅ Dokumen berhasil dimuat.` }]);
+          
+          if (data.chatHistory && Array.isArray(data.chatHistory) && data.chatHistory.length > 0) {
+            setMessages(data.chatHistory);
+          } else {
+            setMessages([{ role: "ai", text: `✅ Dokumen berhasil dimuat.` }]);
+          }
         } catch (e) {} finally { setLoading(false); }
       };
       fetchDoc();

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, boolean, jsonb } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // --- BETTER AUTH TABLES ---
@@ -65,6 +65,7 @@ export const documents = pgTable("documents", {
   size: text("size").default("0 KB"),
   isDeleted: boolean("is_deleted").default(false),
   deletedAt: timestamp("deleted_at"),
+  chatHistory: jsonb("chat_history").default([]),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
