@@ -209,6 +209,7 @@ BAGIAN B. ALUR TUJUAN PEMBELAJARAN (ATP):
   - Alur Tujuan Pembelajaran: Gunakan narasi yang profesional. WAJIB menjabarkan **2-3 poin bullet** yang padat dan bermakna untuk setiap baris tujuan.
   - Dimensi Profil Lulusan: Tuliskan minimal 4-6 poin karakter (Contoh: Keimanan dan Ketakwaan terhadap Tuhan YME dan Berakhlak Mulia, Penalaran Kritis, Kreativitas, Kolaborasi, Kemandirian, Komunikasi).
   - Materi Pokok: Tampilkan sebagai teks biasa (TANPA highlight kuning).
+  - **NOMOR URUT (No)**: SANGAT PENTING! Angka pada kolom 'No' **WAJIB RESET KE NOMOR 1** setiap kali pindah ke BAB baru. DILARANG melanjutkan penomoran dari BAB sebelumnya (Contoh: Jika BAB 1 selesai di No 5, maka baris pertama di BAB 2 HARUS dimulai dari No 1).
   - ALOKASI WAKTU (JP): Data input yang masuk (misal "9 JP") adalah total untuk SATU BAB. Anda WAJIB membaginya ke baris-baris Materi Pokok. **MAKSIMAL ALOKASI PER BARIS ADALAH 3 JP**. Dilarang menuliskan 4 JP atau lebih dalam satu baris. Jika total JP BAB besar, pecahlah menjadi lebih banyak baris ATP. JANGAN biarkan baris kosong tanpa JP.
 
 FOOTER TABEL (TOTAL JP - WAJIB & KRUSIAL):
@@ -219,7 +220,8 @@ FOOTER TABEL (TOTAL JP - WAJIB & KRUSIAL):
 - **DILARANG KERAS** membuat bagian "TOTAL ALOKASI WAKTU" terpisah di luar tabel.
 
 ATURAN GRANULARITAS & PENOMORAN:
-- **BATAS JP & JUMLAH BARIS**: Setiap baris (ATP) **TIDAK BOLEH LEBIH DARI 3 JP**. Jika total JP dalam satu BAB adalah besar (9-12 JP), maka Anda WAJIB membaginya menjadi minimal 4-9 baris agar tiap baris bernilai 2-3 JP. Penomoran nomor urut pada kolom 'No' WAJIB RESET ke angka 1 setiap kali berganti BAB baru. JANGAN sampai wrap (harus 1 baris).
+- **RESET PENOMORAN (WAJIB)**: Penomoran pada kolom 'No' **HARUS RESET KE ANGKA 1** setiap kali berganti BAB baru. JANGAN sampai nomor berlanjut melintasi BAB.
+- **BATAS JP & JUMLAH BARIS**: Setiap baris (ATP) **TIDAK BOLEH LEBIH DARI 3 JP**. Jika total JP dalam satu BAB adalah besar (9-12 JP), maka Anda WAJIB membaginya menjadi minimal 4-9 baris agar tiap baris bernilai 2-3 JP. JANGAN sampai wrap (harus 1 baris).
 - **PENUTUP**: Dokumen HARUS diakhiri dengan baris TOTAL JP di dalam tabel tersebut.
 
 BAGIAN 5 — Tanda Tangan: (BAGIAN INI DIHAPUS, JANGAN DIHASILKAN)
@@ -456,7 +458,7 @@ BAGIAN B. PROGRAM TAHUNAN:
   - Gunakan baris melintang: <tr style="background-color: #ADD8E6;"><td colspan="5" style="text-align: center; font-weight: bold; padding: 10px;">BAB [X] : [NAMA BAB]</td></tr>
 
 ISI TABEL:
-- No: WAJIB direset mulai dari angka 1 di setiap BAB baru.
+- No: **SANGAT PENTING! WAJIB RESET MULAI DARI ANGKA 1** di setiap BAB baru. JANGAN lanjutkan penomoran dari BAB sebelumnya.
 - Alur Tujuan Pembelajaran: Gunakan bullet points untuk merinci langkah-langkah pembelajaran.
 - Materi: Tuliskan nama materi dengan format **Bold & Italic**.
 - ALOKASI WAKTU (JP): Data input yang masuk (misal "9 JP") adalah total untuk SATU BAB. Anda WAJIB membaginya ke baris-baris materi di bawah BAB tersebut. (Misal: baris pertama 3 JP, baris kedua 4 JP, baris ketiga 2 JP). JANGAN biarkan baris kosong tanpa JP.
@@ -551,7 +553,7 @@ BAGIAN B. PROGRAM SEMESTER:
   - Teks: "BAB [X] : [NAMA BAB]" (Bold, Center, padding: 8px).
 
 ISI TABEL:
-- No: WAJIB direset mulai dari angka 1 di setiap BAB baru.
+- No: **SANGAT PENTING! WAJIB RESET MULAI DARI ANGKA 1** di setiap BAB baru. JANGAN lanjutkan penomoran dari BAB sebelumnya.
 - ATP: Gunakan format ***Bold & Italic*** untuk menuliskan Materi Kunci (DILARANG menggunakan highlight kuning).
 - Gunakan bullet points untuk detail aktivitas di bawah materi.
 - ALOKASI WAKTU (JP): Data input yang masuk (misal "9 JP") adalah total untuk SATU BAB. Anda WAJIB membaginya ke baris-baris (Materi Kunci) di bawah BAB tersebut. (Misal: baris pertama 3 JP, baris kedua 4 JP, baris ketiga 2 JP). JANGAN biarkan baris kosong tanpa JP.
@@ -668,6 +670,7 @@ ISI TABEL:
 - Alur Tujuan Pembelajaran: 
   • Tuliskan materi inti dengan format **Bold & Italic**.
   • Gunakan bullet points untuk rincian indikator di bawahnya.
+- **NO**: **WAJIB RESET MULAI DARI ANGKA 1** setiap kali berganti BAB baru.
 - Biarkan kolom interval kosong (akan diisi manual oleh guru).
 
 BAGIAN 4 — Tanda Tangan: (BAGIAN INI DIHAPUS, JANGAN DIHASILKAN)
