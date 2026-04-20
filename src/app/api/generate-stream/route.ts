@@ -91,9 +91,9 @@ const MATH_RULES = `
 const ARABIC_RULES = `
 === ATURAN KHUSUS BAHASA ARAB / PAI (WAJIB) ===
 1. Seluruh teks Arab WAJIB menggunakan harokat lengkap (Full Tasykil/Tasykilat): Fathah, Kasrah, Dhammah, Tanwin, Sukun, Tasydid.
-2. Gunakan wrapping <div dir="rtl" style="font-family: 'Noto Naskh Arabic', serif; font-size: 14pt; line-height: 2.2; text-align: right;">.
-3. JIKA KONTEKSNYA ADALAH SOAL/LKPD: Seluruh butir soal (Pertanyaan), Pilihan Ganda (A, B, C, D), dan Instruksi Soal WAJIB menggunakan Bahasa Arab ber-Harokat. DILARANG menggunakan Bahasa Indonesia untuk pertanyaan kecuali hanya sebagai terjemahan kecil di dalam kurung jika benar-benar diperlukan.
-4. Jika membuat tabel yang berisi teks Arab, SELURUH sel tabel yang berisi teks Arab harus dir="rtl" dan text-align: right.
+2. Gunakan wrapping <div dir="rtl" style="font-family: 'Noto Naskh Arabic', serif; font-size: 14pt; line-height: 2.2; text-align: left;">. (CATATAN: Selalu gunakan text-align: left untuk sinkronisasi dengan gaya dokumen Indonesia jika diminta).
+3. JIKA KONTEKSNYA ADALAH SOAL/LKPD: Hanya butir soal (Pertanyaan) dan Pilihan Ganda (A, B, C, D) yang menggunakan Bahasa Arab. Bagian Judul, Tujuan Pembelajaran, Ringkasan Materi (Narasi), dan Petunjuk Kerja TETAP menggunakan Bahasa Indonesia agar mudah dipahami, dengan format Rata Kiri.
+4. Jika membuat tabel yang berisi teks Arab, SELURUH sel tabel yang berisi teks Arab harus dir="rtl" dan text-align: left.
 5. Transliterasi Latin (jika diminta): gunakan standar EYD/KBBI untuk istilah Arab yang sudah diserap.
 `;
 
@@ -104,7 +104,7 @@ function buildSystemPrompt(type: string, rawPrompt: string): string {
   const isMath = /matematika|math|hitung|angka|aljabar|geometri|trigonometri|statistik|kalkulus/i.test(rawPrompt) || /matematika|math/i.test(type);
   
   const langRule = isArabic 
-    ? "WAJIB menggunakan Bahasa Arab ber-Harokat (Full Tasykil) untuk SELURUH konten materi, pertanyaan soal, dan pilihan ganda. Gunakan direction RTL dan font-family: 'Noto Naskh Arabic', serif."
+    ? "WAJIB menggunakan Bahasa Arab ber-Harokat (Full Tasykil) untuk bagian soal dan pilihan ganda. Bagian narasi pengantar, tujuan, dan petunjuk tetap Bahasa Indonesia. Gunakan font-family: 'Noto Naskh Arabic', serif."
     : "Gunakan Bahasa Indonesia formal sesuai EYD V.";
 
   // Gabungkan rules tambahan berdasarkan konteks
@@ -273,11 +273,12 @@ BAGIAN 2 — IDENTITAS SISWA:
 
 BAGIAN 3 — JUDUL MATERI & TUJUAN PEMBELAJARAN:
 - Judul materi (centered, bold, underline, CAPS).
-- Tujuan Pembelajaran: tuliskan 2-3 TP yang spesifik dan terukur.
+- Sub-Judul: "TUJUAN PEMBELAJARAN" (Gunakan <p style="font-weight: bold; font-size: 12pt; text-align: left; margin-bottom: 5px;">).
+- Isi: Tuliskan 2-3 TP dalam Bahasa Indonesia (meskipun mapel Arab). Format: Rata Kiri (text-align: left).
 
 BAGIAN 4 — PETUNJUK KERJA:
-- Instruksi langkah-langkah pengerjaan yang jelas untuk siswa.
-- Gunakan numbering (1, 2, 3...).
+- Sub-Judul: "PETUNJUK KERJA" (Gunakan <p style="font-weight: bold; font-size: 12pt; text-align: left; margin-bottom: 5px;">).
+- Isi: Instruksi langkah-langkah pengerjaan dalam Bahasa Indonesia (meskipun mapel Arab). Format: Rata Kiri (text-align: left).
 
 BAGIAN 5 — RINGKASAN MATERI:
 - Rangkuman materi singkat tapi PADAT (150-300 kata) agar siswa punya bekal menjawab.
@@ -285,6 +286,7 @@ BAGIAN 5 — RINGKASAN MATERI:
 
 BAGIAN 6 — KEGIATAN / SOAL:
 - Buat soal sesuai tipe dan jumlah yang diminta di KONTEKS DATA GURU.
+- Alignment: SELURUH konten soal (termasuk Bahasa Arab) WAJIB menggunakan format Rata Kiri (text-align: left).
 - Pilihan Ganda: Format (A, B, C, D). WAJIB gunakan list HTML (<ul> atau <ol type="A">) untuk opsinya agar rapi saat di-export. Soal harus variatif level LOTS-HOTS.
 - Jawaban Singkat: berikan ruang jawab (garis kosong).
 - Esai: berikan petunjuk panjang jawaban yang diharapkan.
