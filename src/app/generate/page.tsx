@@ -341,11 +341,15 @@ function GenerateContent() {
       return `${q.id}. ${q.question}: ${ans}`;
     }).join(" _||_ ");
     
+    // Simpan context besar ke sessionStorage agar tidak kena URI_TOO_LONG
+    sessionStorage.setItem("generate_context", contextStr);
+    
     const params = new URLSearchParams();
-    params.append("context", contextStr);
     params.append("type", docType);
     params.append("prompt", prompt);
     params.append("model", selectedModel);
+    params.append("hasContext", "true"); // Penanda untuk workspace agar ambil dari sessionStorage
+    
     router.push(`/workspace?${params.toString()}`);
   };
 

@@ -431,6 +431,15 @@ function WorkspaceContent() {
     if (hasStarted.current) return;
     hasStarted.current = true;
 
+    // Retrieve context from sessionStorage if flagged
+    let effectiveContext = context;
+    if (searchParams.get("hasContext") === "true") {
+      const stored = sessionStorage.getItem("generate_context");
+      if (stored) {
+        effectiveContext = stored;
+      }
+    }
+
     if (docId) {
       const fetchDoc = async () => {
         setLoading(true);
@@ -447,19 +456,26 @@ function WorkspaceContent() {
         } catch (e) {} finally { setLoading(false); }
       };
       fetchDoc();
-    } else if (context) {
-      const prompt = `Wawancara: ${context.replace(/ _\|\|_ /g, ". ")}. Buatkan dokumen ${docType} LENGKAP.`;
-      streamGenerate(prompt, false, context);
+    } else if (effectiveContext) {
+      const prompt = `Wawancara: ${effectiveContext.replace(/ _\|\|_ /g, ". ")}. Buatkan dokumen ${docType} LENGKAP.`;
+      streamGenerate(prompt, false, effectiveContext);
     } else if (initialPrompt) {
       streamGenerate(initialPrompt);
     }
-  }, [initialPrompt, context, docType, docId, streamGenerate]);
+  }, [initialPrompt, context, docType, docId, streamGenerate, searchParams]);
 
   const handleRestart = () => {
     setIsStopped(false);
-    if (context) {
-      const prompt = `Wawancara: ${context.replace(/ _\|\|_ /g, ". ")}. Buatkan dokumen ${docType} LENGKAP.`;
-      streamGenerate(prompt, false, context);
+    
+    let effectiveContext = context;
+    if (searchParams.get("hasContext") === "true") {
+      const stored = sessionStorage.getItem("generate_context");
+      if (stored) effectiveContext = stored;
+    }
+
+    if (effectiveContext) {
+      const prompt = `Wawancara: ${effectiveContext.replace(/ _\|\|_ /g, ". ")}. Buatkan dokumen ${docType} LENGKAP.`;
+      streamGenerate(prompt, false, effectiveContext);
     } else if (initialPrompt) {
       streamGenerate(initialPrompt);
     } else if (docId) {
