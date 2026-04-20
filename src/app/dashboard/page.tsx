@@ -38,10 +38,12 @@ export default async function DashboardPage(props: { searchParams: Promise<{ sea
 
   const user = session.user;
 
-  const realDocuments = await db.select()
+  const allUserDocs = await db.select()
     .from(documentsTable)
     .where(eq(documentsTable.userId, user.id))
     .orderBy(desc(documentsTable.createdAt));
+  
+  const realDocuments = allUserDocs.filter(doc => !doc.isDeleted);
   
   const availableCategories = Array.from(new Set(realDocuments.map(d => d.type)));
   
@@ -88,6 +90,14 @@ export default async function DashboardPage(props: { searchParams: Promise<{ sea
       }
     }
   });
+
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const monthlyUsage = allUserDocs.filter(doc => new Date(doc.createdAt) >= startOfMonth).length;
+  const GENERATION_LIMIT = 50;
+  const remainingQuota = Math.max(0, GENERATION_LIMIT - monthlyUsage);
 
   const storageVal = totalStorageBytes > 1024 * 1024 
     ? (totalStorageBytes / (1024 * 1024)).toFixed(1)
@@ -181,7 +191,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ sea
                 <span className="font-sans font-medium">Sisa Kuota Generate</span>
               </div>
               <div className="font-bricolage text-3xl font-normal text-neutral-900 dark:text-[#f4f3ed]">
-                12 <span className="font-sans text-sm font-normal text-neutral-400 dark:text-[#6b7b59]"> / 50 bulan ini</span>
+                {remainingQuota} <span className="font-sans text-sm font-normal text-neutral-400 dark:text-[#6b7b59]"> / {GENERATION_LIMIT} bulan ini</span>
               </div>
             </Card>
           </DashboardFadeIn>

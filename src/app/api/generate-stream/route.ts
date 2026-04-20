@@ -5,6 +5,7 @@ import OpenAI from "openai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { needsWebSearch, performWebSearch, formatSearchContext } from "@/lib/web-search";
+import { count, eq, and, gte } from "drizzle-orm";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -873,6 +874,31 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const { rawPrompt, type, model: requestedModel = "deepseek", rawContext, messages = [], isAssistant = false } = body;
+
+    // --- ENFORCE GENERATION QUOTA ---
+    if (!isAssistant) {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const [usage] = await db.select({ val: count() })
+        .from(documents)
+        .where(
+          and(
+            eq(documents.userId, session.user.id),
+            gte(documents.createdAt, startOfMonth)
+          )
+        );
+
+      if (usage && usage.val >= 50) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Kuota paket gratis Anda (50/bulan) telah habis. Silakan hubungi admin atau tunggu bulan depan." 
+          }), 
+          { status: 403 }
+        );
+      }
+    }
 
     const encoder = new TextEncoder();
     let fullText = "";

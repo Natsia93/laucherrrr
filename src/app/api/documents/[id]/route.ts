@@ -49,7 +49,8 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const result = await db.delete(documents)
+    const result = await db.update(documents)
+      .set({ isDeleted: true, deletedAt: new Date() })
       .where(and(eq(documents.id, id), eq(documents.userId, session.user.id)))
       .returning();
 

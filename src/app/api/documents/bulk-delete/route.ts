@@ -21,7 +21,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No IDs provided" }, { status: 400 });
     }
 
-    const result = await db.delete(documents)
+    const result = await db.update(documents)
+      .set({ isDeleted: true, deletedAt: new Date() })
       .where(and(
         inArray(documents.id, ids),
         eq(documents.userId, session.user.id)

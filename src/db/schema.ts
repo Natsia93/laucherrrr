@@ -63,6 +63,8 @@ export const documents = pgTable("documents", {
   content: text("content").notNull(),
   status: text("status").default("Pending"),
   size: text("size").default("0 KB"),
+  isDeleted: boolean("is_deleted").default(false),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
