@@ -209,7 +209,7 @@ BAGIAN B. ALUR TUJUAN PEMBELAJARAN (ATP):
   - Alur Tujuan Pembelajaran: Gunakan narasi yang profesional. WAJIB menjabarkan **2-3 poin bullet** yang padat dan bermakna untuk setiap baris tujuan.
   - Dimensi Profil Lulusan: Tuliskan minimal 4-6 poin karakter (Contoh: Keimanan dan Ketakwaan terhadap Tuhan YME dan Berakhlak Mulia, Penalaran Kritis, Kreativitas, Kolaborasi, Kemandirian, Komunikasi).
   - Materi Pokok: Tampilkan sebagai teks biasa (TANPA highlight kuning).
-  - ALOKASI WAKTU (JP): Data input yang masuk (misal "9 JP") adalah total untuk SATU BAB. Anda WAJIB membaginya ke baris-baris (Materi Pokok) di bawah BAB tersebut. (Misal: baris pertama 3 JP, baris kedua 4 JP, baris ketiga 2 JP). JANGAN biarkan baris kosong tanpa JP.
+  - ALOKASI WAKTU (JP): Data input yang masuk (misal "9 JP") adalah total untuk SATU BAB. Anda WAJIB membaginya ke baris-baris Materi Pokok. **MAKSIMAL ALOKASI PER BARIS ADALAH 3 JP**. Dilarang menuliskan 4 JP atau lebih dalam satu baris. Jika total JP BAB besar, pecahlah menjadi lebih banyak baris ATP. JANGAN biarkan baris kosong tanpa JP.
 
 FOOTER TABEL (TOTAL JP - WAJIB & KRUSIAL):
 - **SETELAH SEMUA BAB SELESAI**, Anda WAJIB menutup tabel dengan satu baris khusus (footer):
@@ -219,8 +219,7 @@ FOOTER TABEL (TOTAL JP - WAJIB & KRUSIAL):
 - **DILARANG KERAS** membuat bagian "TOTAL ALOKASI WAKTU" terpisah di luar tabel.
 
 ATURAN GRANULARITAS & PENOMORAN:
-- **PENOMORAN**: Nomor urut pada kolom 'No' WAJIB RESET ke angka 1 setiap kali berganti BAB baru. JANGAN sampai wrap (harus 1 baris).
-- **JUMLAH BARIS PER BAB**: Setiap BAB WAJIB memiliki **minimal 4 sampai 9 baris (rows)** yang berbeda, dan JP harus dibagi secara logis ke baris-baris tersebut.
+- **BATAS JP & JUMLAH BARIS**: Setiap baris (ATP) **TIDAK BOLEH LEBIH DARI 3 JP**. Jika total JP dalam satu BAB adalah besar (9-12 JP), maka Anda WAJIB membaginya menjadi minimal 4-9 baris agar tiap baris bernilai 2-3 JP. Penomoran nomor urut pada kolom 'No' WAJIB RESET ke angka 1 setiap kali berganti BAB baru. JANGAN sampai wrap (harus 1 baris).
 - **PENUTUP**: Dokumen HARUS diakhiri dengan baris TOTAL JP di dalam tabel tersebut.
 
 BAGIAN 5 — Tanda Tangan: (BAGIAN INI DIHAPUS, JANGAN DIHASILKAN)
