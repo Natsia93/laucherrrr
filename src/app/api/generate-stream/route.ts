@@ -1100,7 +1100,7 @@ WAKTU SAAT INI: ${currentDate}.
 ${webSearchContext ? `${webSearchContext}\n` : ""}
 DOKUMEN SAAT INI DI EDITOR:
 Jenis: ${type}
-Konten: ${rawContext || "Kosong"}
+Konten: ${isContinue ? "(Sedang melanjutkan - data draf ada di blok KONTINUASI)" : (rawContext || "Kosong")}
 
 ${isContinue ? continuationBlock : isMajorMismatch ? `
 === PERINGATAN: MISMATCH KONTEKS (PENTING) ===

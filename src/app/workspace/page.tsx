@@ -51,6 +51,7 @@ function WorkspaceContent() {
   const [progressStage, setProgressStage] = useState(-1);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isStopped, setIsStopped] = useState(false);
+  const [isContinuing, setIsContinuing] = useState(false);
   const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
   
   // Load messages from sessionStorage on mount (to survive refresh)
@@ -163,6 +164,8 @@ function WorkspaceContent() {
     const isAssistantRevision = isAssistantMode && currentMode === 'edit';
     setIsCutOff(false);
     setIsStopped(false);
+    setIsGenerated(false);
+    setIsContinuing(isContinue);
 
     if (!isAssistantMode) setProgressStage(0);
     setElapsedTime(0);
@@ -178,7 +181,7 @@ function WorkspaceContent() {
     setAbortController(controller);
 
     if (isAssistantMode) {
-      setMessages(prev => [...prev, { role: "ai", text: "" }]);
+      setMessages(prev => [...prev, { role: "ai", text: isContinue ? "⏳ Menghubungkan ke AI untuk melanjutkan..." : "⏳ Sedang memproses..." }]);
     } else {
       setMessages(prev => [
         ...prev.filter(m => !m.text.startsWith("⏳")), 
@@ -420,6 +423,7 @@ function WorkspaceContent() {
       setLoading(false);
       setProgressStage(-1);
       setAbortController(null);
+      setIsContinuing(false);
       
       // Smart document completeness detection
       if (contentRef.current.length > 500) {
@@ -967,14 +971,16 @@ function WorkspaceContent() {
                       animate={{ opacity: 1 }} 
                       className="relative z-0"
                     >
-                      {loading && assistantMode === 'edit' && (
+                      {loading && (assistantMode === 'edit' || isContinuing) && (
                         <div className="absolute inset-0 bg-background/5 backdrop-blur-[1px] z-[5] flex items-center justify-center rounded-lg pointer-events-none">
                           <div className="bg-card/90 border border-border px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in zoom-in duration-300">
                              <div className="relative flex items-center justify-center">
                                <Loader2 className="w-5 h-5 animate-spin text-[#4d7537]" />
                                <div className="absolute inset-0 bg-[#4d7537]/20 rounded-full blur-md animate-pulse" />
                              </div>
-                             <span className="text-[13px] font-bold text-foreground font-bricolage tracking-tight">AI sedang merancang revisi...</span>
+                             <span className="text-[13px] font-bold text-foreground font-bricolage tracking-tight">
+                               {isContinuing ? "Menghubungkan ke AI untuk melanjutkan..." : "AI sedang merancang revisi..."}
+                             </span>
                           </div>
                         </div>
                       )}
