@@ -280,8 +280,12 @@ function WorkspaceContent() {
                 patchBuffer += data.text;
               } else {
                 contentRef.current += data.text;
-                setDisplayedContent(contentRef.current);
-                setDocContent(contentRef.current);
+                
+                // Anti-leak: Clean any stray patch markers from document content
+                const cleanContent = contentRef.current.replace(/\[(?:SMART_?)?PATCH_(?:START|END|PART)\]|\[PART\]|SEARCH:|REPLACE:|\[PATCH_START\]/gi, "");
+                
+                setDisplayedContent(cleanContent);
+                setDocContent(cleanContent);
               }
             }
 
@@ -368,9 +372,12 @@ function WorkspaceContent() {
                   return result;
                 };
                 const finalContent = applySmartPatches(previousContent, patchBuffer || decisionBuffer);
-                contentRef.current = finalContent;
-                setDocContent(finalContent);
-                setDisplayedContent(finalContent);
+                // Final clean up of any markers
+                const cleanedFinal = finalContent.replace(/\[(?:SMART_?)?PATCH_(?:START|END|PART)\]|\[PART\]|SEARCH:|REPLACE:/gi, "");
+                
+                contentRef.current = cleanedFinal;
+                setDocContent(cleanedFinal);
+                setDisplayedContent(cleanedFinal);
               }
 
               setIsGenerated(true);

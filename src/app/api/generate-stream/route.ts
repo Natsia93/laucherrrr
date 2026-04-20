@@ -918,7 +918,17 @@ export async function POST(req: Request) {
             
             // === INTELLIGENT INTENT DETECTION (Manual Override) ===
             const mode = body.mode || 'chat';
-            const isContinue = body.isContinue || false;
+            
+            // Otomatis deteksi jika user minta lanjut lewat chat
+            const lowerPrompt = rawPrompt.toLowerCase();
+            const isIntentToContinue = lowerPrompt.includes("lanjutkan") || 
+                                      lowerPrompt.includes("lanjut") || 
+                                      lowerPrompt.includes("teruskan") || 
+                                      lowerPrompt.includes("kurang") || 
+                                      lowerPrompt.includes("sambung");
+            
+            const isContinue = body.isContinue || (mode === 'chat' && isIntentToContinue);
+            
             // Force edit routing if continuing, so output goes to document chunk, not chat
             willEditDocument = mode === 'edit' || isContinue;
             isMajorMismatch = false;
@@ -1032,7 +1042,18 @@ export async function POST(req: Request) {
 === MODE: LANJUTKAN PENULISAN (DIRECT APPEND) ===
 TUGAS ANDA: LANJUTKAN isi dokumen HTML yang terpotong. Output Anda akan LANGSUNG DITEMPELKAN ke akhir dokumen.
 
+INSTRUKSI AWAL USER (TARGET): "${rawPrompt}"
+
 ${structuralAnalysis}
+
+==== ATURAN KERAS LANJUTAN ====
+1. JIKA DOKUMEN ADALAH TABEL: 
+   - Anda WAJIB melanjutkan baris tabel (<tr>...</tr>). 
+   - DILARANG KERAS merespon dengan teks paragraf biasa jika posisi terakhir ada di dalam <table>.
+   - PASTIKAN JUMLAH KOLOM (<td>) SAMA PERSIS dengan baris sebelumnya (Total ${columnCount || 'yang sesuai'}).
+2. LANJUTKAN PENOMORAN: Lihat nomor soal terakhir di draf di bawah, pastikan nomor berikutnya berurutan.
+3. JANGAN mengulang judul atau header yang sudah ada.
+4. JANGAN berikan penjelasan atau markdown. LANGSUNG kode HTML.
 
 DOKUMEN YANG SUDAH DITULIS (AWAL + AKHIR):
 """
@@ -1043,7 +1064,7 @@ ATURAN WAJIB KONTINUASI:
 1. BACA ANALISIS STRUKTURAL di atas. Ini menunjukkan kondisi dokumen saat ini.
 2. LIHAT "100 karakter terakhir" - ini titik PERSIS di mana Anda harus melanjutkan.
 3. Jika ada tag HTML terbuka (misal: <tr> tanpa </tr>), TUTUP DULU tag tersebut sebelum menulis konten baru.
-4. JANGAN gunakan format [SMART_PATCH] atau [PATCH_START]. 
+4. JANGAN gunakan format [PATCH_START] atau [PATCH_END]. 
 5. JANGAN menulis ulang dari awal. LANGSUNG keluarkan lanjutan kode HTML.
 6. JANGAN gunakan markdown code blocks ( \`\`\` ). LANGSUNG kode HTML.
 7. JANGAN berikan penjelasan atau teks pembuka/penutup. Karakter pertama output HARUS berupa tag HTML.
