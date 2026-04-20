@@ -1070,31 +1070,30 @@ INSTRUKSI REVISI DARI USER: "${rawPrompt}"
 TUGAS ANDA:
 Pilih salah satu metode output berdasarkan kerumitan revisi:
 
-1. JIKA REVISI MINOR (Ganti kata, tambah baris tabel, tambah kolom, perbarui informasi spesifik, perbaiki typo):
-   - TUGAS ANDA: Gunakan format [SMART_PATCH] untuk melakukan revisi atau penambahan materi. JANGAN menulis ulang seluruh dokumen.
-   - ATURAN [SMART_PATCH]:
-     1. Gunakan [PATCH_START] SEARCH: <teks_lama> REPLACE: <teks_baru> [PATCH_END].
-     2. SEARCH harus UNIK dan PERSIS sama dengan draf. Jika ingin menambah di akhir, SEARCH bagian akhir draf.
-     3. JIKA SEARCH gagal ditemukan karena teks draf terlalu panjang, COBA gunakan satu paragraf atau satu baris unik saja sebagai SEARCH.
-   - Anda boleh mengirimkan lebih dari satu [SMART_PATCH] jika ada beberapa titik yang diubah.
-   - JANGAN berikan penjelasan apapun di luar blok ini.
+1. JIKA REVISI MINOR (Tambah soal, koreksi materi, ganti kata, perbaiki typo):
+   - TUGAS ANDA: Gunakan [PATCH_START] SEARCH: <teks_draf> REPLACE: <teks_baru> [PATCH_END].
+   - JANGAN menulis ulang seluruh dokumen.
+   
+   === LKPD REVISION STRATEGY (PENTING) ===
+   Jika user meminta menambah soal di bagian tertentu:
+   - BAGIAN A (PG): Cari teks judul "A. PILIHAN GANDA" atau daftar soal terakhir di bagian A sebagai SEARCH. Tambahkan soal baru di bagian REPLACE.
+   - BAGIAN B (JAWABAN SINGKAT): Cari teks judul "B. JAWABAN SINGKAT" sebagai SEARCH.
+   - BAGIAN C (ESSAI): Cari teks judul "C. ESSAI" sebagai SEARCH.
+   - Pastikan nomor soal berlanjut secara otomatis. Jika PG terakhir nomor 10, soal baru mulai nomor 11.
+   
+   === ATURAN PATCH ===
+   1. SEARCH harus UNIK dan PERSIS (termasuk tag HTML-nya jika ada).
+   2. REPLACE harus berisi konten lengkap (Konten SEARCH + Tambahan Baru).
+   3. Anda boleh mengirimkan beberapa [PATCH_START] dalam satu respon.
 
-2. JIKA REVISI MAJOR (Struktur berubah total, ganti tipe dokumen, atau revisi yang mencakup >50% dokumen):
-   - Hasilkan kembali SELURUH kode HTML dari awal (Header Dokumen) sampai akhir.
-   - Langsung mulai dengan <div>.
-   - Tanpa markdown code blocks.
+2. JIKA REVISI MAJOR (Revisi > 50% dokumen atau ganti materi total):
+   - Hasilkan kembali SELURUH kode HTML dari awal sampai akhir.
+   - Langsung mulai dengan <div>. Tanpa markdown.
 
 PENTING (KEDISIPLINAN OUTPUT):
-- DILARANG KERAS menyertakan teks pembuka (seperti "Tentu", "Ini revisinya") atau teks penutup di dalam mode REVISI ini.
-- Hasil output harus MURNI diawali dengan <div> (untuk Major) atau [SMART_PATCH_START] (untuk Minor).
-- Jika Anda menulis teks biasa, itu akan merusak dokumen user.
-
-PENTING (STRUKTURAL AWARENESS): 
-- JIKA REVISI MINOR: Anda HANYA BOLEH mengeluarkan format [PATCH_START] ... [PATCH_END].
-- DILARANG menulis ulang header dokumen atau teks apapun di luar tag tersebut.
-- SEARCH: Ambil potongan teks unik (seperti judul).
-- REPLACE: Konten baru (termasuk KOP jika diminta).
-- PILIHAN GANDA: Selalu gunakan <ul> atau <ol> untuk opsi A, B, C, D agar perataan teks di Word tetap rapi (rata kiri).
+- DILARANG KERAS menyertakan teks pembuka/penutup.
+- Hasil output harus MURNI diawali dengan <div> atau [PATCH_START].
+- Jika output diawali teks biasa, revisi akan dianggap GAGAL.
 ` : `
 === MODE: CHAT ASISTEN (AKTIF) ===
 TUGAS ANDA:

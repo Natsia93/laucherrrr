@@ -240,6 +240,11 @@ function WorkspaceContent() {
 
                 // Buffer up to 200 chars or until we find a clear marker
                 if (decisionBuffer.length < 200 && !patchMatch && divStartIdx === -1) {
+                  // If it definitely looks like it's starting a patch, let it buffer
+                  if (decisionBuffer.includes("[") && !decisionBuffer.includes("]")) break;
+                  if (decisionBuffer.includes("[PATCH") || decisionBuffer.includes("[SMART")) break;
+                  
+                  // Else wait for more
                   break; 
                 }
 
@@ -304,7 +309,7 @@ function WorkspaceContent() {
             if (data.type === "done") {
               // Flush decision buffer if it hasn't been processed yet
               if (!hasDecidedMode && decisionBuffer) {
-                 if (decisionBuffer.includes("[SMART_PATCH")) {
+                 if (decisionBuffer.toUpperCase().includes("[PATCH_START") || decisionBuffer.toUpperCase().includes("[SMART_PATCH")) {
                    isPatchMode = true;
                    patchBuffer = decisionBuffer;
                  } else {
@@ -321,6 +326,8 @@ function WorkspaceContent() {
               if (isPatchMode && (patchBuffer || decisionBuffer)) {
                 const applySmartPatches = (current: string, patches: string) => {
                   let result = current;
+                  const normalize = (t: string) => t.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+                  
                   // Handle typo tolerance and case insensitivity
                   const patchBlocks = patches.split(/\[(?:SMART_?)?PATCH_START\]/i);
                   
@@ -334,16 +341,26 @@ function WorkspaceContent() {
                       const s = sMatch[1].trim();
                       const r = rMatch[1].trim();
                       
+                      // 1. Precise Match (Safest for HTML)
                       if (result.includes(s)) {
                         result = result.replace(s, r);
-                      } else {
-                        // More aggressive normalization if exact match fails
-                        const normalize = (t: string) => t.replace(/\s+/g, ' ').trim();
+                      } 
+                      // 2. Space/Case Insensitive Match
+                      else {
                         const ns = normalize(s);
-                        if (ns.length > 5) { // Only try normalize if search string is substantial
-                           // Try replacing based on line-by-line or partial match if needed
-                           // For now, let's just do a normalized include check
-                           // But for HTML, replace(s, r) is safest.
+                        // We check if normalized string exists in normalized document
+                        // Then we try to find the actual span in the original HTML
+                        if (ns.length > 5) {
+                           // Try partial match for headers (most common additive edits)
+                           if (s.length < 200) {
+                              const lines = current.split(/\n|<p>|<br>|<div>/i);
+                              for (const line of lines) {
+                                 if (normalize(line).includes(ns) || ns.includes(normalize(line))) {
+                                    result = result.replace(line, r);
+                                    break;
+                                 }
+                              }
+                           }
                         }
                       }
                     }
