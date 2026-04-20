@@ -211,15 +211,17 @@ BAGIAN B. ALUR TUJUAN PEMBELAJARAN (ATP):
   - Materi Pokok: Tampilkan sebagai teks biasa (TANPA highlight kuning).
   - ALOKASI WAKTU (JP): Data input yang masuk (misal "9 JP") adalah total untuk SATU BAB. Anda WAJIB membaginya ke baris-baris (Materi Pokok) di bawah BAB tersebut. (Misal: baris pertama 3 JP, baris kedua 4 JP, baris ketiga 2 JP). JANGAN biarkan baris kosong tanpa JP.
 
-FOOTER TABEL (TOTAL JP - WAJIB DI DALAM TABEL):
-- Di baris paling akhir tabel, buat satu baris khusus:
-  - Kolom 1-4 (colspan="4"): background-color: #E7EFF6; teks "JUMLAH JAM PELAJARAN DALAM 1 TAHUN" (Bold, Center).
+FOOTER TABEL (TOTAL JP - WAJIB & KRUSIAL):
+- **SETELAH SEMUA BAB SELESAI**, Anda WAJIB menutup tabel dengan satu baris khusus (footer):
+  - Kolom 1-4 (colspan="4"): background-color: #E7EFF6; teks "**JUMLAH JAM PELAJARAN DALAM 1 TAHUN**" (Bold, Center, Uppercase).
   - Kolom 5: background-color: #E7EFF6; teks total JP (Bold, Center, contoh: 144 JP).
+- **KEGAGALAN MENYERTAKAN BARIS INI ADALAH KESALAHAN FATAL.** Pastikan baris ini ada SEBELUM menutup tag </table>.
 - **DILARANG KERAS** membuat bagian "TOTAL ALOKASI WAKTU" terpisah di luar tabel.
 
 ATURAN GRANULARITAS & PENOMORAN:
 - **PENOMORAN**: Nomor urut pada kolom 'No' WAJIB RESET ke angka 1 setiap kali berganti BAB baru. JANGAN sampai wrap (harus 1 baris).
 - **JUMLAH BARIS PER BAB**: Setiap BAB WAJIB memiliki **minimal 4 sampai 9 baris (rows)** yang berbeda, dan JP harus dibagi secara logis ke baris-baris tersebut.
+- **PENUTUP**: Dokumen HARUS diakhiri dengan baris TOTAL JP di dalam tabel tersebut.
 
 BAGIAN 5 — Tanda Tangan: (BAGIAN INI DIHAPUS, JANGAN DIHASILKAN)
 
