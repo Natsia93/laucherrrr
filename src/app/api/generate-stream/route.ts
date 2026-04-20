@@ -92,7 +92,7 @@ const ARABIC_RULES = `
 === ATURAN KHUSUS BAHASA ARAB / PAI (WAJIB) ===
 1. Seluruh teks Arab WAJIB menggunakan harokat lengkap (Full Tasykil/Tasykilat): Fathah, Kasrah, Dhammah, Tanwin, Sukun, Tasydid.
 2. Gunakan wrapping <div dir="rtl" style="font-family: 'Noto Naskh Arabic', serif; font-size: 14pt; line-height: 2.2; text-align: right;">.
-3. Teks Indonesia (instruksi, nomor soal) tetap LTR di luar blok RTL.
+3. JIKA KONTEKSNYA ADALAH SOAL/LKPD: Seluruh butir soal (Pertanyaan), Pilihan Ganda (A, B, C, D), dan Instruksi Soal WAJIB menggunakan Bahasa Arab ber-Harokat. DILARANG menggunakan Bahasa Indonesia untuk pertanyaan kecuali hanya sebagai terjemahan kecil di dalam kurung jika benar-benar diperlukan.
 4. Jika membuat tabel yang berisi teks Arab, SELURUH sel tabel yang berisi teks Arab harus dir="rtl" dan text-align: right.
 5. Transliterasi Latin (jika diminta): gunakan standar EYD/KBBI untuk istilah Arab yang sudah diserap.
 `;
@@ -100,11 +100,11 @@ const ARABIC_RULES = `
 
 function buildSystemPrompt(type: string, rawPrompt: string): string {
   // Deteksi konteks khusus
-  const isArabic = /bahasa\s*arab|pondok|tasykil|harokat|pai\b|pendidikan\s*agama\s*islam|al[- ]?qur/i.test(rawPrompt);
+  const isArabic = /bahasa\s*arab|pondok|tasykil|harokat|pai\b|pendidikan\s*agama\s*islam|al[- ]?qur|fiqih|kitab|\barab\b/i.test(rawPrompt);
   const isMath = /matematika|math|hitung|angka|aljabar|geometri|trigonometri|statistik|kalkulus/i.test(rawPrompt) || /matematika|math/i.test(type);
   
   const langRule = isArabic 
-    ? "WAJIB menggunakan Bahasa Arab ber-Harokat (Full Tasykil) pada bagian materi inti. Gunakan direction RTL dan font-family: 'Noto Naskh Arabic', serif."
+    ? "WAJIB menggunakan Bahasa Arab ber-Harokat (Full Tasykil) untuk SELURUH konten materi, pertanyaan soal, dan pilihan ganda. Gunakan direction RTL dan font-family: 'Noto Naskh Arabic', serif."
     : "Gunakan Bahasa Indonesia formal sesuai EYD V.";
 
   // Gabungkan rules tambahan berdasarkan konteks
