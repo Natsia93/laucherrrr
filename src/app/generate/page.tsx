@@ -635,7 +635,7 @@ function GenerateContent() {
                                        if (file) handleFileUpload(q.id, file);
                                        e.target.value = '';
                                     }}
-                                    accept=".pdf,.docx,image/*"
+                                    accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,image/*"
                                  />
                               </>
                            )}

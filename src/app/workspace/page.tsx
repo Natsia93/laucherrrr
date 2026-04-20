@@ -1154,7 +1154,7 @@ function WorkspaceContent() {
                       ref={fileInputRef} 
                       onChange={handleFileUpload} 
                       className="hidden" 
-                      accept=".pdf,.docx" 
+                      accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword" 
                     />
                     <Button 
                       variant="ghost" 
