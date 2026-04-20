@@ -463,6 +463,12 @@ ISI TABEL:
 - ALOKASI WAKTU (JP): Data input yang masuk (misal "9 JP") adalah total untuk SATU BAB. Anda WAJIB membaginya ke baris-baris materi di bawah BAB tersebut. (Misal: baris pertama 3 JP, baris kedua 4 JP, baris ketiga 2 JP). JANGAN biarkan baris kosong tanpa JP.
 - Semester: Tuliskan "I (Ganjil)" atau "II (Genap)".
 
+FOOTER TABEL (TOTAL JP - WAJIB & KRUSIAL):
+- **SETELAH SEMUA BAB SELESAI**, Anda WAJIB menutup tabel dengan satu baris khusus (footer):
+  - Kolom 1-4 (colspan="4"): background-color: #FCE4D6; teks "**JUMLAH JAM PELAJARAN DALAM 1 TAHUN**" (Bold, Center, Uppercase).
+  - Kolom 5: background-color: #FCE4D6; teks total JP (Bold, Center, contoh: 144 JP).
+- **KEGAGALAN MENYERTAKAN BARIS INI ADALAH KESALAHAN FATAL.** Pastikan baris ini ada SEBELUM menutup tag </table>.
+
 BAGIAN 4 — Tanda Tangan: (BAGIAN INI DIHAPUS, JANGAN DIHASILKAN)
 
 
@@ -555,6 +561,13 @@ ISI TABEL:
   • STS (Sumatif Tengah Semester) — biasanya di pertengahan semester (sekitar minggu 8-9).
   • SAS (Sumatif Akhir Semester) — di minggu terakhir semester.
   • Libur — tandai pada kolom Ket atau beri warna berbeda.
+
+FOOTER TABEL (TOTAL JP - WAJIB & KRUSIAL):
+- **SETELAH SEMUA BAB SELESAI**, Anda WAJIB menutup tabel dengan satu baris khusus (footer):
+  - Baris ini harus mencakup SELURUH rentang kolom. Misal jika ada 33 total kolom (No, ATP, JP, dan 30 kolom minggu), gunakan <td colspan="[TOTAL_KOLOM - 1]">.
+  - Teks: "**JUMLAH JAM PELAJARAN DALAM 1 SEMESTER**" (Bold, Center, Uppercase, background: #C5B4E3).
+  - Kolom terakhir berisi total JP (Bold, Center, background: #FCE4D6).
+- **KEGAGALAN MENYERTAKAN BARIS INI ADALAH KESALAHAN FATAL.** Pastikan baris ini ada SEBELUM menutup tag </table>.
 
 BAGIAN 3 — CATATAN:
 - Tuliskan catatan singkat:
