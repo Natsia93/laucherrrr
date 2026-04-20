@@ -738,6 +738,8 @@ BAGIAN 4 — TABEL UTAMA KISI-KISI:
 4. **Bentuk Soal**: Gunakan singkatan PG, PGK, atau Uraian.
 5. **Materi Pokok**: Tuliskan dalam format **Bold & Italic** (Tanpa highlight kuning).
 6. **Penomoran**: Lanjutkan nomor soal secara kontinu.
+7. **EFISIENSI CP (Grouping)**: Anda diperbolehkan memuat maksimal 3 soal dalam 1 baris CP jika materinya berkaitan erat.
+8. **JIKA GROUPING**: Kolom "Jumlah Soal" berisi total soal dalam baris tersebut (misal: 2 atau 3), dan kolom "Nomor Soal" berisi rentang (misal: 1-2 atau 4-6). PRIORITASKAN 1 soal per baris jika CP sangat berbeda, namun gunakan grouping untuk efisiensi jika memungkinkan.
 
 ${additionalRules}
 ${SHARED_RULES}`,
@@ -1019,11 +1021,13 @@ export async function POST(req: Request) {
               const isAsesmen = type.includes("KISI-KISI") || type.includes("Desain Evaluasi");
               
               const layoutGuide = isAsesmen ? `
-- LANJUTKAN TABEL ASESMEN:
-  1. Hubungkan langsung ke baris terakhir (<tr>) dari tabel yang sudah ada. JANGAN membuat <table> baru.
-  2. LANGSUNG buat baris baru (<tr>...</tr>).
-  3. LANJUTKAN PENOMORAN: Jika nomor soal terakhir adalah X (lihat di dokumen draf), mulai baris baru dengan nomor soal X+1.
-  4. Selesaikan hingga total soal mencapai target (misal: 20 soal).`
+- ATURAN DESAIN EVALUASI / KISI-KISI:
+  1. EFISIENSI CP (Grouping): Anda diperbolehkan memuat maksimal 3 soal dalam satu baris CP jika materinya berkaitan erat.
+  2. JIKA GROUPING: Kolom "Jumlah Soal" berisi 2 atau 3, dan kolom "Nomor Soal" berisi rentang (misal: 1-2 atau 4-6).
+  3. PRIORITAS: Tetap prioritaskan 1 soal per baris jika CP atau indikatornya berbeda secara signifikan.
+  4. LANJUTKAN TABEL: Hubungkan langsung ke baris terakhir (<tr>) dari tabel yang sudah ada. JANGAN membuat <table> baru.
+  5. LANJUTKAN PENOMORAN: Jika nomor soal terakhir adalah X (lihat di dokumen draf), mulai baris baru dengan nomor soal X+1.
+  6. TARGET: Selesaikan hingga total soal mencapai target sesuai instruksi user.`
                 : type === 'PROSEM' ? `- PROSEM: tabel LANDSCAPE dengan JUMLAH KOLOM TETAP sesuai header.
   - LIHAT "Jumlah kolom tabel utama" dan "Header kolom" di ANALISIS STRUKTURAL — ini adalah jumlah kolom FINAL.
   - Setiap baris <tr> WAJIB memiliki TEPAT ${columnCount || 33} <td> (atau colspan yang setara). TIDAK KURANG, TIDAK LEBIH.
