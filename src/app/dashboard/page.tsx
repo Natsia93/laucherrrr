@@ -105,7 +105,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ sea
   const storageUnit = totalStorageBytes > 1024 * 1024 ? "MB" : "KB";
 
   return (
-    <div className="min-h-screen bg-[#f4f3ed] dark:bg-[#080b06] text-[#1a2315] dark:text-[#e8eedd] flex flex-col font-sans selection:bg-[#4d7537]/30 selection:text-neutral-900 dark:selection:text-white transition-colors duration-300">
+    <div className="min-h-screen bg-[#f4f3ed] dark:bg-[#080b06] text-[#1a2315] dark:text-[#e8eedd] flex flex-col font-sans selection:bg-[#4d7537]/30 selection:text-neutral-900 dark:selection:text-white transition-colors duration-300 overflow-x-hidden">
       <nav className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-[#dcdad1] dark:border-[#3f612d]/20 bg-[#f4f3ed]/90 dark:bg-[#080b06]/90 sticky top-0 z-50 backdrop-blur-md transition-colors duration-300">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 text-[#1a2315] dark:text-[#f4f3ed]">
@@ -151,8 +151,8 @@ export default async function DashboardPage(props: { searchParams: Promise<{ sea
         </div>
       </nav>
 
-      <main className="flex-1 px-6 md:px-10 py-6 max-w-7xl mx-auto w-full space-y-8 relative z-10">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#4d7537]/5 dark:bg-[#3f612d]/10 rounded-full blur-[100px] pointer-events-none -translate-y-1/2 translate-x-1/4"></div>
+      <main className="flex-1 px-6 md:px-10 py-6 max-w-7xl mx-auto w-full space-y-8 relative z-10 overflow-x-hidden md:overflow-x-visible">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#4d7537]/5 dark:bg-[#3f612d]/10 rounded-full blur-[100px] pointer-events-none -translate-y-1/2 translate-x-1/4 select-none"></div>
 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 relative">
           <DashboardFadeIn delay={0.1}>
