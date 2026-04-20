@@ -98,7 +98,7 @@ function GenerateContent() {
               id: 1004,
               question: "Pilih Semester yang ingin di-generate:",
               type: "chips",
-              options: ["Semester Ganjil", "Semester Genap", "Ganjil & Genap"],
+              options: ["Semester Ganjil", "Semester Genap"],
               category: "mandatory"
            });
         }
@@ -148,7 +148,7 @@ function GenerateContent() {
                id: 1004,
                question: "Pilih Semester yang ingin di-generate:",
                type: "chips",
-               options: ["Semester Ganjil", "Semester Genap", "Ganjil & Genap"],
+               options: ["Semester Ganjil", "Semester Genap"],
                category: "mandatory"
             });
             initialQuestions.push({
@@ -179,7 +179,7 @@ function GenerateContent() {
               id: 1004,
               question: "Pilih Semester yang ingin di-generate:",
               type: "chips",
-              options: ["Semester Ganjil", "Semester Genap", "Ganjil & Genap"],
+              options: ["Semester Ganjil", "Semester Genap"],
               category: "mandatory"
            });
         }
@@ -228,7 +228,7 @@ function GenerateContent() {
               id: 1004,
               question: "Pilih Semester yang ingin di-generate:",
               type: "chips",
-              options: ["Semester Ganjil", "Semester Genap", "Ganjil & Genap"],
+              options: ["Semester Ganjil", "Semester Genap"],
               category: "mandatory"
            });
         }
@@ -244,7 +244,7 @@ function GenerateContent() {
 
         if (docType === "KISI-KISI") {
              fallback = fallback.filter(q => q.id !== 1005);
-             fallback.push({ id: 1004, question: "Pilih Semester yang ingin di-generate:", type: "chips", options: ["Semester Ganjil", "Semester Genap", "Ganjil & Genap"], category: "mandatory" });
+              fallback.push({ id: 1004, question: "Pilih Semester yang ingin di-generate:", type: "chips", options: ["Semester Ganjil", "Semester Genap"], category: "mandatory" });
              fallback.push({ id: 2002, question: "Jumlah Soal Pilihan Ganda (PG):", type: "chips", options: ["0 Soal", "10 Soal", "20 Soal", "30 Soal"], category: "data" });
              fallback.push({ id: 3000, question: "Jumlah Soal PG Kompleks:", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal"], category: "data" });
              fallback.push({ id: 2004, question: "Jumlah Soal Uraian/Esai:", type: "chips", options: ["0 Soal", "5 Soal", "10 Soal"], category: "data" });
@@ -520,7 +520,7 @@ function GenerateContent() {
                                  {opt}
                              </button>
                              )})}
-                             {q.type === "chips" && (
+                             {q.type === "chips" && q.id !== 1004 && (
                               <button 
                                   onClick={() => { setShowOther(prev => ({ ...prev, [q.id]: !prev[q.id] })); if (!showOther[q.id]) handleAnswer(q.id, ""); }}
                                   className={`px-4 py-2 rounded-md border border-dashed transition-all text-sm flex items-center gap-1 ${showOther[q.id] ? 'bg-[#4d7537]/10 border-[#4d7537] text-[#4d7537] font-semibold' : 'border-border text-muted-foreground hover:text-[#4d7537] hover:border-[#4d7537]'}`}

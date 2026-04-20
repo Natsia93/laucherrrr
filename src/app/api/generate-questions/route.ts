@@ -80,7 +80,7 @@ export async function POST(req: Request) {
           { id: 4, question: "Apa konteks khusus atau visi sekolah yang ingin diintegrasikan dalam bagian Rasional?", type: "text", placeholder: "Misal: Keunggulan lokal, visi digital, atau karakter religius..." },
           { id: 5, question: "Pilih elemen kompetensi yang ingin diutamakan pembahasannya:", type: "multi-chips", options: ["Pemahaman Konsep", "Keterampilan Proses", "Literasi", "Numerasi"] },
           { id: 6, question: "Metode pembelajaran apa yang paling ditekankan dalam karakteristik CP ini?", type: "chips", options: ["Unit of Inquiry", "Project-Based Learning", "Problem-Based", "Discovery Learning"] },
-          { id: 7, question: "Sebutkan Dimensi Profil Pelajar Pancasila yang ingin diintegrasikan:", type: "multi-chips", options: ["Bernalar Kritis", "Kreatif", "Mandiri", "Gotong Royong", "Kebhinekaan Global"] }
+          { id: 7, question: "Sebutkan Dimensi Profil Pelajar Pancasila yang ingin diintegrasikan:", type: "multi-chips", options: ["Keimanan dan Ketakwaan terhadap Tuhan YME dan Berakhlak Mulia", "Penalaran Kritis", "Kreativitas", "Kolaborasi", "Kemandirian", "Komunikasi"] }
         ]
       });
     }
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         questions: [
           { id: 4, question: "Materi apa yang menjadi prasyarat utama sebelum memulai alur ini?", type: "text", placeholder: "Misal: Dasar bilangan, konsep dasar materi, dsb..." },
-          { id: 5, question: "Pilih dimensi profil pelajar pancasila yang ingin diintegrasikan per alur:", type: "multi-chips", options: ["Kreatif", "Bernalar Kritis", "Mandiri", "Gotong Royong"] },
+          { id: 5, question: "Pilih dimensi profil pelajar pancasila yang ingin diintegrasikan per alur:", type: "multi-chips", options: ["Keimanan dan Ketakwaan terhadap Tuhan YME dan Berakhlak Mulia", "Penalaran Kritis", "Kreativitas", "Kolaborasi", "Kemandirian", "Komunikasi"] },
           { id: 6, question: "Tentukan estimasi alokasi JP per Tujuan Pembelajaran:", type: "chips", options: ["2 JP", "4 JP", "6 JP", "8 JP"] }
         ]
       });
