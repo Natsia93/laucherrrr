@@ -39,7 +39,7 @@ const SHARED_RULES = `
 5. SEMUA sel tabel (th, td) WAJIB menggunakan: border: 1px solid black; padding: 8px 12px; vertical-align: top.
 6. Gunakan Bahasa Indonesia formal kecuali konten khusus Bahasa Arab/Inggris.
 7. Gunakan font-family: 'Times New Roman', serif untuk kesan dokumen resmi.
-8. Gunakan 'text-align: justify' pada <div> atau <p> untuk narasi panjang agar terlihat profesional. Gunakan text-indent: 30px untuk awal paragraf.
+8. Gunakan 'text-align: justify' pada <div> atau <p> untuk narasi panjang agar terlihat profesional. Gunakan text-indent: 30px untuk awal paragraf (KECUALI untuk konten Bahasa Arab, indensi ditiadakan).
 9. Heading/judul pada tengah dokumen WAJIB text-align: center; font-weight: bold.
 10. DILARANG menggunakan CSS class — gunakan INLINE STYLE saja untuk kompatibilitas export .doc.
 
