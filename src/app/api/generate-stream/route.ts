@@ -91,7 +91,7 @@ const MATH_RULES = `
 const ARABIC_RULES = `
 === ATURAN KHUSUS BAHASA ARAB / PAI (WAJIB) ===
 1. Seluruh teks Arab WAJIB menggunakan harokat lengkap (Full Tasykil/Tasykilat): Fathah, Kasrah, Dhammah, Tanwin, Sukun, Tasydid.
-2. Gunakan wrapping <div dir="rtl" style="font-family: 'Noto Naskh Arabic', serif; font-size: 14pt; line-height: 2.2; text-align: right;">. (CATATAN: Gunakan text-align: right untuk seluruh konten Bahasa Arab).
+2. Gunakan wrapping <div dir="rtl" style="font-family: 'Noto Naskh Arabic', serif; font-size: 12pt; line-height: 1.6; text-align: right;">. (CATATAN: Gunakan text-align: right untuk seluruh konten Bahasa Arab).
 3. JIKA KONTEKSNYA ADALAH SOAL/LKPD: Hanya butir soal (Pertanyaan) dan Pilihan Ganda (A, B, C, D) yang menggunakan Bahasa Arab. Bagian Judul, Tujuan Pembelajaran, Ringkasan Materi (Narasi), dan Petunjuk Kerja TETAP menggunakan Bahasa Indonesia agar mudah dipahami, dengan format Rata Kiri (text-align: left).
 4. Jika membuat tabel yang berisi teks Arab, SELURUH sel tabel yang berisi teks Arab harus dir="rtl" dan text-align: right.
 5. Transliterasi Latin (jika diminta): gunakan standar EYD/KBBI untuk istilah Arab yang sudah diserap.
