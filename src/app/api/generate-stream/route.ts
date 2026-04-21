@@ -1361,6 +1361,16 @@ TUGAS ANDA:
           } else {
             systemPrompt = buildSystemPrompt(type, rawPrompt);
             chatMessages = [{ role: "system", content: systemPrompt }];
+            
+            // CRITICAL: Extract file reference and send as separate user message
+            // This forces DeepSeek to FOCUS on the file content instead of burying it in system prompt
+            const fileMatch = rawPrompt.match(/\[FILE REFERENCE:.*?\]\s*Content:\s*([\s\S]*)/i);
+            if (fileMatch && fileMatch[1] && fileMatch[1].trim().length > 50) {
+              chatMessages.push({ 
+                role: "user", 
+                content: `PERHATIAN: Berikut adalah ISI LENGKAP dari file yang diupload user. Gunakan materi ini sebagai SATU-SATUNYA sumber konten dokumen:\n\n${fileMatch[1].trim().substring(0, 30000)}\n\nBuatkan dokumen ${type} berdasarkan materi di atas. DILARANG menggunakan materi lain.` 
+              });
+            }
           }
 
           send({ type: "stage", stage: 0, label: isAssistant ? "Menganalisis Permintaan..." : "Menganalisis Konteks..." });
@@ -1368,7 +1378,7 @@ TUGAS ANDA:
           const attemptDeepSeek = async () => {
              const dsMessages = isAssistant 
               ? [{ role: "system", content: systemPrompt }, ...chatMessages.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content }))]
-              : [{ role: "system", content: systemPrompt }];
+              : chatMessages;
 
              const completion = await deepseek.chat.completions.create({
                 messages: dsMessages as any,

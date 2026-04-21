@@ -17,9 +17,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    // Guard 1: File Size Limit (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: "File terlalu besar. Maksimal 5MB." }, { status: 400 });
+    // Guard 1: File Size Limit (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: "File terlalu besar. Maksimal 10MB." }, { status: 400 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -29,29 +29,46 @@ export async function POST(req: Request) {
     let extractedText = "";
 
     if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
+      // ═══════════════════════════════════════════════════════════
+      // STRATEGI PEMBACAAN PDF (3 LAPIS KEAMANAN)
+      // Lapis 1: pdf-parse (cepat tapi sering berantakan)
+      // Lapis 2: Gemini + raw text (pembersihan AI)
+      // Lapis 3: Gemini + binary PDF (OCR penuh)
+      // ═══════════════════════════════════════════════════════════
+      
+      let rawText = "";
+      
+      // LAPIS 1: Coba pdf-parse dulu (cepat & gratis)
       try {
-        // Step 1: Attempt raw extraction to see if we can get a quick result
         const rawResult = await pdfParse(buffer);
-        const rawText = rawResult.text || "";
-        
-        // Step 2: Use Gemini 1.5 Flash as the High-Precision "Refiner" or OCR
-        // This is necessary because textbooks have complex layouts that raw pdf-parse ruins.
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
-        
-        // We send either the raw text (if available) or the actual file buffer (OCR)
-        const prompt = `Extract and clean all text from this curriculum document. 
-          REQUIREMENTS:
-          1. Preserve the structural meaning (Chapters, Sub-chapters, Points).
-          2. IMPORTANT: If there is Arabic text with Harokat (Dalil/Quran/Hadith), capture it EXACTLY with the harokat.
-          3. Remove any garbage characters, page numbers in the middle of sentences, or header/footer repetitions.
-          4. Return ONLY the cleaned, readable text. No conversational filler.`;
+        rawText = (rawResult.text || "").trim();
+        console.log(`[PDF] pdf-parse berhasil: ${rawText.length} karakter`);
+      } catch (err: any) {
+        console.log(`[PDF] pdf-parse gagal (${err.message}), lanjut ke Gemini OCR...`);
+        rawText = "";
+      }
+      
+      // LAPIS 2 & 3: Gunakan Gemini untuk membersihkan atau OCR
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+      const prompt = `Anda adalah ASISTEN PEMBACA DOKUMEN. Tugas Anda adalah mengekstrak SELURUH teks dari dokumen kurikulum ini.
 
+ATURAN MUTLAK:
+1. EKSTRAK SEMUA TEKS tanpa terkecuali. JANGAN meringkas atau mempersingkat.
+2. Pertahankan struktur dokumen (Bab, Sub-bab, Poin bernomor).
+3. Jika ada teks Bahasa Arab (Dalil/Ayat/Hadits), salin PERSIS SAMA termasuk harokat.
+4. Buang header/footer berulang, nomor halaman, dan watermark.
+5. KEMBALIKAN HANYA teks yang diekstrak. Tanpa komentar atau pengantar.
+6. Identifikasi Mata Pelajaran dan Topik Utama di awal output.`;
+
+      try {
         let result;
-        if (rawText.trim().length > 500) {
-          // If raw text is decent, have Gemini clean it up to save tokens/speed
+        if (rawText.length > 500) {
+          // Lapis 2: Teks mentah cukup panjang -> minta Gemini bersihkan saja
+          console.log(`[PDF] Menggunakan Gemini untuk membersihkan ${rawText.length} karakter teks mentah...`);
           result = await model.generateContent([prompt, rawText]);
         } else {
-          // If raw text is poor or empty, perform full Visual OCR on the PDF
+          // Lapis 3: Teks mentah gagal/kosong -> kirim file biner ke Gemini (Full OCR)
+          console.log(`[PDF] Teks mentah terlalu pendek (${rawText.length}). Mengirim PDF ke Gemini untuk OCR penuh...`);
           result = await model.generateContent([
             prompt,
             { inlineData: { data: buffer.toString("base64"), mimeType: "application/pdf" } }
@@ -59,9 +76,22 @@ export async function POST(req: Request) {
         }
         
         extractedText = result.response.text();
-      } catch (err: any) {
-        console.error("Advanced PDF Parsing error:", err);
-        throw new Error(`Gagal memproses PDF dengan presisi tinggi: ${err.message}`);
+        console.log(`[PDF] Gemini berhasil mengekstrak: ${extractedText.length} karakter`);
+        
+        // Validasi: Jika Gemini mengembalikan teks yang terlalu pendek, coba fallback
+        if (extractedText.trim().length < 100 && rawText.length > 100) {
+          console.log(`[PDF] Gemini output terlalu pendek, menggunakan rawText sebagai fallback.`);
+          extractedText = rawText;
+        }
+      } catch (geminiErr: any) {
+        console.error(`[PDF] Gemini gagal: ${geminiErr.message}`);
+        // Fallback terakhir: gunakan raw text jika ada
+        if (rawText.length > 50) {
+          console.log(`[PDF] Menggunakan rawText sebagai fallback terakhir.`);
+          extractedText = rawText;
+        } else {
+          throw new Error(`Gagal memproses PDF. Silakan coba file yang berbeda atau konversi ke .docx terlebih dahulu.`);
+        }
       }
     } 
     else if (fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || fileName.endsWith(".docx")) {
@@ -78,17 +108,19 @@ export async function POST(req: Request) {
     }
 
     if (!extractedText || extractedText.trim().length === 0) {
-      throw new Error("Teks tidak dapat ditemukan dalam dokumen ini.");
+      throw new Error("Teks tidak dapat ditemukan dalam dokumen ini. Coba konversi ke .docx terlebih dahulu.");
     }
 
+    // Batas karakter: 100.000 (~50-80 halaman)
     const charLimit = 100000;
     if (extractedText.length > charLimit) {
       extractedText = extractedText.substring(0, charLimit) + "... [Teks dipotong karena melebihi batas 100rb karakter]";
     }
 
+    console.log(`[PDF] ✅ Final output: ${extractedText.length} karakter | File: ${file.name}`);
     return NextResponse.json({ text: extractedText });
   } catch (error: any) {
-    console.error("Extraction error:", error);
+    console.error("[PDF] ❌ Extraction error:", error);
     return NextResponse.json({ 
       error: error.message || "Gagal memproses dokumen." 
     }, { status: 500 });
