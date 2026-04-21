@@ -110,6 +110,7 @@ function buildSystemPrompt(type: string, rawPrompt: string): string {
   // Deteksi konteks khusus
   const isArabic = /bahasa\s*arab|pondok|tasykil|harokat|pai\b|pendidikan\s*agama\s*islam|al[- ]?qur|fiqih|kitab|\barab\b/i.test(rawPrompt);
   const isMath = /matematika|math|hitung|angka|aljabar|geometri|trigonometri|statistik|kalkulus/i.test(rawPrompt) || /matematika|math/i.test(type);
+  const hasFileReference = /\[FILE REFERENCE:|\[REFERENSI FILE:/i.test(rawPrompt);
   
   const langRule = isArabic 
     ? "WAJIB menggunakan Bahasa Arab ber-Harokat (Full Tasykil) untuk bagian soal dan pilihan ganda. Bagian narasi pengantar, tujuan, dan petunjuk tetap Bahasa Indonesia. GUNAKAN font-family: 'Noto Naskh Arabic', serif untuk SELURUH dokumen (DILARANG menggunakan Times New Roman)."
@@ -119,6 +120,18 @@ function buildSystemPrompt(type: string, rawPrompt: string): string {
   let additionalRules = "";
   if (isMath) additionalRules += MATH_RULES;
   if (isArabic) additionalRules += ARABIC_RULES;
+  if (hasFileReference) additionalRules += `
+=== PERINGATAN KERAS: FILE REFERENSI TERDETEKSI ===
+User telah mengupload file referensi di dalam data wawancara.
+ATURAN MUTLAK:
+1. BACA SELURUH isi teks dari bagian "[FILE REFERENCE: ...]" atau "[REFERENSI FILE: ...]" yang ada di KONTEKS DATA GURU.
+2. Gunakan ISI MATERI dari file tersebut sebagai SATU-SATUNYA sumber konten dokumen.
+3. DILARANG KERAS menggunakan pengetahuan umum/bawaan AI untuk mengisi konten jika materi sudah tersedia di file.
+4. Ambil nama BAB, topik, ayat Al-Quran, hadits, dan materi PERSIS dari file user.
+5. Jika file membahas "QS. Al-Jumu'ah" maka dokumen WAJIB berisi materi tentang QS. Al-Jumu'ah — BUKAN materi Tajwid atau materi lain.
+6. Jika file membahas "Etos Kerja" maka Lingkup Materi dan TP WAJIB berisi tentang Etos Kerja.
+7. BUANG semua asumsi bawaan AI tentang mapel tersebut. File user = KEBENARAN MUTLAK.
+`;
 
   const prompts: Record<string, string> = {
     // ──────────────────────────────────────
@@ -840,7 +853,9 @@ BAGIAN 2 — IDENTITAS TABEL:
 
 BAGIAN 3 — CAPAIAN PEMBELAJARAN:
 - Judul: "Capaian Pembelajaran" (Bold, 12pt).
-- Isi: Jabarkan Capaian Pembelajaran (CP) fase terkait dalam bentuk narasi yang utuh dan profesional. (Pastikan justify, justify-content: space-between if needed). 
+- JIKA ADA FILE REFERENSI: Ambil dan rangkum narasi Capaian Pembelajaran LANGSUNG dari isi file yang diupload user. Gunakan terminologi dan materi yang SAMA PERSIS dengan file tersebut.
+- JIKA TIDAK ADA FILE: Jabarkan CP fase terkait dalam bentuk narasi yang utuh berdasarkan pengetahuan bawaan AI.
+- Format: text-align: justify.
 
 BAGIAN 4 — TABEL TP:
 - Buat TABEL dengan 3 KOLOM (Elemen, Lingkup Materi, dan Tujuan Pembelajaran).
@@ -848,8 +863,8 @@ BAGIAN 4 — TABEL TP:
 - Lebar Kolom: Elemen (25%), Lingkup Materi (25%), Tujuan Pembelajaran (50%).
 - **ATURAN ISI TABEL (STRUKTUR ROWSPAN)**:
   1. **Elemen**: Gunakan atribut "rowspan" pada tag "td" agar satu Elemen mencakup beberapa baris "Lingkup Materi" dan "Tujuan Pembelajaran". Tuliskan nama Elemen (Bold) dan ringkasan CP-nya.
-  2. **Lingkup Materi**: Tuliskan ruang lingkup materi spesifik di kolom ini.
-  3. **Tujuan Pembelajaran**: Tuliskan SATU Tujuan Pembelajaran per baris di kolom ini.
+  2. **Lingkup Materi**: JIKA ADA FILE REFERENSI — ambil topik/materi PERSIS dari file user (misal: jika file membahas QS al-Jumu'ah dan Etos Kerja, maka Lingkup Materi WAJIB berisi "QS al-Jumu'ah" dan "Etos Kerja", BUKAN materi Tajwid). JIKA TIDAK ADA FILE — turunkan dari CP sesuai kurikulum.
+  3. **Tujuan Pembelajaran**: Tuliskan SATU Tujuan Pembelajaran per baris. JIKA ADA FILE REFERENSI — konten TP harus diturunkan dari materi yang ada di file user, bukan dari pengetahuan umum AI.
   4. **PENOMORAN RESET PER ELEMEN**: Nomor urut pada kolom Tujuan Pembelajaran **WAJIB RESET KEMBALI KE 1** setiap kali berganti ELEMEN baru. DILARANG melanjutkan penomoran dari elemen sebelumnya (Contoh: Elemen A -> No 1, 2, 3 | Elemen B -> No 1, 2...).
   5. **Visual**: Border tabel WAJIB terlihat di semua sisi (1pt solid black).
 
