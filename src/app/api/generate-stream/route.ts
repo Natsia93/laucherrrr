@@ -856,8 +856,10 @@ ${SHARED_RULES}`,
     const upType = (type || '').toUpperCase();
     const upTarget = t.toUpperCase();
     if (upType === upTarget) return true;
-    if (upTarget.length > 4 && upType.includes(upTarget)) return true;
-    if (upType.length > 4 && upTarget.includes(upType)) return true;
+    // Jika input long-form (misal: "Tujuan Pembelajaran (TP)"), cek apakah mengandung target short-form "TP"
+    if (upType.length > 4 && upType.includes(upTarget)) return true;
+    // Jika target long-form (misal: "Program Semester"), cek apakah input short-form "PROSEM" ada di dalamnya
+    if (upTarget.length > 4 && upTarget.includes(upType)) return true;
     return false;
   };
 
