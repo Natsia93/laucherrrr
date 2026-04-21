@@ -9,19 +9,24 @@ export async function POST(req: Request) {
     const body = await req.json();
     docType = body.docType;
     const prompt = body.prompt;
+    const context = body.context || ""; // Previous answers, including PDF content
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     const systemPrompt = `
-      Anda adalah seorang Pakar Kurikulum Merdeka Indonesia (Regulasi 046/H/KR/2025). Tugas Anda adalah menyusun 5 hingga 7 pertanyaan teknis dan pedagogis untuk membantu guru merancang dokumen "${docType}" yang sangat spesifik untuk topik "${prompt}".
+      Anda adalah seorang Pakar Kurikulum Merdeka Indonesia (Regulasi 046/H/KR/2025). 
+      Tugas Anda adalah menyusun 5 hingga 7 pertanyaan teknis untuk merancang dokumen "${docType}" terkait topik "${prompt}".
       
-      PENTING: JANGAN menanyakan data dasar berikut karena sudah ditanyakan sebelumnya:
-      1. Nama Mata Pelajaran
-      2. Kelas & Fase (A, B, C, D, E, F)
-      3. Semester
-      4. Alokasi Jam Pelajaran (KHUSUS CP & KKTP - JP jangan ditanyakan).
-      
-      PANDUAN KHUSUS TIAP DOKUMEN:
+      KONTEKS SAAT INI (Jawaban User/File):
+      "${context.substring(0, 5000)}" 
+
+      INSTRUKSI KHUSUS:
+      1. Jika terdapat "[FILE REFERENCE: ...]" di dalam konteks, artinya user mengupload file. Analisis file tersebut dan berikan pertanyaan yang MENERUSKAN atau MENDALAMI isi file tersebut agar dokumen "${docType}" menjadi lebih presisi.
+      2. JANGAN menanyakan data dasar (Mapel, Kelas, Fase, Semester, JP) karena sudah ada.
+      3. Fokus pada komponen spesifik dokumen:
+         - TP: Tanya tentang Audiens, Behavior, Content, Degree yang ada di materi.
+         - LKPD: Tanya tentang jenis soal, level kognitif, atau skenario kasus.
+      4. Jika file sudah sangat lengkap, tanya tentang "Prefrensi Visual" atau "Kedalaman Pembahasan".
 
       1. CP (Capaian Pembelajaran) - Fokus pada Kompetensi & Visi:
          - Rasionalitas Kontekstual: Mengapa mapel ini penting di sekolah Anda (visi/misi)?
