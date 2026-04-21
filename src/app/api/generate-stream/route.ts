@@ -852,7 +852,14 @@ ${SHARED_RULES}`,
   };
 
   // ── MATCHING LOGIC ──
-  const isType = (t: string) => (type || '').toUpperCase().includes(t.toUpperCase()) || (t || '').toUpperCase().includes((type || '').toUpperCase());
+  const isType = (t: string) => {
+    const upType = (type || '').toUpperCase();
+    const upTarget = t.toUpperCase();
+    if (upType === upTarget) return true;
+    if (upTarget.length > 4 && upType.includes(upTarget)) return true;
+    if (upType.length > 4 && upTarget.includes(upType)) return true;
+    return false;
+  };
 
   let finalPrompt = "";
   if (isType("PROSEM") || isType("Program Semester")) finalPrompt = prompts["PROSEM"];
