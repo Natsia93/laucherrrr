@@ -28,13 +28,18 @@ export async function GET(req: Request) {
 
     // Content is already HTML from the AI generation, wrap it with Word-compatible markup
     const isArabic = doc.content.includes('dir="rtl"') || doc.content.includes('Noto Naskh Arabic');
+    const isLandscape = doc.type.includes("Program Semester") || doc.type.includes("Program Tahunan") || 
+                       doc.type.includes("PROSEM") || doc.type.includes("PROTA") || 
+                       doc.type.includes("KISI-KISI") || doc.type.includes("Desain Evaluasi") ||
+                       doc.type.includes("TP") || doc.type.includes("Tujuan Pembelajaran");
+
     const wordHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head><meta charset='utf-8'><style>
-        @page { size: A4; margin: 20mm 15mm; }
+        @page { size: ${isLandscape ? 'A4 landscape' : 'A4'}; margin: ${isLandscape ? '15mm 15mm' : '20mm 15mm'}; }
         body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; }
         p { text-align: justify; margin: 0 0 10pt 0; line-height: 1.5; }
         .doc-wrapper > p, .doc-wrapper > div > p { ${isArabic ? '' : 'text-indent: 0.4in;'} }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        table { width: 100% !important; border-collapse: collapse; margin-bottom: 20px; mso-table-lspace: 0pt; mso-table-rspace: 0pt; table-layout: fixed; }
         table:not([border="0"]) th, table:not([border="0"]) td { border: 1pt solid black; }
         table[border="0"] th, table[border="0"] td { border: none !important; }
         th { background-color: #f2f2f2; padding: 8pt 6pt; font-weight: bold; text-align: center; }

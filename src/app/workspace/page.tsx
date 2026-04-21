@@ -87,6 +87,7 @@ function WorkspaceContent() {
     const type = activeDocType || docType || "";
     return type.includes("Program Semester") || type.includes("Program Tahunan") || 
            type.includes("PROSEM") || type.includes("PROTA") || type.includes("KISI-KISI") || type.includes("Desain Evaluasi") ||
+           type.includes("TP") || type.includes("Tujuan Pembelajaran") ||
            (displayedContent && (displayedContent.includes('landscape') || displayedContent.includes('width: 297mm')));
   }, [activeDocType, docType, displayedContent]);
 
@@ -662,7 +663,10 @@ function WorkspaceContent() {
   const exportToWord = () => {
     const isArabic = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
     
-    const isLandscape = activeDocType.includes("Program Semester") || activeDocType.includes("Program Tahunan") || activeDocType.includes("PROSEM") || activeDocType.includes("PROTA") || activeDocType.includes("KISI-KISI") || activeDocType.includes("Desain Evaluasi");
+    const isLandscape = activeDocType.includes("Program Semester") || activeDocType.includes("Program Tahunan") || 
+                       activeDocType.includes("PROSEM") || activeDocType.includes("PROTA") || 
+                       activeDocType.includes("KISI-KISI") || activeDocType.includes("Desain Evaluasi") ||
+                       activeDocType.includes("TP") || activeDocType.includes("Tujuan Pembelajaran");
     
     // Explicit style to match the web A4 paper look exactly
     const exportStyles = `
