@@ -183,6 +183,32 @@ function GenerateContent() {
               category: "mandatory"
            });
         }
+
+        if (docType === "TP" || docType === "Tujuan Pembelajaran (TP)") {
+           // TP tidak butuh JP (1005)
+           initialQuestions = initialQuestions.filter(q => q.id !== 1005);
+           initialQuestions.push({
+              id: 1007,
+              question: "Nama Satuan Pendidikan?",
+              type: "text",
+              placeholder: "Misal: Madrasah Aliyah, SMA Negeri 1...",
+              category: "mandatory"
+           });
+           initialQuestions.push({
+              id: 1008,
+              question: "Tahun Pelajaran?",
+              type: "chips",
+              options: ["2022-2023", "2023-2024", "2024-2025", "2025-2026"],
+              category: "mandatory"
+           });
+           initialQuestions.push({
+              id: 1009,
+              question: "Nama Penyusun Dasar?",
+              type: "text",
+              placeholder: "Misal: Tim Guru Al-Qur'an Hadis...",
+              category: "mandatory"
+           });
+        }
         
         const filteredAiQuestions = (data.questions || []).filter((q: Question) => {
            const lowerQ = q.question.toLowerCase();
@@ -231,6 +257,13 @@ function GenerateContent() {
               options: ["Semester Ganjil", "Semester Genap"],
               category: "mandatory"
            });
+        }
+        
+        if (docType === "TP") {
+            fallback = fallback.filter(q => q.id !== 1005);
+            fallback.push({ id: 1007, question: "Nama Satuan Pendidikan?", type: "text", placeholder: "Misal: Madrasah Aliyah, SMA Negeri 1...", category: "mandatory" });
+            fallback.push({ id: 1008, question: "Tahun Pelajaran?", type: "chips", options: ["2022-2023", "2023-2024", "2024-2025", "2025-2026"], category: "mandatory" });
+            fallback.push({ id: 1009, question: "Nama Penyusun Dasar?", type: "text", placeholder: "Misal: Tim Guru Al-Qur'an Hadis...", category: "mandatory" });
         }
 
         if (docType === "LKPD") {

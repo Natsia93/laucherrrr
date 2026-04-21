@@ -290,6 +290,7 @@ export default function Home() {
                   >
                     <option value="" disabled>Pilih Tipe Dokumen</option>
                     <option value="CP">Capaian Pembelajaran (CP)</option>
+                    <option value="TP">Tujuan Pembelajaran (TP)</option>
                     <option value="ATP">Alur Tujuan Pembelajaran (ATP)</option>
                     <option value="PROTA">Program Tahunan (PROTA)</option>
                     <option value="PROSEM">Program Semester (PROSEM)</option>
@@ -322,6 +323,7 @@ export default function Home() {
         >
           {[
             { label: "CP", value: "CP" },
+            { label: "TP", value: "TP" },
             { label: "ATP", value: "ATP" },
             { label: "Prosem", value: "PROSEM" },
             { label: "Prota", value: "PROTA" },

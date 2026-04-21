@@ -765,16 +765,101 @@ BAGIAN 4 — TABEL UTAMA KISI-KISI:
 
 ${additionalRules}
 ${SHARED_RULES}`,
+    
+    // ──────────────────────────────────────
+    // TP (Tujuan Pembelajaran)
+    // ──────────────────────────────────────
+    "TP": `Anda adalah AHLI KURIKULUM MERDEKA yang spesifik membantu guru menentukan Tujuan Pembelajaran (TP).
+Tugas Anda: Menyusun dokumen Tujuan Pembelajaran (TP) yang PROFESIONAL, LENGKAP, dan sesuai Regulasi BSKAP 046/2025.
+
+KONTEKS DATA GURU:
+${rawPrompt}
+
+${langRule}
+
+=== STRUKTUR DOKUMEN TP (WAJIB BERURUTAN & PRESISI) ===
+
+BAGIAN 1 — HEADER BERWARNA:
+- Buat header menggunakan tabel lavender:
+   <table border="1" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1.5pt solid black; table-layout: fixed;">
+     <tr>
+       <td style="background-color: #C5B4E3; padding: 12px 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+         <p style="font-weight: bold; margin: 0; font-size: 13pt; font-family: 'Times New Roman', serif; color: black !important;">TUJUAN PEMBELAJARAN (TP)</p>
+       </td>
+     </tr>
+     <tr>
+       <td style="background-color: #E1D5E7; padding: 10px; text-align: center; border: 1pt solid black; vertical-align: middle;">
+         <p style="font-weight: bold; margin: 0; font-size: 11pt; font-family: 'Times New Roman', serif; color: black !important;">MATA PELAJARAN : [MAPEL DALAM CAPITAL]</p>
+       </td>
+     </tr>
+   </table>
+
+BAGIAN 2 — IDENTITAS TABEL:
+- Gunakan tabel borderless (border="0") untuk merinci identitas:
+  <table border="0" width="100%" cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
+    <tr>
+      <td style="width: 160px; font-weight: bold; padding: 4px 0;">Mata Pelajaran</td>
+      <td style="width: 20px;">:</td>
+      <td>[Mapel]</td>
+    </tr>
+    <tr>
+      <td style="font-weight: bold; padding: 4px 0;">Satuan Pendidikan</td>
+      <td>:</td>
+      <td>[Satuan Pendidikan dari Konteks]</td>
+    </tr>
+    <tr>
+      <td style="font-weight: bold; padding: 4px 0;">Fase</td>
+      <td>:</td>
+      <td>[Fase]</td>
+    </tr>
+    <tr>
+      <td style="font-weight: bold; padding: 4px 0;">Kelas</td>
+      <td>:</td>
+      <td>[Kelas]</td>
+    </tr>
+    <tr>
+      <td style="font-weight: bold; padding: 4px 0;">Tahun Pelajaran</td>
+      <td>:</td>
+      <td>[Tahun Pelajaran dari Konteks]</td>
+    </tr>
+    <tr>
+      <td style="font-weight: bold; padding: 4px 0;">Penyusun</td>
+      <td>:</td>
+      <td>[Nama Penyusun dari Konteks]</td>
+    </tr>
+  </table>
+
+BAGIAN 3 — CAPAIAN PEMBELAJARAN:
+- Judul: "Capaian Pembelajaran" (Bold, 12pt).
+- Isi: Jabarkan Capaian Pembelajaran (CP) fase terkait dalam bentuk narasi yang utuh dan profesional. (Pastikan justify, justify-content: space-between if needed). 
+
+BAGIAN 4 — TABEL TP:
+- Buat TABEL dengan 2 KOLOM (Elemen dan Tujuan Pembelajaran).
+- Header Tabel: background-color: #f2f2f2 (Abu-abu muda).
+- Lebar Kolom: Elemen (30-35%), Tujuan Pembelajaran (65-70%).
+- **ATURAN ISI TABEL**:
+  1. **Elemen**: Tuliskan nama Elemen (Bold) dan di bawahnya tuliskan ringkasan Capaian Pembelajaran khusus elemen tersebut.
+  2. **Tujuan Pembelajaran**: Tuliskan daftar Tujuan Pembelajaran yang diturunkan dari CP elemen tersebut.
+  3. **PENOMORAN WAJIB KONTINU**: Nomor urut pada kolom Tujuan Pembelajaran **WAJIB LANJUT TERUS** (1, 2, 3, 4, 5...) meskipun sudah berganti Elemen. JANGAN me-reset nomor ke 1 setiap ganti Elemen (Kecuali jika dokumen sangat panjang, namun ikuti pola kontinu).
+  4. **Kualitas TP**: TP harus mengandung unsur kompetensi (kata kerja operasional) dan ruang lingkup materi.
+
+BAGIAN 5 — FOOTER DISCLAIMER:
+- Di bawah tabel, tuliskan teks kecil miring:
+  <p style="font-size: 9pt; font-style: italic; margin-top: 15px;">TP dan ATP ini sekadar contoh, Bapak/Ibu bisa memodifikasi disesuaikan dengan kebutuhan, karakteristik madrasah dan peserta didik</p>
+
+${additionalRules}
+${SHARED_RULES}`,
   };
 
   // ── MATCHING LOGIC ──
-  const isType = (t: string) => type.includes(t) || t.includes(type);
+  const isType = (t: string) => (type || '').toUpperCase().includes(t.toUpperCase()) || (t || '').toUpperCase().includes((type || '').toUpperCase());
 
   let finalPrompt = "";
-  if (isType("Program Semester") || isType("PROSEM")) finalPrompt = prompts["PROSEM"];
-  else if (isType("Program Tahunan") || isType("PROTA")) finalPrompt = prompts["PROTA"];
+  if (isType("PROSEM") || isType("Program Semester")) finalPrompt = prompts["PROSEM"];
+  else if (isType("PROTA") || isType("Program Tahunan")) finalPrompt = prompts["PROTA"];
   else if (isType("KKTP")) finalPrompt = prompts["KKTP"];
-  else if (isType("Capaian Pembelajaran") || type === "CP") finalPrompt = prompts["CP"];
+  else if (isType("CP") || isType("Capaian Pembelajaran")) finalPrompt = prompts["CP"];
+  else if (isType("TP") || isType("Tujuan Pembelajaran")) finalPrompt = prompts["TP"];
   else if (isType("LKPD")) finalPrompt = prompts["LKPD"];
   else if (isType("KISI-KISI") || isType("Desain Evaluasi")) finalPrompt = prompts["KISI-KISI"];
   else finalPrompt = prompts["ATP"];
@@ -796,7 +881,12 @@ function extractTitle(type: string, rawPrompt: string): string {
   };
 
   mapel = getAnswerById("1001") || getAnswerById("2001");
-  kelas = getAnswerById("1002");
+  kelas = getAnswerById("1002") || "";
+  
+  if (type === "TP" || type.includes("Tujuan Pembelajaran")) {
+     const satpen = getAnswerById("1007");
+     return `${type} ${mapel} ${kelas} ${satpen}`.trim();
+  }
 
   if (!mapel) {
     const mp = parts.find(p => p.toLowerCase().includes("mata pelajaran") || p.toLowerCase().includes("mapel"));
