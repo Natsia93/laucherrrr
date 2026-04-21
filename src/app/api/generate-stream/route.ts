@@ -883,12 +883,57 @@ function cleanAIOutput(text: string): string {
 }
 
 // Check if a generated document is structurally complete
-// A complete curriculum document MUST have a signature section at the end
-function isDocumentStructurallyComplete(content: string): boolean {
+// Uses multiple heuristics to determine if the document is truly finished
+function isDocumentStructurallyComplete(content: string, docType?: string): boolean {
   if (!content || content.length < 500) return false;
   const trimmed = content.trim();
+  const upper = content.toUpperCase();
+  
+  // 1. Minimum content length check — short documents are never complete
+  if (trimmed.length < 2000) return false;
+
+  // 2. Check for obvious truncation signs (open tags not closed)
+  const lastChars = trimmed.slice(-200);
+  const hasUnclosedTag = /<[^/][^>]*$/.test(lastChars);
+  if (hasUnclosedTag) return false;
+  
+  // 3. Check for TOTAL JP footer (required for ATP, PROTA, PROSEM, KKTP)
+  const tableTypes = ['ATP', 'PROTA', 'PROSEM', 'KKTP', 'Program Semester', 'Program Tahunan'];
+  const isTableDoc = docType ? tableTypes.some(t => (docType || '').toUpperCase().includes(t.toUpperCase())) : false;
+  
+  if (isTableDoc) {
+    const hasTotalJP = /JUMLAH\s+JAM\s+PELAJARAN/i.test(content);
+    if (!hasTotalJP) return false;
+    
+    // For table docs, the TOTAL JP row should be near the end (within last 1500 chars)
+    const lastSection = content.slice(-1500).toUpperCase();
+    const totalJPNearEnd = /JUMLAH\s+JAM\s+PELAJARAN/.test(lastSection);
+    if (!totalJPNearEnd) return false;
+  }
+  
+  // 4. For LKPD, check for Kunci Jawaban section
+  if (docType && docType.toUpperCase().includes('LKPD')) {
+    const hasKunciJawaban = /KUNCI\s+JAWABAN|PEDOMAN\s+PENSKORAN/i.test(content);
+    if (!hasKunciJawaban) return false;
+  }
+  
+  // 5. For CP, check for Fase section (section D)
+  if (docType && (docType.toUpperCase() === 'CP' || docType.toUpperCase().includes('CAPAIAN PEMBELAJARAN'))) {
+    const hasFaseSection = /CAPAIAN\s+PEMBELAJARAN\s+FASE/i.test(content);
+    if (!hasFaseSection) return false;
+  }
+  
+  // 6. For KISI-KISI / Asesmen — check minimum row count
+  if (docType && (docType.toUpperCase().includes('KISI') || docType.toUpperCase().includes('DESAIN EVALUASI'))) {
+    const rowCount = (content.match(/<tr/gi) || []).length;
+    if (rowCount < 8) return false;
+  }
+
+  // 7. Must end with a proper closing tag
   const hasProperEnding = trimmed.endsWith('</table>') || trimmed.endsWith('</div>');
-  return hasProperEnding;
+  if (!hasProperEnding) return false;
+  
+  return true;
 }
 
 export async function POST(req: Request) {
@@ -1064,22 +1109,43 @@ export async function POST(req: Request) {
                 : type === 'CP' ? `- CP: Format naratif <p> dengan text-align: justify. Lanjutkan fase/elemen yang belum selesai.`
                 : `- Pertahankan format dan gaya yang sudah ada. Pastikan konsistensi kolom.`;
 
+              // Detect last numbering per BAB for reset enforcement
+              let lastBabNumbering = "";
+              if (fullDoc) {
+                const babSections = fullDoc.split(/BAB\s+[\dIVXivx]+/gi);
+                if (babSections.length > 1) {
+                  const lastBabSection = babSections[babSections.length - 1];
+                  const numberMatches = [...lastBabSection.matchAll(/<td[^>]*>\s*(\d+)\s*<\/td>/gi)];
+                  if (numberMatches.length > 0) {
+                    const lastNum = numberMatches[numberMatches.length - 1][1];
+                    lastBabNumbering = `\n- Nomor terakhir di BAB terakhir: ${lastNum}`;
+                  }
+                }
+              }
+
               continuationBlock = `
 === MODE: LANJUTKAN PENULISAN (DIRECT APPEND) ===
 TUGAS ANDA: LANJUTKAN isi dokumen HTML yang terpotong. Output Anda akan LANGSUNG DITEMPELKAN ke akhir dokumen.
 
 INSTRUKSI AWAL USER (TARGET): "${rawPrompt}"
 
-${structuralAnalysis}
+${structuralAnalysis}${lastBabNumbering}
 
 ==== ATURAN KERAS LANJUTAN ====
 1. JIKA DOKUMEN ADALAH TABEL: 
    - Anda WAJIB melanjutkan baris tabel (<tr>...</tr>). 
    - DILARANG KERAS merespon dengan teks paragraf biasa jika posisi terakhir ada di dalam <table>.
    - PASTIKAN JUMLAH KOLOM (<td>) SAMA PERSIS dengan baris sebelumnya (Total ${columnCount || 'yang sesuai'}).
-2. LANJUTKAN PENOMORAN: Lihat nomor soal terakhir di draf di bawah, pastikan nomor berikutnya berurutan.
+2. LANJUTKAN PENOMORAN SOAL: Jika ini LKPD atau Kisi-Kisi, lihat nomor soal terakhir dan lanjutkan berurutan.
 3. JANGAN mengulang judul atau header yang sudah ada.
 4. JANGAN berikan penjelasan atau markdown. LANGSUNG kode HTML.
+
+=== ATURAN PENOMORAN PER BAB (SANGAT KRUSIAL) ===
+- Untuk dokumen tabel (ATP, PROTA, PROSEM, KKTP): Kolom "No" WAJIB RESET KE 1 setiap kali ada SEPARATOR BAB baru.
+- Contoh BENAR: BAB 1 → No 1,2,3,4 | BAB 2 → No 1,2,3 | BAB 3 → No 1,2,3,4,5
+- Contoh SALAH: BAB 1 → No 1,2,3,4 | BAB 2 → No 5,6,7 (DILARANG KERAS!)
+- JIKA ANDA MELANJUTKAN DI TENGAH BAB (bukan awal BAB baru), lanjutkan nomor dari posisi terakhir di BAB tersebut.
+- JIKA ANDA MEMULAI BAB BARU, RESET NOMOR KE 1.
 
 DOKUMEN YANG SUDAH DITULIS (AWAL + AKHIR):
 """
@@ -1094,6 +1160,8 @@ ATURAN WAJIB KONTINUASI:
 5. JANGAN menulis ulang dari awal. LANGSUNG keluarkan lanjutan kode HTML.
 6. JANGAN gunakan markdown code blocks ( \`\`\` ). LANGSUNG kode HTML.
 7. JANGAN berikan penjelasan atau teks pembuka/penutup. Karakter pertama output HARUS berupa tag HTML.
+8. TULIS SEBANYAK MUNGKIN konten sampai dokumen BENAR-BENAR LENGKAP. Jangan berhenti di tengah BAB.
+9. WAJIB sertakan baris TOTAL JP (footer tabel) jika ini adalah BAB terakhir dan jenis dokumennya mendukung.
 
 ${layoutGuide}
 `;
@@ -1190,11 +1258,12 @@ TUGAS ANDA:
                 }
              }
              if (lastFinishReason === "length") {
-               send({ type: "status", isCutOff: true });
-             } else if (!isAssistant && !isDocumentStructurallyComplete(fullText)) {
-               // AI stopped but document is incomplete (no signature section)
-               send({ type: "status", isCutOff: true });
-             }
+                send({ type: "status", isCutOff: true });
+              } else if (!isAssistant && !isDocumentStructurallyComplete(fullText, type)) {
+                send({ type: "status", isCutOff: true });
+              } else if (isAssistant && willEditDocument && !isDocumentStructurallyComplete(fullText.length > 500 ? fullText : (rawContext || '') + fullText, type)) {
+                send({ type: "status", isCutOff: true });
+              }
              return true;
           };
 
@@ -1238,9 +1307,13 @@ TUGAS ANDA:
                  try {
                    const finalResp = await result.response;
                    const reason = finalResp.candidates?.[0]?.finishReason as string;
-                   if (reason === "LENGTH" || reason === "MAX_TOKENS" || !isDocumentStructurallyComplete(fullText)) {
-                     send({ type: "status", isCutOff: true });
-                   }
+                    if (reason === "LENGTH" || reason === "MAX_TOKENS") {
+                      send({ type: "status", isCutOff: true });
+                    } else if (!isAssistant && !isDocumentStructurallyComplete(fullText, type)) {
+                      send({ type: "status", isCutOff: true });
+                    } else if (isAssistant && willEditDocument && !isDocumentStructurallyComplete(fullText.length > 500 ? fullText : (rawContext || '') + fullText, type)) {
+                      send({ type: "status", isCutOff: true });
+                    }
                  } catch (e) { console.error("Gemini sync err:", e); }
              } else {
                const result = await model.generateContentStream(systemPrompt + "\n\nUser Instructions: " + rawPrompt);
@@ -1248,9 +1321,9 @@ TUGAS ANDA:
                  const text = chunk.text();
                  if (text) { fullText += text; send({ type: "chunk", text }); }
                }
-               if (!isDocumentStructurallyComplete(fullText)) {
-                 send({ type: "status", isCutOff: true });
-               }
+                if (!isDocumentStructurallyComplete(fullText, type)) {
+                  send({ type: "status", isCutOff: true });
+                }
              }
              return true;
           };

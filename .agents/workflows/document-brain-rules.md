@@ -148,6 +148,32 @@ Deteksi menggunakan `activeDocType` (state yang diupdate dari database):
 
 ---
 
+## 🔍 DETEKSI KELENGKAPAN DOKUMEN (COMPLETENESS DETECTION)
+
+### Aturan `isDocumentStructurallyComplete()`
+Fungsi ini ada di **route.ts** (server) dan **workspace/page.tsx** (client). Menggunakan heuristik multi-level:
+
+1. **Minimum Length**: Dokumen < 2000 karakter = BELUM SELESAI.
+2. **Unclosed Tags**: Jika 200 karakter terakhir mengandung tag HTML terbuka = BELUM SELESAI. 
+3. **Per-Tipe Checks**:
+   - **ATP, PROTA, PROSEM, KKTP**: WAJIB ada "JUMLAH JAM PELAJARAN" di 1500 karakter terakhir.
+   - **LKPD**: WAJIB ada "KUNCI JAWABAN" atau "PEDOMAN PENSKORAN".
+   - **CP**: WAJIB ada "CAPAIAN PEMBELAJARAN FASE".
+   - **KISI-KISI**: Minimal 8 baris `<tr>`.
+4. **Proper Ending**: WAJIB diakhiri `</table>` atau `</div>`.
+
+### Perilaku UI:
+- ✅ **"Dokumen selesai"** (hijau) = `isDocumentComplete() === true` DAN `isCutOff === false`.
+- ⚠️ **"Dokumen belum selesai"** (amber) + Tombol Lanjutkan = `isCutOff === true`.
+- Tombol "Lanjutkan Penulisan" SELALU muncul sampai dokumen BENAR-BENAR lengkap.
+
+### Aturan Penomoran Per BAB (Kontinuasi)
+- Saat melanjutkan dokumen, analisis struktural otomatis mendeteksi BAB terakhir dan nomor terakhir.
+- Jika AI memulai BAB BARU → RESET nomor ke 1.
+- Jika AI melanjutkan di tengah BAB → Lanjutkan nomor dari posisi terakhir.
+
+---
+
 ## ⚠️ CHECKLIST SEBELUM MENGUBAH OTAK AI
 
 Sebelum mengedit `generate-stream/route.ts` atau `workspace/page.tsx`, pastikan:
@@ -159,4 +185,6 @@ Sebelum mengedit `generate-stream/route.ts` atau `workspace/page.tsx`, pastikan:
 - [ ] Apakah highlight kuning masih tidak digunakan?
 - [ ] Apakah header warna masih konsisten?
 - [ ] Apakah data fiktif tidak dihasilkan?
+- [ ] Apakah deteksi kelengkapan dokumen masih berfungsi dengan benar?
 - [ ] Sudah test export ke Word?
+

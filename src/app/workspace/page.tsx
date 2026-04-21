@@ -147,14 +147,56 @@ function WorkspaceContent() {
     }
   };
 
-  // Check if document is structurally complete (properly ended)
+  // Check if document is structurally complete (uses the same heuristics as server)
   const isDocumentComplete = useCallback((content: string): boolean => {
     if (!content || content.length < 500) return false;
     const trimmed = content.trim();
-    // A document is complete if it ends with a closing table or div tag
+    
+    // 1. Minimum content length — short docs are never complete
+    if (trimmed.length < 2000) return false;
+
+    // 2. Check for obvious truncation (open tags not closed)
+    const lastChars = trimmed.slice(-200);
+    const hasUnclosedTag = /<[^/][^>]*$/.test(lastChars);
+    if (hasUnclosedTag) return false;
+
+    // 3. Determine doc type for specific checks
+    const currentType = (activeDocType || docType || '').toUpperCase();
+    
+    // 4. For table documents (ATP, PROTA, PROSEM, KKTP): require TOTAL JP footer
+    const tableTypes = ['ATP', 'PROTA', 'PROSEM', 'KKTP', 'PROGRAM SEMESTER', 'PROGRAM TAHUNAN'];
+    const isTableDoc = tableTypes.some(t => currentType.includes(t));
+    
+    if (isTableDoc) {
+      const hasTotalJP = /JUMLAH\s+JAM\s+PELAJARAN/i.test(content);
+      if (!hasTotalJP) return false;
+      // The TOTAL JP footer must be near the end
+      const lastSection = content.slice(-1500).toUpperCase();
+      if (!/JUMLAH\s+JAM\s+PELAJARAN/.test(lastSection)) return false;
+    }
+    
+    // 5. For LKPD: require Kunci Jawaban
+    if (currentType.includes('LKPD')) {
+      if (!/KUNCI\s+JAWABAN|PEDOMAN\s+PENSKORAN/i.test(content)) return false;
+    }
+    
+    // 6. For CP: require Fase section
+    if (currentType === 'CP' || currentType.includes('CAPAIAN PEMBELAJARAN')) {
+      if (!/CAPAIAN\s+PEMBELAJARAN\s+FASE/i.test(content)) return false;
+    }
+    
+    // 7. For KISI-KISI: minimum row count
+    if (currentType.includes('KISI') || currentType.includes('DESAIN EVALUASI')) {
+      const rowCount = (content.match(/<tr/gi) || []).length;
+      if (rowCount < 8) return false;
+    }
+
+    // 8. Must end with a proper closing tag
     const hasProperEnding = trimmed.endsWith('</table>') || trimmed.endsWith('</div>');
-    return hasProperEnding;
-  }, []);
+    if (!hasProperEnding) return false;
+    
+    return true;
+  }, [activeDocType, docType]);
 
   const streamGenerate = useCallback(async (rawPrompt: string, appendToExisting = false, rawContext?: string, isAssistantMode = false, forcedMode?: 'chat' | 'edit', isContinue = false) => {
     setLoading(true);
@@ -1011,6 +1053,21 @@ function WorkspaceContent() {
                       <div className="flex items-center gap-2.5 bg-[#4d7537]/10 border border-[#4d7537]/30 text-[#4d7537] dark:text-[#7cb860] px-6 py-3 rounded-xl text-sm font-semibold shadow-sm">
                         <CheckCircle2 className="w-5 h-5" />
                         Dokumen telah selesai dibuat secara lengkap.
+                      </div>
+                    </motion.div>
+                  </div>
+                )}
+
+                {/* Incomplete Document Warning */}
+                {!loading && isGenerated && displayedContent && isCutOff && !isStopped && (
+                  <div className="mt-16 pb-8 w-full flex flex-col items-center border-t border-dashed border-amber-500/30 pt-8">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }} 
+                      animate={{ opacity: 1, y: 0 }} 
+                    >
+                      <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 px-6 py-3 rounded-xl text-sm font-semibold shadow-sm">
+                        <Clock className="w-5 h-5" />
+                        Dokumen belum selesai — Tekan tombol {'"'}Lanjutkan Penulisan{'"'} di bawah.
                       </div>
                     </motion.div>
                   </div>
