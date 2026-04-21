@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
-  Sparkles, ArrowRight, Loader2, Plus, ArrowLeft, Zap, Brain, CheckCircle2, FileText
+  Sparkles, ArrowRight, Loader2, Plus, ArrowLeft, Zap, Brain, CheckCircle2, FileText, Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -638,18 +638,18 @@ function GenerateContent() {
                               </div>
                            ) : answers[q.id] ? (
                               <div className="flex flex-col items-center gap-2">
-                                 <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                                    <Sparkles className="w-6 h-6 text-emerald-500" />
+                                 <div className="w-12 h-12 rounded-full bg-[#4d7537] text-white flex items-center justify-center">
+                                    <Check className="w-6 h-6" />
                                  </div>
-                                 <div className="text-center">
-                                    <p className="text-sm font-bold text-emerald-600">File Berhasil Dibaca!</p>
-                                    <p className="text-[10px] text-muted-foreground mt-1">{answers[q.id].split("]")[0].replace("[FILE REFERENCE: ", "")}</p>
-                                 </div>
+                                 <p className="text-sm font-bold text-[#4d7537]">File Berhasil Terbaca!</p>
+                                 <p className="text-[10px] text-muted-foreground bg-white px-2 py-0.5 rounded-full border border-border">
+                                    ± {answers[q.id].split('Content: ')[1]?.length.toLocaleString() || '0'} karakter tersimpan
+                                 </p>
                                  <button 
                                     onClick={() => handleAnswer(q.id, "")}
-                                    className="text-xs text-red-500 hover:text-red-600 font-bold mt-2 z-10"
+                                    className="text-[10px] text-red-500 font-bold uppercase hover:underline mt-2"
                                  >
-                                    Hapus File
+                                    Hapus & Ganti File
                                  </button>
                               </div>
                            ) : (

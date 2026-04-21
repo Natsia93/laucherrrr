@@ -9,6 +9,11 @@ import { count, eq, and, gte } from "drizzle-orm";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
+// Force Node.js runtime for streaming stability
+export const runtime = "nodejs";
+// Multi-page documents take time - set 60s limit
+export const maxDuration = 60;
+
 const deepseek = new OpenAI({
   baseURL: "https://api.deepseek.com",
   apiKey: process.env.DEEPSEEK_API_KEY!,

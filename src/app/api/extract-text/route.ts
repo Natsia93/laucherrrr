@@ -5,6 +5,8 @@ import mammoth from "mammoth";
 import pdfParse from "pdf-parse";
 // Force Node.js runtime for mammoth and pdf-parse
 export const runtime = "nodejs";
+// Max duration for Vercel execution (60 seconds)
+export const maxDuration = 60;
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
