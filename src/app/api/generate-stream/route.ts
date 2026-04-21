@@ -844,7 +844,7 @@ BAGIAN 4 — TABEL TP:
   1. **Elemen**: Gunakan atribut "rowspan" pada tag "td" agar satu Elemen mencakup beberapa baris "Lingkup Materi" dan "Tujuan Pembelajaran". Tuliskan nama Elemen (Bold) dan ringkasan CP-nya.
   2. **Lingkup Materi**: Tuliskan ruang lingkup materi spesifik di kolom ini.
   3. **Tujuan Pembelajaran**: Tuliskan SATU Tujuan Pembelajaran per baris di kolom ini.
-  4. **PENOMORAN WAJIB KONTINU**: Nomor urut pada kolom Tujuan Pembelajaran **WAJIB LANJUT TERUS** (1, 2, 3, 4, 5...) meskipun sudah berganti Elemen atau Materi. DILARANG me-reset nomor.
+  4. **PENOMORAN RESET PER ELEMEN**: Nomor urut pada kolom Tujuan Pembelajaran **WAJIB RESET KEMBALI KE 1** setiap kali berganti ELEMEN baru. DILARANG melanjutkan penomoran dari elemen sebelumnya (Contoh: Elemen A -> No 1, 2, 3 | Elemen B -> No 1, 2...).
   5. **Visual**: Border tabel WAJIB terlihat di semua sisi (1pt solid black).
 
 BAGIAN 5 — FOOTER DISCLAIMER:
