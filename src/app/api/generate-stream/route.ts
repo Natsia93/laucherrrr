@@ -98,23 +98,26 @@ const ARABIC_RULES = `
 === ATURAN KHUSUS BAHASA ARAB / PAI (WAJIB) ===
 1. Seluruh teks Arab WAJIB menggunakan harokat lengkap (Full Tasykil/Tasykilat): Fathah, Kasrah, Dhammah, Tanwin, Sukun, Tasydid.
 2. Gunakan wrapping <div dir="rtl" style="font-family: 'Noto Naskh Arabic', serif; font-size: 12pt; line-height: 1.6; text-align: right;">. (CATATAN: Gunakan text-align: right untuk seluruh konten Bahasa Arab).
-3. JIKA KONTEKSNYA ADALAH SOAL/LKPD: Hanya butir soal (Pertanyaan) dan Pilihan Ganda (A, B, C, D) yang menggunakan Bahasa Arab. Bagian Judul, Tujuan Pembelajaran, Ringkasan Materi (Narasi), dan Petunjuk Kerja TETAP menggunakan Bahasa Indonesia agar mudah dipahami, dengan format Rata Kiri (text-align: left).
-4. Jika membuat tabel yang berisi teks Arab, SELURUH sel tabel yang berisi teks Arab harus dir="rtl" dan text-align: right.
-5. Transliterasi Latin (jika diminta): gunakan standar EYD/KBBI untuk istilah Arab yang sudah diserap.
-6. KHUSUS DOKUMEN BAHASA ARAB: DILARANG menggunakan font 'Times New Roman' meskipun untuk teks Indonesia. Gunakan 'Noto Naskh Arabic' untuk SELURUH dokumen agar visual serasi (Hilangkan font Indo).
-7. JANGAN menyertakan terjemahan Bahasa Indonesia di dalam butir soal/pilihan ganda. Murni Bahasa Arab saja.
+3. JIKA KONTEKSNYA ADALAH SOAL/LKPD (Khusus Mapel Quran Hadis, PAI, Fiqih, dsb): Gunakan Bahasa Indonesia untuk Pertanyaan dan Pilihan Ganda (A, B, C, D). Dalil (Ayat/Hadits) tetap ditulis dalam Bahasa Arab berharokat sebagai konteks soal.
+4. KHUSUS Mapel "Bahasa Arab": Seluruh konten (Pertanyaan & Pilihan Ganda) WAJIB menggunakan Bahasa Arab.
+5. Jika membuat tabel yang berisi teks Arab, SELURUH sel tabel yang berisi teks Arab harus dir="rtl" dan text-align: right.
+6. Transliterasi Latin (jika diminta): gunakan standar EYD/KBBI untuk istilah Arab yang sudah diserap.
+7. DILARANG menggunakan font 'Times New Roman' untuk teks Arab. Gunakan 'Noto Naskh Arabic' untuk kejelasan visual.
+8. JANGAN menyertakan terjemahan Bahasa Indonesia di bawah DALIL ARAB dalam butir soal/pilihan ganda kecuali diminta. Biarkan dalilnya saja yang Arab, pertanyaannya Indonesia.
 `;
 
 
 function buildSystemPrompt(type: string, rawPrompt: string): string {
   // Deteksi konteks khusus
-  const isArabic = /bahasa\s*arab|pondok|tasykil|harokat|pai\b|pendidikan\s*agama\s*islam|al[- ]?qur|fiqih|kitab|\barab\b/i.test(rawPrompt);
+  const isArabicSubject = /bahasa\s*arab/i.test(rawPrompt) || /bahasa\s*arab/i.test(type);
+  const isReligiousSubject = /al[- ]?qur|hadis|hadits|fiqih|akidah|akhlaq|pai\b|tasykil|harokat|kitab/i.test(rawPrompt) || /quran|hadis|fiqih|pai/i.test(type);
+  const isArabic = isArabicSubject || isReligiousSubject;
   const isMath = /matematika|math|hitung|angka|aljabar|geometri|trigonometri|statistik|kalkulus/i.test(rawPrompt) || /matematika|math/i.test(type);
   const hasFileReference = /\[FILE REFERENCE:|\[REFERENSI FILE:/i.test(rawPrompt);
   
-  const langRule = isArabic 
-    ? "WAJIB menggunakan Bahasa Arab ber-Harokat (Full Tasykil) untuk bagian soal dan pilihan ganda. Bagian narasi pengantar, tujuan, dan petunjuk tetap Bahasa Indonesia. GUNAKAN font-family: 'Noto Naskh Arabic', serif untuk SELURUH dokumen (DILARANG menggunakan Times New Roman)."
-    : "Gunakan Bahasa Indonesia formal sesuai EYD V.";
+  const langRule = isArabicSubject 
+    ? "WAJIB menggunakan Bahasa Arab ber-Harokat (Full Tasykil) untuk SELURUH konten. GUNAKAN font-family: 'Noto Naskh Arabic', serif untuk SELURUH dokumen."
+    : isReligiousSubject ? "Gunakan Bahasa Indonesia untuk Pertanyaan dan Opsi Jawaban. Dalil/Ayat/Hadits WAJIB menggunakan Bahasa Arab ber-Harokat." : "Gunakan Bahasa Indonesia formal sesuai EYD V.";
 
   // Gabungkan rules tambahan berdasarkan konteks
   let additionalRules = "";

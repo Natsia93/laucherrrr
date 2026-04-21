@@ -1018,7 +1018,7 @@ function WorkspaceContent() {
                       className="relative z-0"
                     >
                       {loading && (assistantMode === 'edit' || isContinuing) && (
-                        <div className="absolute inset-0 bg-background/5 backdrop-blur-[1px] z-[5] flex items-center justify-center rounded-lg pointer-events-none">
+                        <div className="absolute inset-0 bg-background/5 z-[5] flex items-center justify-center rounded-lg pointer-events-none">
                           <div className="bg-card/90 border border-border px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in zoom-in duration-300">
                              <div className="relative flex items-center justify-center">
                                <Loader2 className="w-5 h-5 animate-spin text-[#4d7537]" />
