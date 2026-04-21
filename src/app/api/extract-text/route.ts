@@ -30,30 +30,38 @@ export async function POST(req: Request) {
 
     if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
       try {
-        const result = await pdfParse(buffer);
-        extractedText = result.text;
+        // Step 1: Attempt raw extraction to see if we can get a quick result
+        const rawResult = await pdfParse(buffer);
+        const rawText = rawResult.text || "";
         
-        if (extractedText.trim().length < 50) {
-          const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
-          const prompt = "Extract all text from this PDF document as accurately as possible, preserving table structures for curriculum data. Return ONLY the text found.";
-          const result = await model.generateContent([
+        // Step 2: Use Gemini 1.5 Flash as the High-Precision "Refiner" or OCR
+        // This is necessary because textbooks have complex layouts that raw pdf-parse ruins.
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+        
+        // We send either the raw text (if available) or the actual file buffer (OCR)
+        const prompt = `Extract and clean all text from this curriculum document. 
+          REQUIREMENTS:
+          1. Preserve the structural meaning (Chapters, Sub-chapters, Points).
+          2. IMPORTANT: If there is Arabic text with Harokat (Dalil/Quran/Hadith), capture it EXACTLY with the harokat.
+          3. Remove any garbage characters, page numbers in the middle of sentences, or header/footer repetitions.
+          4. Return ONLY the cleaned, readable text. No conversational filler.`;
+
+        let result;
+        if (rawText.trim().length > 500) {
+          // If raw text is decent, have Gemini clean it up to save tokens/speed
+          result = await model.generateContent([prompt, rawText]);
+        } else {
+          // If raw text is poor or empty, perform full Visual OCR on the PDF
+          result = await model.generateContent([
             prompt,
             { inlineData: { data: buffer.toString("base64"), mimeType: "application/pdf" } }
           ]);
-          extractedText = result.response.text();
         }
+        
+        extractedText = result.response.text();
       } catch (err: any) {
-        console.log("PDF Parsing error, attempting Gemini OCR...");
-        try {
-          const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
-          const result = await model.generateContent([
-            "Extract all text from this PDF document including tables. Provide the output in plain text. Return ONLY the extracted text.",
-            { inlineData: { data: buffer.toString("base64"), mimeType: "application/pdf" } }
-          ]);
-          extractedText = result.response.text();
-        } catch (geminiErr: any) {
-          throw new Error(`Gagal memproses PDF: ${geminiErr.message}`);
-        }
+        console.error("Advanced PDF Parsing error:", err);
+        throw new Error(`Gagal memproses PDF dengan presisi tinggi: ${err.message}`);
       }
     } 
     else if (fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || fileName.endsWith(".docx")) {
@@ -73,9 +81,9 @@ export async function POST(req: Request) {
       throw new Error("Teks tidak dapat ditemukan dalam dokumen ini.");
     }
 
-    const charLimit = 50000;
+    const charLimit = 100000;
     if (extractedText.length > charLimit) {
-      extractedText = extractedText.substring(0, charLimit) + "... [Teks dipotong]";
+      extractedText = extractedText.substring(0, charLimit) + "... [Teks dipotong karena melebihi batas 100rb karakter]";
     }
 
     return NextResponse.json({ text: extractedText });

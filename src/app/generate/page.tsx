@@ -320,8 +320,8 @@ function GenerateContent() {
   const handleFileUpload = async (id: number, file: File) => {
     if (!file) return;
     
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Format file terlalu besar. Maksimal 5MB untuk keamanan.");
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Format file terlalu besar. Maksimal 10MB untuk keamanan.");
       return;
     }
 
