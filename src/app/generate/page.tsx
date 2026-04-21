@@ -217,8 +217,9 @@ function GenerateContent() {
                           lowerQ.includes("materi spesifik") || lowerQ.includes("topik");
            
            const isLkpdJunk = docType === "LKPD" && (lowerQ.includes("total soal") || lowerQ.includes("jumlah soal") || lowerQ.includes("jenis soal") || lowerQ.includes("bentuk soal"));
+           const isTpMediaJunk = (docType === "TP" || docType === "Tujuan Pembelajaran (TP)") && lowerQ.includes("media");
            
-           return !isJunk && !isLkpdJunk;
+           return !isJunk && !isLkpdJunk && !isTpMediaJunk;
         });
 
         const finalQuestions = [...initialQuestions, ...filteredAiQuestions];

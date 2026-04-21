@@ -48,6 +48,10 @@ export async function POST(req: Request) {
          - Fokus pada total alokasi JP dalam satu tahun pelajaran (dua semester).
          - Pembagian materi antara Semester Ganjil dan Genap.
          - Target kompetensi besar di akhir tahun pelajaran.
+      6. TP (Tujuan Pembelajaran):
+         - Fokus pada 4 Komponen: Audiens, Behavior (Kompetensi/KKO), Content (Lingkup Materi), dan Degree (Kualitas).
+         - Tantangan Belajar: Apa kesulitan utama siswa pada materi ini yang harus diatasi?
+         - *JANGAN TANYAKAN JP DAN MEDIA PEMBELAJARAN.*
 
       Aturan Format:
       - Berikan respons HANYA dalam format JSON array of objects.
@@ -134,6 +138,16 @@ export async function POST(req: Request) {
             { id: 5, question: "Berapa total alokasi JP (Jam Pelajaran) selama satu tahun?", type: "chips", options: ["72 JP", "108 JP", "144 JP", "180 JP"], category: "data" },
             { id: 6, question: "Sebutkan daftar BAB atau materi utama yang akan dipetakan:", type: "text", placeholder: "Smt 1: BAB 1-3, Smt 2: BAB 4-6...", category: "data" },
             { id: 7, question: "Ingin rincian CP (046/2025) dipisah per elemen (Pemahaman & Keterampilan Proses)?", type: "chips", options: ["Ya, Pisah per Elemen", "Gabungkan Saja", "Hanya Tabel Prota"], category: "data" }
+        ]
+      });
+    }
+
+    if (docType === "TP" || docType === "Tujuan Pembelajaran (TP)") {
+      return NextResponse.json({
+        questions: [
+          { id: 4, question: "Apa elemen materi utama yang menjadi fokus utama dalam TP ini?", type: "text", placeholder: "Misal: Menyimak, Membaca, atau Geometri..." },
+          { id: 5, question: "Kompetensi apa yang ingin dicapai siswa? (Pilih satu atau lebih)", type: "multi-chips", options: ["Menjelaskan", "Menganalisis", "Mempresentasikan", "Mengevaluasi", "Mencipta"] },
+          { id: 6, question: "Apa tantangan utama siswa yang ingin Anda sasar dalam pembelajaran ini?", type: "text", placeholder: "Misal: Kesulitan memahami konsep dasar, minat baca rendah..." }
         ]
       });
     }
