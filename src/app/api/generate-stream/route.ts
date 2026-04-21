@@ -29,7 +29,13 @@ const SHARED_RULES = `
 2. Diferensiasi: Berikan variasi aktivitas atau soal yang mencakup level LOTS hingga HOTS (Taksonomi Bloom Revisi).
 3. Kontekstual: Hubungkan materi dengan kehidupan sehari-hari siswa di Indonesia.
 4. Profil Pelajar Pancasila: Integrasikan nilai-nilai karakter (Mandiri, Kreatif, Bernalar Kritis, Gotong Royong, Kebhinekaan Global, Beriman & Bertakwa) secara implisit maupun eksplisit.
-5. PRIORITAS REFERENSI USER: Jika dalam KONTEKS DATA GURU terdapat penanda "[FILE REFERENCE: ...]", Anda WAJIB memprioritaskan seluruh informasi, materi, dan BAB yang ada di dalam file tersebut sebagai sumber utama (source of truth). Ikuti gaya, istilah, dan struktur materi dari file tersebut.
+5. PRIORITAS REFERENSI USER (ATURAN PALING PENTING):
+   Jika dalam KONTEKS DATA GURU terdapat penanda "[FILE REFERENCE: ...]" atau "[REFERENSI FILE: ...]":
+   a. File tersebut menjadi SUMBER KEBENARAN UTAMA (Primary Source of Truth). SEMUA konten, istilah, struktur, dan materi yang ada di file tersebut WAJIB menjadi pedoman utama.
+   b. DILARANG KERAS menggunakan data "umum" dari database AI jika data yang sama SUDAH TERSEDIA di file referensi user.
+   c. Ikuti PERSIS gaya bahasa, nama BAB/materi, urutan topik, dan terminologi yang digunakan di file user.
+   d. Jika file user memuat daftar TP, CP, atau materi, gunakan ISI PERSIS dari file tersebut — JANGAN mengarang versi baru.
+   e. Boleh MELENGKAPI atau MEMPERBAIKI format jika file user kurang lengkap, namun JANGAN MENGGANTI isi kontennya.
 
 === ATURAN OUTPUT HTML (SANGAT KETAT) ===
 1. DILARANG KERAS menggunakan markdown code blocks (\`\`\`html). LANGSUNG MULAI DENGAN <div>.
