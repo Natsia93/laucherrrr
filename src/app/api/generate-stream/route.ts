@@ -777,6 +777,9 @@ ${rawPrompt}
 
 ${langRule}
 
+=== ATURAN LAYOUT LANDSCAPE (SANGAT PENTING) ===
+- Dokumen ini dikerjakan dalam format LANDSCAPE agar tabel terlihat luas dan profesional.
+
 === STRUKTUR DOKUMEN TP (WAJIB BERURUTAN & PRESISI) ===
 
 BAGIAN 1 — HEADER BERWARNA:
