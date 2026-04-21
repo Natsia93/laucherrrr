@@ -837,14 +837,15 @@ BAGIAN 3 — CAPAIAN PEMBELAJARAN:
 - Isi: Jabarkan Capaian Pembelajaran (CP) fase terkait dalam bentuk narasi yang utuh dan profesional. (Pastikan justify, justify-content: space-between if needed). 
 
 BAGIAN 4 — TABEL TP:
-- Buat TABEL dengan 2 KOLOM (Elemen dan Tujuan Pembelajaran).
-- Header Tabel: background-color: #f2f2f2 (Abu-abu muda).
-- Lebar Kolom: Elemen (30-35%), Tujuan Pembelajaran (65-70%).
-- **ATURAN ISI TABEL**:
-  1. **Elemen**: Tuliskan nama Elemen (Bold) dan di bawahnya tuliskan ringkasan Capaian Pembelajaran khusus elemen tersebut.
-  2. **Tujuan Pembelajaran**: Tuliskan daftar Tujuan Pembelajaran yang diturunkan dari CP elemen tersebut.
-  3. **PENOMORAN WAJIB KONTINU**: Nomor urut pada kolom Tujuan Pembelajaran **WAJIB LANJUT TERUS** (1, 2, 3, 4, 5...) meskipun sudah berganti Elemen. JANGAN me-reset nomor ke 1 setiap ganti Elemen (Kecuali jika dokumen sangat panjang, namun ikuti pola kontinu).
-  4. **Kualitas TP**: TP harus mengandung unsur kompetensi (kata kerja operasional) dan ruang lingkup materi.
+- Buat TABEL dengan 3 KOLOM (Elemen, Lingkup Materi, dan Tujuan Pembelajaran).
+- Header Tabel: background-color: #f2f2f2, Bold, Center, Border: 1pt solid black.
+- Lebar Kolom: Elemen (25%), Lingkup Materi (25%), Tujuan Pembelajaran (50%).
+- **ATURAN ISI TABEL (STRUKTUR ROWSPAN)**:
+  1. **Elemen**: Gunakan atribut "rowspan" pada tag "td" agar satu Elemen mencakup beberapa baris "Lingkup Materi" dan "Tujuan Pembelajaran". Tuliskan nama Elemen (Bold) dan ringkasan CP-nya.
+  2. **Lingkup Materi**: Tuliskan ruang lingkup materi spesifik di kolom ini.
+  3. **Tujuan Pembelajaran**: Tuliskan SATU Tujuan Pembelajaran per baris di kolom ini.
+  4. **PENOMORAN WAJIB KONTINU**: Nomor urut pada kolom Tujuan Pembelajaran **WAJIB LANJUT TERUS** (1, 2, 3, 4, 5...) meskipun sudah berganti Elemen atau Materi. DILARANG me-reset nomor.
+  5. **Visual**: Border tabel WAJIB terlihat di semua sisi (1pt solid black).
 
 BAGIAN 5 — FOOTER DISCLAIMER:
 - Di bawah tabel, tuliskan teks kecil miring:
