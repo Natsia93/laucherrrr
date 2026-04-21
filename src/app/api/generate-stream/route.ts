@@ -120,18 +120,20 @@ function buildSystemPrompt(type: string, rawPrompt: string): string {
   let additionalRules = "";
   if (isMath) additionalRules += MATH_RULES;
   if (isArabic) additionalRules += ARABIC_RULES;
-  if (hasFileReference) additionalRules += `
-=== PERINGATAN KERAS: FILE REFERENSI TERDETEKSI ===
-User telah mengupload file referensi di dalam data wawancara.
-ATURAN MUTLAK:
-1. BACA SELURUH isi teks dari bagian "[FILE REFERENCE: ...]" atau "[REFERENSI FILE: ...]" yang ada di KONTEKS DATA GURU.
-2. Gunakan ISI MATERI dari file tersebut sebagai SATU-SATUNYA sumber konten dokumen.
-3. DILARANG KERAS menggunakan pengetahuan umum/bawaan AI untuk mengisi konten jika materi sudah tersedia di file.
-4. Ambil nama BAB, topik, ayat Al-Quran, hadits, dan materi PERSIS dari file user.
-5. Jika file membahas "QS. Al-Jumu'ah" maka dokumen WAJIB berisi materi tentang QS. Al-Jumu'ah — BUKAN materi Tajwid atau materi lain.
-6. Jika file membahas "Etos Kerja" maka Lingkup Materi dan TP WAJIB berisi tentang Etos Kerja.
-7. BUANG semua asumsi bawaan AI tentang mapel tersebut. File user = KEBENARAN MUTLAK.
+
+  // EXTRA STRENGTH FILE ENFORCEMENT
+  if (hasFileReference) {
+    const isQuranHadis = /quran|hadis|hadits|al-qur|tafsir/i.test(rawPrompt) || /quran|hadis/i.test(type);
+    additionalRules += `
+=== PERINGATAN KERAS: MODE KEPATUHAN FILE REFERENSI (WAJIB) ===
+User telah mengupload file dokumen sebagai acuan. Anda dilarang keras menggunakan pengetahuan umum AI.
+1. Gunakan 100% isi materi dari blok "[FILE REFERENCE: ...]" atau "[REFERENSI FILE: ...]" sebagai sumber materi tunggal.
+2. ${isQuranHadis ? "FOKUS MATERI: Jika file membahas AYAT/HADITS spesifik (misal: QS Al-Jumu'ah / Etos Kerja), Anda DILARANG KERAS membuat materi Tajwid (Nun Sukun, Mad, dll) kecuali diminta eksplisit. Fokuslah pada ayat/hadits sesuai isi file." : "FOKUS MATERI: Ambil topik dan narasi sesuai yang ada di dalam file tersebut."}
+3. DILARANG melakukan halusinasi kurikulum. Ikuti alur dan terminologi yang ada di file user.
+4. Jika instruksi user ("Buatkan dokumen...") tidak lengkap, gunakan file sebagai sumber utama untuk melengkapinya.
 `;
+  }
+
 
   const prompts: Record<string, string> = {
     // ──────────────────────────────────────
@@ -853,8 +855,8 @@ BAGIAN 2 — IDENTITAS TABEL:
 
 BAGIAN 3 — CAPAIAN PEMBELAJARAN:
 - Judul: "Capaian Pembelajaran" (Bold, 12pt).
-- JIKA ADA FILE REFERENSI: Ambil dan rangkum narasi Capaian Pembelajaran LANGSUNG dari isi file yang diupload user. Gunakan terminologi dan materi yang SAMA PERSIS dengan file tersebut.
-- JIKA TIDAK ADA FILE: Jabarkan CP fase terkait dalam bentuk narasi yang utuh berdasarkan pengetahuan bawaan AI.
+- ATURAN PRIORITAS: BACA blok "[FILE REFERENCE: ...]" terlebih dahulu. Jika file berisi narasi/isi materi (seperti QS al-Jumu'ah), maka Jabarkan CP berdasarkan narasi materi spesifik tersebut. 
+- JANGAN gunakan CP umum tentang Tajwid jika file user membahas Tafsir/Kandungan Ayat.
 - Format: text-align: justify.
 
 BAGIAN 4 — TABEL TP:
@@ -862,10 +864,10 @@ BAGIAN 4 — TABEL TP:
 - Header Tabel: background-color: #f2f2f2, Bold, Center, Border: 1pt solid black.
 - Lebar Kolom: Elemen (25%), Lingkup Materi (25%), Tujuan Pembelajaran (50%).
 - **ATURAN ISI TABEL (STRUKTUR ROWSPAN)**:
-  1. **Elemen**: Gunakan atribut "rowspan" pada tag "td" agar satu Elemen mencakup beberapa baris "Lingkup Materi" dan "Tujuan Pembelajaran". Tuliskan nama Elemen (Bold) dan ringkasan CP-nya.
-  2. **Lingkup Materi**: JIKA ADA FILE REFERENSI — ambil topik/materi PERSIS dari file user (misal: jika file membahas QS al-Jumu'ah dan Etos Kerja, maka Lingkup Materi WAJIB berisi "QS al-Jumu'ah" dan "Etos Kerja", BUKAN materi Tajwid). JIKA TIDAK ADA FILE — turunkan dari CP sesuai kurikulum.
-  3. **Tujuan Pembelajaran**: Tuliskan SATU Tujuan Pembelajaran per baris. JIKA ADA FILE REFERENSI — konten TP harus diturunkan dari materi yang ada di file user, bukan dari pengetahuan umum AI.
-  4. **PENOMORAN RESET PER ELEMEN**: Nomor urut pada kolom Tujuan Pembelajaran **WAJIB RESET KEMBALI KE 1** setiap kali berganti ELEMEN baru. DILARANG melanjutkan penomoran dari elemen sebelumnya (Contoh: Elemen A -> No 1, 2, 3 | Elemen B -> No 1, 2...).
+  1. **Elemen**: Gunakan atribut "rowspan" pada tag "td" agar satu Elemen mencakup beberapa baris "Lingkup Materi" dan "Tujuan Pembelajaran". Tuliskan nama Elemen (Bold).
+  2. **Lingkup Materi**: WAJIB AMBIL DARI FILE REFERENSI (Jika ada). Contoh: "Kandungan QS. Al-Jumu'ah Ayat 9-11" atau "Etos Kerja dalam Islam". DILARANG MENGARANG MATERI TAJWID JIKA TIDAK ADA DI FILE.
+  3. **Tujuan Pembelajaran**: Sebutkan TP spesifik yang diturunkan dari materi file (misal: Memahami kandungan ayat, Menerapkan etos kerja, dsb).
+  4. **PENOMORAN RESET PER ELEMEN**: Nomor urut pada kolom Tujuan Pembelajaran **WAJIB RESET KEMBALI KE 1** setiap kali berganti ELEMEN baru.
   5. **Visual**: Border tabel WAJIB terlihat di semua sisi (1pt solid black).
 
 BAGIAN 5 — FOOTER DISCLAIMER:
