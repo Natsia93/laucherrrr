@@ -49,14 +49,14 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
     icon: Presentation,
   },
   {
-    title: "Slack Workspace",
-    href: "/slack",
-    icon: MessageSquare,
-  },
-  {
     title: "Google Calendar",
     href: "/integrations/calendar",
     icon: Calendar,
+  },
+  {
+    title: "Slack Workspace",
+    href: "/slack",
+    icon: MessageSquare,
   },
   {
     title: "Launcher Automation",
