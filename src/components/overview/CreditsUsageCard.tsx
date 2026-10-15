@@ -108,7 +108,7 @@ export function CreditsUsageCard() {
               className="text-white/10"
             />
 
-            {/* Glowing Accent Ring */}
+            {/* Glowing Accent Ring with Flat / Non-Rounded Cap */}
             <motion.circle
               cx="100"
               cy="100"
@@ -120,7 +120,7 @@ export function CreditsUsageCard() {
               initial={{ strokeDashoffset: circumference }}
               animate={{ strokeDashoffset: hasApiKey && totalGenerations > 0 ? offset : circumference }}
               transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
-              strokeLinecap="round"
+              strokeLinecap="butt"
             />
           </svg>
 
