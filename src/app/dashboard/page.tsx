@@ -18,11 +18,14 @@ import {
   FileSpreadsheet,
   FileCode,
   X,
+  History,
+  Clock,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { motion, type Variants } from "framer-motion";
+import { ChatHistoryDrawer, type ConversationSummary } from "@/components/chat/ChatHistoryDrawer";
 
 // Staggered upward animation from leftmost to rightmost
 const chipsContainerVariants: Variants = {
@@ -228,6 +231,69 @@ export default function DashboardOverviewPage() {
   const userLastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : nameParts[0];
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [conversationsList, setConversationsList] = useState<ConversationSummary[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const activeConvIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    activeConvIdRef.current = activeConversationId;
+  }, [activeConversationId]);
+
+  const fetchConversations = async () => {
+    if (!session?.user?.id) return;
+    setIsLoadingHistory(true);
+    try {
+      const res = await fetch("/api/chat/conversations");
+      if (res.ok) {
+        const data = await res.json();
+        setConversationsList(data.conversations || []);
+      }
+    } catch (err) {
+      console.error("Error fetching conversations:", err);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchConversations();
+    }
+  }, [session?.user?.id]);
+
+  const persistConversation = async (msgs: ChatMessage[]) => {
+    if (!session?.user?.id || msgs.length === 0) return;
+    try {
+      const res = await fetch("/api/chat/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: activeConvIdRef.current || undefined,
+          docType: docType || "",
+          messages: msgs,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.conversation?.id) {
+          if (!activeConvIdRef.current) {
+            activeConvIdRef.current = data.conversation.id;
+            setActiveConversationId(data.conversation.id);
+          }
+          fetchConversations();
+        }
+      }
+    } catch (err) {
+      console.error("Failed to save conversation:", err);
+    }
+  };
+
+  const persistConversationRef = useRef(persistConversation);
+  useEffect(() => {
+    persistConversationRef.current = persistConversation;
+  });
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -262,8 +328,8 @@ export default function DashboardOverviewPage() {
     }
     const aiId = currentAiMsgIdRef.current;
     if (aiId) {
-      setMessages((prev) =>
-        prev.map((msg) =>
+      setMessages((prev) => {
+        const updated = prev.map((msg) =>
           msg.id === aiId
             ? {
                 ...msg,
@@ -271,8 +337,10 @@ export default function DashboardOverviewPage() {
                 isTyping: false,
               }
             : msg
-        )
-      );
+        );
+        persistConversationRef.current(updated);
+        return updated;
+      });
     }
   };
 
@@ -308,13 +376,16 @@ export default function DashboardOverviewPage() {
           clearInterval(typingIntervalRef.current);
           typingIntervalRef.current = null;
         }
-        setMessages((prev) =>
-          prev.map((msg) =>
+        const finalTarget = target;
+        setMessages((prev) => {
+          const updated = prev.map((msg) =>
             msg.id === targetAiMsgId
-              ? { ...msg, text: target, isTyping: false }
+              ? { ...msg, text: finalTarget, isTyping: false }
               : msg
-          )
-        );
+          );
+          persistConversationRef.current(updated);
+          return updated;
+        });
         setLoading(false);
       }
     }, 18);
@@ -332,12 +403,48 @@ export default function DashboardOverviewPage() {
 
   const handleNewChat = () => {
     handleStopGeneration();
+    activeConvIdRef.current = null;
+    setActiveConversationId(null);
     setMessages([]);
     setPrompt("");
     setAttachment(null);
     targetTextRef.current = "";
     displayedTextRef.current = "";
     currentAiMsgIdRef.current = null;
+  };
+
+  const handleSelectConversation = async (id: string) => {
+    if (loading) handleStopGeneration();
+    try {
+      const res = await fetch(`/api/chat/conversations/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.conversation) {
+          activeConvIdRef.current = data.conversation.id;
+          setActiveConversationId(data.conversation.id);
+          setDocType(data.conversation.docType || "");
+          setMessages(data.conversation.messages || []);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load conversation:", err);
+    }
+  };
+
+  const handleDeleteConversation = async (id: string) => {
+    try {
+      const res = await fetch(`/api/chat/conversations/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setConversationsList((prev) => prev.filter((c) => c.id !== id));
+        if (activeConvIdRef.current === id) {
+          handleNewChat();
+        }
+      }
+    } catch (err) {
+      console.error("Failed to delete conversation:", err);
+    }
   };
 
   const handlePromptSubmit = async (e: React.FormEvent) => {
@@ -488,18 +595,46 @@ export default function DashboardOverviewPage() {
   return (
     <AppShell
       headerActions={
-        messages.length > 0 ? (
+        <div className="flex items-center gap-2">
           <Button
+            variant="outline"
             size="sm"
-            onClick={handleNewChat}
-            className="h-8.5 bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 font-bold text-xs px-3.5 shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+            onClick={() => setHistoryOpen(true)}
+            className="h-8.5 border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white font-medium text-xs px-3 flex items-center gap-1.5 cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shadow-2xs"
           >
-            <RotateCcw className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>New Chat</span>
+            <History className="w-3.5 h-3.5 text-neutral-500" />
+            <span>Riwayat Chat</span>
+            {conversationsList.length > 0 && (
+              <span className="ml-0.5 px-1.5 py-0.2 bg-[#FFDE3C]/30 text-neutral-900 dark:text-[#FFDE3C] text-[10px] font-bold rounded-full">
+                {conversationsList.length}
+              </span>
+            )}
           </Button>
-        ) : undefined
+
+          {messages.length > 0 && (
+            <Button
+              size="sm"
+              onClick={handleNewChat}
+              className="h-8.5 bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 font-bold text-xs px-3.5 shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all rounded-lg"
+            >
+              <RotateCcw className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>New Chat</span>
+            </Button>
+          )}
+        </div>
       }
     >
+      <ChatHistoryDrawer
+        isOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        conversations={conversationsList}
+        activeId={activeConversationId}
+        onSelectConversation={handleSelectConversation}
+        onNewChat={handleNewChat}
+        onDeleteConversation={handleDeleteConversation}
+        isLoadingList={isLoadingHistory}
+      />
+
       {messages.length === 0 ? (
         /* Empty State / Centered Hero Launcher */
         <div className="min-h-[75vh] flex flex-col items-center justify-center max-w-3xl mx-auto px-4 py-8">
@@ -514,6 +649,18 @@ export default function DashboardOverviewPage() {
             <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
               What would you like to explore, build, or analyze today?
             </p>
+            {conversationsList.length > 0 && (
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => setHistoryOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 hover:bg-neutral-200/70 dark:bg-neutral-800/80 dark:hover:bg-neutral-700/80 border border-neutral-200/80 dark:border-neutral-700/60 transition-colors cursor-pointer"
+                >
+                  <Clock className="w-3.5 h-3.5 text-neutral-400" />
+                  <span>Buka riwayat chat terakhir ({conversationsList.length})</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Centered Prompt Box */}

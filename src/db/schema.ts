@@ -80,6 +80,18 @@ export const todos = pgTable("todos", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const chatConversations = pgTable("chat_conversations", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  title: text("title").notNull().default("Percakapan Baru"),
+  docType: text("doc_type").default(""),
+  messages: jsonb("messages").notNull().default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const scratchpads = pgTable("scratchpads", {
   id: text("id").primaryKey(),
   userId: text("user_id")
@@ -210,6 +222,14 @@ export const userRelations = relations(user, ({ many }) => ({
   calendarEvents: many(calendarEvents),
   workflows: many(workflows),
   workflowRuns: many(workflowRuns),
+  chatConversations: many(chatConversations),
+}));
+
+export const chatConversationRelations = relations(chatConversations, ({ one }) => ({
+  user: one(user, {
+    fields: [chatConversations.userId],
+    references: [user.id],
+  }),
 }));
 
 export const workflowRelations = relations(workflows, ({ one, many }) => ({
