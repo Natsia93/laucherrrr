@@ -139,9 +139,7 @@ export function CreditsUsageCard() {
               </>
             ) : (
               <>
-                <div className="w-10 h-10 rounded-full bg-neutral-800/90 border border-neutral-700 flex items-center justify-center mb-1">
-                  <Key className="w-5 h-5 text-neutral-400" />
-                </div>
+                <Key className="w-8 h-8 text-neutral-400 mb-1.5 stroke-[1.6]" />
                 <span className="text-[11px] font-semibold text-neutral-300">
                   Belum Ada Key
                 </span>
