@@ -600,12 +600,12 @@ export default function DashboardOverviewPage() {
             variant="outline"
             size="sm"
             onClick={() => setHistoryOpen(true)}
-            className="h-8.5 border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white font-medium text-xs px-3 flex items-center gap-1.5 cursor-pointer rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shadow-2xs"
+            className="h-8.5 border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white font-medium text-xs px-3 flex items-center gap-1.5 cursor-pointer rounded-[5px] hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shadow-2xs"
           >
             <History className="w-3.5 h-3.5 text-neutral-500" />
             <span>Riwayat Chat</span>
             {conversationsList.length > 0 && (
-              <span className="ml-0.5 px-1.5 py-0.2 bg-[#FFDE3C]/30 text-neutral-900 dark:text-[#FFDE3C] text-[10px] font-bold rounded-full">
+              <span className="ml-0.5 px-1.5 py-0.2 bg-[#FFDE3C]/30 text-neutral-900 dark:text-[#FFDE3C] text-[10px] font-bold rounded-[3px]">
                 {conversationsList.length}
               </span>
             )}
@@ -615,7 +615,7 @@ export default function DashboardOverviewPage() {
             <Button
               size="sm"
               onClick={handleNewChat}
-              className="h-8.5 bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 font-bold text-xs px-3.5 shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all rounded-lg"
+              className="h-8.5 bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 font-bold text-xs px-3.5 shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all rounded-[5px]"
             >
               <RotateCcw className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>New Chat</span>
