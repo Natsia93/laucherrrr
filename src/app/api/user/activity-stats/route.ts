@@ -31,7 +31,7 @@ export async function GET() {
     sunday.setDate(monday.getDate() + 6);
     sunday.setHours(23, 59, 59, 999);
 
-    // Fetch documents
+    // Fetch documents / slide decks created
     const userDocs = await db
       .select({
         id: schema.documents.id,
@@ -57,8 +57,6 @@ export async function GET() {
       .from(schema.chatConversations)
       .where(eq(schema.chatConversations.userId, user.id));
 
-
-
     // Initialize 7 days data (Monday to Sunday)
     const dayKeys = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
     const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -72,25 +70,23 @@ export async function GET() {
       "Sunday",
     ];
 
-    const weekUsage = [0, 0, 0, 0, 0, 0, 0];
-    let totalAllTimeCreditsUsed = 0;
+    const weekRequests = [0, 0, 0, 0, 0, 0, 0];
+    let totalDeckCount = userDocs.length;
+    let totalChatReplies = 0;
 
-    // Calculate usage from documents (5 credits each for automated deck/document generation)
+    // Daily distribution of slide deck creations
     for (const doc of userDocs) {
-      const docCost = 5;
-      totalAllTimeCreditsUsed += docCost;
       const dTime = new Date(doc.createdAt).getTime();
       if (dTime >= monday.getTime() && dTime <= sunday.getTime()) {
         const dDay = (new Date(doc.createdAt).getDay() + 6) % 7;
-        weekUsage[dDay] += docCost;
+        weekRequests[dDay] += 1;
       }
     }
 
-    // Calculate usage from chats (1 credit per successful assistant reply)
+    // Daily distribution of chat assistant replies
     for (const chat of userChats) {
       const msgs = Array.isArray(chat.messages) ? chat.messages : [];
-      // Only count valid assistant responses that are not error messages
-      const validAssistantReplies = msgs.filter((m: any) => {
+      const validReplies = msgs.filter((m: any) => {
         if (m.role !== "assistant") return false;
         const text = m.text || "";
         if (!text.trim()) return false;
@@ -104,33 +100,32 @@ export async function GET() {
         return true;
       }).length;
 
-      if (validAssistantReplies > 0) {
-        totalAllTimeCreditsUsed += validAssistantReplies;
+      if (validReplies > 0) {
+        totalChatReplies += validReplies;
         const cTime = new Date(chat.updatedAt || chat.createdAt).getTime();
         if (cTime >= monday.getTime() && cTime <= sunday.getTime()) {
           const cDay = (new Date(chat.updatedAt || chat.createdAt).getDay() + 6) % 7;
-          weekUsage[cDay] += validAssistantReplies;
+          weekRequests[cDay] += validReplies;
         }
       }
     }
 
-    const creditsTotal = 120;
-    const creditsUsed = totalAllTimeCreditsUsed;
-    const creditsRemaining = Math.max(0, creditsTotal - creditsUsed);
+    const totalGenerations = totalDeckCount + totalChatReplies;
 
     const weekData = dayKeys.map((key, i) => ({
       dayKey: key,
       name: dayNames[i],
       fullDay: fullDays[i],
-      usage: weekUsage[i],
+      requests: weekRequests[i],
+      usage: weekRequests[i], // backward compatibility
       isToday: i === daysSinceMonday,
       isFuture: i > daysSinceMonday,
     }));
 
     return NextResponse.json({
-      creditsTotal,
-      creditsUsed,
-      creditsRemaining,
+      totalGenerations,
+      totalDecks: totalDeckCount,
+      totalChats: totalChatReplies,
       currentDayIndex: daysSinceMonday,
       weekData,
     });

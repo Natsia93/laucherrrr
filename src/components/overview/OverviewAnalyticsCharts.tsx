@@ -122,8 +122,8 @@ export function OverviewAnalyticsCharts() {
                       </div>
                       <p className="text-[#FCD62C] font-bold mt-1">
                         {data.isFuture
-                          ? "0 Credits (Upcoming)"
-                          : `${data.usage} Credits Used`}
+                          ? "0 Requests (Upcoming)"
+                          : `${data.usage} AI Requests`}
                       </p>
                     </div>
                   );
