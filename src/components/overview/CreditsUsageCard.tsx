@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, useSpring } from "framer-motion";
-import { Key, Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
+import { Key, CheckCircle2, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -130,8 +130,8 @@ export function CreditsUsageCard() {
                 <span className="text-4xl sm:text-[46px] font-bold text-white leading-none tracking-tight">
                   {displayCount}
                 </span>
-                <span className="text-xs sm:text-[13px] font-semibold text-[#FCD62C] mt-2 flex items-center gap-1.5 tracking-wide">
-                  <Sparkles className="w-3.5 h-3.5" /> AI Requests
+                <span className="text-xs sm:text-[13px] font-semibold text-[#FCD62C] mt-2 tracking-wide">
+                  AI Requests
                 </span>
               </>
             ) : (
