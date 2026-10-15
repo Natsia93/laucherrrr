@@ -314,19 +314,10 @@ export function ChatHistoryDrawer({
               )}
             </div>
 
-            {/* Footer: Authentic Launcher OS Status Bar */}
-            <div className="p-3 border-t border-neutral-200/80 dark:border-neutral-800/80 bg-white/70 dark:bg-[#111111]/70 backdrop-blur-xs flex items-center justify-between text-[11px] text-neutral-500 shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span className="text-neutral-600 dark:text-neutral-400 font-sf font-medium">
-                  Tersinkronisasi ke Google Cloud
-                </span>
-              </div>
+            {/* Footer: Border line with clean session count */}
+            <div className="px-4 py-2.5 border-t border-neutral-200/80 dark:border-neutral-800/80 bg-white/70 dark:bg-[#111111]/70 backdrop-blur-xs flex items-center justify-end text-[11px] text-neutral-500 shrink-0">
               <span className="text-[11px] font-sf px-2 py-0.5 rounded-[4px] bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-neutral-200/60 dark:border-neutral-700/60 font-medium">
-                {conversations.length} sesi
+                {conversations.length} {conversations.length === 1 ? "session" : "sessions"}
               </span>
             </div>
           </motion.div>
