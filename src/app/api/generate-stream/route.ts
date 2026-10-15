@@ -24,7 +24,7 @@ const PROVIDER_URLS: Record<string, string> = {
 const PROVIDER_DEFAULT_MODELS: Record<string, string> = {
   deepseek: "deepseek-chat",
   openai: "gpt-4o-mini",
-  gemini: "gemini-3.8-flash",
+  gemini: "gemini-2.0-flash",
 };
 
 // Fallback server-side client (uses env key)
@@ -1120,7 +1120,9 @@ export async function POST(req: Request) {
     }
 
     // --- ENFORCE GENERATION QUOTA ---
-    if (!isAssistant) {
+    // If user brings their own API key (BYOK), grant unlimited generations!
+    const isBYOK = Boolean(byokApiKey && byokApiKey.trim().length > 0);
+    if (!isAssistant && !isBYOK) {
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
@@ -1137,7 +1139,7 @@ export async function POST(req: Request) {
       if (usage && usage.val >= 50) {
         return new Response(
           JSON.stringify({ 
-            error: "Kuota paket gratis Anda (50/bulan) telah habis. Silakan hubungi admin atau tunggu bulan depan." 
+            error: "Kuota paket gratis server (50/bulan) telah habis. Silakan pasang API key Anda sendiri di Pengaturan untuk akses tanpa batas." 
           }), 
           { status: 403 }
         );
