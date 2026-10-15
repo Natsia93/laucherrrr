@@ -19,7 +19,6 @@ import {
   FileCode,
   X,
   History,
-  Clock,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -649,18 +648,6 @@ export default function DashboardOverviewPage() {
             <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
               What would you like to explore, build, or analyze today?
             </p>
-            {conversationsList.length > 0 && (
-              <div className="pt-1">
-                <button
-                  type="button"
-                  onClick={() => setHistoryOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-neutral-600 dark:text-neutral-400 bg-neutral-100 hover:bg-neutral-200/70 dark:bg-neutral-800/80 dark:hover:bg-neutral-700/80 border border-neutral-200/80 dark:border-neutral-700/60 transition-colors cursor-pointer"
-                >
-                  <Clock className="w-3.5 h-3.5 text-neutral-400" />
-                  <span>Open recent chat history ({conversationsList.length})</span>
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Centered Prompt Box */}
