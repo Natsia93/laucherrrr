@@ -67,22 +67,22 @@ export function ChatHistoryDrawer({
     const sevenDaysAgo = today - 7 * 24 * 60 * 60 * 1000;
 
     const groups: { [key: string]: ConversationSummary[] } = {
-      "Hari Ini": [],
-      "Kemarin": [],
-      "7 Hari Terakhir": [],
-      "Lebih Lama": [],
+      "Today": [],
+      "Yesterday": [],
+      "Previous 7 Days": [],
+      "Older": [],
     };
 
     filtered.forEach((c) => {
       const time = new Date(c.updatedAt).getTime();
       if (time >= today) {
-        groups["Hari Ini"].push(c);
+        groups["Today"].push(c);
       } else if (time >= yesterday) {
-        groups["Kemarin"].push(c);
+        groups["Yesterday"].push(c);
       } else if (time >= sevenDaysAgo) {
-        groups["7 Hari Terakhir"].push(c);
+        groups["Previous 7 Days"].push(c);
       } else {
-        groups["Lebih Lama"].push(c);
+        groups["Older"].push(c);
       }
     });
 
@@ -91,7 +91,7 @@ export function ChatHistoryDrawer({
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (confirm("Hapus percakapan ini dari riwayat?")) {
+    if (confirm("Delete this conversation from history?")) {
       setDeletingId(id);
       try {
         await onDeleteConversation(id);
@@ -103,11 +103,12 @@ export function ChatHistoryDrawer({
 
   const formatRelativeTime = (dateInput: string | Date) => {
     const date = new Date(dateInput);
-    return date.toLocaleDateString("id-ID", {
+    return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      hour12: false,
     });
   };
 
@@ -147,16 +148,11 @@ export function ChatHistoryDrawer({
                   />
                 </div>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <h2 className="text-[15px] font-sf font-semibold text-neutral-950 dark:text-neutral-100 tracking-tight truncate">
-                      Riwayat Percakapan
-                    </h2>
-                    <span className="text-[9px] font-sf uppercase tracking-wider px-1.5 py-0.2 rounded-[3px] bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-bold border border-neutral-200/60 dark:border-neutral-700/60 shrink-0">
-                      LOS
-                    </span>
-                  </div>
+                  <h2 className="text-[15px] font-sf font-semibold text-neutral-950 dark:text-neutral-100 tracking-tight truncate">
+                    Chat History
+                  </h2>
                   <p className="text-[11px] font-sf text-neutral-500 dark:text-neutral-400 truncate">
-                    Tersimpan di akun Google Anda
+                    Saved to your Google Account
                   </p>
                 </div>
               </div>
@@ -171,11 +167,11 @@ export function ChatHistoryDrawer({
                   className="h-7.5 bg-[#FFDE3C] hover:bg-[#FCD526] text-neutral-950 font-sf font-semibold text-xs px-2.5 rounded-[5px] border border-[#E5BC10]/70 flex items-center gap-1 shadow-2xs cursor-pointer active:scale-95 transition-all"
                 >
                   <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span>Baru</span>
+                  <span>New</span>
                 </Button>
                 <button
                   onClick={onClose}
-                  title="Tutup riwayat"
+                  title="Close history"
                   className="w-7 h-7 rounded-[5px] text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-neutral-200/60 dark:hover:bg-neutral-800 flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
@@ -189,7 +185,7 @@ export function ChatHistoryDrawer({
                 <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Cari riwayat percakapan..."
+                  placeholder="Search conversations..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-8 pr-12 py-1.5 text-xs rounded-[5px] bg-white dark:bg-[#141414] border border-neutral-200 dark:border-neutral-800 focus:border-neutral-400 dark:focus:border-neutral-600 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 outline-none transition-all shadow-2xs font-sf"
@@ -214,7 +210,7 @@ export function ChatHistoryDrawer({
               {isLoadingList ? (
                 <div className="flex flex-col items-center justify-center py-12 text-neutral-400 gap-2">
                   <Loader2 className="w-5 h-5 animate-spin text-[#FFDE3C]" />
-                  <span className="text-xs font-sf">Memuat riwayat chat...</span>
+                  <span className="text-xs font-sf">Loading chat history...</span>
                 </div>
               ) : groupedConversations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
@@ -222,12 +218,12 @@ export function ChatHistoryDrawer({
                     <Sparkles className="w-5 h-5 text-[#FFDE3C]" />
                   </div>
                   <p className="text-xs font-sf font-medium text-neutral-800 dark:text-neutral-200">
-                    {searchQuery ? "Tidak ditemukan" : "Belum ada riwayat"}
+                    {searchQuery ? "No results found" : "No history yet"}
                   </p>
                   <p className="text-[11px] font-sf text-neutral-400 mt-1 max-w-[220px]">
                     {searchQuery
-                      ? `Tidak ada chat dengan kata kunci "${searchQuery}".`
-                      : "Percakapan yang Anda mulai akan otomatis tersimpan di sini."}
+                      ? `No conversations matching "${searchQuery}".`
+                      : "Conversations you start will automatically appear here."}
                   </p>
                   {!searchQuery && (
                     <Button
@@ -239,7 +235,7 @@ export function ChatHistoryDrawer({
                       className="mt-4 h-7.5 bg-[#FFDE3C] hover:bg-[#FCD526] text-neutral-950 font-sf text-xs font-semibold px-3 rounded-[5px] border border-[#E5BC10]/70 flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      Mulai Chat Baru
+                      Start New Chat
                     </Button>
                   )}
                 </div>
@@ -285,7 +281,7 @@ export function ChatHistoryDrawer({
                                     : "text-neutral-900 dark:text-neutral-100 font-medium group-hover:text-neutral-950 dark:group-hover:text-white"
                                 }`}
                               >
-                                {conv.title || "Percakapan Baru"}
+                                {conv.title || "New Conversation"}
                               </p>
                               <div className="flex items-center gap-1.5 mt-1 text-[12px] font-sf text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-neutral-300 font-normal">
                                 <span>{formatRelativeTime(conv.updatedAt)}</span>
@@ -297,7 +293,7 @@ export function ChatHistoryDrawer({
                           <button
                             onClick={(e) => handleDelete(e, conv.id)}
                             disabled={deletingId === conv.id}
-                            title="Hapus percakapan"
+                            title="Delete conversation"
                             className="opacity-0 group-hover:opacity-100 p-1.5 rounded-[4px] hover:bg-red-50 dark:hover:bg-red-950/40 text-neutral-400 hover:text-red-600 dark:hover:text-red-400 transition-all shrink-0 cursor-pointer"
                           >
                             {deletingId === conv.id ? (
