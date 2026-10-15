@@ -847,20 +847,25 @@ export function SlackStudio() {
         <div className="w-60 lg:w-64 bg-gradient-to-b from-[#FFE54C] via-[#FFDE3C] to-[#FCD526] dark:bg-none dark:bg-[#0d0d0d] text-neutral-950 dark:text-neutral-200 flex flex-col border-r border-black/10 dark:border-neutral-800/90 shrink-0 select-none transition-colors">
           {/* Sidebar Header: Workspace Identity */}
           <div className="h-13 px-3.5 border-b border-black/10 dark:border-neutral-800/80 flex items-center justify-between">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-neutral-950 text-[#FFE500] dark:bg-[#FFE500] dark:text-neutral-950 flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+            <button
+              type="button"
+              onClick={() => setIsWebhookConfigOpen(true)}
+              title="Pengaturan Workspace & Webhook"
+              className="flex items-center gap-2.5 min-w-0 text-left hover:opacity-85 transition-opacity cursor-pointer group"
+            >
+              <div className="w-7 h-7 rounded-[5px] bg-neutral-950 text-[#FFE500] dark:bg-[#FFE500] dark:text-neutral-950 flex items-center justify-center font-bold text-[11px] tracking-tight shrink-0 shadow-xs">
                 LOS
               </div>
               <div className="min-w-0">
                 <h2 className="text-[13px] font-bold text-neutral-950 dark:text-white truncate flex items-center gap-1 leading-tight">
                   Launcher OS
-                  <ChevronDown className="w-3 h-3 text-neutral-950/60 dark:text-neutral-400 shrink-0" />
+                  <ChevronDown className="w-3 h-3 text-neutral-950/60 dark:text-neutral-400 shrink-0 group-hover:translate-y-0.5 transition-transform" />
                 </h2>
                 <p className="text-[10px] text-neutral-950/60 dark:text-neutral-400 truncate font-medium">
                   RevoU Team Workspace
                 </p>
               </div>
-            </div>
+            </button>
 
             <button
               onClick={() => setIsNewChannelOpen(true)}
