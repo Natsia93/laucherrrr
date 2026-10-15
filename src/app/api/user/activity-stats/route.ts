@@ -57,14 +57,7 @@ export async function GET() {
       .from(schema.chatConversations)
       .where(eq(schema.chatConversations.userId, user.id));
 
-    // Fetch workflow runs
-    const userRuns = await db
-      .select({
-        id: schema.workflowRuns.id,
-        createdAt: schema.workflowRuns.createdAt,
-      })
-      .from(schema.workflowRuns)
-      .where(eq(schema.workflowRuns.userId, user.id));
+
 
     // Initialize 7 days data (Monday to Sunday)
     const dayKeys = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -93,28 +86,31 @@ export async function GET() {
       }
     }
 
-    // Calculate usage from chats (1 credit per prompt)
+    // Calculate usage from chats (1 credit per successful assistant reply)
     for (const chat of userChats) {
       const msgs = Array.isArray(chat.messages) ? chat.messages : [];
-      const userMsgCount = msgs.filter((m: any) => m.role === "user").length || msgs.length;
-      const chatCost = Math.max(1, userMsgCount);
-      totalAllTimeCreditsUsed += chatCost;
+      // Only count valid assistant responses that are not error messages
+      const validAssistantReplies = msgs.filter((m: any) => {
+        if (m.role !== "assistant") return false;
+        const text = m.text || "";
+        if (!text.trim()) return false;
+        if (
+          text.includes("Sorry, an error occurred") ||
+          text.includes("Failed to connect to AI") ||
+          text.includes("API key")
+        ) {
+          return false;
+        }
+        return true;
+      }).length;
 
-      const cTime = new Date(chat.updatedAt || chat.createdAt).getTime();
-      if (cTime >= monday.getTime() && cTime <= sunday.getTime()) {
-        const cDay = (new Date(chat.updatedAt || chat.createdAt).getDay() + 6) % 7;
-        weekUsage[cDay] += chatCost;
-      }
-    }
-
-    // Calculate usage from workflow runs (2 credits each)
-    for (const run of userRuns) {
-      const runCost = 2;
-      totalAllTimeCreditsUsed += runCost;
-      const rTime = new Date(run.createdAt).getTime();
-      if (rTime >= monday.getTime() && rTime <= sunday.getTime()) {
-        const rDay = (new Date(run.createdAt).getDay() + 6) % 7;
-        weekUsage[rDay] += runCost;
+      if (validAssistantReplies > 0) {
+        totalAllTimeCreditsUsed += validAssistantReplies;
+        const cTime = new Date(chat.updatedAt || chat.createdAt).getTime();
+        if (cTime >= monday.getTime() && cTime <= sunday.getTime()) {
+          const cDay = (new Date(chat.updatedAt || chat.createdAt).getDay() + 6) % 7;
+          weekUsage[cDay] += validAssistantReplies;
+        }
       }
     }
 
