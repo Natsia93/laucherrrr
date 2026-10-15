@@ -373,6 +373,34 @@ html {
   background-color: #3f3f3f;
 }
 
+/* Minimalist Clean Scrollbar for Chatboxes & Textareas */
+.clean-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(160, 160, 160, 0.35) transparent;
+}
+.clean-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.clean-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.clean-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(160, 160, 160, 0.35);
+  border-radius: 9999px;
+}
+.clean-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(160, 160, 160, 0.6);
+}
+.dark .clean-scrollbar {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+.dark .clean-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+.dark .clean-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
 /* Looping Text Shimmer / Mengkilap Effect */
 @keyframes textShimmerLoop {
   0% {

@@ -138,6 +138,7 @@ export default function DashboardOverviewPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomFileInputRef = useRef<HTMLInputElement>(null);
+  const bottomTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleIncomingFile = async (file: File) => {
     if (file.size > 15 * 1024 * 1024) {
@@ -310,6 +311,15 @@ export default function DashboardOverviewPage() {
       chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, loading]);
+
+  // Auto-resize bottom chat textarea dynamically to comfortably fit up to 5 lines (~140px)
+  useEffect(() => {
+    const el = bottomTextareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const nextH = Math.min(Math.max(el.scrollHeight, 44), 140);
+    el.style.height = `${nextH}px`;
+  }, [prompt]);
 
   // Clean up interval on unmount
   useEffect(() => {
@@ -1013,17 +1023,18 @@ export default function DashboardOverviewPage() {
                   </div>
                 )}
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-end gap-2 pb-0.5">
                   <button
                     type="button"
                     onClick={() => bottomFileInputRef.current?.click()}
-                    className="h-9 w-9 rounded-lg flex items-center justify-center text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer shrink-0"
+                    className="h-9 w-9 rounded-lg flex items-center justify-center text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer shrink-0 mb-0.5"
                     title="Attach File (Image, PDF, Word, Excel)"
                   >
                     <Paperclip className="w-4 h-4" />
                   </button>
 
                   <textarea
+                    ref={bottomTextareaRef}
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     onPaste={handlePaste}
@@ -1034,7 +1045,7 @@ export default function DashboardOverviewPage() {
                       }
                     }}
                     placeholder="Type your message, analyze files, or discuss ideas..."
-                    className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm outline-none resize-none max-h-28 min-h-[40px] font-sf"
+                    className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm leading-relaxed outline-none resize-none min-h-[44px] max-h-[140px] font-sf py-2.5 clean-scrollbar"
                     rows={1}
                   />
 
@@ -1042,7 +1053,7 @@ export default function DashboardOverviewPage() {
                     <button
                       type="button"
                       onClick={handleStopGeneration}
-                      className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shrink-0 cursor-pointer border-none p-0"
+                      className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shrink-0 cursor-pointer border-none p-0 mb-0.5"
                       title="Stop generation"
                     >
                       <div className="w-3.5 h-3.5 bg-red-600 hover:bg-red-700 rounded-[2px] shadow-xs active:scale-90 transition-transform" />
@@ -1052,7 +1063,7 @@ export default function DashboardOverviewPage() {
                       type="submit"
                       size="icon"
                       disabled={(!prompt.trim() && !attachment) || loading || (attachment?.isExtracting ?? false)}
-                      className={`h-9 w-9 rounded-lg font-bold shadow-xs transition-all duration-200 shrink-0 ${
+                      className={`h-9 w-9 rounded-lg font-bold shadow-xs transition-all duration-200 shrink-0 mb-0.5 ${
                         (prompt.trim() || attachment) && !loading && !attachment?.isExtracting
                           ? "bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 cursor-pointer active:scale-95"
                           : "bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed opacity-60"
