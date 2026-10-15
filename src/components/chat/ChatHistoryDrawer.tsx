@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   Plus,
@@ -45,8 +46,13 @@ export function ChatHistoryDrawer({
   onDeleteConversation,
   isLoadingList = false,
 }: ChatHistoryDrawerProps) {
+  const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Group conversations by date
   const groupedConversations = useMemo(() => {
@@ -104,7 +110,9 @@ export function ChatHistoryDrawer({
     });
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -114,21 +122,21 @@ export function ChatHistoryDrawer({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 z-[120] bg-black/50 backdrop-blur-xs transition-opacity"
           />
 
-          {/* Drawer Sidebar */}
+          {/* Drawer Sidebar: Full Viewport Height All The Way To Bottom */}
           <motion.div
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed top-0 left-0 bottom-0 z-50 w-full max-w-[340px] sm:max-w-[380px] bg-white/95 dark:bg-[#121212]/95 backdrop-blur-xl border-r border-neutral-200/80 dark:border-neutral-800/80 shadow-2xl flex flex-col font-sans"
+            className="fixed inset-y-0 top-0 left-0 bottom-0 z-[120] w-full max-w-[340px] sm:max-w-[380px] h-screen h-dvh bg-white dark:bg-[#121212] border-r border-neutral-200/80 dark:border-neutral-800/80 shadow-2xl flex flex-col font-sans"
           >
             {/* Header */}
             <div className="p-4 border-b border-neutral-200/70 dark:border-neutral-800/70 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#FFDE3C]/20 text-neutral-900 dark:text-[#FFDE3C] flex items-center justify-center font-bold">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-[6px] bg-[#FFDE3C]/20 text-neutral-900 dark:text-[#FFDE3C] flex items-center justify-center font-bold shrink-0">
                   <MessageSquare className="w-4 h-4 text-neutral-900 dark:text-[#FFDE3C]" />
                 </div>
                 <div>
@@ -141,21 +149,21 @@ export function ChatHistoryDrawer({
                 </div>
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <Button
                   size="sm"
                   onClick={() => {
                     onNewChat();
                     onClose();
                   }}
-                  className="h-8 bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 font-semibold text-xs px-2.5 rounded-lg flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                  className="h-8 bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 font-semibold text-xs px-2.5 rounded-[6px] flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
                 >
                   <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>Baru</span>
                 </Button>
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                  className="p-1.5 rounded-[6px] text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -171,7 +179,7 @@ export function ChatHistoryDrawer({
                   placeholder="Cari riwayat chat..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-neutral-100/80 dark:bg-neutral-800/60 border border-transparent focus:border-[#FFDE3C]/60 text-neutral-800 dark:text-neutral-200 placeholder-neutral-400 outline-none transition-all"
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-[6px] bg-neutral-100/80 dark:bg-neutral-800/60 border border-transparent focus:border-[#FFDE3C]/60 text-neutral-800 dark:text-neutral-200 placeholder-neutral-400 outline-none transition-all"
                 />
                 {searchQuery && (
                   <button
@@ -185,7 +193,7 @@ export function ChatHistoryDrawer({
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto px-3 py-2 space-y-4">
+            <div className="flex-1 overflow-y-auto px-3 py-2 space-y-4 calendar-scrollbar">
               {isLoadingList ? (
                 <div className="flex flex-col items-center justify-center py-12 text-neutral-400 gap-2">
                   <Loader2 className="w-5 h-5 animate-spin text-[#FFDE3C]" />
@@ -193,7 +201,7 @@ export function ChatHistoryDrawer({
                 </div>
               ) : groupedConversations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                  <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800/80 flex items-center justify-center mb-3 text-neutral-400">
+                  <div className="w-12 h-12 rounded-[8px] bg-neutral-100 dark:bg-neutral-800/80 flex items-center justify-center mb-3 text-neutral-400">
                     <Sparkles className="w-5 h-5 text-neutral-400" />
                   </div>
                   <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
@@ -211,7 +219,7 @@ export function ChatHistoryDrawer({
                         onNewChat();
                         onClose();
                       }}
-                      className="mt-4 h-8 bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 text-xs font-semibold px-3 rounded-lg flex items-center gap-1.5"
+                      className="mt-4 h-8 bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 text-xs font-semibold px-3 rounded-[6px] flex items-center gap-1.5"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Mulai Chat Baru
@@ -233,7 +241,7 @@ export function ChatHistoryDrawer({
                             onSelectConversation(conv.id);
                             onClose();
                           }}
-                          className={`group relative flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all duration-150 ${
+                          className={`group relative flex items-center justify-between p-2.5 rounded-[6px] cursor-pointer transition-all duration-150 ${
                             isActive
                               ? "bg-[#FFDE3C]/15 dark:bg-[#FFDE3C]/10 border border-[#FFDE3C]/40 text-neutral-950 dark:text-white"
                               : "hover:bg-neutral-100 dark:hover:bg-neutral-800/70 text-neutral-700 dark:text-neutral-300 border border-transparent"
@@ -243,7 +251,7 @@ export function ChatHistoryDrawer({
                             <MessageSquare
                               className={`w-4 h-4 shrink-0 mt-0.5 ${
                                 isActive
-                                  ? "text-neutral-900 dark:text-[#FFDE3C]"
+                                   ? "text-neutral-900 dark:text-[#FFDE3C]"
                                   : "text-neutral-400 group-hover:text-neutral-600 dark:group-hover:text-neutral-200"
                               }`}
                             />
@@ -274,7 +282,7 @@ export function ChatHistoryDrawer({
                             onClick={(e) => handleDelete(e, conv.id)}
                             disabled={deletingId === conv.id}
                             title="Hapus percakapan"
-                            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-950/40 text-neutral-400 hover:text-red-600 dark:hover:text-red-400 transition-all shrink-0"
+                            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-[4px] hover:bg-red-50 dark:hover:bg-red-950/40 text-neutral-400 hover:text-red-600 dark:hover:text-red-400 transition-all shrink-0"
                           >
                             {deletingId === conv.id ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -291,7 +299,7 @@ export function ChatHistoryDrawer({
             </div>
 
             {/* Footer with Google Account indicator */}
-            <div className="p-3 border-t border-neutral-200/70 dark:border-neutral-800/70 bg-neutral-50/50 dark:bg-neutral-900/50 flex items-center justify-between text-[11px] text-neutral-500">
+            <div className="p-3 border-t border-neutral-200/70 dark:border-neutral-800/70 bg-neutral-50/50 dark:bg-neutral-900/50 flex items-center justify-between text-[11px] text-neutral-500 shrink-0">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span>Tersinkronisasi ke Cloud</span>
@@ -301,6 +309,7 @@ export function ChatHistoryDrawer({
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
