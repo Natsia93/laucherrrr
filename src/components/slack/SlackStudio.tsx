@@ -782,11 +782,11 @@ export function SlackStudio() {
         <div className="flex items-center gap-2.5">
           <Link
             href="/overview"
-            title="Kembali ke Launcher OS Overview"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FFE500] hover:bg-[#F2D700] text-neutral-950 text-xs font-bold transition-all shadow-2xs group cursor-pointer"
+            title="Kembali ke Overview"
+            className="h-8 px-2.5 rounded-[6px] border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#121212] hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
           >
-            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform stroke-[2.5]" />
-            <span>Launcher OS</span>
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Overview</span>
           </Link>
 
           <div className="hidden sm:flex items-center gap-0.5 text-neutral-400">
