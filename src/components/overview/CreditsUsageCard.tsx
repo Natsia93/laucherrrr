@@ -1,53 +1,82 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion, useSpring, useTransform } from "framer-motion";
+import { motion, useSpring } from "framer-motion";
 import { Card } from "@/components/ui/card";
 
 export function CreditsUsageCard() {
-  const creditsUsed = 78;
-  const creditsTotal = 120;
-  const creditsRemaining = creditsTotal - creditsUsed;
-  const percent = Math.min((creditsUsed / creditsTotal) * 100, 100);
+  const [stats, setStats] = useState({
+    creditsUsed: 0,
+    creditsTotal: 120,
+    creditsRemaining: 120,
+  });
+  const [hasUnlocked, setHasUnlocked] = useState(true);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
+  const [displayCount, setDisplayCount] = useState(0);
+
+  const percent = stats.creditsTotal > 0
+    ? Math.min((stats.creditsUsed / stats.creditsTotal) * 100, 100)
+    : 0;
 
   // Prominent gauge settings
   const radius = 76;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percent / 100) * circumference;
 
-  const [hasUnlocked, setHasUnlocked] = useState(true);
-  const [shouldAnimate, setShouldAnimate] = useState(false);
-  const [displayCount, setDisplayCount] = useState(creditsUsed);
-
   // Animated counter from 0 to creditsUsed
-  const springValue = useSpring(creditsUsed, {
+  const springValue = useSpring(0, {
     stiffness: 45,
     damping: 15,
     duration: 1.4,
   });
 
   useEffect(() => {
+    let isMounted = true;
+    fetch("/api/user/activity-stats")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data) {
+          const used = data.creditsUsed ?? 0;
+          const total = data.creditsTotal ?? 120;
+          const remaining = data.creditsRemaining ?? Math.max(0, total - used);
+          setStats({
+            creditsUsed: used,
+            creditsTotal: total,
+            creditsRemaining: remaining,
+          });
+          springValue.set(used);
+          setShouldAnimate(true);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching activity stats:", err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [springValue]);
+
+  useEffect(() => {
     const handleMoodChanged = () => {
-      // Modal closes in ~450ms, animate when modal disappears if needed
       setTimeout(() => {
         setHasUnlocked(true);
         setShouldAnimate(true);
-        springValue.set(creditsUsed);
+        springValue.set(stats.creditsUsed);
         sessionStorage.setItem("overview_charts_animated", "true");
       }, 400);
     };
 
     window.addEventListener("user_mood_changed", handleMoodChanged);
     return () => window.removeEventListener("user_mood_changed", handleMoodChanged);
-  }, [springValue, creditsUsed]);
+  }, [springValue, stats.creditsUsed]);
 
   useEffect(() => {
-    if (!shouldAnimate) return;
     const unsubscribe = springValue.on("change", (latest) => {
       setDisplayCount(Math.round(latest));
     });
     return () => unsubscribe();
-  }, [springValue, shouldAnimate]);
+  }, [springValue]);
 
   return (
     <Card className="relative overflow-hidden bg-gradient-to-br from-[#1c1c1c] via-[#141414] to-[#0d0d0d] text-white border-neutral-800 rounded-xl shadow-lg p-6 flex flex-col justify-center h-[275px] min-h-[275px]">
@@ -113,7 +142,7 @@ export function CreditsUsageCard() {
               {displayCount}
             </span>
             <span className="text-[11px] sm:text-xs font-normal text-neutral-400 mt-1.5">
-              / {creditsTotal} Credits
+              / {stats.creditsTotal} Credits
             </span>
           </div>
         </div>
@@ -121,7 +150,7 @@ export function CreditsUsageCard() {
         {/* Minimalist Info */}
         <div className="flex-1 w-full space-y-2 text-center sm:text-left">
           <h4 className="text-lg sm:text-xl font-medium text-white tracking-tight">
-            {creditsRemaining} Credits Available
+            {stats.creditsRemaining} Credits Available
           </h4>
           <p className="text-xs sm:text-[13px] text-neutral-400 leading-relaxed max-w-sm">
             Remaining credits can be used for automated slide deck generation & AI LLM reasoning.

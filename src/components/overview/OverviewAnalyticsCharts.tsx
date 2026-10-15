@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -21,38 +21,41 @@ interface DayUsageData {
   isFuture: boolean;
 }
 
-// 7-day base data (Monday to Sunday)
-const BASE_WEEK_DATA = [
-  { dayKey: "mon", name: "Mon", fullDay: "Monday", baseUsage: 22 },
-  { dayKey: "tue", name: "Tue", fullDay: "Tuesday", baseUsage: 28 },
-  { dayKey: "wed", name: "Wed", fullDay: "Wednesday", baseUsage: 18 },
-  { dayKey: "thu", name: "Thu", fullDay: "Thursday", baseUsage: 25 },
-  { dayKey: "fri", name: "Fri", fullDay: "Friday", baseUsage: 30 },
-  { dayKey: "sat", name: "Sat", fullDay: "Saturday", baseUsage: 12 },
-  { dayKey: "sun", name: "Sun", fullDay: "Sunday", baseUsage: 8 },
+const DEFAULT_DAYS: DayUsageData[] = [
+  { dayKey: "mon", name: "Mon", fullDay: "Monday", usage: 0, isToday: false, isFuture: false },
+  { dayKey: "tue", name: "Tue", fullDay: "Tuesday", usage: 0, isToday: false, isFuture: false },
+  { dayKey: "wed", name: "Wed", fullDay: "Wednesday", usage: 0, isToday: false, isFuture: false },
+  { dayKey: "thu", name: "Thu", fullDay: "Thursday", usage: 0, isToday: false, isFuture: false },
+  { dayKey: "fri", name: "Fri", fullDay: "Friday", usage: 0, isToday: false, isFuture: false },
+  { dayKey: "sat", name: "Sat", fullDay: "Saturday", usage: 0, isToday: false, isFuture: false },
+  { dayKey: "sun", name: "Sun", fullDay: "Sunday", usage: 0, isToday: false, isFuture: false },
 ];
 
 export function OverviewAnalyticsCharts() {
-  const [currentDayIndex, setCurrentDayIndex] = useState(2); // Default Wednesday (Wed = 2)
+  const [weekChartData, setWeekChartData] = useState<DayUsageData[]>(DEFAULT_DAYS);
   const [hasUnlocked, setHasUnlocked] = useState(true);
   const [shouldAnimate, setShouldAnimate] = useState(false);
 
-  // Real-time calculation of current day in week (0 = Monday ... 6 = Sunday)
   useEffect(() => {
-    const calculateTodayIndex = () => {
-      const now = new Date();
-      const jsDay = now.getDay(); // 0 = Sunday, 1 = Monday, ... 6 = Saturday
-      // Convert to 0 = Monday ... 6 = Sunday
-      const mappedIndex = jsDay === 0 ? 6 : jsDay - 1;
-      setCurrentDayIndex(mappedIndex);
-    };
+    let isMounted = true;
+    fetch("/api/user/activity-stats")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data?.weekData) {
+          setWeekChartData(data.weekData);
+          setShouldAnimate(true);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching week chart data:", err);
+      });
 
-    calculateTodayIndex();
-    const interval = setInterval(calculateTodayIndex, 60000);
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Control animation: only animate once after mood modal is submitted
+  // Control animation after mood modal if any
   useEffect(() => {
     const handleMoodChanged = () => {
       setTimeout(() => {
@@ -65,34 +68,15 @@ export function OverviewAnalyticsCharts() {
     return () => window.removeEventListener("user_mood_changed", handleMoodChanged);
   }, []);
 
-  // Compute 7-day usage array based on current day index
-  const weekChartData: DayUsageData[] = useMemo(() => {
-    return BASE_WEEK_DATA.map((item, index) => {
-      const isToday = index === currentDayIndex;
-      const isFuture = index > currentDayIndex;
-
-      return {
-        dayKey: item.dayKey,
-        name: item.name,
-        fullDay: item.fullDay,
-        usage: !hasUnlocked || isFuture ? 0 : item.baseUsage,
-        isToday,
-        isFuture,
-      };
-    });
-  }, [currentDayIndex, hasUnlocked]);
-
-  // Total usage accumulated for the active days in the current week
-  const totalWeeklyUsage = useMemo(() => {
-    return weekChartData.reduce((acc, item) => acc + item.usage, 0);
-  }, [weekChartData]);
-
   return (
     <Card className="p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-xs flex flex-col justify-between h-[275px] min-h-[275px]">
-      <div>
+      <div className="flex items-center justify-between">
         <h3 className="text-base sm:text-lg font-semibold text-neutral-950 dark:text-white tracking-tight">
           Daily Activity (7 Days)
         </h3>
+        <span className="text-[11px] text-neutral-400 font-normal">
+          Senin – Minggu
+        </span>
       </div>
 
       <div className="h-[185px] w-full">
@@ -137,7 +121,9 @@ export function OverviewAnalyticsCharts() {
                         )}
                       </div>
                       <p className="text-[#FCD62C] font-bold mt-1">
-                        {data.isFuture ? "0 Credits (No Activity Yet)" : `${data.usage} Credits Used`}
+                        {data.isFuture
+                          ? "0 Credits (Upcoming)"
+                          : `${data.usage} Credits Used`}
                       </p>
                     </div>
                   );
