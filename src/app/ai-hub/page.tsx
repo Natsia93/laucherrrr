@@ -57,8 +57,8 @@ const AI_MODELS: ModelCard[] = [
     modelParam: "deepseek",
   },
   {
-    id: "gemini-2-5-flash",
-    name: "Gemini 2.5 Flash",
+    id: "gemini-2-0-flash",
+    name: "Gemini 2.0 Flash",
     provider: "Google Cloud",
     badge: "Ultra Fast",
     badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300/60",
