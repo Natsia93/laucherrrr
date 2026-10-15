@@ -159,13 +159,13 @@ export function CreditsUsageCard() {
               <p className="text-xs sm:text-[13px] text-neutral-400 leading-relaxed max-w-sm">
                 Connected to {providerLabel}{selectedModel ? ` (${selectedModel})` : ""}. No platform quota limits—AI executions run directly via your provider account.
               </p>
-              <div className="pt-1">
+              <div className="pt-1.5">
                 <Link
                   href="/settings"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#FCD62C] hover:text-[#ffe55c] transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm sm:text-[14px] font-semibold text-[#FCD62C] hover:text-[#ffe55c] transition-colors group cursor-pointer"
                 >
                   <span>Manage API Key in Settings</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-4 h-4 stroke-[2.2] transition-transform group-hover:translate-x-0.5" />
                 </Link>
               </div>
             </>
