@@ -256,18 +256,6 @@ const PALETTE_ITEMS: PaletteItem[] = [
   {
     type: "integrationNode",
     category: "integration",
-    nodeType: "gamma_export",
-    label: "Gamma Slide Exporter",
-    description: "Formats output specifically for Gamma App presentation importing",
-    defaultConfig: {
-      theme: "modern_dark",
-    },
-    inputs: [{ id: "deck_in", label: "Content In", type: "deck" }],
-    outputs: [{ id: "gamma_out", label: "Gamma Markdown", type: "text" }],
-  },
-  {
-    type: "integrationNode",
-    category: "integration",
     nodeType: "send_email",
     label: "Email Dispatcher",
     description: "Send automated reports or notifications to colleague emails",

@@ -34,7 +34,6 @@ export const IntegrationNode = React.memo(function IntegrationNode({ id, data, s
   const isTelegram = nodeData.nodeType === "telegram_bot";
   const isSearch = nodeData.nodeType === "web_search";
   const isHttp = nodeData.nodeType === "http_request";
-  const isGamma = nodeData.nodeType === "gamma_export";
   const isEmail = nodeData.nodeType === "send_email";
 
   const snippetOptions = [
@@ -53,12 +52,6 @@ export const IntegrationNode = React.memo(function IntegrationNode({ id, data, s
     { value: "Markdown", label: "Markdown" },
     { value: "HTML", label: "HTML" },
     { value: "None", label: "Plain Text" },
-  ];
-
-  const gammaThemeOptions = [
-    { value: "modern_dark", label: "Midnight / Modern Dark" },
-    { value: "minimal_clean", label: "Clean Minimalist Light" },
-    { value: "gradient_brand", label: "Yellow Accent / RevoU Vibe" },
   ];
 
   return (
@@ -213,20 +206,6 @@ export const IntegrationNode = React.memo(function IntegrationNode({ id, data, s
             <div className="p-2 rounded-[5px] bg-neutral-100/70 dark:bg-white/[0.04] text-[10.5px] text-neutral-500">
               Compatible with Zapier, Make.com, n8n, Discord, & Custom APIs.
             </div>
-          </div>
-        )}
-
-        {/* Gamma App Export Config */}
-        {isGamma && (
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-medium text-neutral-500 uppercase tracking-wider">
-              Gamma Theme Preset
-            </label>
-            <LauncherSelect
-              value={nodeData.config?.theme || "modern_dark"}
-              onChange={(val) => updateConfig("theme", val)}
-              options={gammaThemeOptions}
-            />
           </div>
         )}
 

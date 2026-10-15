@@ -242,21 +242,6 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        // Gamma Presentation Markdown Formatter
-        else if (nodeType === "gamma_export") {
-          const theme = data?.config?.theme || "modern_dark";
-          const gammaMarkdown = `# Presentation Deck\n\n---\n\n${generatedAIResult || currentContext}`;
-          currentContext = gammaMarkdown;
-
-          logs.push({
-            nodeId: id,
-            nodeName: label,
-            status: "success",
-            message: `Formatted output into Gamma Presentation Cards (Theme: ${theme})`,
-            output: { theme, format: "Gamma Markdown" },
-          });
-        }
-
         // Email Dispatcher
         else if (nodeType === "send_email") {
           const toEmail = data?.config?.toEmail || "team@revou.co";

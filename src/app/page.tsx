@@ -48,13 +48,6 @@ function LoginPageContent() {
     }
   }, [searchParams]);
 
-  // Auto-redirect authenticated user to /overview
-  useEffect(() => {
-    if (session?.user && !justLoggedOut && searchParams.get("loggedOut") !== "true") {
-      router.replace("/overview");
-    }
-  }, [session, justLoggedOut, searchParams, router]);
-
   // Sync tab state if pathname changes
   useEffect(() => {
     if (pathname === "/register") {
