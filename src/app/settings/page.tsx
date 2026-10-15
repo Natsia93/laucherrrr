@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
   Key,
@@ -357,6 +358,17 @@ export default function SettingsPage() {
       if (session.user.image) setAvatarUrl(session.user.image);
     }
   }, [session]);
+
+  // Keyboard shortcut: Escape to close connector modal (matches MoodCheck & Logout modal behavior)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && activeConnectorModal && !testingConnector) {
+        setActiveConnectorModal(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeConnectorModal, testingConnector]);
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -1926,10 +1938,53 @@ export default function SettingsPage() {
                 {/* ══════════════════════════════════════════════════════════
                  * MODAL: CONFIGURE CONNECTOR CREDENTIALS
                  * ══════════════════════════════════════════════════════════ */}
-                {activeConnectorModal && editingConnector && (
-                  <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-                    <div className="w-full max-w-lg rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#121212] shadow-2xl overflow-hidden font-sf flex flex-col max-h-[92vh]">
-                      {/* Modal Header */}
+                <AnimatePresence>
+                  {activeConnectorModal && editingConnector && (
+                    <motion.div
+                      key="connector-modal-container"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0, transition: { duration: 0.25 } }}
+                      className="fixed inset-0 z-[99999999] flex items-center justify-center p-4 select-none font-sf"
+                    >
+                      {/* Frosted Glass Backdrop Overlay - matching MoodCheck styling */}
+                      <motion.div
+                        key="connector-modal-backdrop"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0, transition: { duration: 0.25 } }}
+                        onClick={() => {
+                          if (!testingConnector) setActiveConnectorModal(null);
+                        }}
+                        className="fixed inset-0 transition-all duration-300 bg-black/15 dark:bg-black/50 backdrop-blur-md"
+                      />
+
+                      {/* Modal Container with Center Vertical Swipe IN & OUT (MoodCheck signature animation) */}
+                      <motion.div
+                        key="connector-modal-card"
+                        initial={{ opacity: 0, scaleY: 0.1, scaleX: 0.95 }}
+                        animate={{ opacity: 1, scaleY: 1, scaleX: 1 }}
+                        exit={{
+                          opacity: 0,
+                          scaleY: 0.1,
+                          scaleX: 0.95,
+                          transition: {
+                            type: "spring",
+                            damping: 24,
+                            stiffness: 300,
+                            mass: 0.75,
+                          },
+                        }}
+                        transition={{
+                          type: "spring",
+                          damping: 26,
+                          stiffness: 340,
+                          mass: 0.8,
+                        }}
+                        style={{ transformOrigin: "center center" }}
+                        className="relative w-full max-w-lg rounded-3xl border border-neutral-200/80 dark:border-neutral-800/90 bg-white dark:bg-[#121212] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] overflow-hidden font-sf flex flex-col max-h-[92vh] z-10"
+                      >
+                        {/* Modal Header */}
                       <div className="px-5 py-4 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <Image
@@ -2333,10 +2388,11 @@ export default function SettingsPage() {
                           </Button>
                         </div>
                       </div>
-                    </div>
-                  </div>
+                    </motion.div>
+                  </motion.div>
                 )}
-              </div>
+              </AnimatePresence>
+            </div>
             )}
           </div>
         )}
