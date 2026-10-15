@@ -702,9 +702,9 @@ export default function DashboardOverviewPage() {
                     </span>
                     <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
                       {attachment.isExtracting ? (
-                        <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium">
+                        <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium font-sf">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                          Mengekstrak isi dokumen...
+                          Extracting document contents...
                         </span>
                       ) : (
                         `${attachment.type.toUpperCase()} • ${attachment.size}`
@@ -716,7 +716,7 @@ export default function DashboardOverviewPage() {
                     type="button"
                     onClick={handleRemoveAttachment}
                     className="w-5 h-5 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-red-500 text-neutral-500 dark:text-neutral-400 flex items-center justify-center transition-colors cursor-pointer ml-0.5"
-                    title="Hapus lampiran"
+                    title="Remove attachment"
                   >
                     <X className="w-3.5 h-3.5 stroke-[2.5]" />
                   </button>
@@ -733,19 +733,29 @@ export default function DashboardOverviewPage() {
                     e.currentTarget.form?.requestSubmit();
                   }
                 }}
-                placeholder="Tulis pesan, tanyakan topik, atau lampirkan dokumen (PDF, Word, Excel, Gambar)..."
-                className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm sm:text-base outline-none resize-none min-h-[95px] font-sans"
+                placeholder={
+                  docType === "FINANCE"
+                    ? "Ask about market sizing, valuation, unit economics (CAC/LTV), financial models, or attach data..."
+                    : docType === "STRATEGY"
+                    ? "Describe your business dilemma, competitive moats (7 Powers), product strategy, or PRD requirements..."
+                    : docType === "GROWTH"
+                    ? "Ask about acquisition loops, viral coefficients, retention curves, funnel conversion, or campaigns..."
+                    : docType === "REASONING"
+                    ? "Present a complex strategic decision, conflicting trade-off, or hypothesis to stress-test from first principles..."
+                    : "Ask anything, explore ideas, or attach documents (PDF, Word, Excel, Images)..."
+                }
+                className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm sm:text-base outline-none resize-none min-h-[95px] font-sf"
               />
 
               <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800">
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-200 dark:border-neutral-800 transition-colors cursor-pointer"
-                  title="Lampirkan Dokumen atau Gambar (PDF, Word, Excel, Gambar)"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium font-sf text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-200 dark:border-neutral-800 transition-colors cursor-pointer"
+                  title="Attach Document or Image (PDF, Word, Excel, Image)"
                 >
                   <Paperclip className="w-3.5 h-3.5" />
-                  <span>Lampirkan File</span>
+                  <span>Attach File</span>
                 </button>
 
                 <Button
@@ -773,7 +783,7 @@ export default function DashboardOverviewPage() {
               </div>
             </form>
 
-            {/* Quick Filter Chips - Single row with left-to-right staggered upward animation */}
+            {/* Specialized Skills & Brain Chips - Single row with left-to-right staggered upward animation */}
             <motion.div
               variants={chipsContainerVariants}
               initial="hidden"
@@ -782,10 +792,10 @@ export default function DashboardOverviewPage() {
             >
               {[
                 { label: "General Chat", value: "" },
+                { label: "Market & Finance", value: "FINANCE" },
+                { label: "Product & Strategy", value: "STRATEGY" },
+                { label: "Growth & Marketing", value: "GROWTH" },
                 { label: "Deep Reasoning", value: "REASONING" },
-                { label: "Code & Architecture", value: "CODE" },
-                { label: "Slide & Presentation", value: "DECKS" },
-                { label: "Automation Flow", value: "AUTOMATION" },
               ].map((tag) => (
                 <motion.button
                   key={tag.label}
@@ -794,8 +804,8 @@ export default function DashboardOverviewPage() {
                   whileTap={{ scale: 0.96 }}
                   type="button"
                   onClick={() => setDocType(tag.value)}
-                  className={`px-3 py-1.5 rounded-md border text-xs whitespace-nowrap transition-colors font-sans cursor-pointer shrink-0 ${
-                    docType === tag.value
+                  className={`px-3 py-1.5 rounded-md border text-xs whitespace-nowrap transition-colors font-sf cursor-pointer shrink-0 ${
+                    (docType === tag.value) || (!docType && tag.value === "")
                       ? "bg-neutral-950 text-white border-neutral-950 dark:bg-neutral-100 dark:text-neutral-950 dark:border-neutral-100 font-semibold shadow-xs"
                       : "border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:border-neutral-400 dark:hover:border-neutral-600 bg-white dark:bg-neutral-900"
                   }`}
@@ -808,7 +818,7 @@ export default function DashboardOverviewPage() {
         </div>
       ) : (
         /* Active Conversational Chat View (Like ChatGPT / Gemini / Claude) */
-        <div className="flex flex-col max-w-3xl mx-auto min-h-[calc(100vh-140px)] pb-32 pt-2 px-3 sm:px-4 font-redhat">
+        <div className="flex flex-col max-w-3xl mx-auto min-h-[calc(100vh-140px)] pb-32 pt-2 px-3 sm:px-4 font-sf">
           {/* Messages Stream */}
           <div className="space-y-6 flex-1">
             {messages.map((msg) => (
@@ -982,9 +992,9 @@ export default function DashboardOverviewPage() {
                       </span>
                       <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
                         {attachment.isExtracting ? (
-                          <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium">
+                          <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium font-sf">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                            Mengekstrak isi dokumen...
+                            Extracting document contents...
                           </span>
                         ) : (
                           `${attachment.type.toUpperCase()} • ${attachment.size}`
@@ -996,7 +1006,7 @@ export default function DashboardOverviewPage() {
                       type="button"
                       onClick={handleRemoveAttachment}
                       className="w-5 h-5 rounded-xs hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-red-500 text-neutral-500 dark:text-neutral-400 flex items-center justify-center transition-colors cursor-pointer ml-0.5"
-                      title="Hapus lampiran"
+                      title="Remove attachment"
                     >
                       <X className="w-3 h-3 stroke-[2.5]" />
                     </button>
@@ -1008,7 +1018,7 @@ export default function DashboardOverviewPage() {
                     type="button"
                     onClick={() => bottomFileInputRef.current?.click()}
                     className="h-9 w-9 rounded-lg flex items-center justify-center text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer shrink-0"
-                    title="Lampirkan File (Gambar, PDF, Word, Excel)"
+                    title="Attach File (Image, PDF, Word, Excel)"
                   >
                     <Paperclip className="w-4 h-4" />
                   </button>
@@ -1023,8 +1033,8 @@ export default function DashboardOverviewPage() {
                         e.currentTarget.form?.requestSubmit();
                       }
                     }}
-                    placeholder="Tanyakan apapun, analisis dokumen, atau diskusikan ide..."
-                    className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm outline-none resize-none max-h-28 min-h-[40px] font-sans"
+                    placeholder="Type your message, analyze files, or discuss ideas..."
+                    className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm outline-none resize-none max-h-28 min-h-[40px] font-sf"
                     rows={1}
                   />
 
