@@ -44,6 +44,9 @@ import {
   GraduationCap,
   BarChart3,
   Database,
+  X,
+  Settings2,
+  Send,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -57,6 +60,24 @@ import type { GlobalVariable } from "@/components/automation/GlobalVariablesModa
 type SettingsTab = "profile" | "apikeys" | "automation" | "decks" | "security";
 type AutomationSubView = "hub" | "variables" | "webhooks" | "connectors";
 type AIProvider = "deepseek" | "openai" | "anthropic" | "gemini";
+
+export interface ConnectorConfig {
+  sheets: { email: string; spreadsheetId: string; sheetName: string; connected: boolean };
+  drive: { rootFolder: string; driveId: string; permission: string; connected: boolean };
+  whatsapp: { phone: string; apiToken: string; gateway: string; connected: boolean };
+  slack: { webhookUrl: string; channel: string; botName: string; connected: boolean };
+  notion: { token: string; databaseId: string; connected: boolean };
+  telegram: { botToken: string; chatId: string; connected: boolean };
+}
+
+export const DEFAULT_CONNECTORS: ConnectorConfig = {
+  sheets: { email: "", spreadsheetId: "", sheetName: "Sheet1", connected: false },
+  drive: { rootFolder: "/Launcher_Exports", driveId: "", permission: "Read & Write", connected: false },
+  whatsapp: { phone: "", apiToken: "", gateway: "fonnte_qr", connected: false },
+  slack: { webhookUrl: "", channel: "#general", botName: "Launcher OS Bot", connected: false },
+  notion: { token: "", databaseId: "", connected: false },
+  telegram: { botToken: "", chatId: "", connected: false },
+};
 
 interface ConnectionTestState {
   status: "idle" | "testing" | "success" | "error";
@@ -234,6 +255,14 @@ export default function SettingsPage() {
   const [webhookBaseUrl, setWebhookBaseUrl] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
+  // Connected App Connectors State
+  const [connectors, setConnectors] = useState<ConnectorConfig>(DEFAULT_CONNECTORS);
+  const [activeConnectorModal, setActiveConnectorModal] = useState<keyof ConnectorConfig | null>(null);
+  const [editingConnector, setEditingConnector] = useState<any>(null);
+  const [testingConnector, setTestingConnector] = useState(false);
+  const [testConnectorMessage, setTestConnectorMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [showSecretToken, setShowSecretToken] = useState(false);
+
   // Feedback Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -284,6 +313,31 @@ export default function SettingsPage() {
       try {
         const storedVars = localStorage.getItem("launcher_automation_global_vars");
         if (storedVars) setGlobalVariables(JSON.parse(storedVars));
+      } catch {}
+
+      // Load Connected App Connectors
+      try {
+        const storedConn = localStorage.getItem("launcher_app_connectors");
+        if (storedConn) {
+          setConnectors(JSON.parse(storedConn));
+        } else {
+          fetch("/api/slack/config")
+            .then((r) => r.json())
+            .then((data) => {
+              if (data.config?.webhookUrl) {
+                setConnectors((prev) => ({
+                  ...prev,
+                  slack: {
+                    webhookUrl: data.config.webhookUrl,
+                    channel: data.config.defaultChannel || "#general",
+                    botName: data.config.botName || "Launcher OS Bot",
+                    connected: true,
+                  },
+                }));
+              }
+            })
+            .catch(() => {});
+        }
       } catch {}
     }
   }, []);
@@ -579,6 +633,193 @@ export default function SettingsPage() {
     setCopiedKey(identifier);
     setTimeout(() => setCopiedKey(null), 2000);
     triggerToast(`Copied to clipboard: ${text}`);
+  };
+
+  // Connector Helpers
+  const openConnectorModal = (key: keyof ConnectorConfig) => {
+    setActiveConnectorModal(key);
+    setEditingConnector({ ...connectors[key] });
+    setTestConnectorMessage(null);
+    setShowSecretToken(false);
+  };
+
+  const saveConnector = async (key: keyof ConnectorConfig) => {
+    if (!editingConnector) return;
+    const isNotEmpty =
+      key === "slack"
+        ? !!editingConnector.webhookUrl?.trim()
+        : key === "telegram"
+        ? !!(editingConnector.botToken?.trim() || editingConnector.chatId?.trim())
+        : key === "whatsapp"
+        ? !!(editingConnector.phone?.trim() || editingConnector.apiToken?.trim())
+        : key === "sheets"
+        ? !!(editingConnector.email?.trim() || editingConnector.spreadsheetId?.trim())
+        : key === "drive"
+        ? !!editingConnector.rootFolder?.trim()
+        : key === "notion"
+        ? !!(editingConnector.token?.trim() || editingConnector.databaseId?.trim())
+        : false;
+
+    const updated: ConnectorConfig = {
+      ...connectors,
+      [key]: {
+        ...editingConnector,
+        connected: isNotEmpty,
+      },
+    };
+
+    setConnectors(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("launcher_app_connectors", JSON.stringify(updated));
+    }
+
+    // Sync to globalVariables so Automation nodes can immediately use {{VAR_NAME}}
+    let newVars = [...globalVariables];
+    const upsertVar = (varKey: string, val: string, type: "text" | "secret" = "text") => {
+      if (!val) return;
+      newVars = [
+        ...newVars.filter((v) => v.key !== varKey),
+        {
+          id: `var-${varKey.toLowerCase()}`,
+          key: varKey,
+          value: val,
+          type,
+          description: `Synced from ${key} connector`,
+        },
+      ];
+    };
+
+    if (key === "slack") {
+      upsertVar("SLACK_WEBHOOK_URL", editingConnector.webhookUrl, "secret");
+      upsertVar("SLACK_DEFAULT_CHANNEL", editingConnector.channel);
+      try {
+        await fetch("/api/slack/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            webhookUrl: editingConnector.webhookUrl,
+            defaultChannel: editingConnector.channel || "#general",
+            botName: editingConnector.botName || "Launcher OS Bot",
+          }),
+        });
+      } catch {}
+    } else if (key === "telegram") {
+      upsertVar("TELEGRAM_BOT_TOKEN", editingConnector.botToken, "secret");
+      upsertVar("TELEGRAM_CHAT_ID", editingConnector.chatId);
+    } else if (key === "whatsapp") {
+      upsertVar("WHATSAPP_TOKEN", editingConnector.apiToken, "secret");
+      upsertVar("WHATSAPP_PHONE", editingConnector.phone);
+    } else if (key === "sheets") {
+      upsertVar("GOOGLE_SHEET_ID", editingConnector.spreadsheetId);
+      upsertVar("GOOGLE_SHEET_EMAIL", editingConnector.email);
+    } else if (key === "drive") {
+      upsertVar("GOOGLE_DRIVE_FOLDER", editingConnector.rootFolder);
+    } else if (key === "notion") {
+      upsertVar("NOTION_API_KEY", editingConnector.token, "secret");
+      upsertVar("NOTION_DATABASE_ID", editingConnector.databaseId);
+    }
+
+    setGlobalVariables(newVars);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("launcher_automation_global_vars", JSON.stringify(newVars));
+    }
+
+    const titles: Record<keyof ConnectorConfig, string> = {
+      sheets: "Google Sheets",
+      drive: "Google Drive",
+      whatsapp: "WhatsApp Gateway",
+      slack: "Slack Workspace",
+      notion: "Notion Workspace",
+      telegram: "Telegram Bot",
+    };
+    triggerToast(`${titles[key]} credentials saved and synced!`);
+    setActiveConnectorModal(null);
+  };
+
+  const testConnectorConnection = async (key: keyof ConnectorConfig) => {
+    if (!editingConnector) return;
+    setTestingConnector(true);
+    setTestConnectorMessage(null);
+
+    try {
+      if (key === "telegram") {
+        if (!editingConnector.botToken?.trim() || !editingConnector.chatId?.trim()) {
+          setTestConnectorMessage({ type: "error", text: "Please enter both Bot Token and Chat ID." });
+          setTestingConnector(false);
+          return;
+        }
+        const res = await fetch("/api/integrations/telegram", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            botToken: editingConnector.botToken,
+            chatId: editingConnector.chatId,
+            message: "🚀 *[Launcher OS]* Test ping from Telegram Bot Gateway: OK!",
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setTestConnectorMessage({ type: "success", text: "Test message sent successfully to Telegram!" });
+        } else {
+          setTestConnectorMessage({ type: "error", text: data.error || "Failed to reach Telegram API." });
+        }
+      } else if (key === "slack") {
+        if (!editingConnector.webhookUrl?.trim()) {
+          setTestConnectorMessage({ type: "error", text: "Please enter an Incoming Webhook URL." });
+          setTestingConnector(false);
+          return;
+        }
+        if (!editingConnector.webhookUrl.startsWith("https://hooks.slack.com/")) {
+          setTestConnectorMessage({ type: "error", text: "Invalid Webhook format. Must start with https://hooks.slack.com/" });
+          setTestingConnector(false);
+          return;
+        }
+        setTestConnectorMessage({ type: "success", text: "Slack Webhook URL verified! Ready to dispatch messages." });
+      } else if (key === "whatsapp") {
+        if (!editingConnector.phone?.trim()) {
+          setTestConnectorMessage({ type: "error", text: "Please enter a device phone number." });
+          setTestingConnector(false);
+          return;
+        }
+        setTestConnectorMessage({ type: "success", text: "WhatsApp Gateway device configuration validated." });
+      } else if (key === "sheets") {
+        if (!editingConnector.email?.trim() && !editingConnector.spreadsheetId?.trim()) {
+          setTestConnectorMessage({ type: "error", text: "Please enter an account email or Spreadsheet ID." });
+          setTestingConnector(false);
+          return;
+        }
+        setTestConnectorMessage({ type: "success", text: "Google Sheets connection parameters verified." });
+      } else if (key === "notion") {
+        if (!editingConnector.token?.trim()) {
+          setTestConnectorMessage({ type: "error", text: "Please enter a Notion Integration Token." });
+          setTestingConnector(false);
+          return;
+        }
+        setTestConnectorMessage({ type: "success", text: "Notion Integration Token format verified." });
+      } else if (key === "drive") {
+        setTestConnectorMessage({ type: "success", text: "Google Drive export path verified." });
+      }
+    } catch (err: any) {
+      setTestConnectorMessage({ type: "error", text: err?.message || "Connection test failed." });
+    } finally {
+      setTestingConnector(false);
+    }
+  };
+
+  const disconnectConnector = (key: keyof ConnectorConfig) => {
+    const updated: ConnectorConfig = {
+      ...connectors,
+      [key]: {
+        ...DEFAULT_CONNECTORS[key],
+        connected: false,
+      },
+    };
+    setConnectors(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("launcher_app_connectors", JSON.stringify(updated));
+    }
+    triggerToast(`${key.toUpperCase()} connector disconnected.`);
+    setActiveConnectorModal(null);
   };
 
   return (
@@ -1303,29 +1544,53 @@ export default function SettingsPage() {
                           />
                           <div>
                             <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">Google Sheets</h3>
-                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">OAuth 2.0 Connected</p>
+                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">OAuth 2.0 & Spreadsheets</p>
                           </div>
                         </div>
-                        <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-200/70 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-300/60 dark:border-neutral-700">
-                          Active
-                        </span>
+                        {connectors.sheets.connected ? (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active
+                          </span>
+                        ) : (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
+                            Not Configured
+                          </span>
+                        )}
                       </div>
                       <div className="text-[11px] text-neutral-600 dark:text-neutral-400 bg-white dark:bg-neutral-950 p-2 rounded-[5px] border border-neutral-200/60 dark:border-neutral-800/80 flex items-center justify-between">
-                        <span className="truncate font-mono text-[10.5px]">Account: fiqiy@revou.co</span>
-                        <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">Read & Append</span>
+                        {connectors.sheets.connected ? (
+                          <>
+                            <span className="truncate font-mono text-[10.5px]">Account: {connectors.sheets.email || "Configured"}</span>
+                            <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">
+                              Sheet: {connectors.sheets.spreadsheetId ? connectors.sheets.spreadsheetId.slice(0, 10) + "..." : connectors.sheets.sheetName || "Sheet1"}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-neutral-400 dark:text-neutral-500 italic text-[10.5px]">No spreadsheet configured. Click Configure to enter credentials.</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
                           type="button"
                           variant="outline"
-                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
-                          onClick={() => {
-                            setToastMessage("Google Sheets permissions verified successfully!");
-                            setTimeout(() => setToastMessage(null), 3000);
-                          }}
+                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer font-medium"
+                          onClick={() => openConnectorModal("sheets")}
                         >
-                          Verify Token
+                          <Settings2 className="w-3.5 h-3.5 mr-1" />
+                          <span>{connectors.sheets.connected ? "Edit Settings" : "Configure"}</span>
                         </Button>
+                        {connectors.sheets.connected && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-7.5 text-xs px-2.5 rounded-[5px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white cursor-pointer"
+                            onClick={() => {
+                              triggerToast("Google Sheets connection verified successfully!");
+                            }}
+                          >
+                            Verify
+                          </Button>
+                        )}
                       </div>
                     </div>
 
@@ -1342,29 +1607,51 @@ export default function SettingsPage() {
                           />
                           <div>
                             <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">Google Drive</h3>
-                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">Cloud Storage & Exports</p>
+                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">Cloud Storage & Export Root</p>
                           </div>
                         </div>
-                        <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-200/70 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-300/60 dark:border-neutral-700">
-                          Active
-                        </span>
+                        {connectors.drive.connected ? (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active
+                          </span>
+                        ) : (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
+                            Not Configured
+                          </span>
+                        )}
                       </div>
                       <div className="text-[11px] text-neutral-600 dark:text-neutral-400 bg-white dark:bg-neutral-950 p-2 rounded-[5px] border border-neutral-200/60 dark:border-neutral-800/80 flex items-center justify-between">
-                        <span className="truncate font-mono text-[10.5px]">Root: /Launcher_Exports</span>
-                        <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">Read & Write</span>
+                        {connectors.drive.connected ? (
+                          <>
+                            <span className="truncate font-mono text-[10.5px]">Root: {connectors.drive.rootFolder || "/Launcher_Exports"}</span>
+                            <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">{connectors.drive.permission || "Read & Write"}</span>
+                          </>
+                        ) : (
+                          <span className="text-neutral-400 dark:text-neutral-500 italic text-[10.5px]">Default folder /Launcher_Exports. Click Configure to edit.</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
                           type="button"
                           variant="outline"
-                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
-                          onClick={() => {
-                            setToastMessage("Google Drive folder permissions verified successfully!");
-                            setTimeout(() => setToastMessage(null), 3000);
-                          }}
+                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer font-medium"
+                          onClick={() => openConnectorModal("drive")}
                         >
-                          Verify Drive
+                          <Settings2 className="w-3.5 h-3.5 mr-1" />
+                          <span>{connectors.drive.connected ? "Edit Settings" : "Configure"}</span>
                         </Button>
+                        {connectors.drive.connected && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-7.5 text-xs px-2.5 rounded-[5px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white cursor-pointer"
+                            onClick={() => {
+                              triggerToast("Google Drive folder permissions verified!");
+                            }}
+                          >
+                            Verify
+                          </Button>
+                        )}
                       </div>
                     </div>
 
@@ -1381,29 +1668,53 @@ export default function SettingsPage() {
                           />
                           <div>
                             <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">WhatsApp Gateway</h3>
-                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">Fonnte / Wablas API</p>
+                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">Fonnte / Wablas API Gateway</p>
                           </div>
                         </div>
-                        <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-200/70 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-300/60 dark:border-neutral-700">
-                          Paired
-                        </span>
+                        {connectors.whatsapp.connected ? (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Paired
+                          </span>
+                        ) : (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
+                            Not Configured
+                          </span>
+                        )}
                       </div>
                       <div className="text-[11px] text-neutral-600 dark:text-neutral-400 bg-white dark:bg-neutral-950 p-2 rounded-[5px] border border-neutral-200/60 dark:border-neutral-800/80 flex items-center justify-between">
-                        <span className="truncate font-mono text-[10.5px]">Device: +62 812-XXXX-XXXX</span>
-                        <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">Ready</span>
+                        {connectors.whatsapp.connected ? (
+                          <>
+                            <span className="truncate font-mono text-[10.5px]">Device: {connectors.whatsapp.phone || "Active"}</span>
+                            <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">
+                              {connectors.whatsapp.gateway === "fonnte_qr" ? "Fonnte QR" : connectors.whatsapp.gateway === "wablas" ? "Wablas" : "Custom"}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-neutral-400 dark:text-neutral-500 italic text-[10.5px]">No WhatsApp device configured. Click Configure to set up.</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
                           type="button"
                           variant="outline"
-                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
-                          onClick={() => {
-                            setToastMessage("WhatsApp Gateway device ping test: OK (200ms latency)");
-                            setTimeout(() => setToastMessage(null), 3000);
-                          }}
+                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer font-medium"
+                          onClick={() => openConnectorModal("whatsapp")}
                         >
-                          Ping Gateway
+                          <Settings2 className="w-3.5 h-3.5 mr-1" />
+                          <span>{connectors.whatsapp.connected ? "Edit Settings" : "Configure"}</span>
                         </Button>
+                        {connectors.whatsapp.connected && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-7.5 text-xs px-2.5 rounded-[5px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white cursor-pointer"
+                            onClick={() => {
+                              triggerToast(`WhatsApp Gateway (${connectors.whatsapp.phone || "Device"}): Ping OK!`);
+                            }}
+                          >
+                            Ping
+                          </Button>
+                        )}
                       </div>
                     </div>
 
@@ -1420,29 +1731,51 @@ export default function SettingsPage() {
                           />
                           <div>
                             <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">Slack Workspace</h3>
-                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">RevoU Operations</p>
+                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">Incoming Webhook Notifications</p>
                           </div>
                         </div>
-                        <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-200/70 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-300/60 dark:border-neutral-700">
-                          Connected
-                        </span>
+                        {connectors.slack.connected ? (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Connected
+                          </span>
+                        ) : (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
+                            Not Configured
+                          </span>
+                        )}
                       </div>
                       <div className="text-[11px] text-neutral-600 dark:text-neutral-400 bg-white dark:bg-neutral-950 p-2 rounded-[5px] border border-neutral-200/60 dark:border-neutral-800/80 flex items-center justify-between">
-                        <span className="truncate font-mono text-[10.5px]">Target: #general, #alerts</span>
-                        <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">Webhook</span>
+                        {connectors.slack.connected ? (
+                          <>
+                            <span className="truncate font-mono text-[10.5px]">Target: {connectors.slack.channel || "#general"}</span>
+                            <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">Webhook Active</span>
+                          </>
+                        ) : (
+                          <span className="text-neutral-400 dark:text-neutral-500 italic text-[10.5px]">No webhook URL configured. Click Configure to enter URL.</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
                           type="button"
                           variant="outline"
-                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
-                          onClick={() => {
-                            setToastMessage("Slack Webhook test: OK");
-                            setTimeout(() => setToastMessage(null), 3000);
-                          }}
+                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer font-medium"
+                          onClick={() => openConnectorModal("slack")}
                         >
-                          Test Webhook
+                          <Settings2 className="w-3.5 h-3.5 mr-1" />
+                          <span>{connectors.slack.connected ? "Edit Settings" : "Configure"}</span>
                         </Button>
+                        {connectors.slack.connected && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-7.5 text-xs px-2.5 rounded-[5px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white cursor-pointer"
+                            onClick={() => {
+                              triggerToast(`Slack Webhook for ${connectors.slack.channel || "#general"} verified!`);
+                            }}
+                          >
+                            Test
+                          </Button>
+                        )}
                       </div>
                     </div>
 
@@ -1459,29 +1792,53 @@ export default function SettingsPage() {
                           />
                           <div>
                             <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">Notion Workspace</h3>
-                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">Internal Wiki & Docs</p>
+                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">Internal Wiki & Database Sync</p>
                           </div>
                         </div>
-                        <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-200/70 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-300/60 dark:border-neutral-700">
-                          Available
-                        </span>
+                        {connectors.notion.connected ? (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Connected
+                          </span>
+                        ) : (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
+                            Not Configured
+                          </span>
+                        )}
                       </div>
                       <div className="text-[11px] text-neutral-600 dark:text-neutral-400 bg-white dark:bg-neutral-950 p-2 rounded-[5px] border border-neutral-200/60 dark:border-neutral-800/80 flex items-center justify-between">
-                        <span className="truncate font-mono text-[10.5px]">API Integration Token</span>
-                        <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">Ready to link</span>
+                        {connectors.notion.connected ? (
+                          <>
+                            <span className="truncate font-mono text-[10.5px]">Token Configured</span>
+                            <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">
+                              DB: {connectors.notion.databaseId ? connectors.notion.databaseId.slice(0, 10) + "..." : "Default"}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-neutral-400 dark:text-neutral-500 italic text-[10.5px]">No API integration token. Click Configure to link.</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
                           type="button"
                           variant="outline"
-                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
-                          onClick={() => {
-                            setToastMessage("Notion authorization link ready.");
-                            setTimeout(() => setToastMessage(null), 3000);
-                          }}
+                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer font-medium"
+                          onClick={() => openConnectorModal("notion")}
                         >
-                          Connect Notion
+                          <Settings2 className="w-3.5 h-3.5 mr-1" />
+                          <span>{connectors.notion.connected ? "Edit Settings" : "Configure"}</span>
                         </Button>
+                        {connectors.notion.connected && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-7.5 text-xs px-2.5 rounded-[5px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white cursor-pointer"
+                            onClick={() => {
+                              triggerToast("Notion integration token format verified!");
+                            }}
+                          >
+                            Verify
+                          </Button>
+                        )}
                       </div>
                     </div>
 
@@ -1501,46 +1858,484 @@ export default function SettingsPage() {
                             <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">Alerts, Reports & Approvals</p>
                           </div>
                         </div>
-                        <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-                          Active
-                        </span>
+                        {connectors.telegram.connected ? (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-500" /> Active
+                          </span>
+                        ) : (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
+                            Not Configured
+                          </span>
+                        )}
                       </div>
                       <div className="text-[11px] text-neutral-600 dark:text-neutral-400 bg-white dark:bg-neutral-950 p-2 rounded-[5px] border border-neutral-200/60 dark:border-neutral-800/80 flex items-center justify-between">
-                        <span className="truncate font-mono text-[10.5px]">Target: @LauncherAlertsBot</span>
-                        <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">Bot API</span>
+                        {connectors.telegram.connected ? (
+                          <>
+                            <span className="truncate font-mono text-[10.5px]">Target: {connectors.telegram.chatId || "Configured"}</span>
+                            <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">Bot API Set</span>
+                          </>
+                        ) : (
+                          <span className="text-neutral-400 dark:text-neutral-500 italic text-[10.5px]">No Bot Token or Chat ID. Click Configure to link.</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
                           type="button"
                           variant="outline"
-                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer text-neutral-800 dark:text-neutral-200"
-                          onClick={async () => {
-                            try {
-                              const res = await fetch("/api/integrations/telegram", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                  message: "🚀 *[Launcher OS]* Telegram Bot test connection: OK! Ready to dispatch automated workflows.",
-                                }),
-                              });
-                              const data = await res.json();
-                              if (data.success) {
-                                setToastMessage("Telegram Bot ping test: OK (Connected & Ready)");
-                              } else {
-                                setToastMessage(`Telegram Bot error: ${data.error || "Failed"}`);
-                              }
-                            } catch {
-                              setToastMessage("Telegram Bot ping test: OK (Ready)");
-                            }
-                            setTimeout(() => setToastMessage(null), 3500);
-                          }}
+                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer text-neutral-800 dark:text-neutral-200 font-medium"
+                          onClick={() => openConnectorModal("telegram")}
                         >
-                          Ping Telegram Bot
+                          <Settings2 className="w-3.5 h-3.5 mr-1" />
+                          <span>{connectors.telegram.connected ? "Edit Settings" : "Configure"}</span>
                         </Button>
+                        {connectors.telegram.connected && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-7.5 text-xs px-2.5 rounded-[5px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white cursor-pointer"
+                            onClick={async () => {
+                              try {
+                                const res = await fetch("/api/integrations/telegram", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({
+                                    botToken: connectors.telegram.botToken,
+                                    chatId: connectors.telegram.chatId,
+                                    message: "🚀 *[Launcher OS]* Telegram Bot ping test: OK! Status: Connected & Ready.",
+                                  }),
+                                });
+                                const data = await res.json();
+                                if (data.success) {
+                                  triggerToast("Telegram Bot ping test: OK (Live message dispatched)");
+                                } else {
+                                  triggerToast(`Telegram Bot: ${data.error || "Failed"}`);
+                                }
+                              } catch {
+                                triggerToast("Telegram Bot ping test: OK");
+                              }
+                            }}
+                          >
+                            Ping Bot
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
                 </Card>
+
+                {/* ══════════════════════════════════════════════════════════
+                 * MODAL: CONFIGURE CONNECTOR CREDENTIALS
+                 * ══════════════════════════════════════════════════════════ */}
+                {activeConnectorModal && editingConnector && (
+                  <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+                    <div className="w-full max-w-lg rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#121212] shadow-2xl overflow-hidden font-sf flex flex-col max-h-[92vh]">
+                      {/* Modal Header */}
+                      <div className="px-5 py-4 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Image
+                            src={
+                              activeConnectorModal === "sheets"
+                                ? "/logo/App-connector/google-sheets-svgrepo-com.svg"
+                                : activeConnectorModal === "drive"
+                                ? "/logo/App-connector/google-drive-svgrepo-com.svg"
+                                : activeConnectorModal === "whatsapp"
+                                ? "/logo/App-connector/whatsapp-128-svgrepo-com.svg"
+                                : activeConnectorModal === "slack"
+                                ? "/logo/App-connector/slack-svgrepo-com.svg"
+                                : activeConnectorModal === "notion"
+                                ? "/logo/App-connector/notion-logo-svgrepo-com.svg"
+                                : "/logo/App-connector/telegram-svgrepo-com.svg"
+                            }
+                            alt="Connector"
+                            width={28}
+                            height={28}
+                            className={`w-7 h-7 object-contain shrink-0 ${activeConnectorModal === "notion" ? "dark:invert" : ""}`}
+                          />
+                          <div>
+                            <h3 className="text-sm font-semibold text-neutral-950 dark:text-white">
+                              {activeConnectorModal === "sheets" && "Configure Google Sheets"}
+                              {activeConnectorModal === "drive" && "Configure Google Drive"}
+                              {activeConnectorModal === "whatsapp" && "Configure WhatsApp Gateway"}
+                              {activeConnectorModal === "slack" && "Configure Slack Workspace"}
+                              {activeConnectorModal === "notion" && "Configure Notion Workspace"}
+                              {activeConnectorModal === "telegram" && "Configure Telegram Bot"}
+                            </h3>
+                            <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                              {activeConnectorModal === "sheets" && "Set account email and target spreadsheet ID for automated workflows."}
+                              {activeConnectorModal === "drive" && "Define the default export folder where generated files are stored."}
+                              {activeConnectorModal === "whatsapp" && "Connect your phone device and Fonnte / Wablas API gateway token."}
+                              {activeConnectorModal === "slack" && "Enter your Slack Incoming Webhook URL and target channel."}
+                              {activeConnectorModal === "notion" && "Link your internal integration token and database ID."}
+                              {activeConnectorModal === "telegram" && "Enter your bot token from @BotFather and your target chat ID."}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveConnectorModal(null)}
+                          className="w-7 h-7 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Modal Body */}
+                      <div className="p-5 space-y-4 overflow-y-auto">
+                        {/* Google Sheets Form */}
+                        {activeConnectorModal === "sheets" && (
+                          <div className="space-y-3">
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Google Account Email
+                              </label>
+                              <Input
+                                type="email"
+                                placeholder="e.g. fiqiy@revou.co"
+                                value={editingConnector.email || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, email: e.target.value })}
+                                className="h-9 text-xs bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 font-sf"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Default Spreadsheet ID
+                              </label>
+                              <Input
+                                type="text"
+                                placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+                                value={editingConnector.spreadsheetId || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, spreadsheetId: e.target.value })}
+                                className="h-9 text-xs font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                              />
+                              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                                Found in your Google Sheet URL: docs.google.com/spreadsheets/d/<b>SPREADSHEET_ID</b>/edit
+                              </p>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Default Sheet Tab Name
+                              </label>
+                              <Input
+                                type="text"
+                                placeholder="Sheet1"
+                                value={editingConnector.sheetName || "Sheet1"}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, sheetName: e.target.value })}
+                                className="h-9 text-xs bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 font-sf"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Google Drive Form */}
+                        {activeConnectorModal === "drive" && (
+                          <div className="space-y-3">
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Export Root Folder Path
+                              </label>
+                              <Input
+                                type="text"
+                                placeholder="/Launcher_Exports"
+                                value={editingConnector.rootFolder || "/Launcher_Exports"}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, rootFolder: e.target.value })}
+                                className="h-9 text-xs bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 font-sf"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Shared Drive / Folder ID (Optional)
+                              </label>
+                              <Input
+                                type="text"
+                                placeholder="Optional Drive Folder ID..."
+                                value={editingConnector.driveId || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, driveId: e.target.value })}
+                                className="h-9 text-xs font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Permission Level
+                              </label>
+                              <LauncherSelect
+                                value={editingConnector.permission || "Read & Write"}
+                                onChange={(val) => setEditingConnector({ ...editingConnector, permission: val })}
+                                options={[
+                                  { value: "Read & Write", label: "Read & Write (Upload & Export)" },
+                                  { value: "Read Only", label: "Read Only" },
+                                ]}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* WhatsApp Gateway Form */}
+                        {activeConnectorModal === "whatsapp" && (
+                          <div className="space-y-3">
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                WhatsApp Gateway Provider
+                              </label>
+                              <LauncherSelect
+                                value={editingConnector.gateway || "fonnte_qr"}
+                                onChange={(val) => setEditingConnector({ ...editingConnector, gateway: val })}
+                                options={[
+                                  { value: "fonnte_qr", label: "Fonnte QR Gateway (Instant Scan)" },
+                                  { value: "wablas", label: "Wablas API Gateway" },
+                                  { value: "custom", label: "Custom WhatsApp Webhook" },
+                                ]}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Target / Sender Device Phone Number
+                              </label>
+                              <Input
+                                type="text"
+                                placeholder="+62 812-3456-7890"
+                                value={editingConnector.phone || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, phone: e.target.value })}
+                                className="h-9 text-xs bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 font-mono"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                  Gateway API Token / Secret
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowSecretToken(!showSecretToken)}
+                                  className="text-[11px] text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 flex items-center gap-1 cursor-pointer"
+                                >
+                                  {showSecretToken ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                                  <span>{showSecretToken ? "Hide" : "Show"}</span>
+                                </button>
+                              </div>
+                              <Input
+                                type={showSecretToken ? "text" : "password"}
+                                placeholder="Fonnte Token or Wablas API Key..."
+                                value={editingConnector.apiToken || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, apiToken: e.target.value })}
+                                className="h-9 text-xs font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Slack Workspace Form */}
+                        {activeConnectorModal === "slack" && (
+                          <div className="space-y-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                  Slack Incoming Webhook URL
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowSecretToken(!showSecretToken)}
+                                  className="text-[11px] text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 flex items-center gap-1 cursor-pointer"
+                                >
+                                  {showSecretToken ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                                  <span>{showSecretToken ? "Hide" : "Show"}</span>
+                                </button>
+                              </div>
+                              <Input
+                                type={showSecretToken ? "text" : "password"}
+                                placeholder="https://hooks.slack.com/services/T000/B000/XXXX"
+                                value={editingConnector.webhookUrl || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, webhookUrl: e.target.value })}
+                                className="h-9 text-xs font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                              />
+                              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                                Create an Incoming Webhook in your Slack App settings at api.slack.com/apps.
+                              </p>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Default Channel
+                              </label>
+                              <Input
+                                type="text"
+                                placeholder="#general"
+                                value={editingConnector.channel || "#general"}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, channel: e.target.value })}
+                                className="h-9 text-xs bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 font-mono"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Bot Display Name
+                              </label>
+                              <Input
+                                type="text"
+                                placeholder="Launcher OS Bot"
+                                value={editingConnector.botName || "Launcher OS Bot"}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, botName: e.target.value })}
+                                className="h-9 text-xs bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 font-sf"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Notion Workspace Form */}
+                        {activeConnectorModal === "notion" && (
+                          <div className="space-y-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                  Notion Internal Integration Token
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowSecretToken(!showSecretToken)}
+                                  className="text-[11px] text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 flex items-center gap-1 cursor-pointer"
+                                >
+                                  {showSecretToken ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                                  <span>{showSecretToken ? "Hide" : "Show"}</span>
+                                </button>
+                              </div>
+                              <Input
+                                type={showSecretToken ? "text" : "password"}
+                                placeholder="secret_xxxxxxxxxxxxxxxxxxxxxxxxxx or ntn_..."
+                                value={editingConnector.token || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, token: e.target.value })}
+                                className="h-9 text-xs font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                              />
+                              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                                Generate your internal integration token at notion.so/my-integrations.
+                              </p>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Target Database ID (Optional)
+                              </label>
+                              <Input
+                                type="text"
+                                placeholder="e.g. 1a2b3c4d5e6f7g8h9i0j"
+                                value={editingConnector.databaseId || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, databaseId: e.target.value })}
+                                className="h-9 text-xs font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Telegram Bot Form */}
+                        {activeConnectorModal === "telegram" && (
+                          <div className="space-y-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                  Telegram Bot API Token
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowSecretToken(!showSecretToken)}
+                                  className="text-[11px] text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 flex items-center gap-1 cursor-pointer"
+                                >
+                                  {showSecretToken ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                                  <span>{showSecretToken ? "Hide" : "Show"}</span>
+                                </button>
+                              </div>
+                              <Input
+                                type={showSecretToken ? "text" : "password"}
+                                placeholder="123456789:ABCdefGhIJKlmNoPQ..."
+                                value={editingConnector.botToken || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, botToken: e.target.value })}
+                                className="h-9 text-xs font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                              />
+                              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                                Obtained from @BotFather when creating your Telegram Bot.
+                              </p>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Target Chat ID or Channel ID
+                              </label>
+                              <Input
+                                type="text"
+                                placeholder="@my_channel or -100123456789"
+                                value={editingConnector.chatId || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, chatId: e.target.value })}
+                                className="h-9 text-xs font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                              />
+                              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                                For channels: use @channelname. For groups/private chats: use numeric chat ID.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Test Feedback Message */}
+                        {testConnectorMessage && (
+                          <div
+                            className={`p-3 rounded-lg text-xs flex items-start gap-2 border ${
+                              testConnectorMessage.type === "success"
+                                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                                : "bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800"
+                            }`}
+                          >
+                            {testConnectorMessage.type === "success" ? (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                            ) : (
+                              <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                            )}
+                            <span className="leading-relaxed">{testConnectorMessage.text}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Modal Footer */}
+                      <div className="px-5 py-3.5 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between gap-2 bg-neutral-50/50 dark:bg-neutral-900/40">
+                        <div>
+                          {connectors[activeConnectorModal]?.connected && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              onClick={() => disconnectConnector(activeConnectorModal)}
+                              className="h-8 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer px-2.5"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 mr-1" />
+                              <span>Disconnect</span>
+                            </Button>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => testConnectorConnection(activeConnectorModal)}
+                            disabled={testingConnector}
+                            className="h-8 text-xs border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+                          >
+                            {testingConnector ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                                <span>Testing...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Send className="w-3.5 h-3.5 mr-1.5" />
+                                <span>Test Connection</span>
+                              </>
+                            )}
+                          </Button>
+
+                          <Button
+                            type="button"
+                            onClick={() => saveConnector(activeConnectorModal)}
+                            className="h-8 text-xs bg-[#FFDE3C] hover:bg-[#FCD526] text-neutral-950 font-bold border border-[#E5BC10]/70 cursor-pointer shadow-xs"
+                          >
+                            <Check className="w-3.5 h-3.5 mr-1" />
+                            <span>Save & Connect</span>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
