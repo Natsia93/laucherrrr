@@ -14,11 +14,11 @@ html {
   --font-sans: var(--font-sf), "SF Pro Display", "SF Pro", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-sf: var(--font-sf), "SF Pro Display", "SF Pro", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-geist: var(--font-sf), "SF Pro Display", "SF Pro", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-bricolage: var(--font-bricolage);
-  --font-lora: var(--font-lora), serif;
-  --font-jakarta: var(--font-jakarta), sans-serif;
-  --font-outfit: var(--font-outfit), sans-serif;
-  --font-inter: var(--font-inter), sans-serif;
+  --font-bricolage: "Bricolage Grotesque", sans-serif;
+  --font-lora: "Lora", Georgia, serif;
+  --font-jakarta: "Plus Jakarta Sans", sans-serif;
+  --font-outfit: "Outfit", sans-serif;
+  --font-inter: "Inter", -apple-system, sans-serif;
   --font-heading: var(--font-sf), "SF Pro Display", sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);

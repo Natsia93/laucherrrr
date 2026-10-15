@@ -1,28 +1,9 @@
 import type { Metadata } from "next";
-import { Inter, Bricolage_Grotesque, Lora, Plus_Jakarta_Sans, Outfit } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import NextTopLoader from 'nextjs-toploader';
 import { MobileBottomNav } from "@/components/MobileBottomNav";
-
-const lora = Lora({
-  variable: "--font-lora",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-jakarta",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-});
-
-const outfit = Outfit({
-  variable: "--font-outfit",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-});
 
 const sfPro = localFont({
   src: [
@@ -51,16 +32,6 @@ const sfPro = localFont({
   display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const bricolage = Bricolage_Grotesque({
-  variable: "--font-bricolage",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
   title: "Launcher OS - RevoU",
   description: "The intelligent operating system for modern execution.",
@@ -81,7 +52,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning className={`${lora.variable} ${sfPro.variable} ${inter.variable} ${bricolage.variable} ${plusJakartaSans.variable} ${outfit.variable} font-sans antialiased bg-white text-neutral-900 dark:bg-[#0a0a0a] dark:text-[#f5f5f5] min-h-screen transition-colors duration-200`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400..700;1,400..700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        />
+      </head>
+      <body suppressHydrationWarning className={`${sfPro.variable} font-sans antialiased bg-white text-neutral-900 dark:bg-[#0a0a0a] dark:text-[#f5f5f5] min-h-screen transition-colors duration-200`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
