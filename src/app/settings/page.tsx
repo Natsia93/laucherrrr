@@ -707,10 +707,14 @@ export default function SettingsPage() {
                 : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
             }`}
           >
-            <Workflow className="w-4 h-4 shrink-0 text-neutral-800 dark:text-neutral-200" />
+            <Workflow className="w-4 h-4 shrink-0" />
             <span>Automation & Integrations</span>
             {globalVariables.length > 0 && (
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-neutral-950/10 dark:bg-white/20 font-mono font-bold">
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+                activeTab === "automation"
+                  ? "bg-neutral-950/15 text-neutral-950"
+                  : "bg-neutral-950/10 dark:bg-white/20 text-neutral-700 dark:text-neutral-300"
+              }`}>
                 {globalVariables.length}
               </span>
             )}
