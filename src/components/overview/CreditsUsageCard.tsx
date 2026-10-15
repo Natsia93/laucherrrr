@@ -127,21 +127,18 @@ export function CreditsUsageCard() {
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-2">
             {hasApiKey ? (
               <>
-                <span className="text-3xl sm:text-[38px] font-bold text-white leading-none tracking-tight">
+                <span className="text-4xl sm:text-[46px] font-bold text-white leading-none tracking-tight">
                   {displayCount}
                 </span>
-                <span className="text-[11px] sm:text-xs font-medium text-[#FCD62C] mt-1.5 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" /> AI Requests
-                </span>
-                <span className="text-[10px] text-neutral-400 mt-0.5 font-normal">
-                  Unlimited BYOK
+                <span className="text-xs sm:text-[13px] font-semibold text-[#FCD62C] mt-2 flex items-center gap-1.5 tracking-wide">
+                  <Sparkles className="w-3.5 h-3.5" /> AI Requests
                 </span>
               </>
             ) : (
               <>
                 <Key className="w-8 h-8 text-neutral-400 mb-1.5 stroke-[1.6]" />
-                <span className="text-[11px] font-semibold text-neutral-300">
-                  Belum Ada Key
+                <span className="text-xs font-semibold text-neutral-300">
+                  No Key Configured
                 </span>
               </>
             )}
@@ -160,14 +157,14 @@ export function CreditsUsageCard() {
                 Direct Provider Billing
               </h4>
               <p className="text-xs sm:text-[13px] text-neutral-400 leading-relaxed max-w-sm">
-                Terhubung ke {providerLabel}{selectedModel ? ` (${selectedModel})` : ""}. Tidak ada batasan kuota platform—eksekusi AI langsung dari akun API Anda.
+                Connected to {providerLabel}{selectedModel ? ` (${selectedModel})` : ""}. No platform quota limits—AI executions run directly via your provider account.
               </p>
               <div className="pt-1">
                 <Link
                   href="/settings"
                   className="inline-flex items-center gap-1 text-xs font-semibold text-[#FCD62C] hover:text-[#ffe55c] transition-colors"
                 >
-                  <span>Kelola API Key di Settings</span>
+                  <span>Manage API Key in Settings</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -175,22 +172,22 @@ export function CreditsUsageCard() {
           ) : (
             <>
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-semibold">
-                <span>Setup Diperlukan</span>
+                <span>Setup Required</span>
               </div>
               <h4 className="text-lg sm:text-xl font-medium text-white tracking-tight">
-                Hubungkan API Key Anda
+                Connect Your API Key
               </h4>
               <p className="text-xs sm:text-[13px] text-neutral-400 leading-relaxed max-w-sm">
-                Sistem Launcher OS menggunakan BYOK (Bring Your Own Key). Masukkan API Key Anda di Settings untuk membuka seluruh fitur AI.
+                Launcher OS operates on a BYOK (Bring Your Own Key) model. Configure your API key in Settings to unlock all AI features.
               </p>
               <div className="pt-1">
                 <Link href="/settings">
                   <Button
                     size="sm"
-                    className="h-8.5 bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 font-bold text-xs px-3.5 rounded-lg shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                    className="h-8.5 bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 font-bold text-xs px-3.5 rounded-[5px] shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
                   >
                     <Key className="w-3.5 h-3.5" />
-                    <span>Pasang API Key</span>
+                    <span>Configure API Key</span>
                   </Button>
                 </Link>
               </div>
