@@ -156,7 +156,7 @@ export function CreditsUsageCard() {
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>BYOK Connected • {providerLabel}</span>
               </div>
-              <h4 className="text-lg sm:text-xl font-semibold text-white tracking-tight">
+              <h4 className="text-lg sm:text-xl font-medium text-white tracking-tight">
                 Direct Provider Billing
               </h4>
               <p className="text-xs sm:text-[13px] text-neutral-400 leading-relaxed max-w-sm">
@@ -177,7 +177,7 @@ export function CreditsUsageCard() {
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-semibold">
                 <span>Setup Diperlukan</span>
               </div>
-              <h4 className="text-lg sm:text-xl font-semibold text-white tracking-tight">
+              <h4 className="text-lg sm:text-xl font-medium text-white tracking-tight">
                 Hubungkan API Key Anda
               </h4>
               <p className="text-xs sm:text-[13px] text-neutral-400 leading-relaxed max-w-sm">
