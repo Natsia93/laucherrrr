@@ -95,8 +95,7 @@ const AI_PROVIDERS: Record<AIProvider, {
     models: [
       { value: "gpt-4o-mini", label: "GPT-4o Mini" },
       { value: "gpt-4o", label: "GPT-4o" },
-      { value: "gpt-4.1-mini", label: "GPT-4.1 Mini" },
-      { value: "gpt-4.1", label: "GPT-4.1" },
+      { value: "o3-mini", label: "o3-mini (Reasoning)" },
     ],
     color: "#10A37F",
   },
@@ -107,8 +106,9 @@ const AI_PROVIDERS: Record<AIProvider, {
     dashboardUrl: "https://console.anthropic.com/settings/keys",
     dashboardLabel: "Get Key from Anthropic",
     models: [
-      { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
+      { value: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet" },
       { value: "claude-3-5-haiku-20241022", label: "Claude 3.5 Haiku" },
+      { value: "claude-3-opus-20240229", label: "Claude 3 Opus" },
     ],
     color: "#D4A27F",
   },
@@ -119,10 +119,9 @@ const AI_PROVIDERS: Record<AIProvider, {
     dashboardUrl: "https://aistudio.google.com/apikey",
     dashboardLabel: "Get Key from Google AI Studio",
     models: [
-      { value: "gemini-3.8-flash", label: "Gemini 3.8 Flash (Latest)" },
-      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+      { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash (Fastest)" },
       { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash" },
+      { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" },
     ],
     color: "#4285F4",
   },

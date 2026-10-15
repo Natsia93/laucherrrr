@@ -22,12 +22,12 @@ const PROVIDER_CONFIG: Record<string, {
   },
   anthropic: {
     baseURL: "https://api.anthropic.com/v1",
-    defaultModel: "claude-sonnet-4-20250514",
+    defaultModel: "claude-3-5-sonnet-20241022",
     label: "Anthropic (Claude)",
   },
   gemini: {
     baseURL: "https://generativelanguage.googleapis.com/v1beta",
-    defaultModel: "gemini-3.8-flash",
+    defaultModel: "gemini-2.0-flash",
     label: "Google Gemini",
   },
 };
