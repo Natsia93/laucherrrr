@@ -97,11 +97,11 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
         body: JSON.stringify({ ids: idsToDelete }),
       });
 
-      if (!response.ok) {
+        if (!response.ok) {
         // Rollback
         setOptimisticDocuments(previousDocs);
         const data = await response.json();
-        alert(data.error || "Gagal menghapus dokumen");
+        alert(data.error || "Failed to delete documents");
       } else {
         // Trigger background refresh to sync with server state
         router.refresh();
@@ -109,7 +109,7 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
     } catch (_error) {
       // Rollback
       setOptimisticDocuments(previousDocs);
-      alert("Terjadi kesalahan sistem");
+      alert("A system error occurred");
     } finally {
       setIsDeleting(false);
     }
@@ -134,7 +134,7 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
                 <CheckCircle2 className="w-4 h-4" />
               </div>
               <span className="font-sans font-medium text-sm">
-                {selectedIds.length} Dokumen terpilih
+                {selectedIds.length} {selectedIds.length === 1 ? "document selected" : "documents selected"}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
                 onClick={() => setSelectedIds([])}
                 className="text-white hover:bg-white/10 text-xs"
               >
-                Batal
+                Cancel
               </Button>
               <Button 
                 variant="ghost" 
@@ -153,7 +153,7 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
                 className="!bg-[#ff0000] hover:!bg-[#cc0000] text-white border-none text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(255,0,0,0.5)] transition-all active:scale-95 font-bold rounded-md px-4"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                Hapus Terpilih
+                Delete Selected
               </Button>
             </div>
           </motion.div>
@@ -171,11 +171,11 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
                   className="border-neutral-300 dark:border-[#3f612d]/50 data-[state=checked]:bg-[#4d7537] data-[state=checked]:border-[#4d7537]"
                 />
               </TableHead>
-              <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans px-4">Nama Dokumen</TableHead>
-              <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans px-4">Kategori</TableHead>
-              <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans px-4">Tanggal</TableHead>
-              <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans px-4 whitespace-nowrap">Ukuran</TableHead>
-              <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans text-right px-6">Aksi</TableHead>
+              <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans px-4">Document Name</TableHead>
+              <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans px-4">Category</TableHead>
+              <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans px-4">Date</TableHead>
+              <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans px-4 whitespace-nowrap">Size</TableHead>
+              <TableHead className="text-[#4d7537] dark:text-[#89b867] font-medium font-sans text-right px-6">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="min-h-[400px]">
@@ -187,8 +187,8 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
                       <Folder className="w-10 h-10 opacity-20" />
                       <p>
                         {search || category 
-                          ? "Tidak ada dokumen yang sesuai dengan filter." 
-                          : "Belum ada dokumen. Mulai buat perangkat ajar pertama Anda!"}
+                          ? "No documents match the filter criteria." 
+                          : "No documents yet. Start creating your first workspace document!"}
                       </p>
                     </div>
                   </TableCell>
@@ -239,11 +239,11 @@ export function DocumentTable({ documents: initialDocuments }: DocumentTableProp
         onClose={() => setShowBulkDeleteModal(false)}
         onConfirm={handleBulkDelete}
         isLoading={isDeleting}
-        title={`Hapus ${selectedIds.length} Dokumen?`}
-        description={`Semua dokumen yang terpilih akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.`}
+        title={`Delete ${selectedIds.length} ${selectedIds.length === 1 ? "Document" : "Documents"}?`}
+        description="All selected documents will be permanently deleted. This action cannot be undone."
         type="danger"
-        confirmText="Hapus Sekarang"
-        cancelText="Batal"
+        confirmText="Delete Now"
+        cancelText="Cancel"
       />
     </div>
   );

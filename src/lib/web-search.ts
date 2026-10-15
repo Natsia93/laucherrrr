@@ -5,7 +5,7 @@
  * Strategy v3.0: AGGRESSIVE SEARCH
  * - Nearly ALL user questions trigger web search (except document revision commands)
  * - Tavily is PRIMARY for knowledge questions; free providers as supplement
- * - This ensures Dekstorio matches ChatGPT/Gemini accuracy
+ * - This ensures Launcher OS-RevoU matches ChatGPT/Gemini accuracy
  */
 
 interface SearchResult {
@@ -41,7 +41,23 @@ export function cleanQuery(query: string): string {
 export function needsWebSearch(message: string): boolean {
   const lower = message.toLowerCase().trim();
   
-  // SKIP search ONLY for these explicit document-editing commands
+  // SKIP search for simple greetings & conversational messages (very short, no factual question)
+  const greetingPatterns = [
+    /^(h[ae]lo|hai|hi|hey|hei|yo|p|oi|woi|hoy|assalamualaikum|selamat\s*(pagi|siang|sore|malam)|good\s*(morning|afternoon|evening|night))[\s!.,?]*$/i,
+    /^(terima\s*kasih|makasih|thanks|thank\s*you|thx|ok|oke|okay|siap|mantap|keren|bagus|nice|cool|great|good|iya|ya|yap|yep|yoi|betul|benar|setuju|noted)[\s!.,?]*$/i,
+    /^(gimana\s*kabar|apa\s*kabar|how\s*are\s*you|what'?s?\s*up)[\s!?.,]*$/i,
+    /^(bye|dah|dadah|sampai\s*jumpa|see\s*you)[\s!.,?]*$/i,
+  ];
+  
+  if (greetingPatterns.some(p => p.test(lower))) return false;
+  
+  // SKIP search for very short messages (1-2 words, no question marks) — likely conversational
+  const wordCount = lower.split(/\s+/).length;
+  if (wordCount <= 2 && !lower.includes('?') && !/\b(siapa|apa|dimana|kapan|berapa|mengapa|kenapa|how|what|who|where|when|why)\b/i.test(lower)) {
+    return false;
+  }
+  
+  // SKIP search for explicit document-editing commands
   const skipPatterns = [
     /^(perbaiki|revisi|edit|ubah|ganti|tambah|hapus|format|rapikan)\s+(dokumen|tabel|paragraf|kalimat|judul|bab|bagian)/i,
     /^(lanjutkan|continue)\s*(penulisan|menulis|buat|generate)?/i,
@@ -174,19 +190,22 @@ export async function performWebSearch(query: string): Promise<SearchResponse> {
   const searxResults = searx.status === 'fulfilled' ? searx.value : [];
   const tavilyResults = tavily?.status === 'fulfilled' ? tavily.value : [];
 
-  // Tavily results are highest quality — put them first
-  let results = [...tavilyResults, ...searxResults, ...wikiResults];
+  // If Tavily returned results, use them directly for clean, high-signal context
+  let results = tavilyResults.length > 0 
+    ? tavilyResults 
+    : [...searxResults, ...wikiResults];
   
   // Deduplicate by URL
   const seen = new Set<string>();
   results = results.filter(r => {
+    if (!r.url) return true;
     if (seen.has(r.url)) return false;
     seen.add(r.url);
     return true;
   });
 
-  // Limit to top 8 results
-  results = results.slice(0, 8);
+  // Limit to top 5 high quality results
+  results = results.slice(0, 5);
 
   let provider = "none";
   if (tavilyResults.length > 0) provider = "Pencarian Web Lanjutan";
@@ -198,8 +217,8 @@ export async function performWebSearch(query: string): Promise<SearchResponse> {
 }
 
 export function formatSearchContext(searchResponse: SearchResponse): string {
-  if (searchResponse.results.length === 0) {
-    return `[Pencarian web tidak menemukan data spesifik untuk: "${searchResponse.query}". Jawab berdasarkan pengetahuan Anda, namun PERINGATKAN user bahwa jawaban mungkin tidak akurat tanpa data terbaru.]`;
+  if (!searchResponse.results || searchResponse.results.length === 0) {
+    return "";
   }
 
   const resText = searchResponse.results
@@ -210,17 +229,13 @@ export function formatSearchContext(searchResponse: SearchResponse): string {
     .join("\n\n");
 
   return `
-=== HASIL PENCARIAN WEB REAL-TIME (${searchResponse.timestamp}) ===
+=== REFERENSI PENCARIAN WEB TERBARU (${searchResponse.timestamp}) ===
 Query: "${searchResponse.query}"
 
 ${resText}
 
-INSTRUKSI WAJIB:
-1. Jawab pertanyaan user berdasarkan data di atas secara MENDALAM dan DETAIL.
-2. JANGAN PERNAH katakan "tidak ada informasi" atau "saya tidak tahu" jika ada data di atas yang relevan.
-3. PRIORITASKAN data pencarian ini di atas pengetahuan bawaan Anda.
-4. Sebutkan sumber informasi ASLI (nama website/instansi seperti Kemenag, LinkedIn, Wikipedia, dll).
-5. Jika data pencarian bertentangan dengan pengetahuan Anda, IKUTI data pencarian karena lebih up-to-date.
-6. DILARANG KERAS menyebut kata "Tavily", "Tavily AI", atau mesin pencari internal lainnya dalam jawaban Anda. Cukup sebutkan sumber website aslinya saja.
+PANDUAN MENJAWAB:
+- Padukan informasi pencarian di atas dengan basis pengetahuan luas Anda untuk memberikan jawaban yang lengkap, kaya wawasan, dan terstruktur rapi (gunakan poin-poin/list).
+- JANGAN menyalin teks potongan pencarian secara mentah atau kaku. Sampaikan dengan gaya bahasa yang cerdas, lugas, dan mengalir seperti ChatGPT.
 ===`;
 }

@@ -13,7 +13,7 @@ import {
   PenTool, Save, Clock, Zap, Folder, XCircle,
   ZoomIn, ZoomOut, PanelRightClose, PanelRightOpen,
   Plus, ArrowRight, Send, X, Paperclip, FileText as FileIcon,
-  MessageSquare, FileEdit, Square, RotateCcw
+  MessageSquare, FileEdit, Square, RotateCcw, Copy, Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,10 +23,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
 const PROGRESS_STAGES = [
-  { icon: Brain, label: "Menganalisis Konteks", description: "Membaca dan memahami data wawancara Anda..." },
-  { icon: FileText, label: "Menyusun Struktur", description: "Merancang kerangka dokumen kurikulum..." },
-  { icon: PenTool, label: "Menulis Konten", description: "AI sedang menulis konten detail..." },
-  { icon: Save, label: "Finalisasi", description: "Menyimpan dokumen ke database..." },
+  { icon: Brain, label: "Analyzing Context", description: "Parsing and interpreting workspace data..." },
+  { icon: FileText, label: "Structuring Framework", description: "Designing document outline and layout..." },
+  { icon: PenTool, label: "Drafting Content", description: "AI is generating detailed content sections..." },
+  { icon: Save, label: "Finalization", description: "Saving completed document to database..." },
 ];
 
 function WorkspaceContent() {
@@ -81,7 +81,17 @@ function WorkspaceContent() {
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [pageCount, setPageCount] = useState(1);
+  const [copiedChatIndex, setCopiedChatIndex] = useState<number | null>(null);
   const docContentRef = useRef<HTMLDivElement>(null);
+
+  const handleCopyChat = (index: number, text: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedChatIndex(index);
+    setTimeout(() => {
+      setCopiedChatIndex((prev) => (prev === index ? null : prev));
+    }, 2000);
+  };
 
   const isLandscapeType = useMemo(() => {
     const type = activeDocType || docType || "";
@@ -224,11 +234,11 @@ function WorkspaceContent() {
     setAbortController(controller);
 
     if (isAssistantMode) {
-      setMessages(prev => [...prev, { role: "ai", text: isContinue ? "⏳ Menghubungkan ke AI untuk melanjutkan..." : "⏳ Sedang memproses..." }]);
+      setMessages(prev => [...prev, { role: "ai", text: isContinue ? "⏳ Connecting to AI to continue..." : "⏳ Processing request..." }]);
     } else {
       setMessages(prev => [
         ...prev.filter(m => !m.text.startsWith("⏳")), 
-        { role: "ai", text: "⏳ Sedang menyusun konten..." }
+        { role: "ai", text: "⏳ Composing document content..." }
       ]);
     }
 
@@ -250,11 +260,15 @@ function WorkspaceContent() {
           messages: messages.slice(-6), 
           isAssistant: isAssistantMode,
           mode: isAssistantMode ? currentMode : 'doc',
-          isContinue
+          isContinue,
+          // BYOK: send user's API key and provider
+          apiKey: typeof window !== "undefined" ? (localStorage.getItem(`ai_key_${localStorage.getItem("ai_provider") || "deepseek"}`) || localStorage.getItem("deepseek_api_key") || "") : "",
+          provider: typeof window !== "undefined" ? (localStorage.getItem("ai_provider") || "deepseek") : "deepseek",
+          selectedModel: typeof window !== "undefined" ? (localStorage.getItem(`ai_model_${localStorage.getItem("ai_provider") || "deepseek"}`) || localStorage.getItem("deepseek_selected_model") || "") : "",
         }),
       });
 
-      if (!response.ok) throw new Error("Gagal menyambung ke AI");
+      if (!response.ok) throw new Error("Failed to connect to AI");
 
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
@@ -547,13 +561,13 @@ function WorkspaceContent() {
           if (data.chatHistory && Array.isArray(data.chatHistory) && data.chatHistory.length > 0) {
             setMessages(data.chatHistory);
           } else {
-            setMessages([{ role: "ai", text: `✅ Dokumen berhasil dimuat.` }]);
+            setMessages([{ role: "ai", text: `✅ Document loaded successfully.` }]);
           }
         } catch (e) {} finally { setLoading(false); }
       };
       fetchDoc();
     } else if (effectiveContext) {
-      const prompt = `Wawancara: ${effectiveContext.replace(/ _\|\|_ /g, ". ")}. Buatkan dokumen ${docType} LENGKAP.`;
+      const prompt = `Interview context: ${effectiveContext.replace(/ _\|\|_ /g, ". ")}. Generate full ${docType} document.`;
       streamGenerate(prompt, false, effectiveContext);
     } else if (initialPrompt) {
       streamGenerate(initialPrompt);
@@ -570,12 +584,12 @@ function WorkspaceContent() {
     }
 
     if (effectiveContext) {
-      const prompt = `Wawancara: ${effectiveContext.replace(/ _\|\|_ /g, ". ")}. Buatkan dokumen ${docType} LENGKAP.`;
+      const prompt = `Interview context: ${effectiveContext.replace(/ _\|\|_ /g, ". ")}. Generate full ${docType} document.`;
       streamGenerate(prompt, false, effectiveContext);
     } else if (initialPrompt) {
       streamGenerate(initialPrompt);
     } else if (docId) {
-      streamGenerate(`Buat ulang dokumen ${docType} ini dari awal sesuai format standar.`, false, contentRef.current, true, 'edit');
+      streamGenerate(`Recreate this ${docType} document from scratch following standard formatting.`, false, contentRef.current, true, 'edit');
     }
   };
 
@@ -584,7 +598,7 @@ function WorkspaceContent() {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("Format file terlalu besar. Maksimal 5MB.");
+      alert("File size exceeds 5MB limit.");
       return;
     }
 
@@ -607,7 +621,7 @@ function WorkspaceContent() {
         alert(data.error);
       }
     } catch (err) {
-      alert("Gagal mengunggah file.");
+      alert("Failed to upload file.");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -623,7 +637,7 @@ function WorkspaceContent() {
     const isArabicDoc = displayedContent.includes('dir="rtl"') || displayedContent.includes('Noto Naskh Arabic');
     
     const textToSend = isContinue 
-      ? `INI ADALAH KONTINUASI (LANJUTAN) DARI DRAF SEBELUMNYA. Jenis dokumen: ${docType}. TUGAS ANDA HANYA MENERUSKAN ISI HTML YANG TERPOTONG. IKUTI LAYOUT DAN FORMAT TABEL YANG SUDAH ADA.`
+      ? `THIS IS A CONTINUATION OF THE PREVIOUS DRAFT. Document type: ${docType}. YOUR TASK IS SOLELY TO CONTINUE THE TRUNCATED HTML CONTENT. MAINTAIN EXISTING LAYOUT AND TABLE FORMATS.`
       : chatInput;
       
     if (!textToSend.trim() && attachments.length === 0) return;
@@ -762,7 +776,7 @@ function WorkspaceContent() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `Dekstorio_${docType.replace(/ /g,'_')}.doc`;
+    link.download = `Launcher_OS_RevoU_${docType.replace(/ /g,'_')}.doc`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -777,7 +791,7 @@ function WorkspaceContent() {
           <Zap className="w-8 h-8 text-white" />
         </div>
       </div>
-      <h3 className="text-xl font-bold text-foreground mb-2 font-bricolage tracking-tight">AI Sedang Menyusun Dokumen</h3>
+      <h3 className="text-xl font-bold text-foreground mb-2 font-bricolage tracking-tight">AI is Generating Document</h3>
       <p className="text-sm text-muted-foreground mb-10 flex items-center gap-2">
         <Clock className="w-4 h-4" /> {formatTime(elapsedTime)}
       </p>
@@ -797,11 +811,10 @@ function WorkspaceContent() {
       </div>
 
       <Button 
-        variant="outline" 
         onClick={stopGeneration} 
-        className="border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white rounded-full px-10 h-12 gap-2 shadow-2xl transition-all active:scale-95 bg-transparent"
+        className="bg-red-500 hover:bg-red-600 text-white border-none rounded-full px-10 h-12 gap-2 shadow-2xl transition-all active:scale-95"
       >
-        <XCircle className="w-5 h-5" /> Batalkan Proses
+        <XCircle className="w-5 h-5" /> Cancel Process
       </Button>
     </motion.div>
   );
@@ -899,14 +912,15 @@ function WorkspaceContent() {
           <Link href="/" className="flex items-center gap-2">
             <div className="relative w-8 h-8 rounded overflow-hidden">
               <Image 
-                src="/logo/Logo Hijau.svg" 
-                alt="Dekstorio Logo" 
+                src="/logo/Logo_revou.png" 
+                alt="Launcher OS-RevoU Logo" 
                 fill
-                className="object-cover"
+                sizes="32px"
+                className="object-contain"
               />
             </div>
             <div className="flex flex-col">
-              <span className="font-bricolage font-semibold text-lg leading-none text-foreground">Dekstorio</span>
+              <span className="font-bricolage font-semibold text-lg leading-none text-foreground">Launcher OS-RevoU</span>
               {docTitle && (
                 <span className="text-[10px] text-muted-foreground font-medium truncate max-w-[120px] md:max-w-[200px] mt-0.5">
                   {docTitle}
@@ -1025,7 +1039,7 @@ function WorkspaceContent() {
                                <div className="absolute inset-0 bg-[#4d7537]/20 rounded-full blur-md animate-pulse" />
                              </div>
                              <span className="text-[13px] font-bold text-foreground font-bricolage tracking-tight">
-                               {isContinuing ? "Menghubungkan ke AI untuk melanjutkan..." : "AI sedang merancang revisi..."}
+                               {isContinuing ? "Connecting to AI to continue..." : "AI is drafting revisions..."}
                              </span>
                           </div>
                         </div>
@@ -1036,13 +1050,14 @@ function WorkspaceContent() {
                     <div className="flex flex-col items-center justify-center min-h-[900px] opacity-10 py-20">
                       <div className="relative w-16 h-16 mb-4">
                         <Image 
-                          src="/logo/Logo Hijau.svg" 
-                          alt="Dekstorio Logo" 
+                          src="/logo/Logo_revou.png" 
+                          alt="Launcher OS-RevoU Logo" 
                           fill
-                          className="object-cover"
+                          sizes="64px"
+                          className="object-contain"
                         />
                       </div>
-                      <p className="text-xl font-bold">Menunggu Konteks...</p>
+                      <p className="text-xl font-bold">Waiting for Context...</p>
                     </div>
                   )}
                 </AnimatePresence>
@@ -1056,7 +1071,7 @@ function WorkspaceContent() {
                     >
                       <div className="flex items-center gap-2.5 bg-[#4d7537]/10 border border-[#4d7537]/30 text-[#4d7537] dark:text-[#7cb860] px-6 py-3 rounded-xl text-sm font-semibold shadow-sm">
                         <CheckCircle2 className="w-5 h-5" />
-                        Dokumen telah selesai dibuat secara lengkap.
+                        Document has been generated completely.
                       </div>
                     </motion.div>
                   </div>
@@ -1071,7 +1086,7 @@ function WorkspaceContent() {
                     >
                       <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 px-6 py-3 rounded-xl text-sm font-semibold shadow-sm">
                         <Clock className="w-5 h-5" />
-                        Dokumen belum selesai — Tekan tombol {'"'}Lanjutkan Penulisan{'"'} di bawah.
+                        Document is incomplete — Click &quot;Continue Writing&quot; below.
                       </div>
                     </motion.div>
                   </div>
@@ -1097,7 +1112,7 @@ function WorkspaceContent() {
                 onClick={() => handleSendMessage(true)} 
                 className="pointer-events-auto px-10 py-5 bg-[#4d7537] text-white hover:bg-[#5a8b41] rounded-lg font-bold shadow-2xl shadow-[#4d7537]/30 border-none transition-all active:scale-95"
               >
-                Dokumen Belum Selesai — Lanjutkan Penulisan
+                Document Incomplete — Continue Writing
               </Button>
             </motion.div>
           )}
@@ -1113,7 +1128,7 @@ function WorkspaceContent() {
                 onClick={stopGeneration} 
                 className="pointer-events-auto px-6 py-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold shadow-2xl shadow-red-500/20 border-none transition-all active:scale-95 flex items-center gap-2"
               >
-                <Square className="w-5 h-5 fill-white" /> Hentikan Generate
+                <Square className="w-5 h-5 fill-white" /> Stop Generation
               </Button>
             </motion.div>
           )}
@@ -1130,7 +1145,7 @@ function WorkspaceContent() {
                   onClick={() => handleSendMessage(true)} 
                   className="pointer-events-auto px-8 py-4 bg-[#4d7537] hover:bg-[#5a8b41] text-white rounded-xl font-bold shadow-2xl shadow-[#4d7537]/20 border-none transition-all active:scale-95 flex items-center gap-2"
                 >
-                  Lanjutkan Generate
+                  Continue Generation
                 </Button>
               )}
               <Button 
@@ -1138,7 +1153,7 @@ function WorkspaceContent() {
                 variant="outline"
                 className="pointer-events-auto px-8 py-4 bg-white dark:bg-card hover:bg-neutral-100 dark:hover:bg-secondary text-foreground rounded-xl font-bold shadow-2xl border border-border transition-all active:scale-95 flex items-center gap-2"
               >
-                <RotateCcw className="w-4 h-4" /> Mulai dari Awal
+                <RotateCcw className="w-4 h-4" /> Start Over
               </Button>
             </motion.div>
           )}
@@ -1167,7 +1182,7 @@ function WorkspaceContent() {
                 size="icon" 
                 onClick={() => setIsSidebarCollapsed(true)} 
                 className="hidden md:flex h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-background/50"
-                title="Sembunyikan Sidebar"
+                title="Hide Sidebar"
               >
                 <PanelRightClose className="w-4 h-4" />
               </Button>
@@ -1194,10 +1209,29 @@ function WorkspaceContent() {
                         {m.text}
                       </div>
                     ) : (
-                      <div 
-                        className="markdown-chat prose prose-sm dark:prose-invert max-w-none text-[14px] leading-relaxed antialiased"
-                        dangerouslySetInnerHTML={{ __html: marked.parse(m.text) }}
-                      />
+                      <div className="w-full text-foreground group/msg">
+                        <div 
+                          className="markdown-chat prose prose-sm dark:prose-invert max-w-none text-[14px] leading-relaxed antialiased"
+                          dangerouslySetInnerHTML={{ __html: marked.parse(m.text) as string }}
+                        />
+                        <div className="flex items-center gap-1 mt-2 text-muted-foreground">
+                          <button
+                            type="button"
+                            onClick={() => handleCopyChat(i, m.text)}
+                            className="p-1 rounded-md hover:bg-secondary hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5 text-xs select-none"
+                            title="Copy response"
+                          >
+                            {copiedChatIndex === i ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                <span className="text-[11px] font-medium text-emerald-500">Copied</span>
+                              </>
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
@@ -1236,13 +1270,13 @@ function WorkspaceContent() {
                   onClick={() => setAssistantMode('chat')}
                   className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-[11px] font-bold transition-all ${assistantMode === 'chat' ? 'bg-[#4d7537] text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                 >
-                  <MessageSquare className="w-3 h-3" /> Tanya AI
+                  <MessageSquare className="w-3 h-3" /> Ask AI
                 </button>
                 <button 
                   onClick={() => setAssistantMode('edit')}
                   className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-[11px] font-bold transition-all ${assistantMode === 'edit' ? 'bg-[#4d7537] text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                 >
-                  <FileEdit className="w-3 h-3" /> Edit Dokumen
+                  <FileEdit className="w-3 h-3" /> Edit Document
                 </button>
               </div>
             </div>
@@ -1259,7 +1293,7 @@ function WorkspaceContent() {
                       handleSendMessage();
                     }
                   }} 
-                  placeholder={assistantMode === 'edit' ? "Tulis instruksi revisi dokumen..." : "Tanya apa saja ke AI..."} 
+                  placeholder={assistantMode === 'edit' ? "Write document revision instructions..." : "Ask AI anything..."} 
                   className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground min-h-[40px] px-3 py-2 resize-none shadow-none" 
                 />
                 
@@ -1284,13 +1318,14 @@ function WorkspaceContent() {
                   </div>
                   
                   {loading ? (
-                    <Button 
+                    <button 
+                      type="button"
                       onClick={stopGeneration}
-                      className="h-9 w-9 p-0 flex items-center justify-center rounded-lg transition-all bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white"
-                      title="Hentikan"
+                      className="h-9 w-9 p-0 flex items-center justify-center rounded-lg hover:bg-secondary transition-all border-none cursor-pointer shadow-xs shrink-0"
+                      title="Stop"
                     >
-                      <Square className="w-4 h-4 fill-current" />
-                    </Button>
+                      <div className="w-3.5 h-3.5 bg-red-600 hover:bg-red-700 rounded-[2px] shadow-xs active:scale-90 transition-transform" />
+                    </button>
                   ) : (
                     <Button 
                       onClick={() => handleSendMessage()} 
@@ -1315,7 +1350,7 @@ function WorkspaceContent() {
         <Button 
           onClick={() => setIsSidebarCollapsed(false)} 
           className="hidden md:flex fixed top-20 right-4 z-50 h-9 w-9 rounded-lg bg-white dark:bg-[#10140d] border border-[#dcdad1] dark:border-[#3f612d]/30 text-muted-foreground hover:text-foreground hover:bg-neutral-100 dark:hover:bg-[#1a2315] shadow-lg transition-all p-0 items-center justify-center"
-          title="Tampilkan Sidebar"
+          title="Show Sidebar"
         >
           <PanelRightOpen className="w-4 h-4" />
         </Button>

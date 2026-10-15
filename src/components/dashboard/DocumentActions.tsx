@@ -34,12 +34,12 @@ export function DocumentActions({ docId, title, onDeleteOptimistic }: DocumentAc
         router.refresh();
       } else {
         const data = await response.json();
-        alert(data.error || "Gagal menghapus dokumen");
+        alert(data.error || "Failed to delete document");
         // For simple rollback we can just refresh to get state back
         router.refresh();
       }
     } catch (error) {
-      alert("Terjadi kesalahan sistem");
+      alert("A system error occurred");
     } finally {
       setIsDeleting(false);
     }
@@ -64,7 +64,7 @@ export function DocumentActions({ docId, title, onDeleteOptimistic }: DocumentAc
         variant="ghost" 
         size="icon" 
         className="h-8 w-8 text-neutral-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-        title="Edit Dokumen"
+        title="Edit Document"
         onClick={handleEdit}
       >
         <Pencil className="w-4 h-4" />
@@ -75,7 +75,7 @@ export function DocumentActions({ docId, title, onDeleteOptimistic }: DocumentAc
         size="icon" 
         className="h-8 w-8 text-neutral-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
         disabled={isDeleting}
-        title="Hapus Dokumen"
+        title="Delete Document"
         onClick={() => setShowDeleteModal(true)}
       >
         <Trash2 className="w-4 h-4" />
@@ -86,11 +86,11 @@ export function DocumentActions({ docId, title, onDeleteOptimistic }: DocumentAc
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
         isLoading={isDeleting}
-        title="Hapus Dokumen?"
-        description={`Dokumen "${title}" akan dihapus secara permanen dari penyimpanan Anda. Tindakan ini tidak dapat dibatalkan.`}
+        title="Delete Document?"
+        description={`Document "${title}" will be permanently removed from your storage. This action cannot be undone.`}
         type="danger"
-        confirmText="Hapus Sekarang"
-        cancelText="Batal"
+        confirmText="Delete Now"
+        cancelText="Cancel"
       />
     </div>
   );

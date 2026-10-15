@@ -1,10 +1,55 @@
 import type { Metadata } from "next";
-import { Inter, Bricolage_Grotesque } from "next/font/google";
+import { Inter, Bricolage_Grotesque, Lora, Plus_Jakarta_Sans, Outfit } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
-import { SmoothScroll } from "@/components/SmoothScroll";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import NextTopLoader from 'nextjs-toploader';
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+
+const lora = Lora({
+  variable: "--font-lora",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const outfit = Outfit({
+  variable: "--font-outfit",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const sfPro = localFont({
+  src: [
+    {
+      path: "../fonts/SF-Pro-Display-Medium.otf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../fonts/SF-Pro-Display-Semibold.otf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../fonts/SF-Pro-Text-Medium.otf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/SF-Pro.ttf",
+      weight: "400",
+      style: "normal",
+    },
+  ],
+  variable: "--font-sf",
+  display: "swap",
+});
 
 const inter = Inter({
   variable: "--font-inter",
@@ -17,15 +62,17 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "Dekstorio AI - Asisten Kurikulum Merdeka",
-  description: "Buat CP, ATP, Prosem, Prota, dan KKTP secara otomatis dengan AI.",
+  title: "Launcher OS - RevoU",
+  description: "The intelligent operating system for modern execution.",
   icons: {
-    icon: "/logo/Logo Hijau.svg",
+    icon: "/logo/Logo_revou.png",
+    shortcut: "/logo/Logo_revou.png",
+    apple: "/logo/Logo_revou.png",
   },
 };
 
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
-import AppPreloader from "@/components/common/AppPreloader";
+import { SidebarProvider } from "@/components/layout/SidebarContext";
 
 export default function RootLayout({
   children,
@@ -33,21 +80,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" suppressHydrationWarning>
-      <body className={`${inter.variable} ${bricolage.variable} font-sans antialiased bg-[#f4f3ed] text-[#1a2315] dark:bg-[#080b06] dark:text-[#f4f3ed] min-h-screen transition-colors duration-300`}>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning className={`${lora.variable} ${sfPro.variable} ${inter.variable} ${bricolage.variable} ${plusJakartaSans.variable} ${outfit.variable} font-sans antialiased bg-white text-neutral-900 dark:bg-[#0a0a0a] dark:text-[#f5f5f5] min-h-screen transition-colors duration-200`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
-          <AppPreloader />
-          <NextTopLoader color="#4d7537" showSpinner={false} shadow="0 0 10px #4d7537,0 0 5px #4d7537" />
+          <NextTopLoader color="#FFD100" showSpinner={false} shadow="0 0 10px #FFD100,0 0 5px #FFD100" />
           <NuqsAdapter>
-            <MobileBottomNav />
-            <SmoothScroll>
+            <SidebarProvider>
+              <MobileBottomNav />
               {children}
-            </SmoothScroll>
+            </SidebarProvider>
           </NuqsAdapter>
         </ThemeProvider>
       </body>

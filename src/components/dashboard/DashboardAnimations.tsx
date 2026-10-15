@@ -22,9 +22,9 @@ export function DashboardContainer({ children }: { children: React.ReactNode }) 
 export function DashboardFadeIn({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      transition={{ duration: 0.5, delay, ease: "easeOut" }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay, ease: "easeOut" }}
     >
       {children}
     </motion.div>
@@ -34,10 +34,10 @@ export function DashboardFadeIn({ children, delay = 0 }: { children: React.React
 export function DashboardTableRow({ children, index, className }: { children: React.ReactNode, index: number, className?: string }) {
   return (
     <motion.tr
-      initial={{ opacity: 0, x: -10, filter: "blur(8px)" }}
-      animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-      exit={{ opacity: 0, x: 10, filter: "blur(8px)", transition: { duration: 0.2 } }}
-      transition={{ delay: 0.1 * index, duration: 0.4 }}
+      initial={{ opacity: 0, x: -6 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 6, transition: { duration: 0.15 } }}
+      transition={{ delay: 0.05 * index, duration: 0.25 }}
       layout
       className={`border-b border-neutral-100 dark:border-[#3f612d]/20 hover:bg-neutral-50 dark:hover:bg-[#1a2315]/40 transition-colors group ${className || ""}`}
     >

@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import mammoth from "mammoth";
 // @ts-ignore
 import pdfParse from "pdf-parse";
+import * as XLSX from "xlsx";
 // Force Node.js runtime for mammoth and pdf-parse
 export const runtime = "nodejs";
 // Max duration for Vercel execution (60 seconds)
@@ -103,6 +104,41 @@ ATURAN MUTLAK:
       } catch (err: any) {
         throw new Error("Gagal membaca file Word (.docx).");
       }
+    }
+    else if (
+      fileType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      fileType === "application/vnd.ms-excel" ||
+      fileName.endsWith(".xlsx") ||
+      fileName.endsWith(".xls") ||
+      fileName.endsWith(".csv")
+    ) {
+      try {
+        const workbook = XLSX.read(buffer, { type: "buffer" });
+        const sheetSections: string[] = [];
+
+        for (const sheetName of workbook.SheetNames) {
+          const sheet = workbook.Sheets[sheetName];
+          const csv = XLSX.utils.sheet_to_csv(sheet);
+          if (csv && csv.trim()) {
+            sheetSections.push(`### Lembar: ${sheetName}\n\`\`\`csv\n${csv.trim()}\n\`\`\``);
+          }
+        }
+
+        extractedText = sheetSections.length > 0
+          ? `[DOKUMEN SPREADSHEET EXCEL: ${file.name}]\n\n` + sheetSections.join("\n\n")
+          : "Spreadsheet Excel kosong.";
+      } catch (err: any) {
+        console.error("[Excel] Extraction error:", err);
+        throw new Error("Gagal membaca file spreadsheet Excel (.xlsx / .xls).");
+      }
+    }
+    else if (
+      fileType.startsWith("text/") ||
+      fileName.endsWith(".txt") ||
+      fileName.endsWith(".md") ||
+      fileName.endsWith(".json")
+    ) {
+      extractedText = buffer.toString("utf-8");
     }
     else {
       // Fallback for plain text or unsupported

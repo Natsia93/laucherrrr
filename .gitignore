@@ -45,3 +45,5 @@ test-*.ts
 list-*.ts
 prisma.config.ts
 .env*.local
+.neon
+/referensi/

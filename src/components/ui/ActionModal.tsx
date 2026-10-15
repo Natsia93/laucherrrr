@@ -25,8 +25,8 @@ export function ActionModal({
   title,
   description,
   type = "info",
-  confirmText = "Konfirmasi",
-  cancelText = "Batal",
+  confirmText = "Confirm",
+  cancelText = "Cancel",
   isLoading = false,
 }: ModalProps) {
   const [mounted, setMounted] = useState(false);

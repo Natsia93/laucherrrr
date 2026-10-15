@@ -1,219 +1,933 @@
-import React from "react";
-import Link from "next/link";
-import { Folder, Search, BookOpen, Plus, Clock, Filter, Sparkles } from "lucide-react";
+"use client";
+
+import React, { useState, useEffect, useRef } from "react";
+import { marked } from "marked";
+import {
+  ArrowRight,
+  Loader2,
+  Sparkles,
+  RotateCcw,
+  Square,
+  User,
+  Search,
+  Check,
+  Copy,
+  Paperclip,
+  ImageIcon,
+  FileText,
+  FileSpreadsheet,
+  FileCode,
+  X,
+} from "lucide-react";
+import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { db } from "@/db";
-import { documents as documentsTable } from "@/db/schema";
-import { desc } from "drizzle-orm";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
-import { DashboardFadeIn } from "@/components/dashboard/DashboardAnimations";
-import { AnimatedGreeting } from "@/components/dashboard/AnimatedGreeting";
-import { DashboardNavbarActions } from "@/components/dashboard/DashboardNavbarActions";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
-import { DocumentTable } from "@/components/dashboard/DashboardClientWrapper";
-import { DashboardSearchBar } from "@/components/dashboard/DashboardClientWrapper";
-import { DashboardFilter } from "@/components/dashboard/DashboardClientWrapper";
-import { Suspense } from "react";
-import Image from "next/image";
+import { authClient } from "@/lib/auth-client";
+import { motion, type Variants } from "framer-motion";
 
-export default async function DashboardPage(props: { searchParams: Promise<{ search?: string; category?: string }> }) {
-  const searchParams = await props.searchParams;
-  const searchQuery = searchParams.search || "";
-  const categoryQuery = searchParams.category || "";
-  
-  const session = await auth.api.getSession({
-    headers: await headers()
-  });
+// Staggered upward animation from leftmost to rightmost
+const chipsContainerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
+    },
+  },
+};
 
-  if (!session) {
-    return redirect("/login");
+const chipItemVariants: Variants = {
+  hidden: { opacity: 0, y: 18 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 380,
+      damping: 22,
+      mass: 0.7,
+    },
+  },
+};
+
+// Configure marked synchronous mode
+marked.use({ async: false, breaks: true });
+
+export interface ChatAttachment {
+  name: string;
+  type: "image" | "pdf" | "word" | "excel" | "text";
+  size: string;
+  previewUrl?: string; // For images
+  extractedText?: string; // For documents
+  isExtracting?: boolean;
+}
+
+interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  image?: string;
+  attachment?: ChatAttachment;
+  isSearching?: boolean;
+  isTyping?: boolean;
+}
+
+const getAttachmentType = (file: File): "image" | "pdf" | "word" | "excel" | "text" => {
+  const name = file.name.toLowerCase();
+  const type = file.type.toLowerCase();
+
+  if (type.startsWith("image/") || /\.(png|jpe?g|webp|gif|svg|bmp|ico)$/i.test(name)) {
+    return "image";
   }
+  if (type === "application/pdf" || name.endsWith(".pdf")) {
+    return "pdf";
+  }
+  if (
+    type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    type === "application/msword" ||
+    /\.(docx|doc)$/i.test(name)
+  ) {
+    return "word";
+  }
+  if (
+    type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+    type === "application/vnd.ms-excel" ||
+    /\.(xlsx|xls|csv)$/i.test(name)
+  ) {
+    return "excel";
+  }
+  return "text";
+};
 
-  const user = session.user;
+const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
-  const allUserDocs = await db.select()
-    .from(documentsTable)
-    .where(eq(documentsTable.userId, user.id))
-    .orderBy(desc(documentsTable.createdAt));
-  
-  const realDocuments = allUserDocs.filter(doc => !doc.isDeleted);
-  
-  const availableCategories = Array.from(new Set(realDocuments.map(d => d.type)));
-  
-  const filteredDocuments = realDocuments.filter(doc => {
-    const matchesSearch = searchQuery ? doc.title.toLowerCase().includes(searchQuery.toLowerCase()) : true;
-    
-    let matchesCategory = true;
-    if (categoryQuery) {
-      if (categoryQuery === "CP") {
-        matchesCategory = doc.type === "CP" || doc.type === "Capaian Pembelajaran (CP)";
-      } else if (categoryQuery === "ATP") {
-        matchesCategory = doc.type === "ATP" || doc.type === "Alur Tujuan Pembelajaran (ATP)";
-      } else if (categoryQuery === "PROTA") {
-        matchesCategory = doc.type === "PROTA" || doc.type === "Program Tahunan";
-      } else if (categoryQuery === "PROSEM") {
-        matchesCategory = doc.type === "PROSEM" || doc.type === "Program Semester";
-      } else if (categoryQuery === "KISI-KISI") {
-        matchesCategory = doc.type === "KISI-KISI" || doc.type === "Desain Evaluasi";
+const truncateFileName = (name: string, maxLen = 20): string => {
+  if (!name || name.length <= maxLen) return name;
+  const lastDot = name.lastIndexOf(".");
+  if (lastDot > 0 && name.length - lastDot <= 6) {
+    const ext = name.slice(lastDot);
+    const base = name.slice(0, lastDot);
+    const charsToShow = Math.max(maxLen - ext.length - 3, 4);
+    return `${base.slice(0, charsToShow).trimEnd()}...${ext}`;
+  }
+  return `${name.slice(0, maxLen - 3).trimEnd()}...`;
+};
+
+export default function DashboardOverviewPage() {
+  const { data: session } = authClient.useSession();
+  const [prompt, setPrompt] = useState("");
+  const [docType, setDocType] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [attachment, setAttachment] = useState<ChatAttachment | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopyMessage = (id: string, text: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => {
+      setCopiedId((prev) => (prev === id ? null : prev));
+    }, 2000);
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const bottomFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleIncomingFile = async (file: File) => {
+    if (file.size > 15 * 1024 * 1024) {
+      alert("Ukuran file maksimal 15MB.");
+      return;
+    }
+
+    const attType = getAttachmentType(file);
+    const sizeFormatted = formatFileSize(file.size);
+
+    if (attType === "image") {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAttachment({
+          name: file.name,
+          type: "image",
+          size: sizeFormatted,
+          previewUrl: e.target?.result as string,
+          isExtracting: false,
+        });
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // Document: PDF, Word, Excel, or Text
+    setAttachment({
+      name: file.name,
+      type: attType,
+      size: sizeFormatted,
+      isExtracting: true,
+    });
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/extract-text", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Gagal membaca isi dokumen.");
+      }
+
+      setAttachment((prev) =>
+        prev && prev.name === file.name
+          ? {
+              ...prev,
+              extractedText: data.text,
+              isExtracting: false,
+            }
+          : prev
+      );
+    } catch (err: any) {
+      alert(err?.message || "Gagal memproses file. Pastikan format file sesuai.");
+      setAttachment(null);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleIncomingFile(file);
+    }
+    e.target.value = "";
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachment(null);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === "file") {
+        const file = item.getAsFile();
+        if (file) {
+          handleIncomingFile(file);
+          break;
+        }
+      }
+    }
+  };
+
+  const userFullName = session?.user?.name || "Fiqiy";
+  const nameParts = userFullName.trim().split(/\s+/);
+  const userLastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : nameParts[0];
+
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  const chatBottomRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Typewriter streaming animation refs
+  const targetTextRef = useRef<string>("");
+  const displayedTextRef = useRef<string>("");
+  const isStreamDoneRef = useRef<boolean>(false);
+  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const currentAiMsgIdRef = useRef<string | null>(null);
+
+  // Auto-scroll when messages update
+  useEffect(() => {
+    if (messages.length > 0) {
+      chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, loading]);
+
+  // Clean up interval on unmount
+  useEffect(() => {
+    return () => {
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const stopTypewriter = (finalText?: string) => {
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
+    const aiId = currentAiMsgIdRef.current;
+    if (aiId) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiId
+            ? {
+                ...msg,
+                text: finalText !== undefined ? finalText : targetTextRef.current || msg.text,
+                isTyping: false,
+              }
+            : msg
+        )
+      );
+    }
+  };
+
+  const startTypewriter = (targetAiMsgId: string) => {
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+    }
+
+    currentAiMsgIdRef.current = targetAiMsgId;
+    displayedTextRef.current = "";
+
+    typingIntervalRef.current = setInterval(() => {
+      const target = targetTextRef.current;
+      const current = displayedTextRef.current;
+
+      if (current.length < target.length) {
+        const remaining = target.length - current.length;
+        // Dynamic adaptive typing cadence: gentle & smooth
+        const step = remaining > 120 ? 6 : remaining > 50 ? 4 : remaining > 20 ? 2 : 1;
+        const nextText = target.slice(0, current.length + step);
+        displayedTextRef.current = nextText;
+
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === targetAiMsgId
+              ? { ...msg, text: nextText, isTyping: true }
+              : msg
+          )
+        );
+      } else if (isStreamDoneRef.current) {
+        // Finished typing everything after network stream completed
+        if (typingIntervalRef.current) {
+          clearInterval(typingIntervalRef.current);
+          typingIntervalRef.current = null;
+        }
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === targetAiMsgId
+              ? { ...msg, text: target, isTyping: false }
+              : msg
+          )
+        );
+        setLoading(false);
+      }
+    }, 18);
+  };
+
+  const handleStopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    isStreamDoneRef.current = true;
+    stopTypewriter();
+    setLoading(false);
+  };
+
+  const handleNewChat = () => {
+    handleStopGeneration();
+    setMessages([]);
+    setPrompt("");
+    setAttachment(null);
+    targetTextRef.current = "";
+    displayedTextRef.current = "";
+    currentAiMsgIdRef.current = null;
+  };
+
+  const handlePromptSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const userPrompt = prompt.trim();
+    if ((!userPrompt && !attachment) || loading || (attachment?.isExtracting ?? false)) return;
+
+    const currentAttachment = attachment;
+    const currentPrompt = userPrompt;
+
+    setPrompt("");
+    setAttachment(null);
+    setLoading(true);
+
+    const userMsgId = `user-${Date.now()}`;
+    const aiMsgId = `ai-${Date.now()}`;
+
+    // Reset typewriter trackers
+    targetTextRef.current = "";
+    displayedTextRef.current = "";
+    isStreamDoneRef.current = false;
+    currentAiMsgIdRef.current = aiMsgId;
+
+    let rawPromptToSend = currentPrompt;
+    let imageToSend: string | undefined = undefined;
+
+    if (currentAttachment) {
+      if (currentAttachment.type === "image") {
+        imageToSend = currentAttachment.previewUrl;
+        rawPromptToSend = currentPrompt || "Analisis dan jelaskan gambar yang diunggah secara mendalam.";
       } else {
-        matchesCategory = doc.type === categoryQuery;
+        const docHeader = `[DOKUMEN DILAMPIRKAN: ${currentAttachment.name} (${currentAttachment.type.toUpperCase()})]\n\n--- KONTEN DOKUMEN ---\n${currentAttachment.extractedText || "Teks dokumen tidak dapat diekstrak atau kosong."}\n--- AKHIR KONTEN DOKUMEN ---`;
+        rawPromptToSend = currentPrompt
+          ? `${docHeader}\n\nPertanyaan / Instruksi Pengguna:\n${currentPrompt}`
+          : `${docHeader}\n\nAnalisis dan jelaskan isi dokumen di atas secara komprehensif, terstruktur rapi, dan jelas.`;
       }
     }
 
-    return matchesSearch && matchesCategory;
-  });
-  
-  const displayDocuments = filteredDocuments.map(doc => ({
-    id: doc.id,
-    title: doc.title,
-    type: doc.type,
-    date: format(new Date(doc.createdAt), "dd MMM yyyy", { locale: id }),
-    status: doc.status,
-    size: doc.size || "0 KB"
-  }));
+    const newMessages: ChatMessage[] = [
+      ...messages,
+      {
+        id: userMsgId,
+        role: "user",
+        text: currentPrompt,
+        image: imageToSend,
+        attachment: currentAttachment
+          ? {
+              name: currentAttachment.name,
+              type: currentAttachment.type,
+              size: currentAttachment.size,
+              previewUrl: currentAttachment.previewUrl,
+            }
+          : undefined,
+      },
+      { id: aiMsgId, role: "assistant", text: "", isSearching: false, isTyping: true },
+    ];
 
-  let totalStorageBytes = 0;
-  realDocuments.forEach(doc => {
-    if (doc.size) {
-      const isMB = doc.size.toUpperCase().includes("MB");
-      const numStr = doc.size.replace(/[^\d.]/g, '');
-      const num = parseFloat(numStr);
-      if (!isNaN(num)) {
-        totalStorageBytes += isMB ? (num * 1024 * 1024) : (num * 1024);
+    setMessages(newMessages);
+    startTypewriter(aiMsgId);
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    try {
+      const historyPayload = messages.slice(-6).map((m) => ({
+        role: m.role === "user" ? ("user" as const) : ("ai" as const),
+        text: m.text,
+      }));
+
+      const activeProvider = typeof window !== "undefined" ? (localStorage.getItem("ai_provider") || "deepseek") : "deepseek";
+      const storedApiKey = typeof window !== "undefined" ? (localStorage.getItem(`ai_key_${activeProvider}`) || localStorage.getItem("deepseek_api_key") || "") : "";
+      const storedModel = typeof window !== "undefined" ? (localStorage.getItem(`ai_model_${activeProvider}`) || localStorage.getItem("deepseek_selected_model") || "") : "";
+
+      const response = await fetch("/api/generate-stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          rawPrompt: rawPromptToSend,
+          image: imageToSend,
+          type: docType || "General",
+          mode: "chat",
+          isAssistant: true,
+          messages: historyPayload,
+          // BYOK: send user's API key and provider
+          apiKey: storedApiKey,
+          provider: activeProvider,
+          selectedModel: storedModel,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to connect to AI");
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("Stream reader not available");
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() || "";
+
+        for (const part of parts) {
+          if (!part.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(part.slice(6));
+
+            if (data.type === "chat" || data.type === "chunk") {
+              const chunkText = data.text || "";
+              if (!chunkText.includes("🔍 *Mencari informasi") && !chunkText.includes("Mencari informasi")) {
+                // Append chunk to target text ref for typewriter queue
+                targetTextRef.current += chunkText;
+              }
+            }
+          } catch {
+            // ignore JSON parse error for incomplete chunks
+          }
+        }
+      }
+
+      // Mark stream finished so typewriter can conclude
+      isStreamDoneRef.current = true;
+    } catch (err: any) {
+      if (err?.name !== "AbortError") {
+        isStreamDoneRef.current = true;
+        const fallbackText =
+          targetTextRef.current ||
+          "Sorry, an error occurred while connecting to AI. Please ensure your API key configuration is active on the server.";
+        targetTextRef.current = fallbackText;
+      }
+    } finally {
+      abortControllerRef.current = null;
+      // If targetText was empty (or immediate error), ensure typewriter concludes
+      if (!targetTextRef.current) {
+        stopTypewriter();
+        setLoading(false);
       }
     }
-  });
-
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-
-  const monthlyUsage = allUserDocs.filter(doc => new Date(doc.createdAt) >= startOfMonth).length;
-  const GENERATION_LIMIT = 50;
-  const remainingQuota = Math.max(0, GENERATION_LIMIT - monthlyUsage);
-
-  const storageVal = totalStorageBytes > 1024 * 1024 
-    ? (totalStorageBytes / (1024 * 1024)).toFixed(1)
-    : Math.round(totalStorageBytes / 1024);
-  const storageUnit = totalStorageBytes > 1024 * 1024 ? "MB" : "KB";
+  };
 
   return (
-    <div className="min-h-screen bg-[#f4f3ed] dark:bg-[#080b06] text-[#1a2315] dark:text-[#e8eedd] flex flex-col font-sans selection:bg-[#4d7537]/30 selection:text-neutral-900 dark:selection:text-white transition-colors duration-300 overflow-x-hidden">
-      <nav className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-[#dcdad1] dark:border-[#3f612d]/20 bg-[#f4f3ed]/90 dark:bg-[#080b06]/90 sticky top-0 z-50 backdrop-blur-md transition-colors duration-300">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2 text-[#1a2315] dark:text-[#f4f3ed]">
-            <div className="relative w-8 h-8 rounded overflow-hidden">
-              <Image 
-                src="/logo/Logo Hijau.svg" 
-                alt="Dekstorio Logo" 
-                fill
-                className="object-cover"
-              />
-            </div>
-            <span className="font-bricolage font-semibold text-lg hidden sm:block">Dekstorio</span>
-          </Link>
-        </div>
-
-        <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-white dark:bg-[#10140d]/80 rounded-lg p-1 border border-[#dcdad1] dark:border-[#3f612d]/30 backdrop-blur-md">
-          <Link href="/dashboard">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="bg-neutral-100 dark:bg-[#1a2315] text-neutral-900 dark:text-[#f4f3ed] hover:bg-neutral-200 dark:hover:bg-[#2c471c] hover:text-neutral-900 dark:hover:text-white rounded-md"
+    <AppShell
+      headerActions={
+        messages.length > 0 ? (
+          <Button
+            size="sm"
+            onClick={handleNewChat}
+            className="h-8.5 bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 font-bold text-xs px-3.5 shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+          >
+            <RotateCcw className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>New Chat</span>
+          </Button>
+        ) : undefined
+      }
+    >
+      {messages.length === 0 ? (
+        /* Empty State / Centered Hero Launcher */
+        <div className="min-h-[75vh] flex flex-col items-center justify-center max-w-3xl mx-auto px-4 py-8">
+          {/* Lora Font English Greeting */}
+          <div className="w-full text-center space-y-2.5 mb-8">
+            <h1
+              suppressHydrationWarning
+              className="text-[32px] sm:text-[44px] font-normal sm:font-medium font-sf tracking-tight leading-tight animate-text-shimmer"
             >
-              <Folder className="w-4 h-4 mr-2" />
-              Penyimpanan File
-            </Button>
-          </Link>
-          <Link href="/">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-neutral-500 dark:text-[#a2b591] hover:text-neutral-900 dark:hover:text-[#f4f3ed] hover:bg-neutral-100 dark:hover:bg-[#1a2315] rounded-md"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              AI Generate
-            </Button>
-          </Link>
-        </div>
-        <div className="flex items-center gap-2 md:gap-4">
-          <Suspense fallback={<div className="w-48 xl:w-64 h-9 bg-neutral-100 dark:bg-[#1a2315]/50 animate-pulse rounded-md" />}>
-            <DashboardSearchBar />
-          </Suspense>
-          <DashboardNavbarActions user={user} />
-        </div>
-      </nav>
-
-      <main className="flex-1 px-6 md:px-10 py-6 max-w-7xl mx-auto w-full space-y-8 relative z-10 overflow-x-hidden md:overflow-x-visible">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#4d7537]/5 dark:bg-[#3f612d]/10 rounded-full blur-[100px] pointer-events-none -translate-y-1/2 translate-x-1/4 select-none"></div>
-
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 relative">
-          <DashboardFadeIn delay={0.1}>
-            <AnimatedGreeting name={user.name?.split(' ')[0] || 'Guru'} />
-            <p className="text-neutral-600 dark:text-[#a2b591] mt-1 font-sans">
-              Kelola dan unduh semua dokumen kurikulum yang pernah Anda buat.
+              Nice to meet you, {userLastName}
+            </h1>
+            <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
+              What would you like to explore, build, or analyze today?
             </p>
-          </DashboardFadeIn>
-          <div className="flex items-center gap-3">
-            <Suspense fallback={<div className="h-10 w-24 bg-neutral-100 dark:bg-[#1a2315]/50 animate-pulse rounded-md" />}>
-              <DashboardFilter availableCategories={availableCategories} />
-            </Suspense>
-            <Link href="/">
-              <Button className="bg-[#4d7537] text-white hover:bg-[#5a8b41] shadow-lg shadow-black/5 dark:shadow-[#3f612d]/20 border border-[#4d7537] dark:border-[#6b9d4f]/50 cursor-pointer h-10 px-4">
-                <Plus className="w-4 h-4 mr-2" />
-                Generate Baru
-              </Button>
-            </Link>
+          </div>
+
+          {/* Centered Prompt Box */}
+          <div className="w-full relative">
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*,.pdf,.docx,.doc,.xlsx,.xls,.csv,.txt,.md"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+
+            <form
+              onSubmit={handlePromptSubmit}
+              className="w-full bg-white dark:bg-[#111111] border border-neutral-200 dark:border-neutral-800 p-4 sm:p-5 flex flex-col gap-3.5 shadow-sm hover:border-neutral-400 dark:hover:border-neutral-700 transition-all rounded-xl"
+            >
+              {/* Attachment preview */}
+              {attachment && (
+                <div className="relative inline-flex items-center gap-2.5 p-1.5 pr-2.5 bg-neutral-100 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 rounded-lg self-start group animate-in fade-in zoom-in-95 duration-150 shadow-xs max-w-full">
+                  {attachment.type === "image" && attachment.previewUrl ? (
+                    <div className="w-8 h-8 rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-neutral-200 dark:bg-neutral-900 shrink-0">
+                      <img src={attachment.previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div
+                      className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 border ${
+                        attachment.type === "pdf"
+                          ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                          : attachment.type === "word"
+                          ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                          : attachment.type === "excel"
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                      }`}
+                    >
+                      {attachment.isExtracting ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : attachment.type === "excel" ? (
+                        <FileSpreadsheet className="w-4 h-4" />
+                      ) : (
+                        <FileText className="w-4 h-4" />
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex flex-col min-w-0 pr-1 text-left">
+                    <span
+                      title={attachment.name}
+                      className="text-xs font-medium text-neutral-800 dark:text-neutral-200 truncate max-w-[140px] sm:max-w-[200px]"
+                    >
+                      {truncateFileName(attachment.name, 18)}
+                    </span>
+                    <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                      {attachment.isExtracting ? (
+                        <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                          Mengekstrak isi dokumen...
+                        </span>
+                      ) : (
+                        `${attachment.type.toUpperCase()} • ${attachment.size}`
+                      )}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleRemoveAttachment}
+                    className="w-5 h-5 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-red-500 text-neutral-500 dark:text-neutral-400 flex items-center justify-center transition-colors cursor-pointer ml-0.5"
+                    title="Hapus lampiran"
+                  >
+                    <X className="w-3.5 h-3.5 stroke-[2.5]" />
+                  </button>
+                </div>
+              )}
+
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                onPaste={handlePaste}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    e.currentTarget.form?.requestSubmit();
+                  }
+                }}
+                placeholder="Tulis pesan, tanyakan topik, atau lampirkan dokumen (PDF, Word, Excel, Gambar)..."
+                className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm sm:text-base outline-none resize-none min-h-[95px] font-sans"
+              />
+
+              <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-200 dark:border-neutral-800 transition-colors cursor-pointer"
+                  title="Lampirkan Dokumen atau Gambar (PDF, Word, Excel, Gambar)"
+                >
+                  <Paperclip className="w-3.5 h-3.5" />
+                  <span>Lampirkan File</span>
+                </button>
+
+                <Button
+                  type="submit"
+                  size="icon"
+                  disabled={(!prompt.trim() && !attachment) || loading || (attachment?.isExtracting ?? false)}
+                  className={`h-9 w-9 rounded-lg font-bold shadow-xs transition-all duration-200 shrink-0 ${
+                    (prompt.trim() || attachment) && !loading && !attachment?.isExtracting
+                      ? "bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 cursor-pointer active:scale-95"
+                      : "bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed opacity-60"
+                  }`}
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-neutral-950" />
+                  ) : (
+                    <ArrowRight
+                      className={`w-4 h-4 stroke-[2.5] ${
+                        prompt.trim() || attachment
+                          ? "text-neutral-950"
+                          : "text-neutral-400 dark:text-neutral-600"
+                      }`}
+                    />
+                  )}
+                </Button>
+              </div>
+            </form>
+
+            {/* Quick Filter Chips - Single row with left-to-right staggered upward animation */}
+            <motion.div
+              variants={chipsContainerVariants}
+              initial="hidden"
+              animate="visible"
+              className="flex flex-nowrap items-center justify-center gap-2 mt-4 overflow-x-auto no-scrollbar py-1"
+            >
+              {[
+                { label: "General Chat", value: "" },
+                { label: "Deep Reasoning", value: "REASONING" },
+                { label: "Code & Architecture", value: "CODE" },
+                { label: "Slide & Presentation", value: "DECKS" },
+                { label: "Automation Flow", value: "AUTOMATION" },
+              ].map((tag) => (
+                <motion.button
+                  key={tag.label}
+                  variants={chipItemVariants}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.96 }}
+                  type="button"
+                  onClick={() => setDocType(tag.value)}
+                  className={`px-3 py-1.5 rounded-md border text-xs whitespace-nowrap transition-colors font-sans cursor-pointer shrink-0 ${
+                    docType === tag.value
+                      ? "bg-neutral-950 text-white border-neutral-950 dark:bg-neutral-100 dark:text-neutral-950 dark:border-neutral-100 font-semibold shadow-xs"
+                      : "border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:border-neutral-400 dark:hover:border-neutral-600 bg-white dark:bg-neutral-900"
+                  }`}
+                >
+                  {tag.label}
+                </motion.button>
+              ))}
+            </motion.div>
           </div>
         </div>
+      ) : (
+        /* Active Conversational Chat View (Like ChatGPT / Gemini / Claude) */
+        <div className="flex flex-col max-w-3xl mx-auto min-h-[calc(100vh-140px)] pb-32 pt-2 px-3 sm:px-4 font-redhat">
+          {/* Messages Stream */}
+          <div className="space-y-6 flex-1">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex items-start gap-3 transition-opacity duration-300 ${
+                  msg.role === "user" ? "justify-end" : "justify-start"
+                }`}
+              >
+                {/* AI Message (Clean, standalone larger RevoU logo) */}
+                {msg.role === "assistant" ? (
+                  <div className="flex items-start gap-3.5 w-full">
+                    <div className="relative w-7 h-7 sm:w-8 sm:h-8 shrink-0 select-none mt-0.5 flex items-center justify-center overflow-visible">
+                      <img
+                        src="/logo/Logo_revou.png"
+                        alt="Launcher OS"
+                        className={`w-full h-full object-contain select-none transition-all duration-300 ${
+                          !msg.text ? "animate-logo-heartbeat" : ""
+                        }`}
+                      />
+                    </div>
+                    {msg.text ? (
+                      <div className="flex-1 min-w-0 text-sm sm:text-base leading-relaxed text-neutral-900 dark:text-neutral-100 pt-0.5">
+                        <div className="relative">
+                          <div
+                            className="markdown-body prose dark:prose-invert max-w-none [overflow-wrap:break-word] [word-break:break-word]"
+                            dangerouslySetInnerHTML={{
+                              __html: marked.parse(msg.text) as string,
+                            }}
+                          />
+                          {msg.isTyping && (
+                            <span className="inline-block w-2 h-4.5 bg-[#FFDE3C] ml-1 align-middle animate-pulse rounded-xs shadow-xs" />
+                          )}
+                        </div>
+                        {!msg.isTyping && msg.text && (
+                          <div className="flex items-center gap-2 mt-2 pt-1 text-neutral-400 dark:text-neutral-500">
+                            <button
+                              type="button"
+                              onClick={() => handleCopyMessage(msg.id, msg.text)}
+                              className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors cursor-pointer flex items-center gap-1.5 text-xs select-none"
+                              title="Copy response"
+                            >
+                              {copiedId === msg.id ? (
+                                <>
+                                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                  <span className="text-[11px] font-medium text-emerald-500">Copied</span>
+                                </>
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center text-xs sm:text-sm text-neutral-400 dark:text-neutral-500 font-normal pt-1.5 sm:pt-2 select-none animate-pulse">
+                        Thinking...
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* User Message Bubble */
+                  <div className="flex flex-col items-end max-w-[85%] ml-auto gap-2">
+                    {/* Document Preview Card (PDF, Word, Excel, Text) */}
+                    {msg.attachment && msg.attachment.type !== "image" && (
+                      <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xs max-w-[320px] sm:max-w-[380px]">
+                        <div
+                          className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                            msg.attachment.type === "pdf"
+                              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                              : msg.attachment.type === "word"
+                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                              : msg.attachment.type === "excel"
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                              : "bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 border border-neutral-500/20"
+                          }`}
+                        >
+                          {msg.attachment.type === "excel" ? (
+                            <FileSpreadsheet className="w-5 h-5" />
+                          ) : (
+                            <FileText className="w-5 h-5" />
+                          )}
+                        </div>
+                        <div className="flex flex-col min-w-0 flex-1 text-left">
+                          <span
+                            title={msg.attachment.name}
+                            className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 truncate"
+                          >
+                            {truncateFileName(msg.attachment.name, 22)}
+                          </span>
+                          <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                            {msg.attachment.type.toUpperCase()} • {msg.attachment.size}
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative">
-          <DashboardFadeIn delay={0.2}>
-            <Card className="h-full bg-white dark:bg-[#10140d]/80 border-[#dcdad1] dark:border-[#3f612d]/30 p-5 backdrop-blur-sm shadow-sm transition-colors">
-              <div className="flex items-center gap-3 mb-2 text-neutral-500 dark:text-[#a2b591]">
-                <span className="w-5 h-5 flex items-center justify-center text-[#4d7537] dark:text-[#89b867]">📄</span>
-                <span className="font-sans font-medium">Total Dokumen</span>
+                    {/* Image Attachment */}
+                    {((msg.attachment?.type === "image" && msg.attachment.previewUrl) || msg.image) && (
+                      <div className="rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-xs max-w-[280px] sm:max-w-[340px] bg-white dark:bg-neutral-900">
+                        <img
+                          src={msg.attachment?.previewUrl || msg.image}
+                          alt="Uploaded attachment"
+                          className="w-full h-auto max-h-64 object-contain rounded-xl"
+                        />
+                      </div>
+                    )}
+
+                    {msg.text && (
+                      <div className="bg-[#FFDE3C] text-neutral-950 font-medium px-4 py-2.5 rounded-lg rounded-tr-xs shadow-xs text-sm sm:text-base leading-relaxed">
+                        <p className="whitespace-pre-wrap">{msg.text}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="font-bricolage text-3xl font-normal text-neutral-900 dark:text-[#f4f3ed]">{displayDocuments.length}</div>
-            </Card>
-          </DashboardFadeIn>
-          <DashboardFadeIn delay={0.3}>
-            <Card className="h-full bg-white dark:bg-[#10140d]/80 border-[#dcdad1] dark:border-[#3f612d]/30 p-5 backdrop-blur-sm shadow-sm transition-colors">
-              <div className="flex items-center gap-3 mb-2 text-neutral-500 dark:text-[#a2b591]">
-                <Clock className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-                <span className="font-sans font-medium">Sisa Kuota Generate</span>
-              </div>
-              <div className="font-bricolage text-3xl font-normal text-neutral-900 dark:text-[#f4f3ed]">
-                {remainingQuota} <span className="font-sans text-sm font-normal text-neutral-400 dark:text-[#6b7b59]"> / {GENERATION_LIMIT} bulan ini</span>
-              </div>
-            </Card>
-          </DashboardFadeIn>
-          <DashboardFadeIn delay={0.4}>
-            <Card className="h-full bg-white dark:bg-[#10140d]/80 border-[#dcdad1] dark:border-[#3f612d]/30 p-5 backdrop-blur-sm shadow-sm transition-colors">
-              <div className="flex items-center gap-3 mb-2 text-neutral-500 dark:text-[#a2b591]">
-                <Folder className="w-5 h-5 text-amber-500 dark:text-amber-400" />
-                <span className="font-sans font-medium">Penyimpanan Terpakai</span>
-              </div>
-              <div className="font-bricolage text-3xl font-normal text-neutral-900 dark:text-[#f4f3ed]">
-                {storageVal} <span className="font-sans text-sm font-normal text-neutral-400 dark:text-[#6b7b59]">{storageUnit} / 1 GB</span>
-              </div>
-            </Card>
-          </DashboardFadeIn>
+            ))}
+            <div ref={chatBottomRef} />
+          </div>
+
+          {/* Sticky Bottom Floating Prompt Box */}
+          <div className="fixed bottom-0 left-0 right-0 lg:pl-[238px] z-30 p-4 pointer-events-none">
+            <div className="max-w-3xl mx-auto pointer-events-auto">
+              <input
+                type="file"
+                ref={bottomFileInputRef}
+                accept="image/*,.pdf,.docx,.doc,.xlsx,.xls,.csv,.txt,.md"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+
+              <form
+                onSubmit={handlePromptSubmit}
+                className="w-full bg-white/95 dark:bg-[#111111]/95 backdrop-blur-md border border-neutral-200 dark:border-neutral-800 p-3 sm:p-4 flex flex-col gap-2.5 shadow-lg hover:border-neutral-400 dark:hover:border-neutral-700 transition-all rounded-xl"
+              >
+                {/* Attachment preview */}
+                {attachment && (
+                  <div className="relative inline-flex items-center gap-2 p-1.5 pr-2 bg-neutral-100 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 rounded-md self-start group animate-in fade-in zoom-in-95 duration-150">
+                    {attachment.type === "image" && attachment.previewUrl ? (
+                      <div className="w-8 h-8 rounded-xs overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-neutral-200 dark:bg-neutral-900 shrink-0">
+                        <img src={attachment.previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div
+                        className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 border ${
+                          attachment.type === "pdf"
+                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                            : attachment.type === "word"
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                            : attachment.type === "excel"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                        }`}
+                      >
+                        {attachment.isExtracting ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : attachment.type === "excel" ? (
+                          <FileSpreadsheet className="w-4 h-4" />
+                        ) : (
+                          <FileText className="w-4 h-4" />
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex flex-col min-w-0 pr-1 text-left">
+                      <span
+                        title={attachment.name}
+                        className="text-xs font-medium text-neutral-800 dark:text-neutral-200 truncate max-w-[130px] sm:max-w-[180px]"
+                      >
+                        {truncateFileName(attachment.name, 18)}
+                      </span>
+                      <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                        {attachment.isExtracting ? (
+                          <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                            Mengekstrak isi dokumen...
+                          </span>
+                        ) : (
+                          `${attachment.type.toUpperCase()} • ${attachment.size}`
+                        )}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleRemoveAttachment}
+                      className="w-5 h-5 rounded-xs hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-red-500 text-neutral-500 dark:text-neutral-400 flex items-center justify-center transition-colors cursor-pointer ml-0.5"
+                      title="Hapus lampiran"
+                    >
+                      <X className="w-3 h-3 stroke-[2.5]" />
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => bottomFileInputRef.current?.click()}
+                    className="h-9 w-9 rounded-lg flex items-center justify-center text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer shrink-0"
+                    title="Lampirkan File (Gambar, PDF, Word, Excel)"
+                  >
+                    <Paperclip className="w-4 h-4" />
+                  </button>
+
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    onPaste={handlePaste}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        e.currentTarget.form?.requestSubmit();
+                      }
+                    }}
+                    placeholder="Tanyakan apapun, analisis dokumen, atau diskusikan ide..."
+                    className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm outline-none resize-none max-h-28 min-h-[40px] font-sans"
+                    rows={1}
+                  />
+
+                  {loading ? (
+                    <button
+                      type="button"
+                      onClick={handleStopGeneration}
+                      className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shrink-0 cursor-pointer border-none p-0"
+                      title="Stop generation"
+                    >
+                      <div className="w-3.5 h-3.5 bg-red-600 hover:bg-red-700 rounded-[2px] shadow-xs active:scale-90 transition-transform" />
+                    </button>
+                  ) : (
+                    <Button
+                      type="submit"
+                      size="icon"
+                      disabled={(!prompt.trim() && !attachment) || loading || (attachment?.isExtracting ?? false)}
+                      className={`h-9 w-9 rounded-lg font-bold shadow-xs transition-all duration-200 shrink-0 ${
+                        (prompt.trim() || attachment) && !loading && !attachment?.isExtracting
+                          ? "bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 cursor-pointer active:scale-95"
+                          : "bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed opacity-60"
+                      }`}
+                    >
+                      <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                    </Button>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-neutral-500 dark:text-neutral-400 pt-1 border-t border-neutral-100 dark:border-neutral-800">
+                  <span className="text-[11px] text-neutral-400">Mendukung PDF, Word (.docx), Excel (.xlsx), Text, dan Gambar</span>
+                  <span>Press Enter to send, Shift+Enter for new line</span>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
-
-        <DashboardFadeIn delay={0.5}>
-          <Card className="bg-white dark:bg-[#10140d]/80 border-[#dcdad1] dark:border-[#3f612d]/30 overflow-hidden relative backdrop-blur-sm shadow-sm transition-colors scrollbar-hide">
-            <DocumentTable documents={displayDocuments} />
-          </Card>
-        </DashboardFadeIn>
-      </main>
-    </div>
+      )}
+    </AppShell>
   );
 }

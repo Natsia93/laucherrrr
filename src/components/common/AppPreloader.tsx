@@ -170,9 +170,10 @@ export default function AppPreloader() {
             {/* Filled Logo Layer - White Version */}
             <div ref={logoRef} className="absolute inset-0 w-full h-full z-20 flex items-center justify-center pointer-events-none opacity-0">
                 <Image 
-                  src="/logo/Logo Putih.svg" 
+                  src="/logo/Logo_revou.png" 
                   alt="App Loading" 
                   fill
+                  sizes="(max-width: 640px) 112px, 128px"
                   className="object-contain" 
                   priority
                 />
