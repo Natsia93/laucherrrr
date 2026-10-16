@@ -2035,7 +2035,7 @@ export default function SettingsPage() {
                       </div>
 
                       {/* Modal Body */}
-                      <div className="p-5 space-y-4 overflow-y-auto">
+                      <div className="p-5 pb-7 space-y-4 overflow-y-auto">
                         {/* Google Sheets Form */}
                         {activeConnectorModal === "sheets" && (
                           <div className="space-y-3">
@@ -2119,6 +2119,7 @@ export default function SettingsPage() {
                                   { value: "Read & Write", label: "Read & Write (Upload & Export)" },
                                   { value: "Read Only", label: "Read Only" },
                                 ]}
+                                dropUp
                               />
                             </div>
                           </div>

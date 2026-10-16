@@ -17,6 +17,7 @@ interface LauncherSelectProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  dropUp?: boolean;
 }
 
 export function LauncherSelect({
@@ -26,8 +27,10 @@ export function LauncherSelect({
   placeholder = "Select...",
   className = "",
   disabled = false,
+  dropUp,
 }: LauncherSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [openUpwards, setOpenUpwards] = useState(dropUp ?? false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Normalize options
@@ -36,6 +39,47 @@ export function LauncherSelect({
   );
 
   const selectedOption = normalizedOptions.find((opt) => opt.value === value);
+
+  // Determine placement (upwards or downwards) based on available space
+  const calculatePlacement = () => {
+    if (dropUp) {
+      setOpenUpwards(true);
+      return;
+    }
+    if (!containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const dropdownHeight = Math.min(normalizedOptions.length * 36 + 16, 224);
+
+    let spaceBelow = window.innerHeight - rect.bottom;
+
+    // Check closest scrollable or overflow-hidden parent container
+    let parent = containerRef.current.parentElement;
+    while (parent && parent !== document.body) {
+      const style = window.getComputedStyle(parent);
+      if (/(auto|scroll|hidden)/.test(style.overflow + style.overflowY)) {
+        const parentRect = parent.getBoundingClientRect();
+        const spaceBelowInParent = parentRect.bottom - rect.bottom;
+        spaceBelow = Math.min(spaceBelow, spaceBelowInParent);
+        break;
+      }
+      parent = parent.parentElement;
+    }
+
+    if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
+      setOpenUpwards(true);
+    } else {
+      setOpenUpwards(false);
+    }
+  };
+
+  const handleToggle = () => {
+    if (disabled) return;
+    if (!isOpen) {
+      calculatePlacement();
+    }
+    setIsOpen(!isOpen);
+  };
 
   // Click outside to close
   useEffect(() => {
@@ -68,12 +112,15 @@ export function LauncherSelect({
   }, [isOpen]);
 
   return (
-    <div className={`relative w-full ${className}`} ref={containerRef}>
+    <div
+      className={`relative w-full ${isOpen ? "z-50" : "z-auto"} ${className}`}
+      ref={containerRef}
+    >
       {/* Trigger Button */}
       <button
         type="button"
         disabled={disabled}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className={`w-full h-8 px-2.5 text-xs font-medium rounded-[6px] border flex items-center justify-between transition-colors duration-100 cursor-pointer text-left ${
           isOpen
             ? "border-neutral-400 dark:border-white/40 ring-1 ring-neutral-400/30 dark:ring-white/20 bg-neutral-100 dark:bg-white/[0.08]"
@@ -93,7 +140,13 @@ export function LauncherSelect({
 
       {/* Custom Dropdown Popover */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-[999] min-w-[140px] max-h-56 overflow-y-auto rounded-[8px] border border-neutral-200 dark:border-white/[0.14] bg-white dark:bg-[#1c1c1c] shadow-[0_10px_25px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_35px_rgba(0,0,0,0.7)] p-1 backdrop-blur-md animate-in fade-in zoom-in-95 duration-100">
+        <div
+          className={`absolute left-0 right-0 z-[9999] min-w-[140px] max-h-56 overflow-y-auto rounded-[8px] border border-neutral-200 dark:border-white/[0.14] bg-white dark:bg-[#1c1c1c] shadow-[0_10px_25px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_35px_rgba(0,0,0,0.7)] p-1 backdrop-blur-md animate-in fade-in zoom-in-95 duration-100 ${
+            openUpwards
+              ? "bottom-[calc(100%+4px)] origin-bottom"
+              : "top-[calc(100%+4px)] origin-top"
+          }`}
+        >
           {normalizedOptions.map((opt) => {
             const isSelected = opt.value === value;
             return (
