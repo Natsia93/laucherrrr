@@ -21,6 +21,7 @@ import {
   History,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { useSidebar } from "@/components/layout/SidebarContext";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { motion, type Variants } from "framer-motion";
@@ -121,6 +122,7 @@ const truncateFileName = (name: string, maxLen = 20): string => {
 
 export default function DashboardOverviewPage() {
   const { data: session } = authClient.useSession();
+  const { collapsed } = useSidebar();
   const [prompt, setPrompt] = useState("");
   const [docType, setDocType] = useState("");
   const [loading, setLoading] = useState(false);
@@ -828,7 +830,7 @@ export default function DashboardOverviewPage() {
         </div>
       ) : (
         /* Active Conversational Chat View (Like ChatGPT / Gemini / Claude) */
-        <div className="flex flex-col max-w-3xl mx-auto min-h-[calc(100vh-140px)] pb-32 pt-2 px-3 sm:px-4 font-sf">
+        <div className="flex flex-col max-w-3xl mx-auto min-h-[calc(100vh-140px)] pb-60 sm:pb-72 pt-2 px-3 sm:px-4 font-sf">
           {/* Messages Stream */}
           <div className="space-y-6 flex-1">
             {messages.map((msg) => (
@@ -949,136 +951,154 @@ export default function DashboardOverviewPage() {
             <div ref={chatBottomRef} />
           </div>
 
-          {/* Sticky Bottom Floating Prompt Box */}
-          <div className="fixed bottom-0 left-0 right-0 lg:pl-[238px] z-30 p-4 pointer-events-none">
-            <div className="max-w-3xl mx-auto pointer-events-auto">
-              <input
-                type="file"
-                ref={bottomFileInputRef}
-                accept="image/*,.pdf,.docx,.doc,.xlsx,.xls,.csv,.txt,.md"
-                className="hidden"
-                onChange={handleFileChange}
-              />
+          {/* Sticky Bottom Floating Prompt Box with Claude-Style Gradient Mask */}
+          <div
+            className={`fixed bottom-0 left-0 right-0 z-30 pointer-events-none transition-[padding] duration-200 ${
+              collapsed ? "lg:pl-[70px]" : "lg:pl-[238px]"
+            }`}
+          >
+            {/* Claude-style top gradient fade mask: chat text smoothly dissolves into background */}
+            <div className="w-full h-16 sm:h-24 bg-gradient-to-t from-[#faf9f6] via-[#faf9f6]/90 to-transparent dark:from-[#090909] dark:via-[#090909]/90 dark:to-transparent pointer-events-none" />
 
-              <form
-                onSubmit={handlePromptSubmit}
-                className="w-full bg-white/95 dark:bg-[#111111]/95 backdrop-blur-md border border-neutral-200 dark:border-neutral-800 p-3 sm:p-4 flex flex-col gap-2.5 shadow-lg hover:border-neutral-400 dark:hover:border-neutral-700 transition-all rounded-xl"
-              >
-                {/* Attachment preview */}
-                {attachment && (
-                  <div className="relative inline-flex items-center gap-2 p-1.5 pr-2 bg-neutral-100 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 rounded-md self-start group animate-in fade-in zoom-in-95 duration-150">
-                    {attachment.type === "image" && attachment.previewUrl ? (
-                      <div className="w-8 h-8 rounded-xs overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-neutral-200 dark:bg-neutral-900 shrink-0">
-                        <img src={attachment.previewUrl} alt="Preview" className="w-full h-full object-cover" />
+            {/* Solid background dock behind prompt box: prevents any text from peeking underneath */}
+            <div className="w-full bg-[#faf9f6] dark:bg-[#090909] pb-3 sm:pb-4 px-3 sm:px-4 pointer-events-auto">
+              <div className="max-w-3xl mx-auto">
+                <input
+                  type="file"
+                  ref={bottomFileInputRef}
+                  accept="image/*,.pdf,.docx,.doc,.xlsx,.xls,.csv,.txt,.md"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+
+                <form
+                  onSubmit={handlePromptSubmit}
+                  className="w-full bg-white dark:bg-[#141414] border border-neutral-200 dark:border-white/10 p-3 sm:p-4 flex flex-col gap-2.5 shadow-sm dark:shadow-2xl hover:border-neutral-300 dark:hover:border-white/20 transition-all rounded-2xl"
+                >
+                  {/* Attachment preview */}
+                  {attachment && (
+                    <div className="relative inline-flex items-center gap-2 p-1.5 pr-2 bg-neutral-100 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 rounded-md self-start group animate-in fade-in zoom-in-95 duration-150">
+                      {attachment.type === "image" && attachment.previewUrl ? (
+                        <div className="w-8 h-8 rounded-xs overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-neutral-200 dark:bg-neutral-900 shrink-0">
+                          <img src={attachment.previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div
+                          className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 border ${
+                            attachment.type === "pdf"
+                              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                              : attachment.type === "word"
+                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                              : attachment.type === "excel"
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                          }`}
+                        >
+                          {attachment.isExtracting ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : attachment.type === "excel" ? (
+                            <FileSpreadsheet className="w-4 h-4" />
+                          ) : (
+                            <FileText className="w-4 h-4" />
+                          )}
+                        </div>
+                      )}
+
+                      <div className="flex flex-col min-w-0 pr-1 text-left">
+                        <span
+                          title={attachment.name}
+                          className="text-xs font-medium text-neutral-800 dark:text-neutral-200 truncate max-w-[130px] sm:max-w-[180px]"
+                        >
+                          {truncateFileName(attachment.name, 18)}
+                        </span>
+                        <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                          {attachment.isExtracting ? (
+                            <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium font-sf">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                              Extracting document contents...
+                            </span>
+                          ) : (
+                            `${attachment.type.toUpperCase()} • ${attachment.size}`
+                          )}
+                        </span>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={handleRemoveAttachment}
+                        className="w-5 h-5 rounded-xs hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-red-500 text-neutral-500 dark:text-neutral-400 flex items-center justify-center transition-colors cursor-pointer ml-0.5"
+                        title="Remove attachment"
+                      >
+                        <X className="w-3 h-3 stroke-[2.5]" />
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex items-end gap-2 pb-0.5">
+                    <button
+                      type="button"
+                      onClick={() => bottomFileInputRef.current?.click()}
+                      className="h-9 w-9 rounded-lg flex items-center justify-center text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer shrink-0 mb-0.5"
+                      title="Attach File (Image, PDF, Word, Excel)"
+                    >
+                      <Paperclip className="w-4 h-4" />
+                    </button>
+
+                    <textarea
+                      ref={bottomTextareaRef}
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      onPaste={handlePaste}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          e.currentTarget.form?.requestSubmit();
+                        }
+                      }}
+                      placeholder="Type your message, analyze files, or discuss ideas..."
+                      className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm leading-relaxed outline-none resize-none min-h-[44px] max-h-[140px] font-sf py-2.5 clean-scrollbar"
+                      rows={1}
+                    />
+
+                    {loading ? (
+                      <button
+                        type="button"
+                        onClick={handleStopGeneration}
+                        className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shrink-0 cursor-pointer border-none p-0 mb-0.5"
+                        title="Stop generation"
+                      >
+                        <div className="w-3.5 h-3.5 bg-red-600 hover:bg-red-700 rounded-[2px] shadow-xs active:scale-90 transition-transform" />
+                      </button>
                     ) : (
-                      <div
-                        className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 border ${
-                          attachment.type === "pdf"
-                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                            : attachment.type === "word"
-                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                            : attachment.type === "excel"
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                      <Button
+                        type="submit"
+                        size="icon"
+                        disabled={(!prompt.trim() && !attachment) || loading || (attachment?.isExtracting ?? false)}
+                        className={`h-9 w-9 rounded-lg font-bold shadow-xs transition-all duration-200 shrink-0 mb-0.5 ${
+                          (prompt.trim() || attachment) && !loading && !attachment?.isExtracting
+                            ? "bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 cursor-pointer active:scale-95"
+                            : "bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed opacity-60"
                         }`}
                       >
-                        {attachment.isExtracting ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : attachment.type === "excel" ? (
-                          <FileSpreadsheet className="w-4 h-4" />
-                        ) : (
-                          <FileText className="w-4 h-4" />
-                        )}
-                      </div>
+                        <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                      </Button>
                     )}
-
-                    <div className="flex flex-col min-w-0 pr-1 text-left">
-                      <span
-                        title={attachment.name}
-                        className="text-xs font-medium text-neutral-800 dark:text-neutral-200 truncate max-w-[130px] sm:max-w-[180px]"
-                      >
-                        {truncateFileName(attachment.name, 18)}
-                      </span>
-                      <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
-                        {attachment.isExtracting ? (
-                          <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium font-sf">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                            Extracting document contents...
-                          </span>
-                        ) : (
-                          `${attachment.type.toUpperCase()} • ${attachment.size}`
-                        )}
-                      </span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleRemoveAttachment}
-                      className="w-5 h-5 rounded-xs hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-red-500 text-neutral-500 dark:text-neutral-400 flex items-center justify-center transition-colors cursor-pointer ml-0.5"
-                      title="Remove attachment"
-                    >
-                      <X className="w-3 h-3 stroke-[2.5]" />
-                    </button>
                   </div>
-                )}
 
-                <div className="flex items-end gap-2 pb-0.5">
-                  <button
-                    type="button"
-                    onClick={() => bottomFileInputRef.current?.click()}
-                    className="h-9 w-9 rounded-lg flex items-center justify-center text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer shrink-0 mb-0.5"
-                    title="Attach File (Image, PDF, Word, Excel)"
-                  >
-                    <Paperclip className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center justify-between text-[11px] text-neutral-500 dark:text-neutral-400 pt-1 border-t border-neutral-100 dark:border-neutral-800">
+                    <span className="text-[11px] text-neutral-400">Mendukung PDF, Word (.docx), Excel (.xlsx), Text, dan Gambar</span>
+                    <span>Press Enter to send, Shift+Enter for new line</span>
+                  </div>
+                </form>
 
-                  <textarea
-                    ref={bottomTextareaRef}
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    onPaste={handlePaste}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        e.currentTarget.form?.requestSubmit();
-                      }
-                    }}
-                    placeholder="Type your message, analyze files, or discuss ideas..."
-                    className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm leading-relaxed outline-none resize-none min-h-[44px] max-h-[140px] font-sf py-2.5 clean-scrollbar"
-                    rows={1}
-                  />
-
-                  {loading ? (
-                    <button
-                      type="button"
-                      onClick={handleStopGeneration}
-                      className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shrink-0 cursor-pointer border-none p-0 mb-0.5"
-                      title="Stop generation"
-                    >
-                      <div className="w-3.5 h-3.5 bg-red-600 hover:bg-red-700 rounded-[2px] shadow-xs active:scale-90 transition-transform" />
-                    </button>
-                  ) : (
-                    <Button
-                      type="submit"
-                      size="icon"
-                      disabled={(!prompt.trim() && !attachment) || loading || (attachment?.isExtracting ?? false)}
-                      className={`h-9 w-9 rounded-lg font-bold shadow-xs transition-all duration-200 shrink-0 mb-0.5 ${
-                        (prompt.trim() || attachment) && !loading && !attachment?.isExtracting
-                          ? "bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 cursor-pointer active:scale-95"
-                          : "bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed opacity-60"
-                      }`}
-                    >
-                      <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-                    </Button>
-                  )}
+                {/* Claude-style footer note */}
+                <div className="flex items-center justify-between text-[11px] text-neutral-400 dark:text-neutral-500 pt-2 px-1">
+                  <span>Launcher OS can make mistakes. Verify important responses.</span>
+                  <span className="font-mono text-[10px] hidden sm:inline-block px-1.5 py-0.5 rounded bg-neutral-200/60 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
+                    Gemini 2.5 • LLM Mode
+                  </span>
                 </div>
-
-                <div className="flex items-center justify-between text-[11px] text-neutral-500 dark:text-neutral-400 pt-1 border-t border-neutral-100 dark:border-neutral-800">
-                  <span className="text-[11px] text-neutral-400">Mendukung PDF, Word (.docx), Excel (.xlsx), Text, dan Gambar</span>
-                  <span>Press Enter to send, Shift+Enter for new line</span>
-                </div>
-              </form>
+              </div>
             </div>
           </div>
         </div>
