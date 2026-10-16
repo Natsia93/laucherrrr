@@ -761,21 +761,34 @@ html {
 
 /* ==========================================================================
    Full-Screen Swipe Transition for Theme Switching (GPU Accelerated)
-   Zero DOM reflow overhead: browser takes snapshot of old and wipes in new
+   Zero external libraries, 100% native compositor layer
    ========================================================================== */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
+html.theme-transitioning::view-transition-group(root) {
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-::view-transition-old(root) {
+html.theme-transitioning::view-transition-image-pair(root) {
+  isolation: isolate;
+}
+
+html.theme-transitioning::view-transition-old(root),
+html.theme-transitioning::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+  display: block;
+}
+
+html.theme-transitioning::view-transition-old(root) {
   z-index: 1;
 }
 
-::view-transition-new(root) {
+html.theme-transitioning::view-transition-new(root) {
   z-index: 9999;
-  animation: theme-swipe-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: theme-swipe-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: clip-path;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @keyframes theme-swipe-in {
@@ -788,9 +801,9 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(root),
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
+  html.theme-transitioning::view-transition-group(root),
+  html.theme-transitioning::view-transition-old(root),
+  html.theme-transitioning::view-transition-new(root) {
     animation: none !important;
   }
 }

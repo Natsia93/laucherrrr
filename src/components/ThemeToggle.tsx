@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { flushSync } from "react-dom";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -26,8 +27,16 @@ export function ThemeToggle() {
       "startViewTransition" in document &&
       typeof (document as any).startViewTransition === "function"
     ) {
-      (document as any).startViewTransition(() => {
-        setTheme(newTheme);
+      document.documentElement.classList.add("theme-transitioning");
+
+      const transition = (document as any).startViewTransition(() => {
+        flushSync(() => {
+          setTheme(newTheme);
+        });
+      });
+
+      transition.finished.finally(() => {
+        document.documentElement.classList.remove("theme-transitioning");
       });
     } else {
       setTheme(newTheme);
