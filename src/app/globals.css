@@ -758,3 +758,39 @@ html {
 .dark .prose a {
   color: #60a5fa;
 }
+
+/* ==========================================================================
+   Full-Screen Swipe Transition for Theme Switching (GPU Accelerated)
+   Zero DOM reflow overhead: browser takes snapshot of old and wipes in new
+   ========================================================================== */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+  animation: theme-swipe-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes theme-swipe-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}

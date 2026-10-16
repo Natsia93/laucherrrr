@@ -13,6 +13,27 @@ export function ThemeToggle() {
     setMounted(true);
   }, []);
 
+  const handleThemeChange = (newTheme: "light" | "dark") => {
+    if (theme === newTheme) return;
+
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (
+      !prefersReducedMotion &&
+      typeof document !== "undefined" &&
+      "startViewTransition" in document &&
+      typeof (document as any).startViewTransition === "function"
+    ) {
+      (document as any).startViewTransition(() => {
+        setTheme(newTheme);
+      });
+    } else {
+      setTheme(newTheme);
+    }
+  };
+
   if (!mounted) {
     return (
       <div className="relative inline-flex h-9 w-[68px] items-center rounded-full border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#10140d] p-1 opacity-0">
@@ -23,7 +44,8 @@ export function ThemeToggle() {
   return (
     <div className="relative inline-flex h-9 items-center rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#141414] p-1 transition-colors">
       <button
-        onClick={() => setTheme("light")}
+        type="button"
+        onClick={() => handleThemeChange("light")}
         className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
           theme === "light" ? "text-amber-500 font-bold" : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
         }`}
@@ -32,7 +54,8 @@ export function ThemeToggle() {
         <span className="sr-only">Light</span>
       </button>
       <button
-        onClick={() => setTheme("dark")}
+        type="button"
+        onClick={() => handleThemeChange("dark")}
         className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
           theme === "dark" || !theme ? "text-[#ffd100] font-bold" : "text-neutral-500 hover:text-neutral-900"
         }`}
