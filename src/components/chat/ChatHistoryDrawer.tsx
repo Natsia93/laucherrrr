@@ -206,7 +206,7 @@ export function ChatHistoryDrawer({
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto px-3 py-2 space-y-3 calendar-scrollbar">
+            <div className="flex-1 overflow-y-auto px-2.5 py-1.5 space-y-2 calendar-scrollbar">
               {isLoadingList ? (
                 <div className="flex flex-col items-center justify-center py-12 text-neutral-400 gap-2">
                   <Loader2 className="w-5 h-5 animate-spin text-[#FFDE3C]" />
@@ -241,9 +241,9 @@ export function ChatHistoryDrawer({
                 </div>
               ) : (
                 groupedConversations.map(([groupName, items]) => (
-                  <div key={groupName} className="space-y-1">
+                  <div key={groupName} className="space-y-0.5">
                     <div className="flex items-center gap-2 px-1 pt-1.5 pb-0.5">
-                      <span className="text-[11px] font-sf font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                      <span className="text-[11px] font-sf font-medium uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
                         {groupName}
                       </span>
                       <div className="flex-1 h-[1px] bg-neutral-200/70 dark:bg-neutral-800/70" />
@@ -257,33 +257,33 @@ export function ChatHistoryDrawer({
                             onSelectConversation(conv.id);
                             onClose();
                           }}
-                          className={`group relative flex items-center justify-between p-3 rounded-[6px] cursor-pointer transition-all duration-150 ${
+                          className={`group relative flex items-center justify-between py-1.5 px-2.5 rounded-[6px] cursor-pointer transition-all duration-150 ${
                             isActive
                               ? "bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700/80 shadow-xs border-l-[3.5px] border-l-[#FFDE3C]"
                               : "hover:bg-neutral-100/90 dark:hover:bg-[#181818] text-neutral-700 dark:text-neutral-300 border border-transparent hover:border-neutral-200/70 dark:hover:border-neutral-800"
                           }`}
                         >
-                          <div className="flex items-start gap-3 min-w-0 pr-2">
+                          <div className="flex items-center gap-2.5 min-w-0 pr-2 flex-1">
                             <div
-                              className={`w-7 h-7 rounded-[5px] flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                              className={`w-7 h-7 rounded-[5px] flex items-center justify-center shrink-0 transition-colors ${
                                 isActive
-                                  ? "bg-[#FFDE3C] text-neutral-950 font-bold shadow-2xs"
+                                  ? "bg-[#FFDE3C] text-neutral-950 shadow-2xs"
                                   : "bg-neutral-100 dark:bg-neutral-800 text-neutral-400 group-hover:bg-neutral-200/80 dark:group-hover:bg-neutral-700 group-hover:text-neutral-800 dark:group-hover:text-neutral-200"
                               }`}
                             >
                               <MessageSquare className="w-3.5 h-3.5" />
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                               <p
-                                className={`text-[14px] font-sf truncate leading-snug ${
+                                className={`text-[15px] font-sf truncate leading-tight font-normal ${
                                   isActive
-                                    ? "text-neutral-950 dark:text-white font-semibold"
-                                    : "text-neutral-900 dark:text-neutral-100 font-medium group-hover:text-neutral-950 dark:group-hover:text-white"
+                                    ? "text-neutral-950 dark:text-white"
+                                    : "text-neutral-800 dark:text-neutral-200 group-hover:text-neutral-950 dark:group-hover:text-white"
                                 }`}
                               >
                                 {conv.title || "New Conversation"}
                               </p>
-                              <div className="flex items-center gap-1.5 mt-1 text-[12px] font-sf text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-neutral-300 font-normal">
+                              <div className="flex items-center gap-1.5 mt-0.5 text-[12px] font-sf text-neutral-400 dark:text-neutral-500 font-normal">
                                 <span>{formatRelativeTime(conv.updatedAt)}</span>
                               </div>
                             </div>
