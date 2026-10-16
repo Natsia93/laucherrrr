@@ -48,6 +48,7 @@ import {
   X,
   Settings2,
   Send,
+  Pencil,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -253,8 +254,11 @@ export default function SettingsPage() {
   const [newVarKey, setNewVarKey] = useState("");
   const [newVarValue, setNewVarValue] = useState("");
   const [newVarType, setNewVarType] = useState<"text" | "secret" | "number" | "json">("text");
+  const [editingVarId, setEditingVarId] = useState<string | null>(null);
+  const [revealedSecretIds, setRevealedSecretIds] = useState<Set<string>>(new Set());
   const [webhookBaseUrl, setWebhookBaseUrl] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [isSavingVar, setIsSavingVar] = useState(false);
 
   // Connected App Connectors State
   const [connectors, setConnectors] = useState<ConnectorConfig>(DEFAULT_CONNECTORS);
@@ -310,10 +314,25 @@ export default function SettingsPage() {
       if (storedPalette) setDefaultPalette(storedPalette);
       if (storedBrain) setCustomDeckBrain(storedBrain);
 
-      // Load Global Variables
+      // Load Global Variables (LocalStorage + Cloud Sync)
       try {
         const storedVars = localStorage.getItem("launcher_automation_global_vars");
-        if (storedVars) setGlobalVariables(JSON.parse(storedVars));
+        if (storedVars) {
+          const parsed = JSON.parse(storedVars);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setGlobalVariables(parsed);
+          }
+        }
+        // Sync with backend API
+        fetch("/api/automation/variables")
+          .then((r) => r.json())
+          .then((data) => {
+            if (data.variables && Array.isArray(data.variables) && data.variables.length > 0) {
+              setGlobalVariables(data.variables);
+              localStorage.setItem("launcher_automation_global_vars", JSON.stringify(data.variables));
+            }
+          })
+          .catch(() => {});
       } catch {}
 
       // Load Connected App Connectors
@@ -605,39 +624,154 @@ export default function SettingsPage() {
     }
   };
 
-  // Global Variables CRUD
-  const handleAddGlobalVar = (e: React.FormEvent) => {
+  // Global Variables CRUD & Cloud Sync
+  const handleAddGlobalVar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newVarKey.trim()) return;
 
+    setIsSavingVar(true);
     const formattedKey = newVarKey.trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_");
-    const updated: GlobalVariable[] = [
-      ...globalVariables.filter((v) => v.key !== formattedKey),
-      {
-        id: `var-${Date.now()}`,
-        key: formattedKey,
-        value: newVarValue.trim(),
-        type: newVarType,
-        description: `Configured via Settings (${newVarType})`,
-      },
-    ];
+    
+    let updated: GlobalVariable[];
+    if (editingVarId) {
+      updated = globalVariables.map((v) =>
+        v.id === editingVarId
+          ? {
+              ...v,
+              key: formattedKey,
+              value: newVarValue.trim(),
+              type: newVarType,
+              description: `Configured via Settings (${newVarType})`,
+            }
+          : v
+      );
+    } else {
+      updated = [
+        ...globalVariables.filter((v) => v.key !== formattedKey),
+        {
+          id: `var-${Date.now()}`,
+          key: formattedKey,
+          value: newVarValue.trim(),
+          type: newVarType,
+          description: `Configured via Settings (${newVarType})`,
+        },
+      ];
+    }
 
     setGlobalVariables(updated);
     if (typeof window !== "undefined") {
       localStorage.setItem("launcher_automation_global_vars", JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent("launcher_global_vars_changed", { detail: updated }));
     }
+
+    try {
+      await fetch("/api/automation/variables", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ variables: updated }),
+      });
+    } catch {}
+
     setNewVarKey("");
     setNewVarValue("");
-    triggerToast(`Variable {{${formattedKey}}} saved!`);
+    setEditingVarId(null);
+    setIsSavingVar(false);
+    triggerToast(editingVarId ? `Variable {{${formattedKey}}} updated!` : `Variable {{${formattedKey}}} saved!`);
   };
 
-  const handleDeleteGlobalVar = (id: string, keyName: string) => {
+  const handleEditGlobalVar = (v: GlobalVariable) => {
+    setEditingVarId(v.id);
+    setNewVarKey(v.key);
+    setNewVarValue(v.value);
+    setNewVarType(v.type);
+    triggerToast(`Editing {{${v.key}}}...`);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingVarId(null);
+    setNewVarKey("");
+    setNewVarValue("");
+    setNewVarType("text");
+  };
+
+  const toggleRevealSecret = (id: string) => {
+    setRevealedSecretIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleDeleteGlobalVar = async (id: string, keyName: string) => {
     const updated = globalVariables.filter((v) => v.id !== id);
     setGlobalVariables(updated);
     if (typeof window !== "undefined") {
       localStorage.setItem("launcher_automation_global_vars", JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent("launcher_global_vars_changed", { detail: updated }));
+    }
+    try {
+      await fetch("/api/automation/variables", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ variables: updated }),
+      });
+    } catch {}
+    if (editingVarId === id) {
+      setEditingVarId(null);
+      setNewVarKey("");
+      setNewVarValue("");
     }
     triggerToast(`Variable {{${keyName}}} removed.`);
+  };
+
+  const handleImportFromConnectors = () => {
+    let importedCount = 0;
+    const newVars = [...globalVariables];
+
+    const addIfPresent = (keyName: string, val: string | undefined, type: "text" | "secret" = "text", desc: string = "") => {
+      if (val && val.trim()) {
+        const idx = newVars.findIndex((v) => v.key === keyName);
+        if (idx === -1) {
+          newVars.push({
+            id: `var-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            key: keyName,
+            value: val.trim(),
+            type,
+            description: desc,
+          });
+          importedCount++;
+        }
+      }
+    };
+
+    if (connectors.slack?.webhookUrl) addIfPresent("SLACK_WEBHOOK_URL", connectors.slack.webhookUrl, "secret", "Imported from Slack Connector");
+    if (connectors.slack?.channel) addIfPresent("SLACK_DEFAULT_CHANNEL", connectors.slack.channel, "text", "Imported from Slack Connector");
+    if (connectors.telegram?.botToken) addIfPresent("TELEGRAM_BOT_TOKEN", connectors.telegram.botToken, "secret", "Imported from Telegram Connector");
+    if (connectors.telegram?.chatId) addIfPresent("TELEGRAM_CHAT_ID", connectors.telegram.chatId, "text", "Imported from Telegram Connector");
+    if (connectors.drive?.rootFolder) addIfPresent("GOOGLE_DRIVE_FOLDER", connectors.drive.rootFolder, "text", "Imported from Drive Connector");
+    if (connectors.drive?.driveId) addIfPresent("GOOGLE_DRIVE_ID", connectors.drive.driveId, "text", "Imported from Drive Connector");
+    if (connectors.sheets?.spreadsheetId) addIfPresent("GOOGLE_SHEET_ID", connectors.sheets.spreadsheetId, "text", "Imported from Sheets Connector");
+    if (connectors.sheets?.email) addIfPresent("GOOGLE_SHEET_EMAIL", connectors.sheets.email, "text", "Imported from Sheets Connector");
+    if (connectors.whatsapp?.phone) addIfPresent("WHATSAPP_PHONE", connectors.whatsapp.phone, "text", "Imported from WhatsApp Connector");
+    if (connectors.whatsapp?.apiToken) addIfPresent("WHATSAPP_TOKEN", connectors.whatsapp.apiToken, "secret", "Imported from WhatsApp Connector");
+    if (connectors.notion?.token) addIfPresent("NOTION_API_KEY", connectors.notion.token, "secret", "Imported from Notion Connector");
+
+    if (importedCount > 0) {
+      setGlobalVariables(newVars);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("launcher_automation_global_vars", JSON.stringify(newVars));
+        window.dispatchEvent(new CustomEvent("launcher_global_vars_changed", { detail: newVars }));
+      }
+      fetch("/api/automation/variables", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ variables: newVars }),
+      }).catch(() => {});
+      triggerToast(`Imported ${importedCount} variables from connected apps!`);
+    } else {
+      triggerToast("All configured connector credentials are already in variables.");
+    }
   };
 
   const copyToClipboard = (text: string, identifier: string) => {
@@ -1336,14 +1470,72 @@ export default function SettingsPage() {
                         Store tokens, webhook URLs, and parameters shared across all automation flows. Use <code className="font-mono text-[11px] px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-medium">{"{{VARIABLE_NAME}}"}</code> in nodes.
                       </p>
                     </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleImportFromConnectors}
+                      className="h-8 text-xs border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer self-start sm:self-auto shrink-0"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                      <span>Sync from Connected Apps</span>
+                    </Button>
                   </div>
 
-                  {/* Add Variable Form */}
+                  {/* Add / Edit Variable Form */}
                   <form onSubmit={handleAddGlobalVar} className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 space-y-3">
-                    <div className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5">
-                      <Plus className="w-3.5 h-3.5 text-neutral-600 dark:text-neutral-400" />
-                      <span>Add New Global Variable</span>
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5">
+                        {editingVarId ? (
+                          <>
+                            <Pencil className="w-3.5 h-3.5 text-amber-500" />
+                            <span>Edit Variable</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-3.5 h-3.5 text-neutral-600 dark:text-neutral-400" />
+                            <span>Add New Global Variable</span>
+                          </>
+                        )}
+                      </div>
+
+                      {editingVarId && (
+                        <button
+                          type="button"
+                          onClick={handleCancelEdit}
+                          className="text-[11px] text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 underline cursor-pointer"
+                        >
+                          Cancel Edit
+                        </button>
+                      )}
                     </div>
+
+                    {/* Quick Preset Chips */}
+                    {!editingVarId && (
+                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5 pb-1">
+                        <span className="text-[10px] text-neutral-400 font-medium">Quick Presets:</span>
+                        {[
+                          { key: "SLACK_WEBHOOK_URL", type: "secret" as const },
+                          { key: "TELEGRAM_BOT_TOKEN", type: "secret" as const },
+                          { key: "TELEGRAM_CHAT_ID", type: "text" as const },
+                          { key: "GOOGLE_DRIVE_FOLDER", type: "text" as const },
+                          { key: "GOOGLE_SHEET_ID", type: "text" as const },
+                          { key: "OPENAI_API_KEY", type: "secret" as const },
+                        ].map((chip) => (
+                          <button
+                            key={chip.key}
+                            type="button"
+                            onClick={() => {
+                              setNewVarKey(chip.key);
+                              setNewVarType(chip.type);
+                            }}
+                            className="px-2 py-0.5 text-[10px] font-mono rounded border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-[#1a1a1a] hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 transition-colors cursor-pointer"
+                          >
+                            +{chip.key}
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
                       <div className="sm:col-span-4">
@@ -1380,65 +1572,131 @@ export default function SettingsPage() {
                       </div>
                     </div>
 
-                    <div className="flex justify-end pt-1">
+                    <div className="flex justify-end gap-2 pt-1">
+                      {editingVarId && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={handleCancelEdit}
+                          className="h-8 text-xs cursor-pointer"
+                        >
+                          Cancel
+                        </Button>
+                      )}
                       <Button
                         type="submit"
+                        disabled={isSavingVar}
                         className="h-8 text-xs bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-950 font-semibold px-4 rounded-md cursor-pointer hover:bg-neutral-800 dark:hover:bg-white"
                       >
-                        Save Variable
+                        {isSavingVar ? "Saving..." : editingVarId ? "Update Variable" : "Save Variable"}
                       </Button>
                     </div>
                   </form>
 
                   {/* Variables List Table */}
                   <div className="space-y-2">
-                    <div className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                      Configured Variables ({globalVariables.length})
+                    <div className="flex items-center justify-between text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                      <span>Configured Variables ({globalVariables.length})</span>
+                      {globalVariables.length > 0 && (
+                        <span className="text-[10.5px] text-neutral-400">
+                          Click syntax to copy <code className="font-mono">{"{{KEY}}"}</code>
+                        </span>
+                      )}
                     </div>
 
                     {globalVariables.length === 0 ? (
-                      <div className="p-6 text-center rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 text-neutral-400 text-xs">
-                        No global variables added yet. Add tokens or API URLs above.
+                      <div className="p-8 text-center rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 text-neutral-400 text-xs space-y-2">
+                        <Key className="w-6 h-6 mx-auto text-neutral-300 dark:text-neutral-600" />
+                        <p>No global variables added yet. Add tokens or API URLs above.</p>
+                        <p className="text-[11px] text-neutral-500">
+                          Tip: Click <b>&quot;Sync from Connected Apps&quot;</b> above to instantly import credentials from Google, Slack, and Telegram.
+                        </p>
                       </div>
                     ) : (
-                      <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
-                        {globalVariables.map((v) => (
-                          <div
-                            key={v.id}
-                            className="flex items-center justify-between p-2.5 rounded-lg border border-neutral-200/70 dark:border-neutral-800/80 bg-neutral-50/50 dark:bg-neutral-900/40 hover:bg-neutral-100/50 dark:hover:bg-neutral-800/40 transition-colors"
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <button
-                                type="button"
-                                onClick={() => copyToClipboard(`{{${v.key}}}`, v.id)}
-                                className="text-xs font-mono font-bold text-neutral-900 dark:text-white flex items-center gap-1 hover:underline cursor-pointer"
-                                title="Click to copy syntax"
-                              >
-                                <span>{"{{" + v.key + "}}"}</span>
-                                {copiedKey === v.id ? (
-                                  <Check className="w-3 h-3 text-neutral-900 dark:text-white" />
-                                ) : (
-                                  <Copy className="w-3 h-3 opacity-60" />
-                                )}
-                              </button>
-                              <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
-                                {v.type}
-                              </span>
-                              <span className="text-xs font-mono text-neutral-400 truncate max-w-[200px] sm:max-w-[300px]">
-                                {v.type === "secret" ? "••••••••••••••••" : v.value}
-                              </span>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteGlobalVar(v.id, v.key)}
-                              className="p-1 text-neutral-400 hover:text-red-500 transition-colors cursor-pointer"
-                              title="Delete Variable"
+                      <div className="space-y-1.5 max-h-80 overflow-y-auto pr-1">
+                        {globalVariables.map((v) => {
+                          const isSecret = v.type === "secret";
+                          const isRevealed = revealedSecretIds.has(v.id);
+                          return (
+                            <div
+                              key={v.id}
+                              className="flex items-center justify-between p-2.5 rounded-lg border border-neutral-200/70 dark:border-neutral-800/80 bg-neutral-50/50 dark:bg-neutral-900/40 hover:bg-neutral-100/50 dark:hover:bg-neutral-800/40 transition-colors gap-3"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ))}
+                              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                <button
+                                  type="button"
+                                  onClick={() => copyToClipboard(`{{${v.key}}}`, `syntax-${v.id}`)}
+                                  className="text-xs font-mono font-bold text-neutral-900 dark:text-white flex items-center gap-1 hover:underline cursor-pointer shrink-0"
+                                  title="Click to copy {{KEY}} syntax"
+                                >
+                                  <span>{"{{" + v.key + "}}"}</span>
+                                  {copiedKey === `syntax-${v.id}` ? (
+                                    <Check className="w-3 h-3 text-emerald-500" />
+                                  ) : (
+                                    <Copy className="w-3 h-3 opacity-60" />
+                                  )}
+                                </button>
+                                <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 shrink-0">
+                                  {v.type}
+                                </span>
+                                <span
+                                  className={`text-xs font-mono truncate max-w-[200px] sm:max-w-[320px] ${
+                                    isSecret && isRevealed
+                                      ? "text-amber-600 dark:text-amber-400 font-semibold"
+                                      : "text-neutral-500 dark:text-neutral-400"
+                                  }`}
+                                  title={isSecret && !isRevealed ? "Secret masked" : v.value}
+                                >
+                                  {isSecret && !isRevealed ? "••••••••••••••••" : v.value || "(empty)"}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1 shrink-0">
+                                {isSecret && (
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleRevealSecret(v.id)}
+                                    className="p-1.5 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors cursor-pointer rounded"
+                                    title={isRevealed ? "Hide Secret" : "Show Secret"}
+                                  >
+                                    {isRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => copyToClipboard(v.value, `val-${v.id}`)}
+                                  className="p-1.5 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors cursor-pointer rounded"
+                                  title="Copy raw value"
+                                >
+                                  {copiedKey === `val-${v.id}` ? (
+                                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                  ) : (
+                                    <Copy className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditGlobalVar(v)}
+                                  className="p-1.5 text-neutral-400 hover:text-amber-500 transition-colors cursor-pointer rounded"
+                                  title="Edit Variable"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteGlobalVar(v.id, v.key)}
+                                  className="p-1.5 text-neutral-400 hover:text-red-500 transition-colors cursor-pointer rounded"
+                                  title="Delete Variable"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

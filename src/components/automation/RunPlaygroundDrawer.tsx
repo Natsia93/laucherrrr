@@ -70,6 +70,12 @@ export function RunPlaygroundDrawer({
     };
 
     try {
+      let globalVariables: any[] = [];
+      try {
+        const storedVars = localStorage.getItem("launcher_automation_global_vars");
+        if (storedVars) globalVariables = JSON.parse(storedVars);
+      } catch {}
+
       const response = await fetch("/api/automation/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,6 +83,7 @@ export function RunPlaygroundDrawer({
           nodes,
           edges,
           inputPrompt,
+          globalVariables,
         }),
       });
 

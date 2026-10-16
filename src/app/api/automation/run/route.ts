@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import OpenAI from "openai";
 import { db } from "@/db";
-import { user, documents, todos, scratchpads, calendarEvents, workflowRuns } from "@/db/schema";
+import { user, documents, todos, scratchpads, calendarEvents, workflowRuns, workflows } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
@@ -23,11 +23,50 @@ export async function POST(req: NextRequest) {
     // Authenticated user session or fallback for playground guest execution
     const userId = session?.user?.id || null;
 
-    const { nodes, edges, inputPrompt, workflowId } = await req.json();
+    const { nodes, edges, inputPrompt, workflowId, globalVariables } = await req.json();
 
     if (!nodes || !Array.isArray(nodes)) {
       return NextResponse.json({ error: "Invalid nodes array provided" }, { status: 400 });
     }
+
+    // Resolve global environment variables & secrets
+    const varsMap: Record<string, string> = {};
+
+    // 1. From request payload
+    if (Array.isArray(globalVariables)) {
+      for (const v of globalVariables) {
+        if (v?.key && v?.value !== undefined) {
+          varsMap[v.key] = String(v.value);
+        }
+      }
+    }
+
+    // 2. From database fallback if authenticated
+    if (userId) {
+      try {
+        const configId = `system_vars_${userId}`;
+        const dbVarsRecord = await db.query.workflows.findFirst({
+          where: eq(workflows.id, configId),
+        });
+        if (dbVarsRecord && Array.isArray(dbVarsRecord.nodes)) {
+          for (const v of dbVarsRecord.nodes as any[]) {
+            if (v?.key && v?.value !== undefined && varsMap[v.key] === undefined) {
+              varsMap[v.key] = String(v.value);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load DB global variables:", err);
+      }
+    }
+
+    // Template interpolation helper
+    const replaceVariables = (val: any): any => {
+      if (!val || typeof val !== "string") return val;
+      return val.replace(/\{\{\s*([A-Za-z0-9_]+)\s*\}\}/g, (match, key) => {
+        return varsMap[key] !== undefined ? varsMap[key] : match;
+      });
+    };
 
     const logs: Array<{
       nodeId: string;
@@ -63,7 +102,7 @@ export async function POST(req: NextRequest) {
 
       // 1. TRIGGER NODES
       if (type === "triggerNode" || data?.category === "trigger") {
-        const text = inputPrompt || data?.config?.defaultText || currentContext;
+        const text = replaceVariables(inputPrompt || data?.config?.defaultText || currentContext);
         currentContext = text;
         logs.push({
           nodeId: id,
@@ -78,7 +117,7 @@ export async function POST(req: NextRequest) {
       else if (type === "integrationNode" || data?.category === "integration") {
         // Live Web Search
         if (nodeType === "web_search") {
-          const searchQuery = data?.config?.query || currentContext || "Informasi terkini";
+          const searchQuery = replaceVariables(data?.config?.query || currentContext || "Informasi terkini");
           try {
             const searchRes = await performWebSearch(searchQuery);
             const formattedSearch = formatSearchContext(searchRes);
@@ -109,9 +148,9 @@ export async function POST(req: NextRequest) {
 
         // Slack Notification Webhook
         else if (nodeType === "slack_webhook") {
-          const webhookUrl = data?.config?.webhookUrl?.trim();
-          const channel = data?.config?.channel || "#general";
-          const botName = data?.config?.botName || "Launcher OS Bot";
+          const webhookUrl = replaceVariables(data?.config?.webhookUrl?.trim());
+          const channel = replaceVariables(data?.config?.channel || "#general");
+          const botName = replaceVariables(data?.config?.botName || "Launcher OS Bot");
           const messageText = `🚀 *[Launcher OS Automation Notification]*\n*Channel:* \`${channel}\`\n\n${generatedAIResult || currentContext}`;
 
           let sentReal = false;
@@ -148,8 +187,8 @@ export async function POST(req: NextRequest) {
 
         // Telegram Bot Alert Dispatcher
         else if (nodeType === "telegram_bot") {
-          const botToken = data?.config?.botToken?.trim() || process.env.TELEGRAM_BOT_TOKEN;
-          const chatId = data?.config?.chatId?.trim() || process.env.TELEGRAM_CHAT_ID;
+          const botToken = replaceVariables(data?.config?.botToken?.trim()) || process.env.TELEGRAM_BOT_TOKEN;
+          const chatId = replaceVariables(data?.config?.chatId?.trim()) || process.env.TELEGRAM_CHAT_ID;
           const parseMode = data?.config?.parseMode || "Markdown";
           const silent = !!data?.config?.silent;
 
@@ -203,7 +242,7 @@ export async function POST(req: NextRequest) {
         // Generic HTTP Request / Webhook (Zapier, Make, n8n, Discord, REST)
         else if (nodeType === "http_request") {
           const method = data?.config?.method || "POST";
-          const url = data?.config?.url?.trim();
+          const url = replaceVariables(data?.config?.url?.trim());
           let httpStatus = 200;
           let executedLive = false;
 
@@ -244,8 +283,8 @@ export async function POST(req: NextRequest) {
 
         // Email Dispatcher
         else if (nodeType === "send_email") {
-          const toEmail = data?.config?.toEmail || "team@revou.co";
-          const subject = data?.config?.subject || "Automation Summary Report";
+          const toEmail = replaceVariables(data?.config?.toEmail || "team@revou.co");
+          const subject = replaceVariables(data?.config?.subject || "Automation Summary Report");
 
           logs.push({
             nodeId: id,
@@ -259,8 +298,8 @@ export async function POST(req: NextRequest) {
         // Google Sheets Connector (Read / Append / Update)
         else if (nodeType === "google_sheets" || type === "googleSheetsNode") {
           const operation = data?.config?.operation || "read_rows";
-          const sheetName = data?.config?.sheetName || "Sheet1";
-          const spreadsheetId = data?.config?.spreadsheetId || "Leads_2026";
+          const sheetName = replaceVariables(data?.config?.sheetName || "Sheet1");
+          const spreadsheetId = replaceVariables(data?.config?.spreadsheetId || "Leads_2026");
           const limit = data?.config?.limit || 5;
 
           let sheetResult: any = null;
@@ -305,8 +344,8 @@ export async function POST(req: NextRequest) {
         // Google Drive Storage Connector (Upload / Search / Read / Folder)
         else if (nodeType === "google_drive" || type === "googleDriveNode") {
           const operation = data?.config?.operation || "upload_file";
-          const folderPath = data?.config?.folderPath || "Launcher_Exports";
-          const fileName = data?.config?.fileName || `Report_${Date.now()}.pdf`;
+          const folderPath = replaceVariables(data?.config?.folderPath || "Launcher_Exports");
+          const fileName = replaceVariables(data?.config?.fileName || `Report_${Date.now()}.pdf`);
 
           const fileId = `drive_file_${Math.random().toString(36).substring(2, 9)}`;
           const driveFileUrl = `https://drive.google.com/file/d/${fileId}/view`;
@@ -337,8 +376,8 @@ export async function POST(req: NextRequest) {
         // WhatsApp Messenger Dispatcher (Fonnte / Wablas / Waha / Meta)
         else if (nodeType === "whatsapp_send" || type === "whatsappNode") {
           const gateway = data?.config?.gateway || "fonnte_qr";
-          const rawPhone = data?.config?.targetPhone || "081234567890";
-          let messageTemplate = data?.config?.messageBody || "Halo, terima kasih telah menghubungi Launcher OS. Update alur Anda: {{summary}}";
+          const rawPhone = replaceVariables(data?.config?.targetPhone || "081234567890");
+          let messageTemplate = replaceVariables(data?.config?.messageBody || "Halo, terima kasih telah menghubungi Launcher OS. Update alur Anda: {{summary}}");
 
           // Dynamic tag replacement
           const formattedPhone = rawPhone.replace(/\{\{phone\}\}/gi, "081234567890");
@@ -436,7 +475,7 @@ export async function POST(req: NextRequest) {
       // 5. AI GENERATION NODES
       else if (type === "aiNode" || data?.category === "ai") {
         const modelName = data?.config?.model || "gemini-2.5-flash";
-        let systemPrompt = data?.config?.systemPrompt || "Rangkum dan buatkan action items terstruktur.";
+        let systemPrompt = replaceVariables(data?.config?.systemPrompt || "Rangkum dan buatkan action items terstruktur.");
         
         // Langflow-style dynamic prompt template interpolation
         systemPrompt = systemPrompt.replace(/\{([a-zA-Z0-9_-]+)\}/g, (match: string, p1: string) => {
@@ -517,7 +556,7 @@ export async function POST(req: NextRequest) {
 
         // Add To-Do Item
         else if (nodeType === "create_todo") {
-          const taskTitle = data?.config?.taskTitle || "Action item baru dari alur otomasi";
+          const taskTitle = replaceVariables(data?.config?.taskTitle || "Action item baru dari alur otomasi");
           const todoId = `todo-${Date.now()}`;
 
           if (userId && userId !== "anonymous-user") {
@@ -543,7 +582,7 @@ export async function POST(req: NextRequest) {
 
         // Create Calendar Event
         else if (nodeType === "create_calendar") {
-          const eventTitle = data?.config?.eventTitle || "Follow-up Meeting dari Otomasi";
+          const eventTitle = replaceVariables(data?.config?.eventTitle || "Follow-up Meeting dari Otomasi");
           const duration = data?.config?.durationMinutes || 60;
           const category = data?.config?.category || "meeting";
           const eventId = `event-${Date.now()}`;
