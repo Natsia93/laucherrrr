@@ -49,6 +49,10 @@ import {
   Settings2,
   Send,
   Pencil,
+  Code,
+  Play,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -259,6 +263,34 @@ export default function SettingsPage() {
   const [webhookBaseUrl, setWebhookBaseUrl] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isSavingVar, setIsSavingVar] = useState(false);
+
+  // Webhook Trigger Gateway State
+  const [webhookTestId, setWebhookTestId] = useState("flow-123");
+  const [webhookTestMethod, setWebhookTestMethod] = useState<"POST" | "GET" | "PUT">("POST");
+  const [webhookTestPayload, setWebhookTestPayload] = useState(
+    JSON.stringify(
+      {
+        event: "lead_submission",
+        topic: "Laporan Mingguan",
+        urgency: "high",
+        user: "Fiqiy",
+      },
+      null,
+      2
+    )
+  );
+  const [webhookTestResult, setWebhookTestResult] = useState<{
+    status: "idle" | "sending" | "success" | "error";
+    statusCode?: number;
+    latencyMs?: number;
+    response?: any;
+    error?: string;
+  }>({ status: "idle" });
+  const [webhookEvents, setWebhookEvents] = useState<any[]>([]);
+  const [registeredWebhookTriggers, setRegisteredWebhookTriggers] = useState<any[]>([]);
+  const [isLoadingWebhookEvents, setIsLoadingWebhookEvents] = useState(false);
+  const [webhookCodeTab, setWebhookCodeTab] = useState<"curl" | "fetch" | "python">("curl");
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
   // Connected App Connectors State
   const [connectors, setConnectors] = useState<ConnectorConfig>(DEFAULT_CONNECTORS);
@@ -779,6 +811,142 @@ export default function SettingsPage() {
     setCopiedKey(identifier);
     setTimeout(() => setCopiedKey(null), 2000);
     triggerToast(`Copied to clipboard: ${text}`);
+  };
+
+  // Webhook Gateway Methods
+  const fetchWebhookEvents = async () => {
+    setIsLoadingWebhookEvents(true);
+    try {
+      const res = await fetch("/api/automation/webhook/events");
+      const data = await res.json();
+      if (data.events) {
+        setWebhookEvents(data.events);
+      }
+      if (data.registeredTriggers) {
+        setRegisteredWebhookTriggers(data.registeredTriggers);
+      }
+    } catch {}
+    setIsLoadingWebhookEvents(false);
+  };
+
+  useEffect(() => {
+    if (automationSubView === "webhooks") {
+      fetchWebhookEvents();
+    }
+  }, [automationSubView]);
+
+  const handleSendTestWebhook = async () => {
+    const trimmedId = webhookTestId.trim() || "flow-123";
+    setWebhookTestResult({ status: "sending" });
+    const startTime = Date.now();
+
+    try {
+      let parsedBody: any = undefined;
+      if (webhookTestMethod !== "GET") {
+        try {
+          parsedBody = JSON.parse(webhookTestPayload);
+        } catch {
+          setWebhookTestResult({
+            status: "error",
+            error: "Invalid JSON format in payload editor.",
+          });
+          return;
+        }
+      }
+
+      const url = `${webhookBaseUrl}${trimmedId}`;
+      const res = await fetch(url, {
+        method: webhookTestMethod,
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "LauncherOS-Webhook-Tester/1.0",
+        },
+        body: webhookTestMethod !== "GET" ? JSON.stringify(parsedBody) : undefined,
+      });
+
+      const latencyMs = Date.now() - startTime;
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        setWebhookTestResult({
+          status: "success",
+          statusCode: res.status,
+          latencyMs,
+          response: data,
+        });
+        triggerToast(`Webhook 200 OK — Processed in ${latencyMs}ms!`);
+        fetchWebhookEvents();
+      } else {
+        setWebhookTestResult({
+          status: "error",
+          statusCode: res.status,
+          latencyMs,
+          error: data.error || `HTTP ${res.status} Error`,
+          response: data,
+        });
+      }
+    } catch (err: any) {
+      const latencyMs = Date.now() - startTime;
+      setWebhookTestResult({
+        status: "error",
+        latencyMs,
+        error: err?.message || "Network request failed",
+      });
+    }
+  };
+
+  const handleClearWebhookEvents = async () => {
+    try {
+      await fetch("/api/automation/webhook/events", { method: "DELETE" });
+      setWebhookEvents([]);
+      triggerToast("Webhook event logs cleared.");
+    } catch {}
+  };
+
+  const loadPayloadPreset = (preset: "lead" | "order" | "github") => {
+    if (preset === "lead") {
+      setWebhookTestPayload(
+        JSON.stringify(
+          {
+            event: "new_lead",
+            name: "Budi Santoso",
+            email: "budi@revou.co",
+            company: "RevoU Enterprise",
+            topic: "Enterprise AI Training",
+          },
+          null,
+          2
+        )
+      );
+    } else if (preset === "order") {
+      setWebhookTestPayload(
+        JSON.stringify(
+          {
+            event: "order_completed",
+            orderId: `ORD-${Date.now().toString().slice(-6)}`,
+            amount: 1500000,
+            currency: "IDR",
+            status: "PAID",
+          },
+          null,
+          2
+        )
+      );
+    } else if (preset === "github") {
+      setWebhookTestPayload(
+        JSON.stringify(
+          {
+            event: "push",
+            repository: "LauncherOs",
+            branch: "main",
+            commit: "3abcc35",
+            author: "FiqiyMuhammad",
+          },
+          null,
+          2
+        )
+      );
+    }
   };
 
   // Connector Helpers
@@ -1706,7 +1874,7 @@ export default function SettingsPage() {
 
             {/* SUB-VIEW 3: WEBHOOK GATEWAY DETAIL */}
             {automationSubView === "webhooks" && (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div className="flex items-center justify-between">
                   <button
                     type="button"
@@ -1716,9 +1884,23 @@ export default function SettingsPage() {
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Back to Automation & Integration</span>
                   </button>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={fetchWebhookEvents}
+                      disabled={isLoadingWebhookEvents}
+                      className="h-8 text-xs border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+                    >
+                      <RotateCcw className={`w-3.5 h-3.5 mr-1.5 ${isLoadingWebhookEvents ? "animate-spin" : ""}`} />
+                      <span>Refresh Gateway</span>
+                    </Button>
+                  </div>
                 </div>
 
-                <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl space-y-4 shadow-xs">
+                {/* Card 1: Webhook Endpoint Gateway Configuration */}
+                <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl space-y-5 shadow-xs">
                   <div className="space-y-1 pb-3 border-b border-neutral-100 dark:border-neutral-800">
                     <div className="flex items-center gap-2">
                       <Globe className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
@@ -1731,42 +1913,389 @@ export default function SettingsPage() {
                     </p>
                   </div>
 
+                  {/* Registered Triggers from Active Workflows */}
+                  {registeredWebhookTriggers.length > 0 && (
+                    <div className="p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 space-y-2">
+                      <div className="flex items-center justify-between text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                        <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                          <Zap className="w-3.5 h-3.5" />
+                          <span>Active Registered Workflow Triggers ({registeredWebhookTriggers.length})</span>
+                        </span>
+                        <span className="text-[10.5px] font-normal text-neutral-400">Click to load in tester</span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {registeredWebhookTriggers.map((trig) => (
+                          <button
+                            key={trig.flowId + trig.webhookId}
+                            type="button"
+                            onClick={() => {
+                              setWebhookTestId(trig.webhookId);
+                              setWebhookTestMethod((trig.method as any) || "POST");
+                              triggerToast(`Loaded trigger for flow "${trig.flowName}"`);
+                            }}
+                            className={`px-2.5 py-1 text-xs rounded-md border flex items-center gap-2 transition-all cursor-pointer ${
+                              webhookTestId === trig.webhookId
+                                ? "border-amber-500/60 bg-amber-500/15 text-neutral-900 dark:text-white font-medium"
+                                : "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#18181b] text-neutral-700 dark:text-neutral-300 hover:border-neutral-400"
+                            }`}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span className="font-medium truncate max-w-[150px]">{trig.flowName}</span>
+                            <span className="font-mono text-[10px] opacity-70">({trig.webhookId})</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Live Endpoint URL Box */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                      Live Webhook URL Endpoint
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 flex items-center h-9 px-3 rounded-md bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-xs font-mono overflow-x-auto">
+                        <span className="text-neutral-400 shrink-0">{webhookBaseUrl}</span>
+                        <span className="text-amber-600 dark:text-amber-400 font-bold shrink-0">{webhookTestId.trim() || "[WEBHOOK_ID]"}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => copyToClipboard(`${webhookBaseUrl}${webhookTestId.trim() || "flow-123"}`, "webhook-base")}
+                        className="h-9 px-3 text-xs flex items-center gap-1.5 shrink-0 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+                      >
+                        {copiedKey === "webhook-base" ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>Copy URL</span>
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Card 2: Interactive Webhook Dispatcher & Tester */}
+                <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl space-y-4 shadow-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-neutral-100 dark:border-neutral-800">
+                    <div className="flex items-center gap-2">
+                      <Play className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <h3 className="text-sm font-semibold text-neutral-950 dark:text-white">
+                        Live Webhook Tester & Dispatcher
+                      </h3>
+                    </div>
+                    <span className="text-[10.5px] text-neutral-500 dark:text-neutral-400">
+                      Simulate incoming HTTP webhooks from external providers
+                    </span>
+                  </div>
+
                   <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                        Webhook Endpoint Base URL
-                      </label>
-                      <div className="flex items-center gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                      <div className="sm:col-span-3 space-y-1">
+                        <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                          HTTP Method
+                        </label>
+                        <select
+                          value={webhookTestMethod}
+                          onChange={(e) => setWebhookTestMethod(e.target.value as any)}
+                          className="w-full h-8 px-2.5 text-xs font-medium rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#18181b] text-neutral-800 dark:text-neutral-200 focus:outline-none"
+                        >
+                          <option value="POST">POST (Standard)</option>
+                          <option value="GET">GET (Ping / Query)</option>
+                          <option value="PUT">PUT (Update)</option>
+                        </select>
+                      </div>
+
+                      <div className="sm:col-span-9 space-y-1">
+                        <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                          Target Webhook ID / Route Parameter
+                        </label>
                         <Input
                           type="text"
-                          readOnly
-                          value={`${webhookBaseUrl}[YOUR_WEBHOOK_ID]`}
-                          className="h-9 text-xs font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300"
+                          value={webhookTestId}
+                          onChange={(e) => setWebhookTestId(e.target.value)}
+                          placeholder="e.g. flow-123 or lead-capture"
+                          className="h-8 text-xs font-mono bg-white dark:bg-[#18181b] border-neutral-200 dark:border-neutral-800"
                         />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => copyToClipboard(`${webhookBaseUrl}flow-trigger-123`, "webhook-base")}
-                          className="h-9 px-3 text-xs flex items-center gap-1.5 shrink-0 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
-                        >
-                          {copiedKey === "webhook-base" ? <Check className="w-3.5 h-3.5 text-neutral-900 dark:text-white" /> : <Copy className="w-3.5 h-3.5" />}
-                          <span>Copy URL</span>
-                        </Button>
                       </div>
                     </div>
 
-                    <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-neutral-800/80 space-y-2">
-                      <div className="text-[11px] font-semibold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5">
-                        <Terminal className="w-3.5 h-3.5 text-neutral-600 dark:text-neutral-400" />
-                        <span>Quick cURL Example</span>
+                    {/* Payload Presets & Editor */}
+                    {webhookTestMethod !== "GET" && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                            Request Body JSON Payload
+                          </label>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-neutral-400">Preset:</span>
+                            <button
+                              type="button"
+                              onClick={() => loadPayloadPreset("lead")}
+                              className="px-2 py-0.5 text-[10px] rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 transition-colors cursor-pointer"
+                            >
+                              CRM Lead
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => loadPayloadPreset("order")}
+                              className="px-2 py-0.5 text-[10px] rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 transition-colors cursor-pointer"
+                            >
+                              Order Paid
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => loadPayloadPreset("github")}
+                              className="px-2 py-0.5 text-[10px] rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 transition-colors cursor-pointer"
+                            >
+                              GitHub Push
+                            </button>
+                          </div>
+                        </div>
+
+                        <textarea
+                          rows={5}
+                          value={webhookTestPayload}
+                          onChange={(e) => setWebhookTestPayload(e.target.value)}
+                          className="w-full p-2.5 text-xs font-mono rounded-md border border-neutral-200 dark:border-neutral-800 bg-neutral-950 text-neutral-100 focus:outline-none focus:ring-1 focus:ring-neutral-700"
+                        />
                       </div>
-                      <pre className="p-2.5 rounded-md bg-neutral-950 text-neutral-200 dark:bg-black dark:text-neutral-200 font-mono text-[11px] overflow-x-auto whitespace-pre border border-neutral-800">
-{`curl -X POST ${webhookBaseUrl}flow-123 \\
-  -H "Content-Type: application/json" \\
-  -d '{"topic": "Laporan Mingguan", "urgency": "high"}'`}
-                      </pre>
+                    )}
+
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[11px] text-neutral-400">
+                        Dispatches directly to: <code className="font-mono text-neutral-700 dark:text-neutral-300">/api/automation/webhook/{webhookTestId || "..."}</code>
+                      </span>
+                      <Button
+                        type="button"
+                        onClick={handleSendTestWebhook}
+                        disabled={webhookTestResult.status === "sending"}
+                        className="h-8 text-xs bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-950 font-semibold px-4 rounded-md cursor-pointer hover:bg-neutral-800 dark:hover:bg-white shadow-xs"
+                      >
+                        {webhookTestResult.status === "sending" ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                            <span>Dispatching...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-3.5 h-3.5 mr-1.5" />
+                            <span>Send Test Webhook</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    {/* Live Test Response Panel */}
+                    {webhookTestResult.status !== "idle" && (
+                      <div
+                        className={`p-3 rounded-lg border space-y-2 mt-3 ${
+                          webhookTestResult.status === "success"
+                            ? "bg-emerald-500/5 border-emerald-500/20"
+                            : webhookTestResult.status === "error"
+                            ? "bg-red-500/5 border-red-500/20"
+                            : "bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-[10px] font-bold uppercase font-mono px-2 py-0.5 rounded ${
+                                webhookTestResult.status === "success"
+                                  ? "bg-emerald-500 text-white"
+                                  : "bg-red-500 text-white"
+                              }`}
+                            >
+                              {webhookTestResult.statusCode || (webhookTestResult.status === "success" ? 200 : 500)} {webhookTestResult.status === "success" ? "OK" : "ERROR"}
+                            </span>
+                            {webhookTestResult.latencyMs !== undefined && (
+                              <span className="text-[11px] text-neutral-500 font-mono">
+                                Latency: {webhookTestResult.latencyMs}ms
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] text-neutral-400">Response Payload</span>
+                        </div>
+
+                        <pre className="p-2.5 rounded bg-black/80 text-neutral-200 font-mono text-[11px] overflow-x-auto max-h-48 border border-white/10">
+                          {JSON.stringify(webhookTestResult.response || { error: webhookTestResult.error }, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+
+                {/* Card 3: Multi-Language Code Snippet Generator */}
+                <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between pb-2 border-b border-neutral-100 dark:border-neutral-800">
+                    <div className="flex items-center gap-2">
+                      <Code className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
+                      <h3 className="text-xs font-semibold text-neutral-900 dark:text-white">
+                        Integration Code Snippets
+                      </h3>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {(["curl", "fetch", "python"] as const).map((tab) => (
+                        <button
+                          key={tab}
+                          type="button"
+                          onClick={() => setWebhookCodeTab(tab)}
+                          className={`px-2.5 py-1 text-[11px] font-mono rounded cursor-pointer transition-colors ${
+                            webhookCodeTab === tab
+                              ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-950 font-semibold"
+                              : "text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200"
+                          }`}
+                        >
+                          {tab === "curl" ? "cURL" : tab === "fetch" ? "JS (fetch)" : "Python (requests)"}
+                        </button>
+                      ))}
                     </div>
                   </div>
+
+                  <div className="relative">
+                    <pre className="p-3.5 rounded-lg bg-neutral-950 text-neutral-200 font-mono text-[11px] overflow-x-auto whitespace-pre border border-neutral-800 leading-relaxed">
+                      {webhookCodeTab === "curl" &&
+                        `curl -X ${webhookTestMethod} ${webhookBaseUrl}${webhookTestId || "flow-123"} \\\n  -H "Content-Type: application/json" \\\n  -d '${webhookTestPayload.replace(/\n\s*/g, " ")}'`}
+                      {webhookCodeTab === "fetch" &&
+                        `await fetch("${webhookBaseUrl}${webhookTestId || "flow-123"}", {\n  method: "${webhookTestMethod}",\n  headers: { "Content-Type": "application/json" },\n  body: JSON.stringify(${webhookTestPayload.trim()})\n});`}
+                      {webhookCodeTab === "python" &&
+                        `import requests\n\nres = requests.${webhookTestMethod.toLowerCase()}(\n    "${webhookBaseUrl}${webhookTestId || "flow-123"}",\n    json=${webhookTestPayload.trim()}\n)\nprint(res.json())`}
+                    </pre>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => {
+                        const code =
+                          webhookCodeTab === "curl"
+                            ? `curl -X ${webhookTestMethod} ${webhookBaseUrl}${webhookTestId || "flow-123"} \\\n  -H "Content-Type: application/json" \\\n  -d '${webhookTestPayload.replace(/\n\s*/g, " ")}'`
+                            : webhookCodeTab === "fetch"
+                            ? `await fetch("${webhookBaseUrl}${webhookTestId || "flow-123"}", {\n  method: "${webhookTestMethod}",\n  headers: { "Content-Type": "application/json" },\n  body: JSON.stringify(${webhookTestPayload.trim()})\n});`
+                            : `import requests\n\nres = requests.${webhookTestMethod.toLowerCase()}(\n    "${webhookBaseUrl}${webhookTestId || "flow-123"}",\n    json=${webhookTestPayload.trim()}\n)\nprint(res.json())`;
+                        copyToClipboard(code, "webhook-snippet");
+                      }}
+                      className="absolute top-2 right-2 h-7 px-2.5 text-[10.5px] bg-neutral-800/80 hover:bg-neutral-700 text-neutral-200 rounded cursor-pointer flex items-center gap-1 border border-neutral-700"
+                    >
+                      {copiedKey === "webhook-snippet" ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      <span>Copy Snippet</span>
+                    </Button>
+                  </div>
+                </Card>
+
+                {/* Card 4: Real-Time Incoming Webhook Events & Monitor Log */}
+                <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl space-y-4 shadow-xs">
+                  <div className="flex items-center justify-between pb-3 border-b border-neutral-100 dark:border-neutral-800">
+                    <div className="flex items-center gap-2">
+                      <Radio className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
+                      <h3 className="text-sm font-semibold text-neutral-950 dark:text-white">
+                        Incoming Webhook Activity Logs ({webhookEvents.length})
+                      </h3>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {webhookEvents.length > 0 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={handleClearWebhookEvents}
+                          className="h-7 px-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
+                        >
+                          <Trash2 className="w-3 h-3 mr-1" />
+                          <span>Clear Logs</span>
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={fetchWebhookEvents}
+                        disabled={isLoadingWebhookEvents}
+                        className="h-7 px-2.5 text-xs cursor-pointer border-neutral-200 dark:border-neutral-800"
+                      >
+                        <RotateCcw className={`w-3 h-3 mr-1 ${isLoadingWebhookEvents ? "animate-spin" : ""}`} />
+                        <span>Refresh</span>
+                      </Button>
+                    </div>
+                  </div>
+
+                  {webhookEvents.length === 0 ? (
+                    <div className="p-8 text-center rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 text-neutral-400 text-xs space-y-2">
+                      <Globe className="w-6 h-6 mx-auto text-neutral-300 dark:text-neutral-600" />
+                      <p>No webhook events received yet.</p>
+                      <p className="text-[11px] text-neutral-500">
+                        Dispatch a request using the <b>Live Tester</b> above or via cURL from terminal to see real-time incoming events.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                      {webhookEvents.map((ev) => {
+                        const isExpanded = expandedEventId === ev.id;
+                        return (
+                          <div
+                            key={ev.id}
+                            className="rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 p-3 space-y-2 transition-all"
+                          >
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`text-[9.5px] font-bold font-mono px-2 py-0.5 rounded ${
+                                    ev.method === "POST"
+                                      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                                      : ev.method === "GET"
+                                      ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30"
+                                      : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                                  }`}
+                                >
+                                  {ev.method}
+                                </span>
+                                <span className="font-mono text-xs font-semibold text-neutral-900 dark:text-white">
+                                  /api/automation/webhook/{ev.webhookId}
+                                </span>
+                                {ev.matchedFlowName && (
+                                  <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                                    Flow: {ev.matchedFlowName}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-neutral-400 font-mono">
+                                  {new Date(ev.receivedAt).toLocaleTimeString()}
+                                </span>
+                                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 font-mono bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                                  {ev.status || 200} OK
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedEventId(isExpanded ? null : ev.id)}
+                                  className="p-1 rounded text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer"
+                                  title="Inspect Payload"
+                                >
+                                  {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Expanded Payload & Headers */}
+                            {isExpanded && (
+                              <div className="p-3 rounded bg-black/90 text-neutral-200 text-xs font-mono space-y-2 border border-white/10 mt-2">
+                                <div>
+                                  <span className="text-[10px] text-neutral-400 uppercase tracking-wider block mb-1">Incoming Body</span>
+                                  <pre className="text-[11px] overflow-x-auto text-emerald-400">
+                                    {JSON.stringify(ev.body, null, 2)}
+                                  </pre>
+                                </div>
+                                {ev.headers && (
+                                  <div className="pt-2 border-t border-neutral-800">
+                                    <span className="text-[10px] text-neutral-400 uppercase tracking-wider block mb-1">Headers</span>
+                                    <pre className="text-[10px] text-neutral-400 overflow-x-auto">
+                                      {JSON.stringify(ev.headers, null, 2)}
+                                    </pre>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </Card>
               </div>
             )}

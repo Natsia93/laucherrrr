@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { recordWebhookEvent } from "@/lib/webhook-store";
+import { db } from "@/db";
+import { workflows } from "@/db/schema";
 
 export const runtime = "nodejs";
 
@@ -12,29 +15,54 @@ export async function POST(
     const { webhookId } = await params;
     const body = await req.json().catch(() => ({}));
     const headersList = Object.fromEntries(req.headers.entries());
+    const clientIp = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "127.0.0.1";
 
-    // Store the webhook event in memory (in production, use a queue like Redis)
-    // For now, we acknowledge and return the payload shape
-    const event = {
+    // Check if this webhookId matches any registered workflow
+    let matchedFlowName: string | undefined = undefined;
+    try {
+      const allFlows = await db.query.workflows.findMany();
+      for (const flow of allFlows) {
+        if (Array.isArray(flow.nodes)) {
+          const hasMatch = (flow.nodes as any[]).some(
+            (node) =>
+              (node.type === "webhookTriggerNode" || node.data?.nodeType === "webhook_trigger") &&
+              (node.data?.config?.webhookId === webhookId || node.id === webhookId)
+          );
+          if (hasMatch) {
+            matchedFlowName = flow.name;
+            break;
+          }
+        }
+      }
+    } catch {}
+
+    const recorded = recordWebhookEvent({
       webhookId,
-      receivedAt: new Date().toISOString(),
       method: req.method,
-      body,
+      receivedAt: new Date().toISOString(),
+      status: 200,
       headers: {
         "content-type": headersList["content-type"],
         "user-agent": headersList["user-agent"],
         authorization: headersList["authorization"] ? "[REDACTED]" : undefined,
       },
-    };
-
-    console.log(`[Webhook] Received event for ${webhookId}:`, JSON.stringify(event, null, 2));
+      body,
+      ip: clientIp,
+      matchedFlowName,
+    });
 
     return NextResponse.json({
       success: true,
-      message: `Webhook received by Launcher OS Automation`,
+      message: `Webhook "${webhookId}" processed successfully by Launcher OS Automation`,
       webhookId,
-      receivedAt: event.receivedAt,
+      receivedAt: recorded.receivedAt,
+      matchedFlowName: matchedFlowName || null,
       bodyKeys: Object.keys(body),
+      event: {
+        id: recorded.id,
+        method: recorded.method,
+        status: 200,
+      },
     });
   } catch (error: any) {
     return NextResponse.json(
@@ -49,11 +77,27 @@ export async function GET(
   { params }: { params: Promise<{ webhookId: string }> }
 ) {
   const { webhookId } = await params;
+  const clientIp = req.headers.get("x-forwarded-for") || "127.0.0.1";
+
+  const recorded = recordWebhookEvent({
+    webhookId,
+    method: "GET",
+    receivedAt: new Date().toISOString(),
+    status: 200,
+    headers: {
+      "user-agent": req.headers.get("user-agent") || undefined,
+    },
+    body: { ping: "ok", queryParams: Object.fromEntries(req.nextUrl.searchParams.entries()) },
+    ip: clientIp,
+  });
+
   return NextResponse.json({
     status: "active",
     webhookId,
     message: "Launcher OS Automation Webhook is ready to receive events",
     supportedMethods: ["POST", "GET", "PUT"],
+    receivedAt: recorded.receivedAt,
+    eventId: recorded.id,
   });
 }
 
