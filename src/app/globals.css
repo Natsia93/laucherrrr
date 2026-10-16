@@ -764,8 +764,8 @@ html {
    Zero external libraries, 100% native compositor layer
    ========================================================================== */
 html.theme-transitioning::view-transition-group(root) {
-  animation-duration: 0.4s;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-duration: 0.65s;
+  animation-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 
 html.theme-transitioning::view-transition-image-pair(root) {
@@ -785,7 +785,7 @@ html.theme-transitioning::view-transition-old(root) {
 
 html.theme-transitioning::view-transition-new(root) {
   z-index: 9999;
-  animation: theme-swipe-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: theme-swipe-in 0.65s cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
   will-change: clip-path;
   transform: translateZ(0);
   backface-visibility: hidden;
