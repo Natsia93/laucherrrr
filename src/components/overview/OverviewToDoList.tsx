@@ -228,7 +228,7 @@ export function OverviewToDoList() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -10 }}
                     className={cn(
-                      "group flex items-center gap-3 p-2.5 rounded-lg border border-neutral-100 dark:border-neutral-800/80 bg-neutral-50/70 dark:bg-neutral-900/40 hover:bg-neutral-100/60 dark:hover:bg-neutral-850/60 transition-all",
+                      "group flex items-center gap-3 p-2.5 rounded-lg border border-neutral-100 dark:border-neutral-800/80 bg-neutral-50/70 dark:bg-neutral-900/40 hover:bg-neutral-100/60 dark:hover:bg-neutral-800/60 transition-all",
                       item.isCompleted && "opacity-50 bg-neutral-100/40 dark:bg-neutral-900/20"
                     )}
                   >

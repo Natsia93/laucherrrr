@@ -1304,7 +1304,7 @@ function SlideFrameHeader({
       </div>
       <div className="flex items-center gap-2">
         {rightPill && (
-          <span className={`text-[10px] sm:text-[11px] font-medium tracking-wide px-2.5 py-0.5 rounded-full border ${isDark ? "border-neutral-800 bg-neutral-900/80 text-neutral-300" : "border-neutral-200 bg-neutral-100/90 text-neutral-600 dark:border-neutral-800 dark:bg-neutral-850 dark:text-neutral-300"}`}>
+          <span className={`text-[10px] sm:text-[11px] font-medium tracking-wide px-2.5 py-0.5 rounded-full border ${isDark ? "border-neutral-800 bg-neutral-900/80 text-neutral-300" : "border-neutral-200 bg-neutral-100/90 text-neutral-600 dark:border-neutral-800 dark:bg-neutral-800 dark:text-neutral-300"}`}>
             {rightPill}
           </span>
         )}
@@ -3586,7 +3586,7 @@ function SlideRenderer({
                 {pollOpts.map((opt, oIdx) => (
                   <div
                     key={oIdx}
-                    className="flex items-center gap-2.5 p-2 rounded-lg bg-white dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 hover:border-amber-400 cursor-pointer transition-colors shadow-2xs text-xs"
+                    className="flex items-center gap-2.5 p-2 rounded-lg bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-800 hover:border-amber-400 cursor-pointer transition-colors shadow-2xs text-xs"
                   >
                     <span className="w-5 h-5 rounded-full bg-neutral-900 text-white text-[11px] font-bold flex items-center justify-center shrink-0">
                       {opt.label}
@@ -3650,7 +3650,7 @@ function SlideRenderer({
               )}
             </motion.div>
 
-            <motion.div {...anim(0.14)} className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-850 p-3.5 shadow-sm flex flex-col justify-between">
+            <motion.div {...anim(0.14)} className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-800 p-3.5 shadow-sm flex flex-col justify-between">
               <div className="bg-neutral-900 text-white font-extrabold px-3 py-1 rounded text-xs w-fit mb-2 uppercase tracking-wider">
                 {templateCardObj.title || "Output Template"}
               </div>
@@ -4793,7 +4793,7 @@ async function streamBuildSlide(
                 <button
                   type="button"
                   onClick={handleDownloadTemplateMd}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white bg-neutral-100 dark:bg-neutral-850 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors cursor-pointer border border-neutral-200/80 dark:border-neutral-750"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer border border-neutral-200/80 dark:border-neutral-700"
                   title="Download File Template .md"
                 >
                   <Download className="w-3.5 h-3.5 text-amber-500" />
@@ -5583,7 +5583,7 @@ async function streamBuildSlide(
               onClick={handleAddSlideCard}
               className="w-full aspect-[16/9] border-2 border-dashed border-neutral-200 dark:border-neutral-800 hover:border-amber-400 dark:hover:border-amber-400/80 rounded-xl p-4 flex flex-col items-center justify-center gap-2 text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-amber-50/20 dark:hover:bg-amber-950/10 transition-all cursor-pointer select-none group"
             >
-              <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-850 group-hover:bg-[#FFDE3C] group-hover:text-neutral-950 flex items-center justify-center transition-colors">
+              <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 group-hover:bg-[#FFDE3C] group-hover:text-neutral-950 flex items-center justify-center transition-colors">
                 <Plus className="w-4 h-4" />
               </div>
               <div className="text-center">
