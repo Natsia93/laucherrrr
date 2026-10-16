@@ -830,7 +830,7 @@ export default function DashboardOverviewPage() {
         </div>
       ) : (
         /* Active Conversational Chat View (Like ChatGPT / Gemini / Claude) */
-        <div className="flex flex-col max-w-3xl mx-auto min-h-[calc(100vh-140px)] pb-60 sm:pb-72 pt-2 px-3 sm:px-4 font-sf">
+        <div className="flex flex-col max-w-3xl mx-auto min-h-[calc(100vh-140px)] pb-48 sm:pb-56 pt-2 px-3 sm:px-4 font-sf">
           {/* Messages Stream */}
           <div className="space-y-6 flex-1">
             {messages.map((msg) => (
@@ -957,8 +957,8 @@ export default function DashboardOverviewPage() {
               collapsed ? "lg:pl-[70px]" : "lg:pl-[238px]"
             }`}
           >
-            {/* Claude-style top gradient fade mask: chat text smoothly dissolves into background */}
-            <div className="w-full h-16 sm:h-24 bg-gradient-to-t from-[#faf9f6] via-[#faf9f6]/90 to-transparent dark:from-[#090909] dark:via-[#090909]/90 dark:to-transparent pointer-events-none" />
+            {/* Claude-style top gradient fade mask: subtle, gentle dissolve right above the prompt box */}
+            <div className="w-full h-7 sm:h-10 bg-gradient-to-t from-[#faf9f6] via-[#faf9f6]/30 to-transparent dark:from-[#090909] dark:via-[#090909]/30 dark:to-transparent pointer-events-none" />
 
             {/* Solid background dock behind prompt box: prevents any text from peeking underneath */}
             <div className="w-full bg-[#faf9f6] dark:bg-[#090909] pb-3 sm:pb-4 px-3 sm:px-4 pointer-events-auto">
