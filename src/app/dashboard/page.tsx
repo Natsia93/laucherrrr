@@ -1386,11 +1386,8 @@ export default function DashboardOverviewPage() {
                 </form>
 
                 {/* Claude-style footer note */}
-                <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-neutral-400 dark:text-neutral-500 pt-2 px-1">
+                <div className="flex items-center justify-center text-[10px] sm:text-[11px] text-neutral-400 dark:text-neutral-500 pt-2 px-1 text-center">
                   <span className="truncate">Launcher OS can make mistakes. Verify important responses.</span>
-                  <span className="font-mono text-[10px] hidden sm:inline-block px-1.5 py-0.5 rounded bg-neutral-200/60 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 shrink-0">
-                    Gemini 2.5 • LLM Mode
-                  </span>
                 </div>
               </div>
             </div>
