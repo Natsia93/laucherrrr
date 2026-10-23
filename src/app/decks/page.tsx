@@ -7007,57 +7007,69 @@ function SkillRulesModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#141414] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="px-5 py-3.5 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between bg-neutral-50/50 dark:bg-neutral-900/50">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center justify-center font-bold text-xs font-mono">
-              MD
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+      {/* Frosted Glass Backdrop Overlay - Exactly matching MoodCheck styling */}
+      <div
+        onClick={onClose}
+        className="fixed inset-0 bg-black/15 dark:bg-black/45 backdrop-blur-sm transition-all duration-300 cursor-pointer"
+      />
+
+      {/* Modal Container with MoodCheck signature elevation & rounded styling */}
+      <div className="relative w-full max-w-2xl bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800/90 rounded-2xl shadow-[0_15px_40px_-15px_rgba(0,0,0,0.12)] dark:shadow-[0_15px_40px_-15px_rgba(0,0,0,0.5)] z-10 flex flex-col overflow-hidden max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b border-neutral-100 dark:border-neutral-800/80 flex items-center justify-between bg-white dark:bg-[#121212]">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800/90 border border-neutral-200/60 dark:border-neutral-700/60 flex items-center justify-center text-neutral-700 dark:text-neutral-300 font-bold text-xs">
+              <FileCode className="w-4.5 h-4.5 text-neutral-700 dark:text-neutral-300" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-                <span>{skill.name}</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
+              <div className="flex items-center gap-2">
+                <h2 className="font-sf text-[15px] font-semibold text-neutral-900 dark:text-white tracking-tight">
+                  {skill.name}
+                </h2>
+                <span className="text-[10.5px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium border border-emerald-500/20">
                   Active Skill
                 </span>
-              </h2>
-              <p className="text-[11px] text-neutral-400 dark:text-neutral-500">
-                {skill.content.split("\n").length} lines • {skill.title}
+              </div>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                {skill.content.split("\n").length} baris aturan • {skill.title}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
+
+          <div className="flex items-center gap-2">
             <button
               onClick={handleCopy}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100/80 dark:bg-neutral-800/80 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/80 transition-colors cursor-pointer border border-neutral-200/60 dark:border-neutral-700/60"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copied ? "Copied" : "Copy"}</span>
+              <span>{copied ? "Tersalin!" : "Copy"}</span>
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-md text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Content Viewer */}
-        <div className="p-4 sm:p-5 overflow-y-auto font-mono text-[11.5px] leading-relaxed text-neutral-800 dark:text-neutral-200 bg-neutral-50/50 dark:bg-[#0c0c0c] whitespace-pre-wrap select-text">
-          {skill.content}
+        {/* Modal Content Document Viewer with Clean Launcher OS Typography */}
+        <div className="p-6 overflow-y-auto space-y-4 font-sans text-[13px] leading-relaxed text-neutral-800 dark:text-neutral-200 bg-neutral-50/40 dark:bg-[#0e0e0e]/50">
+          <div className="p-4 rounded-xl bg-white dark:bg-[#141414] border border-neutral-200/80 dark:border-neutral-800 shadow-2xs font-mono text-[12px] leading-relaxed whitespace-pre-wrap select-text text-neutral-800 dark:text-neutral-300">
+            {skill.content}
+          </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-5 py-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-[#141414]">
-          <span className="text-xs text-neutral-400 dark:text-neutral-500">
-            Aturan ini dibaca otomatis oleh AI saat generate deck
+        {/* Modal Footer */}
+        <div className="px-6 py-3.5 border-t border-neutral-100 dark:border-neutral-800/80 flex items-center justify-between bg-white dark:bg-[#121212]">
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">
+            Aturan ini secara otomatis diinjeksikan ke AI saat generate deck
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1.5 rounded-md text-xs font-medium bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-lg text-xs font-bold bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 transition-all shadow-xs cursor-pointer active:scale-95"
           >
             Tutup
           </button>
