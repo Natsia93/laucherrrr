@@ -1270,35 +1270,13 @@ function ShowcaseDeckCard({
     return (
       <div
         onClick={() => onSelect(deck)}
-        className="group w-full aspect-[16/9] rounded-md border border-[#005AAB]/40 dark:border-[#005AAB]/60 overflow-hidden relative transition-all cursor-pointer select-none hover:shadow-lg hover:border-[#005AAB] hover:scale-[1.01] bg-neutral-900"
+        className="group w-full aspect-[16/9] rounded-md overflow-hidden relative cursor-pointer select-none transition-all hover:opacity-90"
       >
         <img
           src={deck.image}
           alt={deck.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-between p-3">
-          <div className="flex items-center justify-between">
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FFDD3C] text-[#174A7F] uppercase tracking-wider shadow-sm flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#005AAB] animate-pulse" />
-              {deck.badge || "ITB SKILL INSTALLED"}
-            </span>
-            <span className="text-[10px] text-white/90 font-medium bg-black/50 px-2 py-0.5 rounded backdrop-blur-xs border border-white/10">
-              {deck.updatedAt}
-            </span>
-          </div>
-          <div>
-            <span className="text-[10px] font-semibold text-[#FFDD3C] tracking-wide uppercase">
-              {deck.category}
-            </span>
-            <h4 className="text-white text-xs sm:text-[13px] font-bold line-clamp-1 drop-shadow-xs">
-              {deck.title}
-            </h4>
-            <p className="text-white/70 text-[10px] line-clamp-1 mt-0.5">
-              Klik untuk memuat format slide & palet warna resmi ITB
-            </p>
-          </div>
-        </div>
       </div>
     );
   }
