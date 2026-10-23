@@ -4251,6 +4251,7 @@ export default function DeckGeneratorPage() {
   const [specialNotes, setSpecialNotes] = useState<string>("");
   const [selectedLayoutPreview, setSelectedLayoutPreview] = useState<number>(1);
   const [showTemplateModal, setShowTemplateModal] = useState<boolean>(false);
+  const [showSkillModal, setShowSkillModal] = useState<boolean>(false);
   const [customBrainActive, setCustomBrainActive] = useState<boolean>(false);
   const [showCloneStyleModal, setShowCloneStyleModal] = useState<boolean>(false);
   const [clonedStyle, setClonedStyle] = useState<ClonedStyleResult | null>(null);
@@ -5103,13 +5104,17 @@ async function streamBuildSlide(
           </div>
 
           {/* Main Clean Textarea Input Area */}
-          <div className="max-w-2xl mx-auto bg-white dark:bg-[#121212] rounded-2xl border border-neutral-200/90 dark:border-neutral-800 shadow-sm p-4 sm:p-5 relative transition-all focus-within:ring-2 focus-within:ring-[#FFE54C]/50 focus-within:border-[#E5BC10]">
+          <div className="max-w-2xl mx-auto bg-white dark:bg-[#121212] rounded-xl border border-neutral-200/90 dark:border-neutral-800 shadow-sm p-4 sm:p-5 relative transition-all focus-within:ring-2 focus-within:ring-[#FFE54C]/50 focus-within:border-[#E5BC10]">
             {/* Attached Skill File Card (Claude-style Clean Minimalist Card) */}
             {attachedSkill && (
-              <div className="mb-4">
-                <div className="group relative w-32 h-26 p-3 rounded-xl border border-neutral-200/90 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 flex flex-col justify-between select-none transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
+              <div className="mb-3.5">
+                <div
+                  onClick={() => setShowSkillModal(true)}
+                  className="group relative w-32 h-26 p-2.5 rounded-lg border border-neutral-200/90 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 flex flex-col justify-between select-none transition-all hover:border-neutral-400 dark:hover:border-neutral-600 hover:bg-neutral-100/60 dark:hover:bg-neutral-900 cursor-pointer"
+                  title="Klik untuk membaca instruksi skill"
+                >
                   <div>
-                    <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-snug line-clamp-2 break-all">
+                    <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-snug line-clamp-2 break-all group-hover:text-neutral-950 dark:group-hover:text-white transition-colors">
                       {attachedSkill.name}
                     </p>
                     <p className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1 font-normal">
@@ -5123,7 +5128,10 @@ async function streamBuildSlide(
                     </span>
                     <button
                       type="button"
-                      onClick={() => setAttachedSkill(null)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAttachedSkill(null);
+                      }}
                       className="p-1 -mr-1 -mb-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-200/60 dark:hover:bg-neutral-800 rounded-md transition-all cursor-pointer"
                       title="Remove file"
                     >
@@ -6633,6 +6641,13 @@ async function streamBuildSlide(
         currentClonedStyle={clonedStyle}
         onClearClonedStyle={handleClearClonedStyle}
       />
+
+      {/* ──── ATTACHED SKILL RULES PREVIEW MODAL ──── */}
+      <SkillRulesModal
+        isOpen={showSkillModal}
+        onClose={() => setShowSkillModal(false)}
+        skill={attachedSkill}
+      />
     </AppShell>
   );
 }
@@ -6963,6 +6978,89 @@ function PromptTemplateModal({
               <span>Use This Template</span>
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────────────────────────────────
+ * Skill Rules Preview Modal
+ * ─────────────────────────────────────────────────── */
+function SkillRulesModal({
+  isOpen,
+  onClose,
+  skill,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  skill: AttachedSkill | null;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  if (!isOpen || !skill) return null;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(skill.content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-[#141414] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="px-5 py-3.5 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between bg-neutral-50/50 dark:bg-neutral-900/50">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center justify-center font-bold text-xs font-mono">
+              MD
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+                <span>{skill.name}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
+                  Active Skill
+                </span>
+              </h2>
+              <p className="text-[11px] text-neutral-400 dark:text-neutral-500">
+                {skill.content.split("\n").length} lines • {skill.title}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleCopy}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors cursor-pointer"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copied ? "Copied" : "Copy"}</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-md text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content Viewer */}
+        <div className="p-4 sm:p-5 overflow-y-auto font-mono text-[11.5px] leading-relaxed text-neutral-800 dark:text-neutral-200 bg-neutral-50/50 dark:bg-[#0c0c0c] whitespace-pre-wrap select-text">
+          {skill.content}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-[#141414]">
+          <span className="text-xs text-neutral-400 dark:text-neutral-500">
+            Aturan ini dibaca otomatis oleh AI saat generate deck
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-1.5 rounded-md text-xs font-medium bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition-colors cursor-pointer"
+          >
+            Tutup
+          </button>
         </div>
       </div>
     </div>
