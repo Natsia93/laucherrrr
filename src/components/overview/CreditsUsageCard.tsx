@@ -54,6 +54,21 @@ export function CreditsUsageCard() {
     return () => window.removeEventListener("storage", checkApiKey);
   }, []);
 
+  // Instant render from local cache (0ms delay)
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem("launcher_overview_total_generations");
+      if (cached !== null) {
+        const total = parseInt(cached, 10);
+        if (!isNaN(total)) {
+          setTotalGenerations(total);
+          setDisplayCount(total);
+          springValue.set(total);
+        }
+      }
+    } catch {}
+  }, [springValue]);
+
   // Fetch real activity stats
   useEffect(() => {
     let isMounted = true;
@@ -64,6 +79,9 @@ export function CreditsUsageCard() {
           const total = data.totalGenerations ?? 0;
           setTotalGenerations(total);
           springValue.set(total);
+          try {
+            localStorage.setItem("launcher_overview_total_generations", total.toString());
+          } catch {}
         }
       })
       .catch((err) => {

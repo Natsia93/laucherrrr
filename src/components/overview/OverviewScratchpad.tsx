@@ -15,6 +15,17 @@ export function OverviewScratchpad() {
   const [isLoading, setIsLoading] = useState(true);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Load from local storage cache immediately for instant render (0ms delay)
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem("launcher_os_scratchpad");
+      if (cached !== null) {
+        setNote(cached);
+        setIsLoading(false);
+      }
+    } catch {}
+  }, []);
+
   // Fetch initial note from database
   const fetchNote = useCallback(async () => {
     try {

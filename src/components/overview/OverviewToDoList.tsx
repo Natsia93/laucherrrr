@@ -23,6 +23,20 @@ export function OverviewToDoList() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
 
+  // Load from local storage cache immediately for instant render (0ms delay)
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem("launcher_os_todos");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setTodos(parsed);
+          setIsLoading(false);
+        }
+      }
+    } catch {}
+  }, []);
+
   // Fetch todos from database
   const fetchTodos = useCallback(async () => {
     try {

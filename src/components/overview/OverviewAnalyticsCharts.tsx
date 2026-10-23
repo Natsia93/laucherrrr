@@ -36,6 +36,19 @@ export function OverviewAnalyticsCharts() {
   const [hasUnlocked, setHasUnlocked] = useState(true);
   const [shouldAnimate, setShouldAnimate] = useState(false);
 
+  // Instant render from local cache (0ms delay)
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem("launcher_overview_chart_cache");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setWeekChartData(parsed);
+        }
+      }
+    } catch {}
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     fetch("/api/user/activity-stats")
@@ -44,6 +57,9 @@ export function OverviewAnalyticsCharts() {
         if (isMounted && data?.weekData) {
           setWeekChartData(data.weekData);
           setShouldAnimate(true);
+          try {
+            localStorage.setItem("launcher_overview_chart_cache", JSON.stringify(data.weekData));
+          } catch {}
         }
       })
       .catch((err) => {
