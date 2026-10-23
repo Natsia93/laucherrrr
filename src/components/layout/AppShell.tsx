@@ -42,12 +42,12 @@ function AppShellInner({
         </div>
       </div>
 
-      {/* Subtle Warm Yellow Gradient Aura in Bottom-Right Corner */}
+      {/* Subtle Warm Yellow Gradient Aura in Bottom-Right Corner Background */}
       <div
-        className="fixed bottom-0 right-0 w-[420px] h-[420px] sm:w-[600px] sm:h-[600px] pointer-events-none select-none z-0 overflow-hidden"
+        className="fixed bottom-0 right-0 w-[450px] h-[450px] sm:w-[620px] sm:h-[620px] pointer-events-none select-none z-0 overflow-hidden"
         aria-hidden="true"
       >
-        <div className="absolute -bottom-24 -right-24 w-[500px] h-[500px] sm:w-[680px] sm:h-[680px] rounded-full bg-gradient-to-tl from-[#FFD100]/22 via-[#FFE500]/8 to-transparent blur-3xl dark:from-[#FFE500]/12 dark:via-[#FFD100]/3 dark:to-transparent" />
+        <div className="absolute -bottom-20 -right-20 w-[480px] h-[480px] sm:w-[650px] sm:h-[650px] rounded-full bg-gradient-to-tl from-[#FFD100]/32 via-[#FFE500]/14 to-transparent blur-3xl dark:from-[#FFE500]/14 dark:via-[#FFD100]/4 dark:to-transparent" />
       </div>
 
       {/* Persistent Sidebar */}
