@@ -228,6 +228,8 @@ export async function POST(req: NextRequest) {
       layoutMood = "framework",
       specialNotes = "",
       customBrainInstruction = "",
+      clonedStyleDirectives = "",
+      clonedReferenceSummary = "",
     } = body;
 
     // 1. Detect explicit #Slide format (#Slide 1 .. #Slide N or Slide 1:)
@@ -288,6 +290,7 @@ PRESENTATION PARAMETERS:
 - Deck Purpose: ${purpose}
 - Special Notes/Instructions: ${specialNotes || "None"}
 ${customBrainInstruction && customBrainInstruction.trim().length > 0 ? `\nUSER CUSTOM AI BRAIN & GUIDELINES (ACTIVE):\n"""\n${customBrainInstruction.trim()}\n"""\n` : ""}
+${clonedStyleDirectives && clonedStyleDirectives.trim().length > 0 ? `\nVISUAL STYLE CLONED FROM USER REFERENCE SLIDE:\nSummary: ${clonedReferenceSummary || "Reference Slide Style"}\nDirectives:\n"""\n${clonedStyleDirectives.trim()}\n"""\nStrictly emulate this layout rhythm, card hierarchy, and styling aesthetics.\n` : ""}
 
 INSTRUCTIONS:
 - Adapt layouts naturally to the content: use "bullets", "twoColumn", "process", "timeline", "tableComparison", "hero", "stats" (only if numbers exist), and "boldStatement".

@@ -78,6 +78,7 @@ import {
   CurvedCycleLoop,
   AsymmetricMatrixGrid,
 } from "@/components/decks/SlideDiagrams";
+import { CloneStyleModal, type ClonedStyleResult } from "@/components/decks/CloneStyleModal";
 
 /* ───────────────────────────────────────────────────
  * Types & Theme Presets
@@ -616,6 +617,23 @@ export function safeString(val: any, fallback = ""): string {
     }
   }
   return String(val);
+}
+
+export function mapVisualLayoutToLayout(val?: string): SlideLayout {
+  if (!val) return "bullets";
+  const lower = val.toLowerCase();
+  if (lower.includes("hero") || lower.includes("cover") || lower.includes("title")) return "hero";
+  if (lower.includes("two") || lower.includes("column") || lower.includes("split")) return "twoColumn";
+  if (lower.includes("process") || lower.includes("step")) return "process";
+  if (lower.includes("timeline") || lower.includes("roadmap")) return "timeline";
+  if (lower.includes("table") || lower.includes("comparison")) return "tableComparison";
+  if (lower.includes("flow") || lower.includes("diagram") || lower.includes("architecture")) return "flowDiagram";
+  if (lower.includes("stat") || lower.includes("metric") || lower.includes("number")) return "stats";
+  if (lower.includes("bold") || lower.includes("impact") || lower.includes("cta")) return "boldStatement";
+  if (lower.includes("chart") || lower.includes("bar")) return "chartBar";
+  if (lower.includes("donut") || lower.includes("pie")) return "chartDonut";
+  if (lower.includes("insight") || lower.includes("quote")) return "keyInsight";
+  return "bullets";
 }
 
 export function normalizeSlide(raw: any, index: number = 0): SlideData {
@@ -4100,6 +4118,78 @@ export default function DeckGeneratorPage() {
   const [selectedLayoutPreview, setSelectedLayoutPreview] = useState<number>(1);
   const [showTemplateModal, setShowTemplateModal] = useState<boolean>(false);
   const [customBrainActive, setCustomBrainActive] = useState<boolean>(false);
+  const [showCloneStyleModal, setShowCloneStyleModal] = useState<boolean>(false);
+  const [clonedStyle, setClonedStyle] = useState<ClonedStyleResult | null>(null);
+
+  const handleApplyClonedStyle = (style: ClonedStyleResult) => {
+    setClonedStyle(style);
+    setBgColors({
+      color1: style.palette.primary,
+      color2: style.palette.secondary,
+      color3: style.palette.accent,
+    });
+    setIsCustomBgColors(true);
+    if (style.typography.titleFontSuggestion) {
+      setTitleFont(style.typography.titleFontSuggestion);
+    }
+    if (style.typography.bodyFontSuggestion) {
+      setBodyFont(style.typography.bodyFontSuggestion);
+    }
+    setBgStyle(style.bgStyle);
+    const mappedMood: LayoutMood =
+      style.layoutMood === "data" || (style.layoutMood as string) === "data-driven"
+        ? "data"
+        : style.layoutMood === "framework"
+        ? "framework"
+        : "executive";
+    setLayoutMood(mappedMood);
+    setDensity(style.contentDensity);
+  };
+
+  const handleClearClonedStyle = () => {
+    setClonedStyle(null);
+    setIsCustomBgColors(false);
+  };
+
+  const [isPlanningOutline, setIsPlanningOutline] = useState<boolean>(false);
+
+  const handlePlanOutline = async (targetCount: number) => {
+    if (!content.trim()) return;
+    setIsPlanningOutline(true);
+
+    try {
+      const activeProvider = typeof window !== "undefined" ? (localStorage.getItem("ai_provider") || "gemini") : "gemini";
+      const storedApiKey = typeof window !== "undefined" ? (localStorage.getItem(`ai_key_${activeProvider}`) || "") : "";
+      const storedModel = typeof window !== "undefined" ? (localStorage.getItem(`ai_model_${activeProvider}`) || "") : "";
+
+      const res = await fetch("/api/decks/plan-outline", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content,
+          targetCount,
+          audience,
+          purpose,
+          layoutMood,
+          clonedStyleDirectives: clonedStyle?.visualDirectives || "",
+          apiKey: storedApiKey,
+          provider: activeProvider,
+          model: storedModel,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && Array.isArray(data.outline) && data.outline.length > 0) {
+        setEditableBreakdown(data.outline);
+        setSlideCountPreference(`${data.outline.length} Slides`);
+        setSlideCount(String(data.outline.length));
+      }
+    } catch (err) {
+      console.error("Plan outline error:", err);
+    } finally {
+      setIsPlanningOutline(false);
+    }
+  };
 
   // Load user defaults and custom brain from settings
   useEffect(() => {
@@ -4469,6 +4559,90 @@ async function streamBuildSlide(
             : "Auto"
           : slideCountPreference;
 
+      // ──── HIGH-CAPACITY CHUNKED PIPELINE FOR 10 TO 100+ SLIDES ────
+      if (editableBreakdown.length > 8) {
+        const total = editableBreakdown.length;
+        const CHUNK_SIZE = 5;
+        const totalChunks = Math.ceil(total / CHUNK_SIZE);
+        const builtSlides: SlideData[] = [];
+
+        // Put initial placeholders in slides so user can see full slide count
+        setSlides(
+          editableBreakdown.map((b, idx) => ({
+            id: `placeholder-${idx}`,
+            layout: (mapVisualLayoutToLayout(b.visualLayout) as SlideLayout) || "bullets",
+            title: b.headline,
+            subtitle: b.subheadline,
+            description: b.description,
+            slideNumber: String(idx + 1).padStart(2, "0"),
+          }))
+        );
+
+        for (let c = 0; c < totalChunks; c++) {
+          const startIdx = c * CHUNK_SIZE;
+          const endIdx = Math.min((c + 1) * CHUNK_SIZE, total);
+          const chunkBreakdown = editableBreakdown.slice(startIdx, endIdx);
+
+          const progressPct = Math.round(15 + (c / totalChunks) * 80);
+          setGeneratingProgress(progressPct);
+          setGeneratingStage(`⚡ Men-generate Batch ${c + 1}/${totalChunks}: Slide ${startIdx + 1} s/d ${endIdx} dari ${total}...`);
+          setActiveSlideIndex(startIdx);
+
+          const chunkRes = await fetch("/api/decks/generate-chunk", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chunkIndex: c,
+              totalChunks,
+              slidesToGenerate: chunkBreakdown,
+              deckContext: {
+                audience,
+                purpose,
+                density,
+                bgStylePreference: bgStyle,
+                customBgColors: isCustomBgColors ? bgColors : undefined,
+                clonedStyleDirectives: clonedStyle?.visualDirectives || "",
+                clonedReferenceSummary: clonedStyle?.designDNASummary || "",
+              },
+              apiKey: storedApiKey,
+              model: storedModel,
+              provider: activeProvider,
+            }),
+          });
+
+          const chunkData = await chunkRes.json();
+          const chunkSlides: SlideData[] =
+            chunkData.success && Array.isArray(chunkData.slides)
+              ? chunkData.slides.map((s: any, idx: number) => normalizeSlide(s, startIdx + idx))
+              : chunkBreakdown.map((b, idx) =>
+                  normalizeSlide(
+                    {
+                      id: `slide-${startIdx + idx}`,
+                      layout: mapVisualLayoutToLayout(b.visualLayout),
+                      title: b.headline,
+                      subtitle: b.subheadline,
+                      description: b.description,
+                    },
+                    startIdx + idx
+                  )
+                );
+
+          for (let i = 0; i < chunkSlides.length; i++) {
+            const absoluteIdx = startIdx + i;
+            builtSlides[absoluteIdx] = chunkSlides[i];
+          }
+
+          setSlides([...builtSlides]);
+          await new Promise((r) => setTimeout(r, 60));
+        }
+
+        setSlides(builtSlides);
+        setGeneratingProgress(100);
+        setGeneratingStage(`✅ Selesai! Seluruh ${total} slide berhasil digenerate dengan rapi.`);
+        await new Promise((r) => setTimeout(r, 400));
+        return;
+      }
+
       const response = await fetch("/api/decks/generate-stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -4486,6 +4660,8 @@ async function streamBuildSlide(
           paletteId: selectedPalette.id,
           specialNotes,
           customBrainInstruction: storedCustomBrain,
+          clonedStyleDirectives: clonedStyle?.visualDirectives || "",
+          clonedReferenceSummary: clonedStyle?.designDNASummary || "",
           apiKey: storedApiKey,
           model: storedModel,
           provider: activeProvider,
@@ -4787,9 +4963,29 @@ async function streamBuildSlide(
               className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm sm:text-base outline-none resize-none min-h-[220px] font-sans leading-relaxed"
             />
 
-            {/* Bottom Bar: Download Template on Left + Generate Button on Right */}
-            <div className="flex items-center justify-between pt-3 border-t border-neutral-100 dark:border-neutral-800/80">
-              <div className="flex items-center gap-2">
+            {/* Bottom Bar: Download Template & Clone Style on Left + Generate Button on Right */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-800/80">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCloneStyleModal(true)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer border ${
+                    clonedStyle
+                      ? "bg-[#FFDE3C]/20 border-[#FFDE3C] text-neutral-900 dark:text-amber-300 shadow-2xs"
+                      : "bg-amber-500/10 hover:bg-amber-500/20 text-neutral-800 dark:text-neutral-200 border-amber-500/30"
+                  }`}
+                  title="Analisis dan tiru gaya visual dari slide contoh (gambar / PDF)"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{clonedStyle ? "Style Terkloning Aktif" : "Clone Style dari Slide"}</span>
+                  {clonedStyle && (
+                    <span className="flex items-center gap-1 ml-0.5">
+                      <span className="w-2.5 h-2.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.primary }} />
+                      <span className="w-2.5 h-2.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.secondary }} />
+                      <span className="w-2.5 h-2.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.accent }} />
+                    </span>
+                  )}
+                </button>
                 <button
                   type="button"
                   onClick={handleDownloadTemplateMd}
@@ -4878,6 +5074,69 @@ async function streamBuildSlide(
               <span>Back</span>
             </button>
           </div>
+
+          {/* Reference Slide Style Banner */}
+          {clonedStyle ? (
+            <div className="p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-neutral-900 dark:to-[#1a1708] border border-amber-300/80 dark:border-amber-800/60 shadow-xs flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-[#FFDE3C]/30 text-amber-900 dark:text-amber-200 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5 text-amber-500" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-extrabold uppercase px-2 py-0.5 rounded bg-[#FFDE3C] text-neutral-950">
+                      Gaya Referensi Aktif
+                    </span>
+                    <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                      Warna, Font & Pola Ditiru Otomatis
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 line-clamp-1 max-w-xl">
+                    {clonedStyle.designDNASummary}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+                  <span className="text-[11px] text-neutral-500 font-medium mr-1">Palette:</span>
+                  <span className="w-3.5 h-3.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.primary }} title={`Primary: ${clonedStyle.palette.primary}`} />
+                  <span className="w-3.5 h-3.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.secondary }} title={`Secondary: ${clonedStyle.palette.secondary}`} />
+                  <span className="w-3.5 h-3.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.accent }} title={`Accent: ${clonedStyle.palette.accent}`} />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowCloneStyleModal(true)}
+                  className="px-3 py-1.5 rounded-md text-xs font-semibold bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                >
+                  Ubah
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearClonedStyle}
+                  className="p-1.5 rounded-md text-neutral-400 hover:text-red-500 transition-colors"
+                  title="Hapus gaya referensi"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="p-3.5 rounded-lg bg-neutral-50 dark:bg-neutral-900/40 border border-dashed border-neutral-300 dark:border-neutral-800 flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2.5 text-neutral-600 dark:text-neutral-400">
+                <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Punya screenshot atau contoh slide yang ingin ditiru gayanya?</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCloneStyleModal(true)}
+                className="px-3 py-1.5 rounded-md text-xs font-bold bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 transition-all cursor-pointer shadow-2xs shrink-0"
+              >
+                + Clone Style dari Slide
+              </button>
+            </div>
+          )}
 
           {/* Form Questions List */}
           <div className="space-y-6 pt-1">
@@ -5424,6 +5683,50 @@ async function streamBuildSlide(
               <Plus className="w-3.5 h-3.5" />
               <span>Add Slide</span>
             </button>
+          </div>
+
+          {/* AI Blueprint Architect & Slide Target Selector Bar */}
+          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>Rencanakan Target Slide AI:</span>
+              </span>
+              {[5, 10, 20, 35, 50, 75, 100].map((num) => (
+                <button
+                  key={num}
+                  type="button"
+                  disabled={isPlanningOutline}
+                  onClick={() => handlePlanOutline(num)}
+                  className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer border ${
+                    editableBreakdown.length === num
+                      ? "bg-[#FFDE3C] text-neutral-950 border-[#FFDE3C] shadow-2xs"
+                      : "bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400"
+                  }`}
+                >
+                  {num} Slide
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {isPlanningOutline ? (
+                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>AI sedang menyusun blueprint alur cerita...</span>
+                </span>
+              ) : (
+                <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {editableBreakdown.length >= 10 ? (
+                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                      ⚡ Pipeline Batching Aktif ({Math.ceil(editableBreakdown.length / 5)} Batch)
+                    </span>
+                  ) : (
+                    <span>Siap digenerate ({editableBreakdown.length} slide)</span>
+                  )}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* ══════════════════════════════════════════════════════════
@@ -6126,6 +6429,15 @@ async function streamBuildSlide(
           setSlideCountPreference("5 Slides");
           setShowTemplateModal(false);
         }}
+      />
+
+      {/* ──── CLONE STYLE VISION MODAL ──── */}
+      <CloneStyleModal
+        isOpen={showCloneStyleModal}
+        onClose={() => setShowCloneStyleModal(false)}
+        onApplyStyle={handleApplyClonedStyle}
+        currentClonedStyle={clonedStyle}
+        onClearClonedStyle={handleClearClonedStyle}
       />
     </AppShell>
   );

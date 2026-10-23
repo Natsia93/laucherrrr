@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Loader2, Eye, EyeOff, User, Mail, Lock, ArrowRight, LogOut, CheckCircle2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { motion, AnimatePresence } from "framer-motion";
 
 function LoginPageContent() {
   const router = useRouter();
@@ -22,6 +23,23 @@ function LoginPageContent() {
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [justLoggedOut, setJustLoggedOut] = useState(false);
+
+  // Intro Preloader & Shared Transition States
+  const [introActive, setIntroActive] = useState(true);
+  const [logoCentered, setLogoCentered] = useState(true);
+  const [logoLanded, setLogoLanded] = useState(false);
+  const [backdropVisible, setBackdropVisible] = useState(true);
+  const [targetInfo, setTargetInfo] = useState<{
+    targetX: number;
+    targetY: number;
+    deltaX: number;
+    deltaY: number;
+    scale: number;
+    size: number;
+  } | null>(null);
+
+  const desktopLogoRef = useRef<HTMLDivElement>(null);
+  const mobileLogoRef = useRef<HTMLDivElement>(null);
 
   // Form states
   const [firstName, setFirstName] = useState("");
@@ -47,6 +65,61 @@ function LoginPageContent() {
       setSuccessMsg("You have successfully signed out.");
     }
   }, [searchParams]);
+
+  // Orchestrate Preloader to Login Page Shared Transition
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const computeTarget = () => {
+      const isDesktop = window.innerWidth >= 1024;
+      const targetEl = isDesktop ? desktopLogoRef.current : mobileLogoRef.current;
+      if (!targetEl) return;
+
+      const rect = targetEl.getBoundingClientRect();
+      const screenCenterX = window.innerWidth / 2;
+      const screenCenterY = window.innerHeight / 2;
+
+      // Exactly matches AppPreloader: 96px on desktop (w-24), 80px on mobile (w-20)
+      const initialLogoSize = isDesktop ? 96 : 80;
+      const targetSize = rect.width || (isDesktop ? 32 : 24);
+      const targetCenterX = rect.left + rect.width / 2;
+      const targetCenterY = rect.top + rect.height / 2;
+
+      setTargetInfo({
+        targetX: targetCenterX,
+        targetY: targetCenterY,
+        deltaX: screenCenterX - targetCenterX,
+        deltaY: screenCenterY - targetCenterY,
+        scale: initialLogoSize / targetSize,
+        size: targetSize,
+      });
+    };
+
+    computeTarget();
+    const raf = requestAnimationFrame(computeTarget);
+    window.addEventListener("resize", computeTarget);
+
+    const travelTimer = setTimeout(() => {
+      setBackdropVisible(false);
+      setLogoCentered(false);
+    }, 3200);
+
+    const landTimer = setTimeout(() => {
+      setLogoLanded(true);
+    }, 4100);
+
+    const doneTimer = setTimeout(() => {
+      setIntroActive(false);
+    }, 4950);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", computeTarget);
+      clearTimeout(travelTimer);
+      clearTimeout(landTimer);
+      clearTimeout(doneTimer);
+    };
+  }, []);
 
   // Sync tab state if pathname changes
   useEffect(() => {
@@ -176,7 +249,131 @@ function LoginPageContent() {
       className="h-screen w-screen overflow-hidden flex flex-col lg:flex-row bg-[#faf9f6] text-neutral-900 font-sans antialiased selection:bg-[#FFE54C] selection:text-neutral-950 light"
       style={{ colorScheme: "light" }}
     >
-      
+      {/* 1. Preloader Backdrop: Smooth radial gradient */}
+      <AnimatePresence>
+        {backdropVisible && (
+          <motion.div
+            key="preloader-backdrop"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.7, ease: "easeInOut" }}
+            className="fixed inset-0 z-50 pointer-events-none select-none"
+            style={{
+              background: "radial-gradient(circle at 50% 50%, #FFFFFF 0%, #F6F7F9 55%, #E6E9EF 100%)",
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* 2. Floating Shared ReVOU Logo: Fades in in center with yellow stroke, then glides smoothly & shrinks to Header */}
+      {introActive && targetInfo && (
+        <motion.div
+          className="fixed z-[70] pointer-events-none select-none"
+          style={{
+            left: targetInfo.targetX - targetInfo.size / 2,
+            top: targetInfo.targetY - targetInfo.size / 2,
+            width: targetInfo.size,
+            height: targetInfo.size,
+            transformOrigin: "center center",
+          }}
+          initial={{
+            x: targetInfo.deltaX,
+            y: targetInfo.deltaY,
+            scale: targetInfo.scale,
+            opacity: 1,
+          }}
+          animate={
+            logoCentered
+              ? {
+                  x: targetInfo.deltaX,
+                  y: targetInfo.deltaY,
+                  scale: targetInfo.scale,
+                  opacity: 1,
+                }
+              : {
+                  x: 0,
+                  y: 0,
+                  scale: 1,
+                  opacity: 1,
+                }
+          }
+          transition={{
+            x: logoCentered
+              ? { duration: 0 }
+              : { type: "spring", stiffness: 135, damping: 20, mass: 0.8 },
+            y: logoCentered
+              ? { duration: 0 }
+              : { type: "spring", stiffness: 115, damping: 19, mass: 0.85 },
+            scale: logoCentered
+              ? { duration: 0 }
+              : { type: "spring", stiffness: 150, damping: 22, mass: 0.75 },
+          }}
+        >
+          <div className="relative w-full h-full flex items-center justify-center">
+            {/* SVG Animated Yellow Stroke - Fits directly on the perimeter of the ReVOU logo with dynamic ring release */}
+            <motion.svg
+              className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none z-10"
+              viewBox="0 0 100 100"
+              fill="none"
+              animate={
+                logoCentered
+                  ? { opacity: 1, scale: 1 }
+                  : { opacity: 0, scale: 1.14 }
+              }
+              transition={{ duration: 0.32, ease: "easeOut" }}
+            >
+              <defs>
+                <linearGradient id="revouStrokeGradient" x1="100%" y1="15%" x2="0%" y2="85%">
+                  <stop offset="0%" stopColor="#FFE853" stopOpacity="0.08" />
+                  <stop offset="15%" stopColor="#FFE853" stopOpacity="0.35" />
+                  <stop offset="40%" stopColor="#FFDE3C" stopOpacity="0.75" />
+                  <stop offset="80%" stopColor="#FFDE3C" stopOpacity="0.95" />
+                  <stop offset="100%" stopColor="#F5C400" stopOpacity="1" />
+                </linearGradient>
+              </defs>
+              <motion.circle
+                cx="50"
+                cy="50"
+                r="48"
+                stroke="url(#revouStrokeGradient)"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                fill="none"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{
+                  pathLength: 1,
+                  opacity: 1,
+                }}
+                transition={{
+                  pathLength: { duration: 1.2, ease: [0.4, 0, 0.2, 1] },
+                  opacity: { duration: 0.2 },
+                }}
+                style={{
+                  filter: "drop-shadow(0 0 4px rgba(255, 222, 60, 0.45))",
+                }}
+              />
+            </motion.svg>
+
+            {/* ReVOU Logo - PURE FADE IN ONLY (NO scale, NO zoom) */}
+            <motion.div
+              className="relative w-full h-full flex items-center justify-center pointer-events-none z-0 p-[2px]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.75, delay: 0.75, ease: "easeInOut" }}
+            >
+              <Image
+                src="/logo/Logo_revou.png"
+                alt="RevoU Logo"
+                fill
+                sizes="96px"
+                className="object-contain"
+                priority
+              />
+            </motion.div>
+          </div>
+        </motion.div>
+      )}
+
       {/* LEFT SIDE: Minimalist Yellow Gradient Brand Showcase */}
       <div className="hidden lg:flex lg:w-[46%] xl:w-[44%] h-full bg-gradient-to-br from-[#F5C400] via-[#FFE853] to-[#F5C400] text-neutral-950 p-10 xl:p-14 flex-col justify-between relative overflow-hidden select-none">
         
@@ -186,29 +383,154 @@ function LoginPageContent() {
         <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-[#D4A800]/40 blur-3xl pointer-events-none" />
 
         {/* Brand Header */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="relative w-8 h-8 shrink-0">
+        <div className="relative z-10 flex items-center">
+          <div ref={desktopLogoRef} className="relative w-8 h-8 shrink-0 p-[2px]">
             <Image
               src="/logo/Logo_revou.png"
               alt="RevoU Logo"
               fill
               sizes="32px"
-              className="object-contain"
+              className={`object-contain transition-opacity duration-200 ${
+                introActive && !logoLanded ? "opacity-0" : "opacity-100"
+              }`}
               priority
             />
           </div>
-          <span className="font-lora font-medium text-xl tracking-tight text-neutral-950">
-            Launcher OS
-          </span>
+          <div className="overflow-hidden ml-3 py-1 flex items-center">
+            <motion.span
+              className="font-lora font-medium text-xl tracking-tight text-neutral-950 inline-block whitespace-nowrap"
+              initial={{ opacity: 0, x: -60 }}
+              animate={
+                logoLanded
+                  ? { opacity: 1, x: 0 }
+                  : { opacity: 0, x: -60 }
+              }
+              transition={{
+                type: "spring",
+                stiffness: 180,
+                damping: 20,
+                mass: 0.75,
+              }}
+            >
+              Launcher OS
+            </motion.span>
+          </div>
         </div>
 
         {/* Center: Editorial Hero Text */}
-        <div className="relative z-10 space-y-4 max-w-sm">
+        <div className="relative z-10 space-y-4 max-w-sm select-none">
           <h1 className="font-lora text-3xl xl:text-4xl font-normal leading-[1.2] tracking-tight text-neutral-950">
-            The intelligent operating system for modern execution.
+            <span className="block overflow-hidden pb-0.5">
+              <motion.span
+                className="block"
+                initial={{ y: "115%", opacity: 0, filter: "blur(4px)" }}
+                animate={
+                  logoLanded
+                    ? { y: 0, opacity: 1, filter: "blur(0px)" }
+                    : { y: "115%", opacity: 0, filter: "blur(4px)" }
+                }
+                transition={{
+                  duration: 0.75,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: 0.08,
+                }}
+              >
+                The intelligent
+              </motion.span>
+            </span>
+            <span className="block overflow-hidden pb-0.5">
+              <motion.span
+                className="block"
+                initial={{ y: "115%", opacity: 0, filter: "blur(4px)" }}
+                animate={
+                  logoLanded
+                    ? { y: 0, opacity: 1, filter: "blur(0px)" }
+                    : { y: "115%", opacity: 0, filter: "blur(4px)" }
+                }
+                transition={{
+                  duration: 0.75,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: 0.18,
+                }}
+              >
+                operating system for
+              </motion.span>
+            </span>
+            <span className="block overflow-hidden pb-0.5">
+              <motion.span
+                className="block"
+                initial={{ y: "115%", opacity: 0, filter: "blur(4px)" }}
+                animate={
+                  logoLanded
+                    ? { y: 0, opacity: 1, filter: "blur(0px)" }
+                    : { y: "115%", opacity: 0, filter: "blur(4px)" }
+                }
+                transition={{
+                  duration: 0.75,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: 0.28,
+                }}
+              >
+                modern execution.
+              </motion.span>
+            </span>
           </h1>
+
           <p className="text-sm text-neutral-900/75 leading-relaxed">
-            Orchestrate autonomous workflows, executive presentations, and intelligent collaboration with unified AI precision.
+            <span className="block overflow-hidden pb-0.5">
+              <motion.span
+                className="block"
+                initial={{ y: "115%", opacity: 0, filter: "blur(3px)" }}
+                animate={
+                  logoLanded
+                    ? { y: 0, opacity: 1, filter: "blur(0px)" }
+                    : { y: "115%", opacity: 0, filter: "blur(3px)" }
+                }
+                transition={{
+                  duration: 0.7,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: 0.38,
+                }}
+              >
+                Orchestrate autonomous workflows, executive
+              </motion.span>
+            </span>
+            <span className="block overflow-hidden pb-0.5">
+              <motion.span
+                className="block"
+                initial={{ y: "115%", opacity: 0, filter: "blur(3px)" }}
+                animate={
+                  logoLanded
+                    ? { y: 0, opacity: 1, filter: "blur(0px)" }
+                    : { y: "115%", opacity: 0, filter: "blur(3px)" }
+                }
+                transition={{
+                  duration: 0.7,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: 0.46,
+                }}
+              >
+                presentations, and intelligent collaboration with unified AI
+              </motion.span>
+            </span>
+            <span className="block overflow-hidden pb-0.5">
+              <motion.span
+                className="block"
+                initial={{ y: "115%", opacity: 0, filter: "blur(3px)" }}
+                animate={
+                  logoLanded
+                    ? { y: 0, opacity: 1, filter: "blur(0px)" }
+                    : { y: "115%", opacity: 0, filter: "blur(3px)" }
+                }
+                transition={{
+                  duration: 0.7,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: 0.54,
+                }}
+              >
+                precision.
+              </motion.span>
+            </span>
           </p>
         </div>
 
@@ -221,19 +543,37 @@ function LoginPageContent() {
         
         {/* Top Bar: Mobile Brand */}
         <div className="w-full flex items-center justify-between">
-          <div className="lg:hidden flex items-center gap-2.5">
-            <div className="relative w-6 h-6 shrink-0">
+          <div className="lg:hidden flex items-center">
+            <div ref={mobileLogoRef} className="relative w-6 h-6 shrink-0 p-[1.5px]">
               <Image
                 src="/logo/Logo_revou.png"
                 alt="RevoU Logo"
                 fill
                 sizes="24px"
-                className="object-contain"
+                className={`object-contain transition-opacity duration-200 ${
+                  introActive && !logoLanded ? "opacity-0" : "opacity-100"
+                }`}
               />
             </div>
-            <span className="font-lora font-medium text-lg text-neutral-950">
-              Launcher OS
-            </span>
+            <div className="overflow-hidden ml-2.5 py-0.5 flex items-center">
+              <motion.span
+                className="font-lora font-medium text-lg text-neutral-950 inline-block whitespace-nowrap"
+                initial={{ opacity: 0, x: -45 }}
+                animate={
+                  logoLanded
+                    ? { opacity: 1, x: 0 }
+                    : { opacity: 0, x: -45 }
+                }
+                transition={{
+                  type: "spring",
+                  stiffness: 180,
+                  damping: 20,
+                  mass: 0.75,
+                }}
+              >
+                Launcher OS
+              </motion.span>
+            </div>
           </div>
         </div>
 
