@@ -45,98 +45,78 @@ export function LogoutConfirmModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.25 } }}
-          className="fixed inset-0 z-[99999999] flex items-center justify-center p-4 select-none font-jakarta"
+          className="fixed inset-0 z-[99999999] flex items-center justify-center p-4 select-none font-sf"
         >
-          {/* Frosted Glass Backdrop Overlay - matching MoodCheck styling */}
+          {/* Frosted Glass Backdrop Overlay */}
           <motion.div
             key="logout-modal-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 0.25 } }}
+            exit={{ opacity: 0, transition: { duration: 0.2 } }}
             onClick={() => {
               if (!isLoading) onClose();
             }}
-            className="fixed inset-0 transition-all duration-300 bg-black/15 dark:bg-black/45 backdrop-blur-md"
+            className="fixed inset-0 transition-all duration-300 bg-black/20 dark:bg-black/50 backdrop-blur-sm"
           />
 
-          {/* Modal Container with Center Vertical Swipe IN & OUT (MoodCheck signature animation) */}
+          {/* Modal Container: Compact, Minimalist, Modern */}
           <motion.div
             key="logout-modal-card"
-            initial={{ opacity: 0, scaleY: 0.1, scaleX: 0.95 }}
-            animate={{ opacity: 1, scaleY: 1, scaleX: 1 }}
+            initial={{ opacity: 0, scale: 0.96, y: 6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{
               opacity: 0,
-              scaleY: 0.1,
-              scaleX: 0.95,
-              transition: {
-                type: "spring",
-                damping: 24,
-                stiffness: 300,
-                mass: 0.75,
-              },
+              scale: 0.96,
+              y: 6,
+              transition: { duration: 0.15 },
             }}
             transition={{
               type: "spring",
-              damping: 26,
-              stiffness: 340,
-              mass: 0.8,
+              damping: 28,
+              stiffness: 380,
+              mass: 0.7,
             }}
-            style={{ transformOrigin: "center center" }}
-            className="font-jakarta relative w-full max-w-[440px] bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800/90 rounded-3xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] p-8 sm:p-9 z-10 space-y-7"
+            className="font-sf relative w-full max-w-[340px] bg-white dark:bg-[#141414] border border-neutral-200/90 dark:border-neutral-800 rounded-2xl shadow-xl dark:shadow-2xl p-5 z-10 space-y-4"
           >
             {/* Header & Description */}
-            <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.2 }}
-              className="text-center space-y-3 pt-1"
-            >
-              <h2 className="font-jakarta text-[26px] sm:text-[28px] font-bold tracking-tight text-neutral-950 dark:text-white leading-tight">
+            <div className="text-center space-y-1.5 pt-0.5">
+              <h2 className="text-base sm:text-[17px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
                 Log out
               </h2>
-              <p className="font-jakarta text-[15.5px] sm:text-[16.5px] leading-relaxed text-neutral-600 dark:text-neutral-300 max-w-[340px] mx-auto font-normal">
+              <p className="text-xs sm:text-[13px] leading-relaxed text-neutral-500 dark:text-neutral-400 font-normal px-1">
                 Are you sure you want to log out? Your active session will be ended.
               </p>
-            </motion.div>
+            </div>
 
             {/* Action Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.2 }}
-              className="flex items-center gap-3.5 pt-1"
-            >
-              <motion.button
+            <div className="flex items-center gap-2 pt-1">
+              <button
                 type="button"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
                 disabled={isLoading}
                 onClick={onClose}
-                className="font-jakarta flex-1 h-12 px-5 rounded-xl text-[15px] font-semibold border border-neutral-200 dark:border-neutral-800 bg-neutral-100 hover:bg-neutral-200/70 dark:bg-neutral-800/80 dark:hover:bg-neutral-800 text-neutral-800 dark:text-neutral-200 transition-colors cursor-pointer disabled:opacity-50"
+                className="flex-1 h-9 px-3 rounded-lg text-xs font-medium border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer active:scale-95 disabled:opacity-50"
               >
                 Cancel
-              </motion.button>
-              <motion.button
+              </button>
+              <button
                 type="button"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
                 disabled={isLoading}
                 onClick={onConfirm}
-                className="font-jakarta flex-1 h-12 px-5 rounded-xl text-[15px] font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors shadow-sm shadow-red-600/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="flex-1 h-9 px-3 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 active:scale-95 text-white transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span>Logging out...</span>
                   </>
                 ) : (
                   <>
-                    <LogOut className="w-4.5 h-4.5 stroke-[2.2]" />
+                    <LogOut className="w-3.5 h-3.5 stroke-[2.2]" />
                     <span>Log out</span>
                   </>
                 )}
-              </motion.button>
-            </motion.div>
+              </button>
+            </div>
           </motion.div>
         </motion.div>
       )}
