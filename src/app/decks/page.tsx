@@ -5103,45 +5103,43 @@ async function streamBuildSlide(
           </div>
 
           {/* Main Clean Textarea Input Area */}
-          <div className="max-w-2xl mx-auto bg-white dark:bg-[#121212] rounded-md border border-neutral-200/90 dark:border-neutral-800 shadow-sm p-4 sm:p-5 relative transition-all focus-within:ring-2 focus-within:ring-[#FFE54C]/50 focus-within:border-[#E5BC10]">
-            {/* Attached Skill File Tag (e.g. template-ITB.md) */}
+          <div className="max-w-2xl mx-auto bg-white dark:bg-[#121212] rounded-2xl border border-neutral-200/90 dark:border-neutral-800 shadow-sm p-4 sm:p-5 relative transition-all focus-within:ring-2 focus-within:ring-[#FFE54C]/50 focus-within:border-[#E5BC10]">
+            {/* Attached Skill File Card (Claude-style Clean Minimalist Card) */}
             {attachedSkill && (
-              <div className="mb-3 inline-flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200/90 dark:border-blue-800 text-blue-950 dark:text-blue-100 text-xs shadow-2xs animate-in fade-in slide-in-from-top-1 duration-200">
-                <div className="w-5 h-5 rounded bg-[#005AAB] text-[#FFDD3C] flex items-center justify-center font-bold text-[9px] shrink-0 tracking-tighter">
-                  MD
+              <div className="mb-4">
+                <div className="group relative w-32 h-26 p-3 rounded-xl border border-neutral-200/90 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 flex flex-col justify-between select-none transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
+                  <div>
+                    <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-snug line-clamp-2 break-all">
+                      {attachedSkill.name}
+                    </p>
+                    <p className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1 font-normal">
+                      {attachedSkill.content.split("\n").length} lines
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium text-neutral-500 dark:text-neutral-400 bg-neutral-200/60 dark:bg-neutral-800 tracking-wider">
+                      MD
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setAttachedSkill(null)}
+                      className="p-1 -mr-1 -mb-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-200/60 dark:hover:bg-neutral-800 rounded-md transition-all cursor-pointer"
+                      title="Remove file"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold text-xs font-mono text-[#005AAB] dark:text-blue-300">
-                    {attachedSkill.name}
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-[#FFDD3C] text-[#174A7F]">
-                    Skill ITB Aktif
-                  </span>
-                  <span className="text-neutral-500 dark:text-neutral-400 text-[11px] hidden sm:inline truncate max-w-[280px]">
-                    ({attachedSkill.title})
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setAttachedSkill(null)}
-                  className="p-1 hover:bg-blue-200/60 dark:hover:bg-blue-900/60 rounded text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer ml-1 transition-colors"
-                  title="Lepas lampiran skill"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
               </div>
             )}
 
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder={
-                attachedSkill
-                  ? "Ketik topik materi atau instruksi tambahan (opsional, aturan & format template-ITB.md sudah aktif)..."
-                  : "Type or paste in content here..."
-              }
-              rows={attachedSkill ? 8 : 10}
-              className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm sm:text-base outline-none resize-none min-h-[190px] font-sans leading-relaxed"
+              placeholder="Write a message or notes (optional)..."
+              rows={attachedSkill ? 7 : 10}
+              className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm sm:text-base outline-none resize-none min-h-[180px] font-sans leading-relaxed"
             />
 
             {/* Bottom Bar: Download Template & Clone Style on Left + Generate Button on Right */}
@@ -5225,10 +5223,9 @@ async function streamBuildSlide(
                       // Pasang file skill attachment template-ITB.md di atas chatbox
                       setAttachedSkill({
                         id: "itb",
-                        name: "template-ITB.md",
+                        name: "ITB_Gamma_Deck_Rules.md",
                         title: "ITB × RevoU Deck Design Rules",
                         content: ITB_SKILL_MD,
-                        badge: "ITB Skill Active",
                       });
                       const itbPal = COLOR_PALETTES.find((p) => p.id === "itb");
                       if (itbPal) setSelectedPalette(itbPal);
