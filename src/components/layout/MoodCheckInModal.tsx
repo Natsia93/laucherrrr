@@ -180,7 +180,7 @@ export function MoodCheckInModal({ onSelectMood }: MoodCheckInModalProps) {
               mass: 0.8,
             }}
             style={{ transformOrigin: "center center" }}
-            className="relative w-full max-w-[520px] bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800/90 rounded-3xl shadow-[0_15px_40px_-15px_rgba(0,0,0,0.12)] dark:shadow-[0_15px_40px_-15px_rgba(0,0,0,0.5)] p-7 sm:p-8 z-10 space-y-6"
+            className="relative w-full max-w-[520px] bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800/90 rounded-3xl shadow-[0_15px_40px_-15px_rgba(0,0,0,0.12)] dark:shadow-[0_15px_40px_-15px_rgba(0,0,0,0.5)] p-4 sm:p-7 md:p-8 z-10 space-y-5 sm:space-y-6"
           >
             {/* Header */}
             <motion.div
@@ -189,7 +189,7 @@ export function MoodCheckInModal({ onSelectMood }: MoodCheckInModalProps) {
               transition={{ delay: 0.12, duration: 0.2 }}
               className="text-center"
             >
-              <h2 className="font-sans text-[22px] sm:text-[24px] font-semibold tracking-tight text-neutral-900 dark:text-white">
+              <h2 className="font-sans text-[20px] sm:text-[24px] font-semibold tracking-tight text-neutral-900 dark:text-white">
                 How are you today?
               </h2>
             </motion.div>
@@ -199,7 +199,7 @@ export function MoodCheckInModal({ onSelectMood }: MoodCheckInModalProps) {
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="flex items-center justify-between gap-2 sm:gap-3 py-1"
+              className="flex items-center justify-between gap-1 sm:gap-2.5 md:gap-3 py-1"
             >
               {MOOD_OPTIONS.map((opt) => {
                 const isSelected = selectedId === opt.id;
@@ -210,8 +210,8 @@ export function MoodCheckInModal({ onSelectMood }: MoodCheckInModalProps) {
                     variants={itemVariants}
                     type="button"
                     whileHover={{
-                      scale: 1.18,
-                      y: -7,
+                      scale: 1.15,
+                      y: -5,
                       transition: {
                         type: "spring",
                         stiffness: 450,
@@ -228,11 +228,11 @@ export function MoodCheckInModal({ onSelectMood }: MoodCheckInModalProps) {
                       },
                     }}
                     onClick={() => handleSelect(opt)}
-                    className="flex-1 flex flex-col items-center justify-center gap-2 p-1 group cursor-pointer outline-none focus:outline-none"
+                    className="flex-1 flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-0.5 sm:p-1 group cursor-pointer outline-none focus:outline-none"
                   >
                     {/* All-Yellow Stylized Vector Face Avatar */}
                     <div
-                      className={`relative w-13 h-13 sm:w-15 sm:h-15 rounded-full flex items-center justify-center ${
+                      className={`relative w-11 h-11 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-15 md:h-15 rounded-full flex items-center justify-center shrink-0 ${
                         isSelected
                           ? "ring-2.5 ring-[#FFD100] dark:ring-[#FFE135] ring-offset-2 dark:ring-offset-[#121212] shadow-xs"
                           : "shadow-2xs group-hover:shadow-sm"
@@ -350,7 +350,7 @@ export function MoodCheckInModal({ onSelectMood }: MoodCheckInModalProps) {
 
                     {/* Clean Sans Mood Label */}
                     <span
-                      className={`font-sans text-[13px] sm:text-[14px] tracking-tight text-center transition-colors ${
+                      className={`font-sans text-[11px] xs:text-xs sm:text-[13px] md:text-[14px] tracking-tight text-center transition-colors truncate max-w-full ${
                         isSelected
                           ? "text-neutral-950 dark:text-white font-bold"
                           : "text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-950 dark:group-hover:text-white font-medium"

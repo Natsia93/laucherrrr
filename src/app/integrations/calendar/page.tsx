@@ -249,9 +249,10 @@ export default function GoogleCalendarPage() {
     const weekDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
     return (
-      <div className="flex flex-col flex-1 bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800 rounded-xl overflow-hidden">
-        {/* Days Header */}
-        <div className="grid grid-cols-7 border-b border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/60">
+      <div className="flex flex-col flex-1 bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800 rounded-xl overflow-x-auto overflow-y-hidden">
+        <div className="min-w-[560px] md:min-w-0 flex flex-col flex-1">
+          {/* Days Header */}
+          <div className="grid grid-cols-7 border-b border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/60">
           {weekDays.map((d, idx) => (
             <div
               key={d}
@@ -311,6 +312,7 @@ export default function GoogleCalendarPage() {
               </div>
             );
           })}
+          </div>
         </div>
       </div>
     );
@@ -331,9 +333,10 @@ export default function GoogleCalendarPage() {
     return (
       <div className="flex flex-col flex-1 bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800 rounded-xl overflow-hidden">
         {/* Unified Scrollable Container: Sticky Header + 24-Hour Grid inside same scroll context for 100% line alignment */}
-        <div className="flex-1 overflow-y-auto max-h-[640px] relative calendar-scrollbar">
-          {/* Sticky Week Header */}
-          <div className="flex border-b border-neutral-200/80 dark:border-neutral-800 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-xs z-30 sticky top-0">
+        <div className="flex-1 overflow-x-auto overflow-y-auto max-h-[640px] relative calendar-scrollbar">
+          <div className="min-w-[620px] md:min-w-0">
+            {/* Sticky Week Header */}
+            <div className="flex border-b border-neutral-200/80 dark:border-neutral-800 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-xs z-30 sticky top-0">
             {/* Timezone Gutter on Left */}
             <div className="w-14 sm:w-16 shrink-0 flex items-end justify-center pb-2 text-[10.5px] font-medium text-neutral-400 border-r border-neutral-200/80 dark:border-neutral-800 select-none bg-white dark:bg-[#121212]">
               GMT+07
@@ -460,6 +463,7 @@ export default function GoogleCalendarPage() {
                   </div>
                 );
               })}
+            </div>
             </div>
           </div>
         </div>
@@ -609,60 +613,62 @@ export default function GoogleCalendarPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4">
+      <div className="space-y-4 pb-12 sm:pb-4">
         {/* Top Control Bar (Google Calendar Authentic: [Today] [<] [>] [Title] - No Card Wrapper) */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 py-1">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-1 py-1">
           {/* Left: [Today] [ < ] [ > ] [ Date Title ] [ Sync Status / Authorize ] */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            {/* Today Pill Button */}
-            <button
-              onClick={() => setCurrentDate(new Date())}
-              className="h-9.5 px-5 rounded-full border border-neutral-300 dark:border-neutral-700 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-800 dark:text-neutral-200 transition-colors cursor-pointer"
-            >
-              Today
-            </button>
+          <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Today Pill Button */}
+              <button
+                onClick={() => setCurrentDate(new Date())}
+                className="h-8.5 sm:h-9.5 px-3.5 sm:px-5 rounded-full border border-neutral-300 dark:border-neutral-700 text-xs sm:text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-800 dark:text-neutral-200 transition-colors cursor-pointer"
+              >
+                Today
+              </button>
 
-            {/* Prev & Next Chevrons */}
-            <div className="flex items-center gap-0.5">
-              <button
-                onClick={() => {
-                  if (view === "month") setCurrentDate(subMonths(currentDate, 1));
-                  else if (view === "week") setCurrentDate(subDays(currentDate, 7));
-                  else setCurrentDate(subDays(currentDate, 1));
-                }}
-                className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 transition-colors cursor-pointer"
-                title="Previous"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => {
-                  if (view === "month") setCurrentDate(addMonths(currentDate, 1));
-                  else if (view === "week") setCurrentDate(addDays(currentDate, 7));
-                  else setCurrentDate(addDays(currentDate, 1));
-                }}
-                className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 transition-colors cursor-pointer"
-                title="Next"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+              {/* Prev & Next Chevrons */}
+              <div className="flex items-center gap-0.5">
+                <button
+                  onClick={() => {
+                    if (view === "month") setCurrentDate(subMonths(currentDate, 1));
+                    else if (view === "week") setCurrentDate(subDays(currentDate, 7));
+                    else setCurrentDate(subDays(currentDate, 1));
+                  }}
+                  className="h-8.5 w-8.5 sm:h-9 sm:w-9 rounded-full flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 transition-colors cursor-pointer"
+                  title="Previous"
+                >
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+                <button
+                  onClick={() => {
+                    if (view === "month") setCurrentDate(addMonths(currentDate, 1));
+                    else if (view === "week") setCurrentDate(addDays(currentDate, 7));
+                    else setCurrentDate(addDays(currentDate, 1));
+                  }}
+                  className="h-8.5 w-8.5 sm:h-9 sm:w-9 rounded-full flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 transition-colors cursor-pointer"
+                  title="Next"
+                >
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Date Title (Slightly larger Google Calendar style) */}
-            <h1 className="text-xl sm:text-2xl font-medium text-neutral-800 dark:text-neutral-100 tracking-tight ml-1 sm:ml-2">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-neutral-800 dark:text-neutral-100 tracking-tight ml-0.5 sm:ml-2">
               {getHeaderDateTitle()}
             </h1>
 
-            {/* Live Synced / Authorize Badge (No icon, lighter font-weight) */}
+            {/* Live Synced / Authorize Badge */}
             {calendarScopeGranted ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60 ml-1">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60 ml-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Live Synced
               </span>
             ) : (
               <button
                 onClick={handleConnectGoogle}
-                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-normal text-neutral-800 dark:text-amber-200 bg-[#FFE500]/20 hover:bg-[#FFE500]/35 border border-[#FFE500]/40 transition-colors cursor-pointer ml-1.5"
+                className="inline-flex items-center px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-normal text-neutral-800 dark:text-amber-200 bg-[#FFE500]/20 hover:bg-[#FFE500]/35 border border-[#FFE500]/40 transition-colors cursor-pointer ml-1"
                 title="Grant Google Calendar access"
               >
                 Authorize Google Calendar
@@ -671,17 +677,17 @@ export default function GoogleCalendarPage() {
           </div>
 
           {/* Right: View Switcher & Sync Button */}
-          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center justify-between sm:justify-end gap-2">
             {/* View Switcher Tabs */}
             <div className="flex bg-neutral-100 dark:bg-neutral-900 p-0.5 rounded-lg border border-neutral-200/80 dark:border-neutral-800">
               {(["month", "week", "day"] as const).map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
-                  className={`px-3.5 py-1.5 rounded-md text-xs sm:text-[13px] font-medium capitalize transition-colors cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium capitalize transition-all cursor-pointer ${
                     view === v
-                      ? "bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white border border-neutral-200/60 dark:border-neutral-700/60 font-semibold"
-                      : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-300"
+                      ? "bg-white dark:bg-[#1a1a1a] text-neutral-900 dark:text-white shadow-xs font-bold"
+                      : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
                   }`}
                 >
                   {v}
@@ -693,10 +699,9 @@ export default function GoogleCalendarPage() {
             <button
               onClick={handleSync}
               disabled={isSyncing}
-              className="h-9 px-3.5 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs sm:text-[13px] font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Sync with Google Calendar"
+              className="h-8.5 sm:h-9 px-3 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 disabled:opacity-50"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-[#D4A800]" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : ""}`} />
               <span>Sync</span>
             </button>
           </div>

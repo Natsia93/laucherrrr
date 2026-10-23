@@ -80,7 +80,7 @@ export default function OverviewPage() {
 
   return (
     <AppShell>
-      <div className="max-w-[1200px] mx-auto px-2 sm:px-4 lg:px-6 space-y-6 pb-12">
+      <div className="max-w-[1200px] mx-auto px-2 sm:px-4 lg:px-6 space-y-6 pb-28 sm:pb-12">
         {/* OFFLINE RESILIENCE BANNER */}
         {isOffline && (
           <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs sm:text-sm font-medium">

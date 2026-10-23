@@ -110,10 +110,10 @@ export function CreditsUsageCard() {
   const providerLabel = PROVIDER_NAMES[provider] || provider.toUpperCase();
 
   return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-[#1c1c1c] via-[#141414] to-[#0d0d0d] text-white border-neutral-800 rounded-xl shadow-lg p-6 flex flex-col justify-center h-[275px] min-h-[275px]">
-      <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-8 my-auto">
+    <Card className="relative overflow-hidden bg-gradient-to-br from-[#1c1c1c] via-[#141414] to-[#0d0d0d] text-white border-neutral-800 rounded-xl shadow-lg p-5 sm:p-6 flex flex-col justify-center h-auto min-h-[275px] sm:h-[275px]">
+      <div className="relative z-10 flex flex-col sm:flex-row items-center gap-5 sm:gap-8 my-auto">
         {/* Circular Gauge / Status Dial */}
-        <div className="relative w-44 h-44 sm:w-[195px] sm:h-[195px] flex items-center justify-center shrink-0">
+        <div className="relative w-36 h-36 sm:w-[195px] sm:h-[195px] flex items-center justify-center shrink-0">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 200 200">
             {/* Background Track */}
             <circle

@@ -52,7 +52,7 @@ function AppShellInner({
         }`}
       >
         <AppHeader actions={headerActions} />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6 relative overflow-x-hidden">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6 relative overflow-x-hidden pb-28 sm:pb-8">
           <motion.div
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}

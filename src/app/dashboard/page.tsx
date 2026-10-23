@@ -611,10 +611,11 @@ export default function DashboardOverviewPage() {
             variant="outline"
             size="sm"
             onClick={() => setHistoryOpen(true)}
-            className="h-8.5 border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white font-medium text-xs px-3 flex items-center gap-1.5 cursor-pointer rounded-[5px] hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shadow-2xs"
+            className="h-8.5 border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white font-medium text-xs px-2.5 sm:px-3 flex items-center gap-1.5 cursor-pointer rounded-[5px] hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shadow-2xs shrink-0"
           >
             <History className="w-3.5 h-3.5 text-neutral-500" />
-            <span>Chat History</span>
+            <span className="hidden sm:inline">Chat History</span>
+            <span className="sm:hidden">History</span>
             {conversationsList.length > 0 && (
               <span className="ml-0.5 px-1.5 py-0.2 bg-[#FFDE3C]/30 text-neutral-900 dark:text-[#FFDE3C] text-[10px] font-bold rounded-[3px]">
                 {conversationsList.length}
@@ -800,7 +801,7 @@ export default function DashboardOverviewPage() {
               variants={chipsContainerVariants}
               initial="hidden"
               animate="visible"
-              className="flex flex-nowrap items-center justify-center gap-2 mt-4 overflow-x-auto no-scrollbar py-1"
+              className="flex flex-nowrap items-center justify-start sm:justify-center gap-2 mt-4 overflow-x-auto no-scrollbar py-1 w-full px-1"
             >
               {[
                 { label: "General Chat", value: "" },
@@ -1086,15 +1087,15 @@ export default function DashboardOverviewPage() {
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-neutral-500 dark:text-neutral-400 pt-1 border-t border-neutral-100 dark:border-neutral-800">
-                    <span className="text-[11px] text-neutral-400">Mendukung PDF, Word (.docx), Excel (.xlsx), Text, dan Gambar</span>
-                    <span>Press Enter to send, Shift+Enter for new line</span>
+                    <span className="text-[10px] sm:text-[11px] text-neutral-400 truncate">Mendukung PDF, Word, Excel, Gambar</span>
+                    <span className="hidden sm:inline">Press Enter to send, Shift+Enter for new line</span>
                   </div>
                 </form>
 
                 {/* Claude-style footer note */}
-                <div className="flex items-center justify-between text-[11px] text-neutral-400 dark:text-neutral-500 pt-2 px-1">
-                  <span>Launcher OS can make mistakes. Verify important responses.</span>
-                  <span className="font-mono text-[10px] hidden sm:inline-block px-1.5 py-0.5 rounded bg-neutral-200/60 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
+                <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-neutral-400 dark:text-neutral-500 pt-2 px-1">
+                  <span className="truncate">Launcher OS can make mistakes. Verify important responses.</span>
+                  <span className="font-mono text-[10px] hidden sm:inline-block px-1.5 py-0.5 rounded bg-neutral-200/60 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 shrink-0">
                     Gemini 2.5 • LLM Mode
                   </span>
                 </div>

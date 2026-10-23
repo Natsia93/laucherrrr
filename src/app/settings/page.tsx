@@ -1138,7 +1138,7 @@ export default function SettingsPage() {
 
   return (
     <AppShell>
-      <div className="max-w-[1200px] mx-auto px-2 sm:px-4 lg:px-6 space-y-6 pb-12 font-sans">
+      <div className="max-w-[1200px] mx-auto px-2 sm:px-4 lg:px-6 space-y-6 pb-28 sm:pb-12 font-sans">
         {/* Toast Notification */}
         {toastMessage && (
           <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 px-4 py-2.5 rounded-lg shadow-2xl text-xs font-medium animate-in fade-in slide-in-from-top-3 duration-200 border border-white/15">
@@ -1229,10 +1229,10 @@ export default function SettingsPage() {
         </div>
 
         {/* Sleek Segmented Tab Bar - Rock Solid with No Layout Shifts */}
-        <div className="inline-flex p-1 bg-neutral-100/90 dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-lg overflow-x-auto max-w-full scrollbar-hide gap-1">
+        <div className="flex items-center p-1 bg-neutral-100/90 dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-lg overflow-x-auto max-w-full scrollbar-hide gap-1">
           <button
             onClick={() => setActiveTab("profile")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === "profile"
                 ? "bg-[#FCD62C] text-neutral-950 shadow-xs"
                 : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
@@ -1244,7 +1244,7 @@ export default function SettingsPage() {
 
           <button
             onClick={() => setActiveTab("apikeys")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === "apikeys"
                 ? "bg-[#FCD62C] text-neutral-950 shadow-xs"
                 : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
@@ -1256,7 +1256,7 @@ export default function SettingsPage() {
 
           <button
             onClick={() => setActiveTab("automation")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === "automation"
                 ? "bg-[#FCD62C] text-neutral-950 shadow-xs"
                 : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
