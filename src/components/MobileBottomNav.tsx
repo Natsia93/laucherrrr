@@ -9,8 +9,8 @@ import { usePathname } from "next/navigation";
 export function MobileBottomNav() {
   const pathname = usePathname();
   
-  // Don't show on workspace, agentic-vision, or auth screens
-  if (pathname.startsWith("/workspace") || pathname.startsWith("/agentic-vision") || pathname === "/login" || pathname === "/register" || pathname === "/") return null;
+  // Don't show on workspace or auth screens
+  if (pathname.startsWith("/workspace") || pathname === "/login" || pathname === "/register" || pathname === "/") return null;
 
   const navItems = [
     { label: "Overview", href: "/overview", icon: LayoutDashboard },

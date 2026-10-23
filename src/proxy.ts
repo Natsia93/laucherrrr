@@ -36,7 +36,5 @@ export const config = {
     "/settings/:path*",
     "/ai-hub",
     "/ai-hub/:path*",
-    "/agentic-vision",
-    "/agentic-vision/:path*",
   ],
 };

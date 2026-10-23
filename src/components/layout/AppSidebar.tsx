@@ -18,7 +18,6 @@ import {
   LogOut,
   Settings,
   LayoutDashboard,
-  Bot,
   Compass,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -62,11 +61,6 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
     title: "Launcher Automation",
     href: "/automation",
     icon: Workflow,
-  },
-  {
-    title: "Agentic Vision",
-    href: "/agentic-vision",
-    icon: Bot,
   },
   {
     title: "Settings",
