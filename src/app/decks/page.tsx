@@ -1144,18 +1144,65 @@ interface ShowcaseDeck {
   accentColor: string;
   layoutType: "hero" | "stats" | "split" | "grid" | "process" | "quote";
   sampleContent: string;
+  image?: string;
+  badge?: string;
 }
 
 const SHOWCASE_DECKS: ShowcaseDeck[] = [
   {
-    id: "sc-1",
-    title: "AI Curriculum & Teaching Framework",
-    category: "Education",
-    slidesCount: 8,
-    updatedAt: "Just now",
-    accentColor: "#FFDE3C",
+    id: "sc-itb",
+    title: "Governance, Risk & Compliance for Data and AI Strategy",
+    category: "ITB × RevoU Program",
+    slidesCount: 10,
+    updatedAt: "Skill Active",
+    accentColor: "#005AAB",
     layoutType: "hero",
-    sampleContent: "AI Curriculum & Teaching Framework\n• Core ML Foundations\n• Prompt Engineering & Workflows\n• Responsible AI Practices\n---\nLearning Outcomes\n• 100+ Hands-on Exercises\n• 94% Retention Rate\n---\nCapstone Project Guide",
+    image: "/ITB.png",
+    badge: "ITB SKILL INSTALLED",
+    sampleContent: `#Headline: Governance, Risk & Compliance for Data and AI Strategy
+#Subheadline: Guardrails + Approvals + Auditability
+#Description: Program Eksekutif ITB × RevoU: Data-Driven & AI-Enabled Decision Making for Leaders.
+#Badge: ITB × REVOU
+#SpeakerNotes: Sambut para eksekutif dan buka sesi modul ke-10 mengenai Governance, Risk & Compliance. Jelaskan bagaimana pengawasan AI menjadi pembeda utama organisasi resilient.
+#Visual: Title / Hero
+
+-----
+
+#Headline: 3 Pilar Utama Tata Kelola AI & Data Tingkat Institusi
+#Subheadline: Fondasi operasional untuk memitigasi risiko halusinasi dan kebocoran data
+#Description: Setiap keputusan strategis harus melalui validasi guardrails terstruktur sebelum diaplikasikan ke ekosistem produksi.
+#Bullet:
+- Guardrails: Batasan keamanan parameter dan proteksi data sensitif organisasi
+- Approvals: Jalur persetujuan bertingkat sebelum implementasi model ke produksi
+- Auditability: Rekam jejak menyeluruh dan evaluasi performa model secara berkala
+#SpeakerNotes: Berikan penekanan pada aspek auditability: AI tidak boleh dibiarkan mengambil keputusan tanpa jejak audit yang transparan.
+#Visual: Key Insights / Bullets
+
+-----
+
+#Headline: Alur Kerja Validasi Keputusan Multi-Tahap
+#Subheadline: Dari identifikasi masalah bisnis hingga audit pasca-implementasi
+#Description: Metodologi 4 tahap standar industri untuk mengevaluasi rekomendasi sistem cerdas secara objektif.
+#Bullet:
+- Tahap 01: Problem Formulation & Hypothesis Framing
+- Tahap 02: Deterministic Data Extraction & Verification
+- Tahap 03: Multi-Model Adversarial Stress Testing
+- Tahap 04: Policy Synthesis & Executive Board Sign-off
+#SpeakerNotes: Alokasikan 8 menit untuk bedah kasus di tahap 3. Pastikan peserta memahami teknik adversarial challenge terhadap rekomendasi AI.
+#Visual: Process / Workflow
+
+-----
+
+#Headline: [HANDS-ON] Eksekusi Audit Keputusan Menggunakan AI Prompt Card
+#Subheadline: Format terstruktur untuk mengevaluasi risiko keputusan strategis divisi
+#Description: Gunakan template prompt audit di bawah ini pada AI analitis untuk memetakan skenario terburuk dan asumsi tersembunyi.
+#Bullet:
+- PROMPT CARD: "Sebagai Chief Risk Officer, lakukan stress-test terhadap proposal [Nama Proposal] dengan asumsi penurunan pasar [X]% dan kenaikan biaya operasional [Y]%."
+- Evaluasi Tingkat Risiko: Klasifikasikan temuan ke dalam status OK, Risk, atau Critical Failure
+- Action Plan: Rumuskan langkah mitigasi sebelum presentasi di hadapan dewan pengawas
+#Badge: HANDS-ON 10 MIN
+#SpeakerNotes: Latihan squad 10 menit. Minta peserta mengisi placeholder bracket dengan kasus nyata dari unit kerja masing-masing.
+#Visual: Two Column / Comparison`,
   },
   {
     id: "sc-2",
@@ -1210,7 +1257,7 @@ const SHOWCASE_DECKS: ShowcaseDeck[] = [
 ];
 
 /* ───────────────────────────────────────────────────
- * Showcase 16:9 Plain Gray Skeleton Card
+ * Showcase 16:9 Card (Supports Image Preview & Skeletons)
  * ─────────────────────────────────────────────────── */
 function ShowcaseDeckCard({
   deck,
@@ -1219,6 +1266,43 @@ function ShowcaseDeckCard({
   deck: ShowcaseDeck;
   onSelect: (deck: ShowcaseDeck) => void;
 }) {
+  if (deck.image) {
+    return (
+      <div
+        onClick={() => onSelect(deck)}
+        className="group w-full aspect-[16/9] rounded-md border border-[#005AAB]/40 dark:border-[#005AAB]/60 overflow-hidden relative transition-all cursor-pointer select-none hover:shadow-lg hover:border-[#005AAB] hover:scale-[1.01] bg-neutral-900"
+      >
+        <img
+          src={deck.image}
+          alt={deck.title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-between p-3">
+          <div className="flex items-center justify-between">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FFDD3C] text-[#174A7F] uppercase tracking-wider shadow-sm flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#005AAB] animate-pulse" />
+              {deck.badge || "ITB SKILL INSTALLED"}
+            </span>
+            <span className="text-[10px] text-white/90 font-medium bg-black/50 px-2 py-0.5 rounded backdrop-blur-xs border border-white/10">
+              {deck.updatedAt}
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] font-semibold text-[#FFDD3C] tracking-wide uppercase">
+              {deck.category}
+            </span>
+            <h4 className="text-white text-xs sm:text-[13px] font-bold line-clamp-1 drop-shadow-xs">
+              {deck.title}
+            </h4>
+            <p className="text-white/70 text-[10px] line-clamp-1 mt-0.5">
+              Klik untuk memuat format slide & palet warna resmi ITB
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       onClick={() => onSelect(deck)}
@@ -5050,6 +5134,10 @@ async function streamBuildSlide(
                   deck={deck}
                   onSelect={(selected) => {
                     setContent(selected.sampleContent);
+                    if (selected.id === "sc-itb") {
+                      const itbPal = COLOR_PALETTES.find((p) => p.id === "itb");
+                      if (itbPal) setSelectedPalette(itbPal);
+                    }
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                 />
