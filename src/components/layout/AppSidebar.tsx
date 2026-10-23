@@ -110,16 +110,16 @@ export function AppSidebar() {
 
   return (
     <>
-      {/* Mobile Toggle Button */}
-      <div className="lg:hidden fixed top-2.5 left-4 z-50">
-        <Button
-          variant="outline"
-          size="icon"
+      {/* Mobile Toggle Button (Clean icon only, no wrapper box or shadow) */}
+      <div className="lg:hidden fixed top-3 left-4 z-50">
+        <button
+          type="button"
           onClick={() => setMobileOpen(true)}
-          className="bg-white/90 dark:bg-[#10140d]/90 border-[#dcdad1] dark:border-[#3f612d]/40 shadow-sm h-9 w-9"
+          className="p-1 text-neutral-800 dark:text-neutral-200 hover:text-neutral-950 dark:hover:text-white transition-colors cursor-pointer select-none focus:outline-none"
+          aria-label="Open sidebar"
         >
-          <Menu className="w-5 h-5 text-[#1a2315] dark:text-[#f4f3ed]" />
-        </Button>
+          <Menu className="w-6 h-6 stroke-[2]" />
+        </button>
       </div>
 
       {/* Mobile Backdrop */}
