@@ -3,7 +3,6 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import NextTopLoader from 'nextjs-toploader';
-import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 import {
   Bricolage_Grotesque,
@@ -103,7 +102,6 @@ export default function RootLayout({
           <NextTopLoader color="#FFD100" showSpinner={false} shadow="0 0 10px #FFD100,0 0 5px #FFD100" />
           <NuqsAdapter>
             <SidebarProvider>
-              <MobileBottomNav />
               {children}
             </SidebarProvider>
           </NuqsAdapter>
