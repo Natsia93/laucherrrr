@@ -4727,6 +4727,40 @@ export default function DeckGeneratorPage() {
     }
   };
 
+  const handleStartGenerationFromInput = () => {
+    if (attachedSkill) {
+      if (attachedSkill.id === "itb" || attachedSkill.name?.toLowerCase().includes("itb")) {
+        const itbPal = COLOR_PALETTES.find((p) => p.id === "itb");
+        if (itbPal) {
+          setSelectedPalette(itbPal);
+          setBgColors({
+            color1: itbPal.primary,
+            color2: itbPal.secondary,
+            color3: itbPal.accent || "#FFEC8E",
+          });
+          setIsCustomBgColors(true);
+        }
+        applyFontPreset("red-hat", "red-hat");
+        setBgStyle("solid");
+        setLayoutMood("executive");
+        setDensity("medium");
+        setAudience("Executives & C-Level");
+      }
+
+      const parsed = parsePromptBreakdown(content);
+      if (parsed.length > 0) {
+        setEditableBreakdown(parsed);
+      } else {
+        handlePlanOutline(8);
+      }
+
+      setStep("confirm");
+      return;
+    }
+
+    setStep("styler");
+  };
+
   // Load user defaults and custom brain from settings
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -5613,7 +5647,7 @@ async function streamBuildSlide(
               <button
                 type="button"
                 disabled={!content.trim() && !attachedSkill}
-                onClick={() => setStep("styler")}
+                onClick={handleStartGenerationFromInput}
                 className={`h-8.5 px-4 rounded-md font-semibold text-xs flex items-center justify-center transition-all ${
                   content.trim() || attachedSkill
                     ? "bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 cursor-pointer active:scale-95 shadow-xs"
@@ -5646,8 +5680,18 @@ async function streamBuildSlide(
                         content: ITB_SKILL_MD,
                       });
                       const itbPal = COLOR_PALETTES.find((p) => p.id === "itb");
-                      if (itbPal) setSelectedPalette(itbPal);
+                      if (itbPal) {
+                        setSelectedPalette(itbPal);
+                        setBgColors({
+                          color1: itbPal.primary,
+                          color2: itbPal.secondary,
+                          color3: itbPal.accent || "#FFEC8E",
+                        });
+                        setIsCustomBgColors(true);
+                      }
                       applyFontPreset("red-hat", "red-hat");
+                      setBgStyle("solid");
+                      setDensity("medium");
                     } else {
                       setContent(selected.sampleContent);
                     }
@@ -5679,11 +5723,11 @@ async function streamBuildSlide(
 
             <button
               type="button"
-              onClick={() => setStep("input")}
+              onClick={() => setStep(attachedSkill ? "confirm" : "input")}
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all cursor-pointer shrink-0 border border-neutral-200/80 dark:border-neutral-800"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back</span>
+              <span>{attachedSkill ? "Back to Outline" : "Back"}</span>
             </button>
           </div>
 
@@ -5732,6 +5776,37 @@ async function streamBuildSlide(
                 >
                   <X className="w-4 h-4" />
                 </button>
+              </div>
+            </div>
+          ) : attachedSkill ? (
+            <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50/50 dark:from-neutral-900 dark:to-[#081326] border border-blue-200/80 dark:border-blue-900/60 shadow-xs flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-600/10 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0 border border-blue-200/50 dark:border-blue-800/50">
+                  <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-extrabold uppercase px-2 py-0.5 rounded bg-blue-600 text-white">
+                      Template MD Aktif
+                    </span>
+                    <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                      {attachedSkill.name}
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 line-clamp-1 max-w-xl">
+                    Preset warna, font Red Hat Display, dan tata letak disinkronkan langsung dari file template. Anda dapat melewatinya langsung.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  onClick={() => setStep("confirm")}
+                  className="h-8.5 px-3.5 rounded-md text-xs font-bold bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>Lanjut ke Outline →</span>
+                </Button>
               </div>
             </div>
           ) : (
@@ -6241,11 +6316,11 @@ async function streamBuildSlide(
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
-                onClick={() => setStep("styler")}
+                onClick={() => setStep(attachedSkill ? "input" : "styler")}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all cursor-pointer border border-neutral-200/80 dark:border-neutral-800"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Back to Options</span>
+                <span>{attachedSkill ? "Back to Input" : "Back to Options"}</span>
               </button>
               <Button
                 type="button"
@@ -6257,6 +6332,38 @@ async function streamBuildSlide(
               </Button>
             </div>
           </div>
+
+          {/* Institutional / Active Template Banner in Confirm Step */}
+          {attachedSkill && (
+            <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-amber-50/50 dark:from-blue-950/30 dark:via-neutral-900 dark:to-neutral-900 border border-blue-200/80 dark:border-blue-900/60 shadow-xs flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-blue-600/10 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0 border border-blue-200/50 dark:border-blue-800/50">
+                  <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-blue-600 text-white tracking-wide">
+                      Template Aturan Aktif
+                    </span>
+                    <span className="text-xs font-bold text-neutral-900 dark:text-neutral-100">
+                      {attachedSkill.name}
+                    </span>
+                  </div>
+                  <p className="text-[11.5px] text-neutral-600 dark:text-neutral-400 mt-0.5">
+                    Gaya visual, font Red Hat Display, dan aturan warna dikunci otomatis sesuai standar dokumen template.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setStep("styler")}
+                className="px-3 py-1.5 rounded-md text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-750 transition-colors ml-auto sm:ml-0"
+              >
+                Kustomisasi Gaya (Opsional) →
+              </button>
+            </div>
+          )}
 
           {/* Minimalist Horizontal Style Summary Strip */}
           <div className="flex flex-wrap items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900/60 px-4 py-2.5 rounded-lg border border-neutral-200/70 dark:border-neutral-800 text-xs">
