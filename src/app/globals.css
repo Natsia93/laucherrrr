@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:ital,wght@0,300..900;1,300..900&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -14,6 +15,7 @@ html {
   --font-sans: var(--font-sf), "SF Pro Display", "SF Pro", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-sf: var(--font-sf), "SF Pro Display", "SF Pro", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-geist: var(--font-sf), "SF Pro Display", "SF Pro", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-redhat: "Red Hat Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-bricolage: var(--font-bricolage), "Bricolage Grotesque", sans-serif;
   --font-lora: var(--font-lora), "Lora", Georgia, serif;
   --font-jakarta: var(--font-jakarta), "Plus Jakarta Sans", sans-serif;
@@ -188,6 +190,14 @@ html {
 }
 
 /* Local Red Hat Display Fonts definition */
+@font-face {
+  font-family: 'Red Hat Display';
+  src: url('/fonts/RedHatDisplay-VariableFont_wght.ttf') format('truetype-variations'),
+       url('/fonts/RedHatDisplay-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 @font-face {
   font-family: 'Red Hat Display';
   src: url('/fonts/RedHatDisplay-Light.ttf') format('truetype');

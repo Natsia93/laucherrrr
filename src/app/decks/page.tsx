@@ -213,7 +213,7 @@ export function getTitleFontClass(font: TitleFont = "sf-pro"): string {
   switch (font) {
     case "red-hat":
     case "red-hat-display":
-      return "font-sans font-bold tracking-tight";
+      return "font-redhat font-bold tracking-tight";
     case "bricolage":
       return "font-bricolage font-extrabold tracking-tight";
     case "jakarta":
@@ -226,7 +226,7 @@ export function getTitleFontClass(font: TitleFont = "sf-pro"): string {
       return "font-inter font-extrabold tracking-tight";
     case "sf-pro":
     default:
-      return "font-sf font-sans font-extrabold tracking-tight";
+      return "font-sans font-extrabold tracking-tight";
   }
 }
 
@@ -234,7 +234,7 @@ export function getBodyFontClass(font: BodyFont = "sf-pro"): string {
   switch (font) {
     case "red-hat":
     case "red-hat-display":
-      return "font-sans";
+      return "font-redhat";
     case "inter":
       return "font-inter";
     case "jakarta":
@@ -243,7 +243,7 @@ export function getBodyFontClass(font: BodyFont = "sf-pro"): string {
       return "font-outfit";
     case "sf-pro":
     default:
-      return "font-sf";
+      return "font-sans";
   }
 }
 
@@ -1683,7 +1683,7 @@ function SlideFrameHeader({
         >
           ⚡
         </div>
-        <span className={`text-[10px] sm:text-[11px] font-semibold tracking-wider ${isDark ? "text-neutral-400" : "text-neutral-600 dark:text-neutral-400"} font-sf`}>
+        <span className={`text-[10px] sm:text-[11px] font-semibold tracking-wider ${isDark ? "text-neutral-400" : "text-neutral-600 dark:text-neutral-400"}`}>
           {text}
         </span>
       </div>
@@ -1713,9 +1713,9 @@ function SlideFrameFooter({
   isDark?: boolean;
 }) {
   return (
-    <div className={`w-full flex items-center justify-between pt-2 border-t ${isDark ? "border-neutral-800 text-neutral-500" : "border-neutral-200/60 dark:border-neutral-800 text-neutral-400"} text-[10px] sm:text-[11px] font-sf shrink-0 mt-auto tracking-normal`}>
-      <span className="font-sf font-medium text-neutral-500">{footer}</span>
-      {slideNumber && <span className="font-sf font-bold text-neutral-500 tabular-nums">{slideNumber}</span>}
+    <div className={`w-full flex items-center justify-between pt-2 border-t ${isDark ? "border-neutral-800 text-neutral-500" : "border-neutral-200/60 dark:border-neutral-800 text-neutral-400"} text-[10px] sm:text-[11px] shrink-0 mt-auto tracking-normal`}>
+      <span className="font-medium text-neutral-500">{footer}</span>
+      {slideNumber && <span className="font-bold text-neutral-500 tabular-nums">{slideNumber}</span>}
     </div>
   );
 }
@@ -1740,8 +1740,8 @@ function SlideRenderer({
   palette = COLOR_PALETTES[0],
   bgStyle = "solid",
   fontPairing = "modern",
-  titleFont = "sf-pro",
-  bodyFont = "sf-pro",
+  titleFont = "red-hat",
+  bodyFont = "red-hat",
 }: {
   slide: SlideData;
   isPresentation?: boolean;
@@ -1758,8 +1758,8 @@ function SlideRenderer({
   const titleSize = "text-2xl sm:text-3xl";
   const subtitleSize = "text-sm sm:text-base";
 
-  const effectiveTitleFont: TitleFont = titleFont || (fontPairing === "creative" ? "bricolage" : "sf-pro");
-  const effectiveBodyFont: BodyFont = bodyFont || "sf-pro";
+  const effectiveTitleFont: TitleFont = titleFont || (fontPairing === "creative" ? "bricolage" : "red-hat");
+  const effectiveBodyFont: BodyFont = bodyFont || "red-hat";
 
   const headingFontClass = getTitleFontClass(effectiveTitleFont);
   const bodyFontClass = getBodyFontClass(effectiveBodyFont);
@@ -1839,7 +1839,7 @@ function SlideRenderer({
       : "38%";
 
     return (
-      <div className="w-full h-full flex flex-row relative overflow-hidden font-sf bg-white dark:bg-[#111114]">
+      <div className="w-full h-full flex flex-row relative overflow-hidden bg-white dark:bg-[#111114]">
         {/* Left Color-Blocked Primary Panel */}
         <div
           className="h-full p-[6%] flex flex-col justify-between shrink-0 relative z-10 shadow-sm overflow-hidden"
@@ -1880,13 +1880,14 @@ function SlideRenderer({
     );
   };
 
-  switch (slide.layout) {
+  const renderSlideContent = () => {
+    switch (slide.layout) {
     /* ──── TITLE / HERO SLIDE ──── */
     case "title":
     case "hero":
       if (isDualTone) {
         return (
-          <div className="w-full h-full flex flex-col md:flex-row relative overflow-hidden font-sf bg-white dark:bg-[#111114]">
+          <div className="w-full h-full flex flex-col md:flex-row relative overflow-hidden bg-white dark:bg-[#111114]">
             {/* Left 42% Primary Color Block */}
             <div
               className="w-full md:w-[42%] h-full p-[6%] flex flex-col justify-between shrink-0 relative z-10 shadow-sm"
@@ -1935,7 +1936,7 @@ function SlideRenderer({
                 {slide.subtitle && (
                   <motion.p
                     {...anim(0.12)}
-                    className="text-base sm:text-xl font-semibold text-neutral-800 dark:text-neutral-200 leading-relaxed font-sf"
+                    className="text-base sm:text-xl font-semibold text-neutral-800 dark:text-neutral-200 leading-relaxed"
                   >
                     {safeString(slide.subtitle)}
                   </motion.p>
@@ -1943,7 +1944,7 @@ function SlideRenderer({
                 {slide.description && (
                   <motion.p
                     {...anim(0.18)}
-                    className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed font-sf line-clamp-4"
+                    className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed line-clamp-4"
                   >
                     {safeString(slide.description)}
                   </motion.p>
@@ -1958,7 +1959,7 @@ function SlideRenderer({
 
       return (
         <div
-          className={`w-full h-full flex flex-col justify-between p-[7%] relative overflow-hidden font-sf ${bgClasses}`}
+          className={`w-full h-full flex flex-col justify-between p-[7%] relative overflow-hidden ${bgClasses}`}
           style={dynamicBgStyle}
         >
           {/* Subtle Ambient Shapes */}
@@ -1973,7 +1974,7 @@ function SlideRenderer({
             {slide.highlight && (
               <motion.span
                 {...anim(0)}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider w-fit mb-3 font-sf"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider w-fit mb-3"
                 style={{
                   backgroundColor: palette.id === "launcher" ? "#FFE500" : palette.primary,
                   color: "#111111",
@@ -1984,14 +1985,14 @@ function SlideRenderer({
             )}
             <motion.h1
               {...anim(0.06)}
-              className="text-3xl sm:text-5xl font-black font-sf text-neutral-950 dark:text-white leading-[1.08] tracking-tight"
+              className="text-3xl sm:text-5xl font-black text-neutral-950 dark:text-white leading-[1.08] tracking-tight"
             >
               {safeString(slide.title)}
             </motion.h1>
             {slide.subtitle && (
               <motion.p
                 {...anim(0.12)}
-                className="text-sm sm:text-lg font-medium text-neutral-600 dark:text-neutral-400 mt-3 leading-relaxed font-sf"
+                className="text-sm sm:text-lg font-medium text-neutral-600 dark:text-neutral-400 mt-3 leading-relaxed"
               >
                 {safeString(slide.subtitle)}
               </motion.p>
@@ -1999,7 +2000,7 @@ function SlideRenderer({
             {slide.description && (
               <motion.p
                 {...anim(0.18)}
-                className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-4 leading-relaxed line-clamp-3 font-sf"
+                className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-4 leading-relaxed line-clamp-3"
               >
                 {safeString(slide.description)}
               </motion.p>
@@ -2013,7 +2014,7 @@ function SlideRenderer({
     /* ──── STATS SLIDE ──── */
     case "stats":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative font-sans`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
           <div className="mb-2">
             <SlideFrameHeader badge={slide.badge || "Key Metrics"} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
             <motion.h2
@@ -2037,12 +2038,12 @@ function SlideRenderer({
                 className="p-4 sm:p-5 rounded-xl border border-neutral-200/90 dark:border-neutral-800 bg-white/90 dark:bg-[#18181c] shadow-xs flex flex-col justify-between"
               >
                 <span
-                  className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-none font-sf"
+                  className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-none"
                   style={{ color: palette.primary }}
                 >
                   {safeString(stat?.value)}
                 </span>
-                <span className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 mt-2 font-medium leading-snug font-sf">
+                <span className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 mt-2 font-medium leading-snug">
                   {safeString(stat?.label)}
                 </span>
               </motion.div>
@@ -2068,7 +2069,7 @@ function SlideRenderer({
         : [];
 
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative font-sans`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
           <div className="mb-2">
             <SlideFrameHeader badge={slide.badge || "Strategic Roadmap"} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
             <motion.h2
@@ -2114,7 +2115,7 @@ function SlideRenderer({
                   }}
                 >
                   <div
-                    className="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs font-bold flex items-center justify-center font-sf shadow-xs"
+                    className="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs font-bold flex items-center justify-center shadow-xs"
                     style={{
                       backgroundColor: palette.primary,
                       color: isDarkBadge ? "#FFFFFF" : "#111111",
@@ -2162,7 +2163,7 @@ function SlideRenderer({
       const bulletsList = slide.bullets || [];
       const isDense = bulletsList.length >= 4;
       return (
-        <div className={`w-full h-full ${bgClasses} flex p-[5%] sm:p-[6%] relative font-sans overflow-hidden`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex p-[5%] sm:p-[6%] relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
           <div className="flex flex-col lg:flex-row gap-5 w-full h-full min-h-0 items-center justify-between">
             {/* Left Column: Title, Subtitle, Badge & Narrative Description */}
             <div className="w-full lg:w-[40%] flex flex-col justify-center min-w-0 max-h-full overflow-y-auto scrollbar-none">
@@ -2244,7 +2245,7 @@ function SlideRenderer({
               {safeString(slide.title)}
             </h2>
             {slide.subtitle && (
-              <p className="text-xs sm:text-sm mt-3 opacity-80 leading-relaxed font-sf">
+              <p className="text-xs sm:text-sm mt-3 opacity-80 leading-relaxed">
                 {safeString(slide.subtitle)}
               </p>
             )}
@@ -2269,7 +2270,7 @@ function SlideRenderer({
                     >
                       {safeString(stat?.value)}
                     </div>
-                    <span className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 mt-1 block font-sf">
+                    <span className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 mt-1 block">
                       {safeString(stat?.label)}
                     </span>
                   </motion.div>
@@ -2298,7 +2299,7 @@ function SlideRenderer({
                           {bTitle}
                         </span>
                       </div>
-                      <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed font-sf">
+                      <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
                         {bDesc}
                       </p>
                     </motion.div>
@@ -2307,7 +2308,7 @@ function SlideRenderer({
               </div>
             ) : null}
             {slide.description && (
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed font-sf">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
                 {safeString(slide.description)}
               </p>
             )}
@@ -2317,7 +2318,7 @@ function SlideRenderer({
       }
 
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] sm:p-[7%] relative font-sans`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] sm:p-[7%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
           <div className="mb-3">
             <SlideFrameHeader badge={slide.badge || "Comparative Analysis"} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
             <motion.h2
@@ -2376,7 +2377,7 @@ function SlideRenderer({
                           {bTitle}
                         </h4>
                       </div>
-                      <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed font-sf">
+                      <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
                         {bDesc}
                       </p>
                     </motion.div>
@@ -2385,7 +2386,7 @@ function SlideRenderer({
               </div>
             ) : slide.description ? (
               <motion.div {...anim(0.15)} className="w-full p-5 rounded-xl border border-neutral-200/90 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/80">
-                <p className="text-xs sm:text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed font-sf">
+                <p className="text-xs sm:text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
                   {safeString(slide.description)}
                 </p>
               </motion.div>
@@ -2416,7 +2417,7 @@ function SlideRenderer({
               </motion.div>
             )}
             {slide.description && (
-              <motion.p {...anim(0.16)} className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 max-w-[85%] leading-relaxed font-sf">
+              <motion.p {...anim(0.16)} className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 max-w-[85%] leading-relaxed">
                 {safeString(slide.description)}
               </motion.p>
             )}
@@ -2427,7 +2428,7 @@ function SlideRenderer({
 
       return (
         <div
-          className="w-full h-full flex flex-col justify-center p-[8%] relative overflow-hidden font-sans"
+          className={`w-full h-full flex flex-col justify-center p-[8%] relative overflow-hidden ${bodyFontClass}`}
           style={{ backgroundColor: palette.primary }}
         >
           <div className="absolute -bottom-[20%] -right-[15%] w-[50%] h-[65%] rounded-full bg-white/20" />
@@ -2474,7 +2475,7 @@ function SlideRenderer({
     case "chartBar": {
       const hasNarrative = Boolean(slide.description || (slide.bullets && slide.bullets.length > 0) || (slide.stats && slide.stats.length > 0));
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sans`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
           {hasNarrative ? (
             <div className="flex flex-col lg:flex-row gap-6 w-full h-full min-h-0 items-center">
               {/* Left Column: Context, Narrative & Key Highlights */}
@@ -2549,7 +2550,7 @@ function SlideRenderer({
     case "chartArea": {
       const hasNarrative = Boolean(slide.description || (slide.bullets && slide.bullets.length > 0) || (slide.stats && slide.stats.length > 0));
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sans`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
           {hasNarrative ? (
             <div className="flex flex-col lg:flex-row gap-6 w-full h-full min-h-0 items-center">
               <div className="w-full lg:w-[45%] flex flex-col justify-center min-w-0">
@@ -2622,7 +2623,7 @@ function SlideRenderer({
     case "chartDonut": {
       const hasNarrative = Boolean(slide.description || (slide.bullets && slide.bullets.length > 0) || (slide.stats && slide.stats.length > 0));
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sans`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
           {hasNarrative ? (
             <div className="flex flex-col lg:flex-row gap-6 w-full h-full min-h-0 items-center">
               <div className="w-full lg:w-[45%] flex flex-col justify-center min-w-0">
@@ -2694,7 +2695,7 @@ function SlideRenderer({
     /* ──── FLOW DIAGRAM SLIDE ──── */
     case "flowDiagram":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[7%] relative font-sans justify-between`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[7%] relative ${bodyFontClass} justify-between`} style={dynamicBgStyle}>
           <div className="mb-2">
             <motion.h2
               {...anim(0)}
@@ -2726,7 +2727,7 @@ function SlideRenderer({
         : `text-2xl sm:text-3xl font-bold ${headingFontClass} leading-tight`;
 
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative font-sf overflow-hidden`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative overflow-hidden`} style={dynamicBgStyle}>
           <div className="mb-1.5 shrink-0">
             <SlideFrameHeader badge={slide.badge || "Comparative Analysis"} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} rightPill={slide.topRightPill} />
             <motion.h2
@@ -2803,7 +2804,7 @@ function SlideRenderer({
           ];
 
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative font-sans`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
           <div className="mb-2">
             <SlideFrameHeader badge={slide.badge || "Roadmap Timeline"} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
             <motion.h2
@@ -2832,7 +2833,7 @@ function SlideRenderer({
     case "chartRadar": {
       const hasNarrative = Boolean(slide.description || (slide.bullets && slide.bullets.length > 0));
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sans justify-between`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass} justify-between`} style={dynamicBgStyle}>
           {hasNarrative ? (
             <div className="flex flex-col lg:flex-row gap-6 w-full h-full min-h-0 items-center">
               <div className="w-full lg:w-[45%] flex flex-col justify-center min-w-0">
@@ -2878,7 +2879,7 @@ function SlideRenderer({
     /* ──── QUADRANT MATRIX SLIDE ──── */
     case "quadrantMatrix":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sans justify-between`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass} justify-between`} style={dynamicBgStyle}>
           <div className="mb-2">
             <motion.h2
               {...anim(0)}
@@ -2897,7 +2898,7 @@ function SlideRenderer({
     /* ──── FUNNEL DIAGRAM SLIDE ──── */
     case "funnel":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sans justify-between`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass} justify-between`} style={dynamicBgStyle}>
           <div className="mb-2">
             <motion.h2
               {...anim(0)}
@@ -2916,34 +2917,34 @@ function SlideRenderer({
     /* ──── 12. CIRCULAR CYCLE LOOP WITH CURVED ARROWS ──── */
     case "cycleLoop":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sf justify-between`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
           <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
           
           <div className="flex-1 flex items-center gap-6 my-auto">
             {/* Left Column: Title & Big Stat */}
             <div className="w-[36%] flex flex-col justify-between">
               <div>
-                <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight font-sf`}>
+                <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
                   {slide.title}
                 </motion.h2>
                 {slide.subtitle && (
-                  <h6 className="text-xs font-bold text-neutral-900 dark:text-white mt-2 font-sf">
+                  <h6 className="text-xs font-bold text-neutral-900 dark:text-white mt-2">
                     {slide.subtitle}
                   </h6>
                 )}
                 {slide.description && (
-                  <p className="text-[10px] sm:text-xs text-neutral-500 mt-1 font-sf leading-relaxed">
+                  <p className="text-[10px] sm:text-xs text-neutral-500 mt-1 leading-relaxed">
                     {slide.description}
                   </p>
                 )}
               </div>
               {slide.stats?.[0]?.value && (
                 <div className="mt-4">
-                  <span className={`${isPresentation ? "text-3xl sm:text-4xl" : "text-2xl sm:text-3xl"} font-black text-neutral-950 dark:text-white font-sf block leading-none`}>
+                  <span className={`${isPresentation ? "text-3xl sm:text-4xl" : "text-2xl sm:text-3xl"} font-black text-neutral-950 dark:text-white block leading-none`}>
                     {slide.stats[0].value}
                   </span>
                   {slide.stats[0].label && (
-                    <p className="text-[9px] text-neutral-400 mt-1 font-sf">
+                    <p className="text-[9px] text-neutral-400 mt-1">
                       {slide.stats[0].label}
                     </p>
                   )}
@@ -2977,7 +2978,7 @@ function SlideRenderer({
     /* ──── ARCHITECTURE STACK SLIDE ──── */
     case "architecture":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sf justify-between`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
           <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
           <div className="mb-2">
             <motion.h2
@@ -3002,15 +3003,15 @@ function SlideRenderer({
     /* ──── 8. CHEVRON PROCESS ARROW BAR SLIDE ──── */
     case "chevronProcess":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sf justify-between`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
           <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
           <div className="mb-2">
             <motion.h2
               {...anim(0)}
-              className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight font-sf`}>
+              className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
               {slide.title}
             </motion.h2>
-            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5 font-sf">{slide.subtitle}</motion.p>}
+            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
           </div>
           <div className="flex-1 flex items-center justify-center my-auto">
             <ChevronProcessBar steps={slide.chevronSteps} primaryColor={palette.primary} isPresentation={isPresentation} />
@@ -3022,7 +3023,7 @@ function SlideRenderer({
     /* ──── 9. DUAL GAUGE RINGS WITH SPLIT CARDS ──── */
     case "gaugeRings":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sf justify-between overflow-hidden`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between overflow-hidden`} style={dynamicBgStyle}>
           <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
           <div className="flex-1 flex items-center gap-6 my-auto">
             {/* Left Column: Title, Subtitle, & Optional Cards */}
@@ -3030,12 +3031,12 @@ function SlideRenderer({
               <div>
                 <motion.h2
                   {...anim(0)}
-                  className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight font-sf`}
+                  className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}
                 >
                   {slide.title}
                 </motion.h2>
                 {slide.subtitle && (
-                  <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-2 font-sf leading-relaxed">
+                  <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-2 leading-relaxed">
                     {slide.subtitle}
                   </p>
                 )}
@@ -3072,15 +3073,15 @@ function SlideRenderer({
     /* ──── 4. ASCENDING TRAJECTORY SLIDE ──── */
     case "ascendingTrajectory":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sf justify-between`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
           <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
           <div className="mb-2">
             <motion.h2
               {...anim(0)}
-              className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight font-sf`}>
+              className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
               {slide.title}
             </motion.h2>
-            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5 font-sf">{slide.subtitle}</motion.p>}
+            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
           </div>
           <div className="flex-1 flex items-center justify-center my-auto">
             <AscendingTrajectory nodes={slide.trajectoryNodes} primaryColor={palette.primary} isPresentation={isPresentation} />
@@ -3092,15 +3093,15 @@ function SlideRenderer({
     /* ──── VERTICAL PROGRESS STACK SLIDE ──── */
     case "verticalProgress":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sf justify-between`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
           <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
           <div className="mb-2">
             <motion.h2
               {...anim(0)}
-              className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight font-sf`}>
+              className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
               {slide.title}
             </motion.h2>
-            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5 font-sf">{slide.subtitle}</motion.p>}
+            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
           </div>
           <div className="flex-1 flex items-center justify-center my-auto">
             <VerticalProgressStack items={slide.verticalProgressItems} primaryColor={palette.primary} isPresentation={isPresentation} />
@@ -3118,7 +3119,7 @@ function SlideRenderer({
               {slide.title}
             </h2>
             {slide.subtitle && (
-              <p className="text-xs sm:text-sm mt-3 opacity-80 leading-relaxed font-sf">
+              <p className="text-xs sm:text-sm mt-3 opacity-80 leading-relaxed">
                 {slide.subtitle}
               </p>
             )}
@@ -3131,14 +3132,14 @@ function SlideRenderer({
       }
 
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sf justify-between`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
           <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
           
           <div className="mb-2">
-            <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight font-sf`}>
+            <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
               {slide.title}
             </motion.h2>
-            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5 font-sf">{slide.subtitle}</motion.p>}
+            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
           </div>
 
           <div className="flex-1 flex items-center my-auto">
@@ -3152,15 +3153,15 @@ function SlideRenderer({
     /* ──── 2. HORIZONTAL MILESTONES BAR ──── */
     case "horizontalMilestones":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sf justify-between`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
           <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
           
           <div className="flex items-start justify-between gap-4 mb-2">
-            <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight font-sf`}>
+            <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
               {slide.title}
             </motion.h2>
             {slide.subtitle && (
-              <motion.p {...anim(0.06)} className="text-xs text-neutral-500 max-w-xs text-right leading-relaxed font-sf">
+              <motion.p {...anim(0.06)} className="text-xs text-neutral-500 max-w-xs text-right leading-relaxed">
                 {slide.subtitle}
               </motion.p>
             )}
@@ -3185,14 +3186,14 @@ function SlideRenderer({
           </div>,
           <div className="my-auto max-w-xl space-y-4">
             {slide.subtitle && (
-              <p className="text-sm sm:text-base md:text-lg font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed font-sf">
+              <p className="text-sm sm:text-base md:text-lg font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed">
                 {slide.subtitle}
               </p>
             )}
             {slide.ctaText && (
               <div className="pt-2">
                 <span
-                  className="px-6 py-2.5 rounded-full font-bold text-xs sm:text-sm inline-flex items-center gap-2 shadow-md font-sf cursor-pointer"
+                  className="px-6 py-2.5 rounded-full font-bold text-xs sm:text-sm inline-flex items-center gap-2 shadow-md cursor-pointer"
                   style={{ backgroundColor: palette.primary, color: primaryTextColor }}
                 >
                   {slide.ctaText}
@@ -3207,7 +3208,7 @@ function SlideRenderer({
       if (isGradient) {
         return (
           <div
-            className="w-full h-full flex flex-col p-[7%] relative font-sf justify-between"
+            className="w-full h-full flex flex-col p-[7%] relative justify-between"
             style={{
               background: `linear-gradient(135deg, ${palette.primary} 0%, ${palette.primary}CC 35%, #FFFFFF 90%)`,
               color: "#111111",
@@ -3222,14 +3223,14 @@ function SlideRenderer({
             <div className="flex-1 flex flex-col justify-center max-w-[85%]">
               <motion.h1
                 {...anim(0.06)}
-                className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05] font-sf text-neutral-950"
+                className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05] text-neutral-950"
               >
                 {slide.title}
               </motion.h1>
               {slide.subtitle && (
                 <motion.p
                   {...anim(0.12)}
-                  className="text-sm sm:text-base font-medium mt-4 leading-relaxed font-sf max-w-lg text-neutral-800"
+                  className="text-sm sm:text-base font-medium mt-4 leading-relaxed max-w-lg text-neutral-800"
                 >
                   {slide.subtitle}
                 </motion.p>
@@ -3237,7 +3238,7 @@ function SlideRenderer({
               {slide.ctaText && (
                 <motion.div {...anim(0.18)} className="mt-8">
                   <span
-                    className="px-6 py-3 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2.5 w-fit shadow-md transition-all font-sf cursor-pointer bg-neutral-950 text-white hover:bg-neutral-800"
+                    className="px-6 py-3 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2.5 w-fit shadow-md transition-all cursor-pointer bg-neutral-950 text-white hover:bg-neutral-800"
                   >
                     {slide.ctaText} →
                   </span>
@@ -3252,7 +3253,7 @@ function SlideRenderer({
 
       return (
         <div
-          className="w-full h-full flex flex-col p-[7%] relative font-sf justify-between overflow-hidden"
+          className="w-full h-full flex flex-col p-[7%] relative justify-between overflow-hidden"
           style={{ backgroundColor: palette.primary, color: primaryTextColor }}
         >
           <SlideFrameHeader
@@ -3264,7 +3265,7 @@ function SlideRenderer({
           <div className="flex-1 flex flex-col justify-center max-w-[85%]">
             <motion.h1
               {...anim(0.06)}
-              className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05] font-sf"
+              className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05]"
               style={{ color: primaryTextColor }}
             >
               {slide.title}
@@ -3272,7 +3273,7 @@ function SlideRenderer({
             {slide.subtitle && (
               <motion.p
                 {...anim(0.12)}
-                className="text-sm sm:text-base font-medium mt-4 leading-relaxed font-sf max-w-lg"
+                className="text-sm sm:text-base font-medium mt-4 leading-relaxed max-w-lg"
                 style={{ color: primaryTextColor === "#111111" ? "rgba(17,17,17,0.8)" : "rgba(255,255,255,0.8)" }}
               >
                 {slide.subtitle}
@@ -3281,7 +3282,7 @@ function SlideRenderer({
             {slide.ctaText && (
               <motion.div {...anim(0.18)} className="mt-8">
                 <span
-                  className="px-6 py-3 rounded-full font-bold text-xs sm:text-sm inline-flex items-center gap-2.5 w-fit shadow-md transition-all font-sf cursor-pointer"
+                  className="px-6 py-3 rounded-full font-bold text-xs sm:text-sm inline-flex items-center gap-2.5 w-fit shadow-md transition-all cursor-pointer"
                   style={{
                     backgroundColor: primaryTextColor === "#111111" ? "#111111" : "#FFFFFF",
                     color: primaryTextColor === "#111111" ? "#FFFFFF" : "#111111",
@@ -3300,14 +3301,14 @@ function SlideRenderer({
     /* ──── 5. BUBBLE CLUSTER (3 INTERSECTING CIRCLES) ──── */
     case "bubbleCluster":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sf justify-between`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
           <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
           
           <div className="mb-2">
-            <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight font-sf`}>
+            <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
               {slide.title}
             </motion.h2>
-            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5 font-sf">{slide.subtitle}</motion.p>}
+            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
           </div>
 
           <div className="flex-1 flex items-center justify-center my-auto">
@@ -3321,7 +3322,7 @@ function SlideRenderer({
     /* ──── 6. IMAGE SPLIT WITH YELLOW ACCENTS & METRICS ──── */
     case "imageSplitMetric":
       return (
-        <div className="w-full h-full bg-white dark:bg-neutral-950 flex flex-col p-[6%] relative font-sf justify-between" style={dynamicBgStyle}>
+        <div className="w-full h-full bg-white dark:bg-neutral-950 flex flex-col p-[6%] relative justify-between" style={dynamicBgStyle}>
           <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
           
           <div className="flex-1 flex items-center gap-6 my-auto">
@@ -3343,7 +3344,7 @@ function SlideRenderer({
             {/* Right Card: Headline & Stat */}
             <div className="flex-1 flex flex-col justify-between">
               <div>
-                <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight font-sf`}>
+                <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
                   {slide.title}
                 </motion.h2>
                 {slide.highlight && (
@@ -3355,7 +3356,7 @@ function SlideRenderer({
 
               {slide.stats && slide.stats[0] && (
                 <div className="mt-4 flex items-baseline gap-3">
-                  <span className={`${isPresentation ? "text-4xl sm:text-5xl" : "text-3xl sm:text-4xl"} font-black text-neutral-950 dark:text-white font-sf`}>
+                  <span className={`${isPresentation ? "text-4xl sm:text-5xl" : "text-3xl sm:text-4xl"} font-black text-neutral-950 dark:text-white`}>
                     {slide.stats[0].value}
                   </span>
                   <span className="text-[10px] sm:text-xs text-neutral-500 max-w-[200px] leading-tight">
@@ -3379,7 +3380,7 @@ function SlideRenderer({
               {slide.title}
             </h2>
             {slide.subtitle && (
-              <p className="text-xs sm:text-sm mt-3 opacity-80 leading-relaxed font-sf">
+              <p className="text-xs sm:text-sm mt-3 opacity-80 leading-relaxed">
                 {slide.subtitle}
               </p>
             )}
@@ -3387,18 +3388,18 @@ function SlideRenderer({
           <div className="flex-1 flex items-center justify-between gap-6 my-auto">
             <div className="flex-1">
               <span
-                className="text-4xl sm:text-6xl font-black font-sf leading-none block"
+                className="text-4xl sm:text-6xl font-black leading-none block"
                 style={{ color: palette.primary }}
               >
                 {slide.stats?.[0]?.value || "+85%"}
               </span>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-2 font-sf">
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-2">
                 {slide.stats?.[0]?.label || "Compounding acceleration across key execution metrics"}
               </p>
             </div>
             {slide.description && (
               <div className="w-[45%] rounded-xl p-4 bg-white dark:bg-[#18181c] border border-neutral-200/80 dark:border-neutral-800 shadow-sm">
-                <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 leading-snug font-sf">
+                <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 leading-snug">
                   {slide.description}
                 </p>
               </div>
@@ -3411,7 +3412,7 @@ function SlideRenderer({
       if (isGradient) {
         return (
           <div
-            className="w-full h-full flex flex-col p-[6%] relative font-sf justify-between"
+            className="w-full h-full flex flex-col p-[6%] relative justify-between"
             style={{
               background: `linear-gradient(135deg, ${palette.primary} 0%, ${palette.primary}B3 30%, #FFFFFF 85%)`,
               color: "#111111",
@@ -3426,13 +3427,13 @@ function SlideRenderer({
             <div className="flex items-start justify-between gap-6 mb-4">
               <motion.h2
                 {...anim(0)}
-                className="text-2xl sm:text-4xl font-extrabold leading-tight font-sf flex-1 text-neutral-950"
+                className="text-2xl sm:text-4xl font-extrabold leading-tight flex-1 text-neutral-950"
               >
                 {slide.title}
               </motion.h2>
               {slide.subtitle && (
                 <p
-                  className="text-xs max-w-xs leading-relaxed font-sf text-neutral-800"
+                  className="text-xs max-w-xs leading-relaxed text-neutral-800"
                 >
                   {slide.subtitle}
                 </p>
@@ -3444,18 +3445,18 @@ function SlideRenderer({
               <div className="flex-1">
                 {slide.highlight && (
                   <p
-                    className="text-xs font-semibold mb-1 font-sf text-neutral-800"
+                    className="text-xs font-semibold mb-1 text-neutral-800"
                   >
                     {slide.highlight}
                   </p>
                 )}
                 <span
-                  className={`${isPresentation ? "text-5xl sm:text-6xl" : "text-4xl sm:text-5xl"} font-black font-sf leading-none block text-neutral-950`}
+                  className={`${isPresentation ? "text-5xl sm:text-6xl" : "text-4xl sm:text-5xl"} font-black leading-none block text-neutral-950`}
                 >
                   {slide.stats?.[0]?.value || "+85%"}
                 </span>
                 <p
-                  className="text-xs mt-1 font-sf text-neutral-700"
+                  className="text-xs mt-1 text-neutral-700"
                 >
                   {slide.stats?.[0]?.label || "Compounding acceleration across key execution metrics"}
                 </p>
@@ -3470,7 +3471,7 @@ function SlideRenderer({
                 >
                   ⚡
                 </div>
-                <p className="text-xs font-semibold leading-snug font-sf text-neutral-800">
+                <p className="text-xs font-semibold leading-snug text-neutral-800">
                   {slide.description || "Visualize Every Process Clearly With Structured Steps And Engaging"}
                 </p>
               </div>
@@ -3483,7 +3484,7 @@ function SlideRenderer({
 
       return (
         <div
-          className="w-full h-full flex flex-col p-[6%] relative font-sf justify-between overflow-hidden"
+          className="w-full h-full flex flex-col p-[6%] relative justify-between overflow-hidden"
           style={{ backgroundColor: palette.primary, color: primaryTextColor }}
         >
           <SlideFrameHeader
@@ -3495,14 +3496,14 @@ function SlideRenderer({
           <div className="flex items-start justify-between gap-6 mb-4">
             <motion.h2
               {...anim(0)}
-              className="text-2xl sm:text-4xl font-extrabold leading-tight font-sf flex-1"
+              className="text-2xl sm:text-4xl font-extrabold leading-tight flex-1"
               style={{ color: primaryTextColor }}
             >
               {slide.title}
             </motion.h2>
             {slide.subtitle && (
               <p
-                className="text-xs max-w-xs leading-relaxed font-sf"
+                className="text-xs max-w-xs leading-relaxed"
                 style={{ color: primaryTextColor === "#111111" ? "rgba(17,17,17,0.75)" : "rgba(255,255,255,0.75)" }}
               >
                 {slide.subtitle}
@@ -3515,20 +3516,20 @@ function SlideRenderer({
             <div className="flex-1">
               {slide.highlight && (
                 <p
-                  className="text-xs font-semibold mb-1 font-sf"
+                  className="text-xs font-semibold mb-1"
                   style={{ color: primaryTextColor === "#111111" ? "rgba(17,17,17,0.85)" : "rgba(255,255,255,0.85)" }}
                 >
                   {slide.highlight}
                 </p>
               )}
               <span
-                className={`${isPresentation ? "text-5xl sm:text-6xl" : "text-4xl sm:text-5xl"} font-black font-sf leading-none block`}
+                className={`${isPresentation ? "text-5xl sm:text-6xl" : "text-4xl sm:text-5xl"} font-black leading-none block`}
                 style={{ color: primaryTextColor }}
               >
                 {slide.stats?.[0]?.value || "+85%"}
               </span>
               <p
-                className="text-xs mt-1 font-sf"
+                className="text-xs mt-1"
                 style={{ color: primaryTextColor === "#111111" ? "rgba(17,17,17,0.7)" : "rgba(255,255,255,0.7)" }}
               >
                 {slide.stats?.[0]?.label || "Compounding acceleration across key execution metrics"}
@@ -3544,7 +3545,7 @@ function SlideRenderer({
               >
                 ⚡
               </div>
-              <p className="text-xs font-semibold leading-snug font-sf text-neutral-800">
+              <p className="text-xs font-semibold leading-snug text-neutral-800">
                 {slide.description || "Visualize Every Process Clearly With Structured Steps And Engaging"}
               </p>
             </div>
@@ -3557,7 +3558,7 @@ function SlideRenderer({
     /* ──── 10. ASYMMETRIC STAT MATRIX ──── */
     case "asymmetricMatrix":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sf justify-between`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
           <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
           
           <div className="flex-1 flex items-center gap-6 my-auto">
@@ -3568,11 +3569,11 @@ function SlideRenderer({
 
             {/* Right Headline */}
             <div className="flex-1">
-              <motion.h2 {...anim(0)} className={`text-2xl sm:text-4xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight font-sf`}>
+              <motion.h2 {...anim(0)} className={`text-2xl sm:text-4xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
                 {slide.title}
               </motion.h2>
               {slide.subtitle && (
-                <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-2 font-sf leading-relaxed">
+                <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-2 leading-relaxed">
                   {slide.subtitle}
                 </motion.p>
               )}
@@ -3586,27 +3587,27 @@ function SlideRenderer({
     /* ──── 11. VERTICAL CONNECTED RINGS CHAIN ──── */
     case "connectedRings":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative font-sf justify-between`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
           <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
           
           <div className="flex-1 flex items-center gap-6 my-auto">
             {/* Left Column: Title & Big Stat */}
             <div className="w-[38%] flex flex-col justify-between">
               <div>
-                <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight font-sf`}>
+                <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
                   {slide.title}
                 </motion.h2>
                 {slide.subtitle && (
-                  <p className="text-xs text-neutral-500 mt-1 font-sf">
+                  <p className="text-xs text-neutral-500 mt-1">
                     {slide.subtitle}
                   </p>
                 )}
               </div>
               <div className="mt-6">
-                <span className={`${isPresentation ? "text-4xl sm:text-5xl" : "text-3xl sm:text-4xl"} font-black text-neutral-950 dark:text-white font-sf block leading-none`}>
+                <span className={`${isPresentation ? "text-4xl sm:text-5xl" : "text-3xl sm:text-4xl"} font-black text-neutral-950 dark:text-white block leading-none`}>
                   {slide.stats?.[0]?.value || "5729+"}
                 </span>
-                <p className="text-[10px] sm:text-xs text-neutral-500 mt-2 font-sf leading-tight">
+                <p className="text-[10px] sm:text-xs text-neutral-500 mt-2 leading-tight">
                   {slide.stats?.[0]?.label || "Highlight Every Milestone Using Connected Readability"}
                 </p>
               </div>
@@ -3633,19 +3634,19 @@ function SlideRenderer({
           </div>,
           <div className="my-auto max-w-xl space-y-4">
             {slide.subtitle && (
-              <p className="text-base sm:text-lg text-neutral-700 dark:text-neutral-300 font-sf leading-relaxed">
+              <p className="text-base sm:text-lg text-neutral-700 dark:text-neutral-300 leading-relaxed">
                 {slide.subtitle}
               </p>
             )}
             {slide.description && (
-              <p className="text-xs sm:text-sm text-neutral-500 font-sf leading-relaxed">
+              <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">
                 {slide.description}
               </p>
             )}
             {slide.ctaText && (
               <div className="pt-2">
                 <span
-                  className="px-6 py-2.5 rounded-full font-bold text-xs sm:text-sm inline-flex items-center gap-2 shadow-md font-sf cursor-pointer"
+                  className="px-6 py-2.5 rounded-full font-bold text-xs sm:text-sm inline-flex items-center gap-2 shadow-md cursor-pointer"
                   style={{ backgroundColor: palette.primary, color: primaryTextColor }}
                 >
                   {slide.ctaText}
@@ -3658,7 +3659,7 @@ function SlideRenderer({
       }
 
       return (
-        <div className="w-full h-full bg-neutral-950 flex flex-col justify-center items-center text-center p-[10%] relative overflow-hidden font-sans text-white">
+        <div className={`w-full h-full bg-neutral-950 flex flex-col justify-center items-center text-center p-[10%] relative overflow-hidden ${bodyFontClass} text-white`}>
           <div
             className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[60%] h-[40%] rounded-full blur-3xl opacity-20"
             style={{ backgroundColor: palette.primary }}
@@ -3707,7 +3708,7 @@ function SlideRenderer({
     /* ──── ACTION LIST / LEARNING OBJECTIVES SLIDE ──── */
     case "actionList":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative font-sf`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative`} style={dynamicBgStyle}>
           <div>
             <SlideFrameHeader badge={slide.badge || "LEARNING OBJECTIVES"} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} rightPill={slide.topRightPill} />
             <motion.h2 {...anim(0.04)} className={`text-2xl sm:text-4xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight mt-1`}>
@@ -3737,7 +3738,7 @@ function SlideRenderer({
                   <span className="font-mono font-bold text-sm sm:text-base shrink-0 text-[#854D0E] dark:text-[#FACC15]">
                     {idx + 1}.
                   </span>
-                  <div className="text-xs sm:text-sm text-neutral-900 dark:text-neutral-100 font-sf leading-snug">
+                  <div className="text-xs sm:text-sm text-neutral-900 dark:text-neutral-100 leading-snug">
                     {item.verb && (
                       <strong className="font-extrabold text-[#854D0E] dark:text-[#FACC15] mr-1.5 uppercase tracking-wide">
                         {item.verb}
@@ -3780,7 +3781,7 @@ function SlideRenderer({
             : (slide.description ? [{ title: "Overview", bullets: [slide.description] }] : []));
 
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative font-sf`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative`} style={dynamicBgStyle}>
           <div>
             <SlideFrameHeader badge={slide.badge || "MULTI-INSTRUMENT COMPARISON"} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} rightPill={slide.topRightPill} />
             <motion.h2 {...anim(0.04)} className={`text-xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight mt-1`}>
@@ -3863,7 +3864,7 @@ function SlideRenderer({
                 : (slide.description ? [{ title: "Scenario Overview", bullets: [slide.description] }] : [])));
 
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative font-sf`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative`} style={dynamicBgStyle}>
           <div>
             <SlideFrameHeader badge={slide.badge || "CASE STUDY SCENARIO"} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} rightPill={slide.topRightPill || "Scenario"} />
             <motion.h2 {...anim(0.04)} className={`text-xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight mt-1`}>
@@ -3968,7 +3969,7 @@ function SlideRenderer({
             : []);
 
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative font-sf`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative`} style={dynamicBgStyle}>
           <div>
             <SlideFrameHeader badge={slide.badge || "DECISION DILEMMA & POLL"} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} rightPill={slide.topRightPill || "Scenario"} />
             <motion.h2 {...anim(0.04)} className={`text-xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight mt-1`}>
@@ -4043,7 +4044,7 @@ function SlideRenderer({
       };
 
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative font-sf`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative`} style={dynamicBgStyle}>
           <div>
             <SlideFrameHeader badge={slide.badge || "INTERACTIVE CASE BRIEF"} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} rightPill={slide.topRightPill || "Case Card"} />
             <motion.h2 {...anim(0.04)} className={`text-xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight mt-1`}>
@@ -4117,7 +4118,7 @@ function SlideRenderer({
     /* ──── FULL-BLEED BREAK SCREEN ──── */
     case "breakSlide":
       return (
-        <div className="w-full h-full bg-[#FFE500] text-black flex flex-col justify-between p-[8%] relative overflow-hidden font-sf select-none">
+        <div className="w-full h-full bg-[#FFE500] text-black flex flex-col justify-between p-[8%] relative overflow-hidden select-none">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-black/15">
               {slide.badge || "SESSION PAUSE"}
@@ -4158,7 +4159,7 @@ function SlideRenderer({
     /* ──── KEY INSIGHT / SYNTHESIS SLIDE ──── */
     case "keyInsight":
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative font-sf`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative`} style={dynamicBgStyle}>
           <div>
             <SlideFrameHeader badge={slide.badge || "KEY STRATEGIC INSIGHT"} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} rightPill={slide.topRightPill} />
             <div className="bg-[#FFE500] text-black px-4 py-2 rounded-lg font-black text-xl sm:text-2xl mt-1 tracking-tight inline-block shadow-xs">
@@ -4241,7 +4242,7 @@ function SlideRenderer({
     default:
       // Safe fallback layout: Clean elegant bullets/overview
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[8%] relative font-sans`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[8%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
           <div className="mb-2">
             <motion.h2
               {...anim(0)}
@@ -4287,7 +4288,14 @@ function SlideRenderer({
           </div>
         </div>
       );
-  }
+    }
+  };
+
+  return (
+    <div className={`w-full h-full ${bodyFontClass} select-text overflow-hidden relative`}>
+      {renderSlideContent()}
+    </div>
+  );
 }
 
 /* ───────────────────────────────────────────────────
@@ -4300,8 +4308,8 @@ function SlideThumbnail({
   palette,
   bgStyle,
   fontPairing,
-  titleFont = "sf-pro",
-  bodyFont = "sf-pro",
+  titleFont = "red-hat",
+  bodyFont = "red-hat",
   onClick,
 }: {
   slide: SlideData;
@@ -4642,8 +4650,8 @@ export default function DeckGeneratorPage() {
   const [isCustomBgColors, setIsCustomBgColors] = useState(false);
   const [bgStyle, setBgStyle] = useState<BgStyle>("solid");
   const [fontPairing, setFontPairing] = useState<FontPairing>("modern");
-  const [titleFont, setTitleFont] = useState<TitleFont>("sf-pro");
-  const [bodyFont, setBodyFont] = useState<BodyFont>("sf-pro");
+  const [titleFont, setTitleFont] = useState<TitleFont>("red-hat");
+  const [bodyFont, setBodyFont] = useState<BodyFont>("red-hat");
   const [layoutMood, setLayoutMood] = useState<LayoutMood>("framework");
 
   const applyFontPreset = (tf: TitleFont, bf: BodyFont) => {
@@ -4784,7 +4792,61 @@ export default function DeckGeneratorPage() {
 
   const handleStartGenerationFromInput = () => {
     if (attachedSkill) {
-      if (attachedSkill.id === "itb" || attachedSkill.name?.toLowerCase().includes("itb")) {
+      // ──── INTELLIGENT .MD CONTENT PARSER ────
+      // Instead of just checking file name for "itb", actually READ the .md content
+      // to extract font, color, style, and audience directives.
+      const mdContent = (attachedSkill.content || "").toLowerCase();
+
+      // 1. FONT DETECTION: Parse the .md content for font-family declarations
+      const fontRedHatMatch = /red\s*hat\s*display/i.test(attachedSkill.content || "");
+      const fontInterMatch = /\binter\b/i.test(mdContent) && /font/i.test(mdContent);
+      const fontJakartaMatch = /jakarta/i.test(mdContent) && /font/i.test(mdContent);
+      const fontOutfitMatch = /\boutfit\b/i.test(mdContent) && /font/i.test(mdContent);
+      const fontBricolageMatch = /bricolage/i.test(mdContent) && /font/i.test(mdContent);
+
+      if (fontRedHatMatch) {
+        applyFontPreset("red-hat", "red-hat");
+      } else if (fontInterMatch) {
+        applyFontPreset("inter", "inter");
+      } else if (fontJakartaMatch) {
+        applyFontPreset("jakarta", "jakarta");
+      } else if (fontOutfitMatch) {
+        applyFontPreset("outfit", "outfit");
+      } else if (fontBricolageMatch) {
+        applyFontPreset("bricolage", "inter");
+      }
+
+      // 2. COLOR DETECTION: Extract hex color codes from .md content
+      const hexMatches = (attachedSkill.content || "").match(/#[0-9A-Fa-f]{6}/g);
+      if (hexMatches && hexMatches.length >= 2) {
+        const uniqueColors = [...new Set(hexMatches)];
+        const color1 = uniqueColors[0] || "#005AAB";
+        const color2 = uniqueColors[1] || "#FFDD3C";
+        const color3 = uniqueColors[2] || uniqueColors[1] || "#FFEC8E";
+
+        // Check if there's a matching palette in COLOR_PALETTES
+        const matchedPal = COLOR_PALETTES.find(
+          (p) => p.primary.toLowerCase() === color1.toLowerCase() || p.secondary.toLowerCase() === color2.toLowerCase()
+        );
+        if (matchedPal) {
+          setSelectedPalette(matchedPal);
+        } else {
+          setSelectedPalette({
+            id: "template-custom",
+            name: `Template (${color1.toUpperCase()})`,
+            primary: color1,
+            secondary: color2,
+            accent: color3,
+            bgLight: "bg-white",
+            bgDark: "dark:bg-[#121212]",
+            textPrimary: "text-neutral-950",
+            badgeBg: "bg-neutral-900 text-white",
+          });
+        }
+        setBgColors({ color1, color2, color3 });
+        setIsCustomBgColors(true);
+      } else if (attachedSkill.id === "itb" || attachedSkill.name?.toLowerCase().includes("itb")) {
+        // Fallback to ITB palette if name contains "itb" but no hex codes found
         const itbPal = COLOR_PALETTES.find((p) => p.id === "itb");
         if (itbPal) {
           setSelectedPalette(itbPal);
@@ -4795,18 +4857,48 @@ export default function DeckGeneratorPage() {
           });
           setIsCustomBgColors(true);
         }
-        applyFontPreset("red-hat", "red-hat");
+      }
+
+      // 3. STYLE DETECTION: Parse for bg style preferences
+      if (/solid/i.test(mdContent) && /background|style|bg/i.test(mdContent)) {
         setBgStyle("solid");
+      } else if (/gradient/i.test(mdContent)) {
+        setBgStyle("gradient");
+      } else if (/dark/i.test(mdContent) && /background|mode|theme/i.test(mdContent)) {
+        setBgStyle("dark");
+      }
+
+      // 4. MOOD & AUDIENCE DETECTION
+      if (/executive|formal|corporate|institutional/i.test(mdContent)) {
         setLayoutMood("executive");
-        setDensity("medium");
         setAudience("Executives & C-Level");
+      } else if (/data|metric|chart|analyti/i.test(mdContent)) {
+        setLayoutMood("data");
+      } else {
+        setLayoutMood("framework");
+      }
+
+      // 5. DENSITY DETECTION
+      if (/density.*medium|medium.*density/i.test(mdContent)) {
+        setDensity("medium");
+      } else if (/density.*detailed|detailed.*density/i.test(mdContent)) {
+        setDensity("detailed");
+      } else if (/density.*brief|brief.*density/i.test(mdContent)) {
+        setDensity("brief");
       }
 
       const parsed = parsePromptBreakdown(content);
       if (parsed.length > 0) {
         setEditableBreakdown(parsed);
       } else {
-        handlePlanOutline(8);
+        let targetCount = parseInt(slideCount, 10) || 8;
+        const countMatch = (content + " " + (attachedSkill.content || "")).match(/(\d+)\s*(slide|deck|halaman)/i);
+        if (countMatch && parseInt(countMatch[1], 10) > 0) {
+          targetCount = Math.min(Math.max(parseInt(countMatch[1], 10), 3), 100);
+          setSlideCount(String(targetCount));
+          setSlideCountPreference(`${targetCount} Slides`);
+        }
+        handlePlanOutline(targetCount);
       }
 
       setStep("confirm");
@@ -5571,7 +5663,7 @@ async function streamBuildSlide(
           
           {/* Header Section */}
           <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <h1 className="font-sf text-3xl sm:text-[40px] font-normal sm:font-medium tracking-tight text-neutral-900 dark:text-white leading-[1.2]">
+            <h1 className="text-3xl sm:text-[40px] font-normal sm:font-medium tracking-tight text-neutral-900 dark:text-white leading-[1.2]">
               Transform your ideas into stunning decks
             </h1>
             <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-400 font-normal">
@@ -5764,7 +5856,7 @@ async function streamBuildSlide(
           {/* Header Title, Subtitle & Right-Aligned Back Button */}
           <div className="flex items-start justify-between gap-4 pt-1">
             <div className="space-y-1">
-              <h1 className="font-sf text-3xl sm:text-[34px] font-normal sm:font-medium tracking-tight text-neutral-900 dark:text-white leading-tight">
+              <h1 className="text-3xl sm:text-[34px] font-normal sm:font-medium tracking-tight text-neutral-900 dark:text-white leading-tight">
                 A few quick questions
               </h1>
               <p className="text-sm sm:text-[14.5px] text-neutral-500 dark:text-neutral-400 font-normal">
@@ -5940,7 +6032,7 @@ async function streamBuildSlide(
               <div className="mt-3 p-4 bg-neutral-50/90 dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800 rounded-md space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-1.5 border-b border-neutral-200/60 dark:border-neutral-800/60">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] sm:text-[13.5px] font-semibold text-neutral-800 dark:text-neutral-200 uppercase tracking-wider font-sf">
+                    <span className="text-[13px] sm:text-[13.5px] font-semibold text-neutral-800 dark:text-neutral-200 uppercase tracking-wider">
                       Custom Background & Theme HEX Channels (3 Warna)
                     </span>
                     {isCustomBgColors && (
@@ -5949,7 +6041,7 @@ async function streamBuildSlide(
                       </span>
                     )}
                   </div>
-                  <span className="text-[12.5px] sm:text-[13px] text-neutral-500 dark:text-neutral-400 font-sf">
+                  <span className="text-[12.5px] sm:text-[13px] text-neutral-500 dark:text-neutral-400">
                     Klik lingkaran warna untuk picker atau ketik kode HEX
                   </span>
                 </div>
@@ -5958,7 +6050,7 @@ async function streamBuildSlide(
                   {/* Color 1 */}
                   <div className="flex flex-col gap-2 p-3 sm:p-3.5 rounded-md bg-white dark:bg-[#181818] border border-neutral-200/80 dark:border-neutral-800 shadow-2xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-[14px] sm:text-[14.5px] font-semibold text-neutral-800 dark:text-neutral-200 font-sf">
+                      <span className="text-[14px] sm:text-[14.5px] font-semibold text-neutral-800 dark:text-neutral-200">
                         Color 1 (Primary Base)
                       </span>
                     </div>
@@ -5995,7 +6087,7 @@ async function streamBuildSlide(
                   {/* Color 2 */}
                   <div className="flex flex-col gap-2 p-3 sm:p-3.5 rounded-md bg-white dark:bg-[#181818] border border-neutral-200/80 dark:border-neutral-800 shadow-2xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-[14px] sm:text-[14.5px] font-semibold text-neutral-800 dark:text-neutral-200 font-sf">
+                      <span className="text-[14px] sm:text-[14.5px] font-semibold text-neutral-800 dark:text-neutral-200">
                         Color 2 (Secondary / Split)
                       </span>
                     </div>
@@ -6032,7 +6124,7 @@ async function streamBuildSlide(
                   {/* Color 3 */}
                   <div className="flex flex-col gap-2 p-3 sm:p-3.5 rounded-md bg-white dark:bg-[#181818] border border-neutral-200/80 dark:border-neutral-800 shadow-2xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-[14px] sm:text-[14.5px] font-semibold text-neutral-800 dark:text-neutral-200 font-sf">
+                      <span className="text-[14px] sm:text-[14.5px] font-semibold text-neutral-800 dark:text-neutral-200">
                         Color 3 (Accent / Contrast)
                       </span>
                     </div>
@@ -6071,7 +6163,7 @@ async function streamBuildSlide(
 
             {/* 3. Typography Pairing (Independent Title & Body Dropdowns) */}
             <div className="space-y-3.5">
-              <h3 className="text-[15.5px] sm:text-[17px] font-normal text-neutral-900 dark:text-neutral-100 flex items-center gap-2 font-sf">
+              <h3 className="text-[15.5px] sm:text-[17px] font-normal text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
                 <span>3.</span>
                 <span>Select Font Pairing (Typography):</span>
               </h3>
@@ -6080,7 +6172,7 @@ async function streamBuildSlide(
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-4 bg-neutral-50/90 dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800 rounded-md">
                 {/* Title Font Dropdown */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-[14px] sm:text-[14.5px] font-semibold text-neutral-800 dark:text-neutral-200 flex items-center justify-between font-sf">
+                  <label className="text-[14px] sm:text-[14.5px] font-semibold text-neutral-800 dark:text-neutral-200 flex items-center justify-between">
                     <span>Title / Headline Font (Judul)</span>
                     <span className="text-[12.5px] font-normal text-neutral-500 dark:text-neutral-400">Bold & Punchy</span>
                   </label>
@@ -6094,7 +6186,7 @@ async function streamBuildSlide(
 
                 {/* Body Font Dropdown */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-[14px] sm:text-[14.5px] font-semibold text-neutral-800 dark:text-neutral-200 flex items-center justify-between font-sf">
+                  <label className="text-[14px] sm:text-[14.5px] font-semibold text-neutral-800 dark:text-neutral-200 flex items-center justify-between">
                     <span>Description & Card Font (Isi / Teks)</span>
                     <span className="text-[12.5px] font-normal text-neutral-500 dark:text-neutral-400">Optimal Legibility</span>
                   </label>
@@ -6356,7 +6448,7 @@ async function streamBuildSlide(
                   Rasio 16:9 Presisi
                 </span>
               </div>
-              <h1 className="font-sf text-2xl sm:text-3xl font-normal sm:font-medium tracking-tight text-neutral-900 dark:text-white">
+              <h1 className="text-2xl sm:text-3xl font-normal sm:font-medium tracking-tight text-neutral-900 dark:text-white">
                 Review Presentation Outline
               </h1>
               <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
@@ -6716,12 +6808,12 @@ async function streamBuildSlide(
 
           {/* Top Control Bar (When Completed or Idle) */}
           {!isGenerating && (
-            <div className="flex items-center justify-between gap-3 px-1 py-1 border-b border-neutral-200/80 dark:border-neutral-800 pb-3 font-sf">
+            <div className="flex items-center justify-between gap-3 px-1 py-1 border-b border-neutral-200/80 dark:border-neutral-800 pb-3">
               <div className="flex items-center gap-3 min-w-0">
-                <h2 className="text-sm sm:text-base font-bold text-neutral-950 dark:text-white truncate max-w-[200px] sm:max-w-md font-sf">
+                <h2 className="text-sm sm:text-base font-bold text-neutral-950 dark:text-white truncate max-w-[200px] sm:max-w-md">
                   {content.split("\n")[0]?.substring(0, 45) || "Presentation Deck"}
                 </h2>
-                <span className="text-xs text-neutral-600 dark:text-neutral-400 font-sf font-semibold tabular-nums bg-neutral-100 dark:bg-neutral-800 px-2.5 py-0.5 rounded-full border border-neutral-200/60 dark:border-neutral-700/60">
+                <span className="text-xs text-neutral-600 dark:text-neutral-400 font-semibold tabular-nums bg-neutral-100 dark:bg-neutral-800 px-2.5 py-0.5 rounded-full border border-neutral-200/60 dark:border-neutral-700/60">
                   {slides.length} slide{slides.length !== 1 ? "s" : ""}
                 </span>
               </div>
@@ -6932,7 +7024,7 @@ async function streamBuildSlide(
                     <div className="w-6 h-6 rounded-md bg-[#FFDE3C] text-neutral-950 flex items-center justify-center font-bold text-xs shadow-2xs">
                       <Sparkles className="w-3.5 h-3.5" />
                     </div>
-                    <span className="text-xs sm:text-[13px] font-semibold text-neutral-900 dark:text-white font-sf">
+                    <span className="text-xs sm:text-[13px] font-semibold text-neutral-900 dark:text-white">
                       AI Slide Editor & Co-Pilot
                     </span>
                   </div>
@@ -7615,7 +7707,7 @@ function SkillRulesModal({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-sf text-[15px] font-semibold text-neutral-900 dark:text-white tracking-tight">
+                <h2 className="text-[15px] font-semibold text-neutral-900 dark:text-white tracking-tight">
                   {skill.name}
                 </h2>
                 <span className="text-[10.5px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium border border-emerald-500/20">
