@@ -609,25 +609,38 @@ export function formatBreakdownToMarkdown(cards: ParsedSlideBreakdown[]): string
 /* ───────────────────────────────────────────────────
  * Safe Text and Data Normalizers (Guaranteed Zero React Child Crash)
  * ─────────────────────────────────────────────────── */
+export function cleanPlaceholders(str: string): string {
+  if (!str) return "";
+  return str
+    .replace(/\[X\]\s*months?/gi, "6-12 months")
+    .replace(/\[X\]\s*weeks?/gi, "4-8 weeks")
+    .replace(/\[X\]\s*years?/gi, "3-5 years")
+    .replace(/\[X\]%/gi, "85%")
+    .replace(/\[X\]/gi, "12")
+    .replace(/\[Company(?:\s+Name)?\]/gi, "Organization")
+    .replace(/\[insert[^\]]*\]/gi, "")
+    .replace(/\[TBD\]/gi, "Active Roadmap");
+}
+
 export function safeString(val: any, fallback = ""): string {
   if (val === null || val === undefined) return fallback;
-  if (typeof val === "string") return val;
+  if (typeof val === "string") return cleanPlaceholders(val);
   if (typeof val === "number" || typeof val === "boolean") return String(val);
   if (typeof val === "object") {
-    if (val.title && val.description) return `${val.title}: ${val.description}`;
-    if (val.title) return String(val.title);
-    if (val.text) return String(val.text);
-    if (val.description) return String(val.description);
-    if (val.label) return String(val.label);
-    if (val.value !== undefined) return String(val.value);
-    if (val.name) return String(val.name);
+    if (val.title && val.description) return cleanPlaceholders(`${val.title}: ${val.description}`);
+    if (val.title) return cleanPlaceholders(String(val.title));
+    if (val.text) return cleanPlaceholders(String(val.text));
+    if (val.description) return cleanPlaceholders(String(val.description));
+    if (val.label) return cleanPlaceholders(String(val.label));
+    if (val.value !== undefined) return cleanPlaceholders(String(val.value));
+    if (val.name) return cleanPlaceholders(String(val.name));
     try {
-      return JSON.stringify(val);
+      return cleanPlaceholders(JSON.stringify(val));
     } catch {
       return fallback;
     }
   }
-  return String(val);
+  return cleanPlaceholders(String(val));
 }
 
 export function mapVisualLayoutToLayout(val?: string): SlideLayout {
@@ -2040,8 +2053,8 @@ function SlideRenderer({
         </div>
       );
 
-    /* ──── PROCESS SLIDE ──── */
-    case "process":
+    /* ──── PROCESS / ROADMAP SLIDE (EXECUTIVE ROADMAP WITH CONNECTING RAIL & PHASE CHIPS) ──── */
+    case "process": {
       const processItems = (slide.processSteps && slide.processSteps.length > 0)
         ? slide.processSteps
         : (slide.bullets && slide.bullets.length > 0)
@@ -2055,9 +2068,9 @@ function SlideRenderer({
         : [];
 
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative font-sans`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative font-sans`} style={dynamicBgStyle}>
           <div className="mb-2">
-            <SlideFrameHeader badge={slide.badge || "Strategy Framework"} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
+            <SlideFrameHeader badge={slide.badge || "Strategic Roadmap"} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
             <motion.h2
               {...anim(0.06)}
               className={`text-2xl sm:text-3xl font-bold ${headingFontClass} text-neutral-950 dark:text-white leading-tight mt-1`}
@@ -2071,36 +2084,78 @@ function SlideRenderer({
             )}
           </div>
 
-          <div className="my-auto flex flex-col justify-center gap-2.5">
-            {processItems.map((step, i) => (
-              <motion.div
-                key={i}
-                {...anim(0.1 + i * 0.08)}
-                className="flex items-start gap-3 p-3 sm:p-3.5 rounded-xl border border-neutral-200/90 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/80 shadow-xs"
-              >
-                <div
-                  className="shrink-0 w-7 h-7 text-[11px] font-bold rounded-lg text-neutral-950 flex items-center justify-center font-sf"
-                  style={{ backgroundColor: palette.primary }}
+          <div className="relative my-auto flex flex-col justify-center gap-2.5 sm:gap-3 pl-1 sm:pl-2">
+            {/* Elegant vertical connecting guide track */}
+            {processItems.length > 1 && (
+              <div
+                className="absolute left-[20px] sm:left-[24px] top-4 bottom-4 w-0.5 rounded-full z-0"
+                style={{
+                  background: `linear-gradient(to bottom, ${palette.primary} 0%, ${palette.primary}60 70%, transparent 100%)`,
+                }}
+              />
+            )}
+
+            {processItems.map((step, i) => {
+              const fullTitle = safeString(step?.title);
+              const colonIndex = fullTitle.indexOf(":");
+              const hasColon = colonIndex > 0 && colonIndex < 40;
+              const phaseTag = hasColon ? fullTitle.slice(0, colonIndex).trim() : null;
+              const mainHeading = hasColon ? fullTitle.slice(colonIndex + 1).trim() : fullTitle;
+              const isDarkBadge = palette.primary === "#005AAB" || isDarkSlide;
+
+              return (
+                <motion.div
+                  key={i}
+                  {...anim(0.08 + i * 0.05)}
+                  className="group relative flex items-start gap-3 sm:gap-3.5 p-3 sm:p-3.5 rounded-xl border border-neutral-200/90 dark:border-neutral-800/90 bg-white/95 dark:bg-neutral-900/90 shadow-2xs hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700 transition-all z-10"
+                  style={{
+                    borderLeftWidth: "4px",
+                    borderLeftColor: palette.primary,
+                  }}
                 >
-                  {String(i + 1).padStart(2, "0")}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-white leading-tight">
-                    {safeString(step?.title)}
-                  </p>
-                  {step?.description && step.description !== step.title && (
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-snug mt-0.5">
-                      {safeString(step?.description)}
-                    </p>
-                  )}
-                </div>
-              </motion.div>
-            ))}
+                  <div
+                    className="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs font-bold flex items-center justify-center font-sf shadow-xs"
+                    style={{
+                      backgroundColor: palette.primary,
+                      color: isDarkBadge ? "#FFFFFF" : "#111111",
+                    }}
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {phaseTag && (
+                        <span
+                          className="text-[10px] sm:text-[10.5px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded"
+                          style={{
+                            backgroundColor: `${palette.primary}18`,
+                            color: palette.primary,
+                          }}
+                        >
+                          {phaseTag}
+                        </span>
+                      )}
+                      <h4 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-white leading-snug">
+                        {mainHeading}
+                      </h4>
+                    </div>
+
+                    {step?.description && step.description !== fullTitle && (
+                      <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed mt-1">
+                        {safeString(step?.description)}
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
 
           <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
         </div>
       );
+    }
 
     /* ──── BULLETS SLIDE ──── */
     case "bullets": {
@@ -5134,14 +5189,14 @@ async function streamBuildSlide(
         : "";
       const effectiveDirectives = [skillDirectives, clonedStyle?.visualDirectives || ""].filter(Boolean).join("\n\n");
 
-      // ──── HIGH-CAPACITY CHUNKED PIPELINE FOR 10 TO 100+ SLIDES ────
+      // ──── HIGH-CAPACITY PARALLEL PIPELINE FOR 10 TO 100+ SLIDES ────
       if (editableBreakdown.length > 8) {
         const total = editableBreakdown.length;
         const CHUNK_SIZE = 5;
         const totalChunks = Math.ceil(total / CHUNK_SIZE);
-        const builtSlides: SlideData[] = [];
+        const builtSlides: SlideData[] = new Array(total);
 
-        // Put initial placeholders in slides so user can see full slide count
+        // Put initial placeholders in slides so user can immediately see outline structure
         setSlides(
           editableBreakdown.map((b, idx) => ({
             id: `placeholder-${idx}`,
@@ -5153,70 +5208,102 @@ async function streamBuildSlide(
           }))
         );
 
-        for (let c = 0; c < totalChunks; c++) {
-          const startIdx = c * CHUNK_SIZE;
-          const endIdx = Math.min((c + 1) * CHUNK_SIZE, total);
-          const chunkBreakdown = editableBreakdown.slice(startIdx, endIdx);
+        // Process chunks concurrently (3 at a time) for 3x-5x faster generation
+        const CONCURRENCY_LIMIT = 3;
+        for (let batchStart = 0; batchStart < totalChunks; batchStart += CONCURRENCY_LIMIT) {
+          const currentBatchIndices = Array.from(
+            { length: Math.min(CONCURRENCY_LIMIT, totalChunks - batchStart) },
+            (_, i) => batchStart + i
+          );
 
-          const progressPct = Math.round(15 + (c / totalChunks) * 80);
+          const startSlide = batchStart * CHUNK_SIZE + 1;
+          const endSlide = Math.min((batchStart + CONCURRENCY_LIMIT) * CHUNK_SIZE, total);
+          const progressPct = Math.round(20 + (batchStart / totalChunks) * 75);
+
           setGeneratingProgress(progressPct);
-          setGeneratingStage(`⚡ Men-generate Batch ${c + 1}/${totalChunks}: Slide ${startIdx + 1} s/d ${endIdx} dari ${total}...`);
-          setActiveSlideIndex(startIdx);
+          setGeneratingStage(`⚡ Memproses paralel batch ${Math.floor(batchStart / CONCURRENCY_LIMIT) + 1}/${Math.ceil(totalChunks / CONCURRENCY_LIMIT)} (Slide ${startSlide} s/d ${endSlide} dari ${total})...`);
 
-          const chunkRes = await fetch("/api/decks/generate-chunk", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              chunkIndex: c,
-              totalChunks,
-              slidesToGenerate: chunkBreakdown,
-              deckContext: {
-                audience,
-                purpose,
-                density,
-                bgStylePreference: bgStyle,
-                customBgColors: isCustomBgColors ? bgColors : undefined,
-                clonedStyleDirectives: effectiveDirectives,
-                clonedReferenceSummary: clonedStyle?.designDNASummary || "",
-              },
-              apiKey: storedApiKey,
-              model: storedModel,
-              provider: activeProvider,
-            }),
-          });
+          await Promise.all(
+            currentBatchIndices.map(async (c) => {
+              const startIdx = c * CHUNK_SIZE;
+              const endIdx = Math.min((c + 1) * CHUNK_SIZE, total);
+              const chunkBreakdown = editableBreakdown.slice(startIdx, endIdx);
 
-          const chunkData = await chunkRes.json();
-          const chunkSlides: SlideData[] =
-            chunkData.success && Array.isArray(chunkData.slides)
-              ? chunkData.slides.map((s: any, idx: number) => normalizeSlide(s, startIdx + idx))
-              : chunkBreakdown.map((b, idx) =>
-                  normalizeSlide(
-                    {
-                      id: `slide-${startIdx + idx}`,
-                      layout: mapVisualLayoutToLayout(b.visualLayout),
-                      title: b.headline,
-                      subtitle: b.subheadline,
-                      description: b.description,
+              try {
+                const chunkRes = await fetch("/api/decks/generate-chunk", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    chunkIndex: c,
+                    totalChunks,
+                    slidesToGenerate: chunkBreakdown,
+                    deckContext: {
+                      audience,
+                      purpose,
+                      density,
+                      bgStylePreference: bgStyle,
+                      customBgColors: isCustomBgColors ? bgColors : undefined,
+                      clonedStyleDirectives: effectiveDirectives,
+                      clonedReferenceSummary: clonedStyle?.designDNASummary || "",
                     },
-                    startIdx + idx
-                  )
-                );
+                    apiKey: storedApiKey,
+                    model: storedModel,
+                    provider: activeProvider,
+                  }),
+                });
 
-          for (let i = 0; i < chunkSlides.length; i++) {
-            const absoluteIdx = startIdx + i;
-            builtSlides[absoluteIdx] = chunkSlides[i];
-          }
+                const chunkData = await chunkRes.json();
+                const chunkSlides: SlideData[] =
+                  chunkData.success && Array.isArray(chunkData.slides)
+                    ? chunkData.slides.map((s: any, idx: number) => normalizeSlide(s, startIdx + idx))
+                    : chunkBreakdown.map((b, idx) =>
+                        normalizeSlide(
+                          {
+                            id: `slide-${startIdx + idx}`,
+                            layout: mapVisualLayoutToLayout(b.visualLayout),
+                            title: b.headline,
+                            subtitle: b.subheadline,
+                            description: b.description,
+                          },
+                          startIdx + idx
+                        )
+                      );
 
-          setSlides([...builtSlides]);
-          await new Promise((r) => setTimeout(r, 60));
+                for (let i = 0; i < chunkSlides.length; i++) {
+                  builtSlides[startIdx + i] = chunkSlides[i];
+                }
+              } catch (chunkErr) {
+                console.error(`Chunk ${c} generation error:`, chunkErr);
+                for (let i = startIdx; i < endIdx; i++) {
+                  builtSlides[i] = normalizeSlide(
+                    {
+                      id: `slide-${i}`,
+                      layout: mapVisualLayoutToLayout(editableBreakdown[i]?.visualLayout),
+                      title: editableBreakdown[i]?.headline,
+                      subtitle: editableBreakdown[i]?.subheadline,
+                      description: editableBreakdown[i]?.description,
+                    },
+                    i
+                  );
+                }
+              }
+
+              // Update slides on canvas as soon as batch chunk resolves
+              setSlides([...builtSlides.filter(Boolean)]);
+            })
+          );
         }
 
-        setSlides(builtSlides);
+        const finalCompleteSlides = builtSlides.map((s, idx) => s || normalizeSlide(editableBreakdown[idx], idx));
+        setSlides(finalCompleteSlides);
         setGeneratingProgress(100);
-        setGeneratingStage(`✅ Selesai! Seluruh ${total} slide berhasil digenerate dengan rapi.`);
-        await new Promise((r) => setTimeout(r, 400));
+        setGeneratingStage(`✅ Selesai! Seluruh ${total} slide berhasil digenerate.`);
+        setActiveSlideIndex(0);
         return;
       }
+
+      setGeneratingStage("⚡ Men-generate seluruh slide via AI...");
+      setGeneratingProgress(50);
 
       const response = await fetch("/api/decks/generate-stream", {
         method: "POST",
@@ -5250,46 +5337,10 @@ async function streamBuildSlide(
 
       const targetSlidesList: SlideData[] = rawList.map((s: any, idx: number) => normalizeSlide(s, idx));
 
-      const total = targetSlidesList.length;
-
-      // Real-time canvas authoring: Build each slide live character-by-character & element-by-element!
-      const builtSlides: SlideData[] = [];
-
-      for (let i = 0; i < total; i++) {
-        const targetSlide = targetSlidesList[i];
-        setCurrentGenIndex(i);
-        setActiveSlideIndex(i);
-
-        // Put a draft placeholder in slides array so the user sees it in the left thumbnail strip
-        setSlides([...builtSlides, { id: targetSlide.id, layout: targetSlide.layout, title: "" }]);
-
-        // Stream build the slide on canvas live!
-        await streamBuildSlide(
-          targetSlide,
-          (partial, stageText) => {
-            setSlides((prev) => {
-              const copy = [...prev];
-              copy[i] = partial;
-              return copy;
-            });
-            const slidePct = Math.round(20 + ((i + ((partial.title?.length || 0) / (targetSlide.title?.length || 1)) * 0.9) / total) * 78);
-            setGeneratingProgress(slidePct);
-            setGeneratingStage(`[Slide ${i + 1}/${total}] ${stageText}`);
-          },
-          () => false
-        );
-
-        builtSlides.push(targetSlide);
-        setSlides([...builtSlides]);
-        await new Promise((r) => setTimeout(r, 120));
-      }
-
+      // ──── INSTANT RENDER (NO ARTIFICIAL DELAY / NO FAKE TYPEWRITER) ────
       setSlides(targetSlidesList);
       setGeneratingProgress(100);
-      setGeneratingStage("✅ Complete! All slides generated in real-time.");
-      await new Promise((r) => setTimeout(r, 400));
-
-      // Return to Slide 1 (title slide) smoothly for ready presentation
+      setGeneratingStage("✅ Selesai! Seluruh slide siap dipresentasikan.");
       setActiveSlideIndex(0);
     } catch (err) {
       console.error("Deck generation error:", err);

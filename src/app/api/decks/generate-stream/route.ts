@@ -186,7 +186,12 @@ Choose the layout that BEST visualizes the specific slide content, or follows th
 13. "breakSlide" (Session Break / Pause):
    - Fields: title, subtitle, badge: "SESSION PAUSE", bgStyle: "boldYellow", ctaText: "Resuming shortly"
 
-=== 3. OUTPUT FORMAT ===
+=== 3. STRICT ZERO PLACEHOLDER RULE (NEVER LEAVE BRACKETED PLACEHOLDERS) ===
+- ABSOLUTELY NEVER output placeholder brackets such as "[X]", "[X] months", "[Company]", "[insert date]", "[TBD]", "[number]".
+- If exact values are not in the prompt, intelligently infer realistic, professional, concrete values (e.g., instead of "[X] months", write "6-12 months" or "18 months"; instead of "[Company]", use the actual entity name or industry leader).
+- Every title, subtitle, bullet, and description must be complete, polished, and ready for an executive boardroom.
+
+=== 4. OUTPUT FORMAT ===
 Return ONLY a valid, parseable JSON array of slide objects matching the schema. No markdown codeblock wrapper, no preamble, no commentary.
 `;
 

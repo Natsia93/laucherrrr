@@ -38,7 +38,11 @@ For each slide outline provided in the batch, generate a complete JSON object ad
   * If "tableComparison": tableHeaders: ["Dimension", "Option A", "Option B"], tableRows: [{ "feature": "...", "current": "...", "proposed": "..." }]
   * If "flowDiagram": flowNodes: [{ "title": "Node 1", "subtitle": "Details", "tag": "01" }, ...]
   * If "bullets": bullets: ["Key Concept 1: In-depth rationale", "Key Concept 2: In-depth rationale", ...]
-  * If "stats": stats: [{ "value": "95%", "label": "Retention" }, ...] (NEVER invent fake numbers; use real outline numbers or bracket placeholders like [X]%)
+  * If "stats": stats: [{ "value": "95%", "label": "Retention" }, ...] (Use real outline numbers or concrete estimates; NEVER output bracket placeholders like [X] or [TBD])
+
+- STRICT ZERO PLACEHOLDER RULE:
+  * ABSOLUTELY NEVER output placeholder brackets such as "[X]", "[X] months", "[Company]", "[insert date]", "[TBD]".
+  * Always provide realistic, concrete, executive-level values (e.g. "6-12 months", "85%", "Industry Standard").
 
 OUTPUT FORMAT:
 Return ONLY a valid, parseable JSON array containing the detailed slide objects for THIS BATCH.
