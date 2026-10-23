@@ -123,7 +123,9 @@ export function OverviewScratchpad() {
   };
 
   return (
-    <Card className="p-5 sm:p-6 bg-[#FFEDA5] dark:bg-[#1c1a11] border-[#ebd68c] dark:border-[#FFEDA5]/20 rounded-xl shadow-xs flex flex-col justify-between min-h-[420px] h-full relative group transition-all">
+    <Card className="p-5 sm:p-6 bg-gradient-to-br from-[#FFF6CD] via-[#FFEDA5] to-[#FFDE59] dark:from-[#232013] dark:via-[#1c1a11] dark:to-[#141208] border-[#ebd68c] dark:border-[#FFEDA5]/20 rounded-xl shadow-xs flex flex-col justify-between min-h-[420px] h-full relative group transition-all overflow-hidden">
+      {/* Corner yellow glow accent */}
+      <div className="absolute -bottom-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-tl from-[#FFD100]/30 to-transparent blur-xl pointer-events-none" />
       <div>
         {/* Header */}
         <div className="flex items-center justify-between pb-3.5 mb-3 border-b border-[#ebd68c]/80 dark:border-neutral-800">
