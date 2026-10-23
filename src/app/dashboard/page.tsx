@@ -193,7 +193,7 @@ function ClaudeAttachmentCard({
     <div className="mb-2 inline-block">
       <div
         onClick={onClick}
-        className={`group relative w-28 h-28 rounded-xl border border-neutral-200 dark:border-neutral-700/80 bg-white dark:bg-[#181818] shadow-xs hover:border-neutral-400 dark:hover:border-neutral-500 transition-all overflow-hidden select-none ${
+        className={`group relative w-20 h-20 sm:w-22 sm:h-22 rounded-xl border border-neutral-200 dark:border-neutral-700/80 bg-white dark:bg-[#181818] shadow-xs hover:border-neutral-400 dark:hover:border-neutral-500 transition-all overflow-hidden select-none ${
           onClick ? "cursor-pointer" : ""
         }`}
         title={attachment.name}
@@ -206,10 +206,10 @@ function ClaudeAttachmentCard({
               e.stopPropagation();
               onRemove();
             }}
-            className="absolute top-1.5 right-1.5 z-20 w-5 h-5 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-sm"
+            className="absolute top-1.5 right-1.5 z-20 w-4.5 h-4.5 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-sm"
             title="Remove attachment"
           >
-            <X className="w-3 h-3 stroke-[2.5]" />
+            <X className="w-2.5 h-2.5 stroke-[2.5]" />
           </button>
         )}
 
@@ -229,28 +229,28 @@ function ClaudeAttachmentCard({
               alt="PDF Page 1 preview"
               className="w-full h-full object-cover object-top"
             />
-            <div className="absolute bottom-2 left-2 z-10 pointer-events-none">
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider bg-white/95 dark:bg-neutral-900/90 text-neutral-800 dark:text-neutral-200 border border-neutral-200/90 dark:border-neutral-700 shadow-xs">
+            <div className="absolute bottom-1.5 left-1.5 z-10 pointer-events-none">
+              <span className="px-1 py-0.2 rounded text-[8px] font-bold tracking-wider bg-white/95 dark:bg-neutral-900/90 text-neutral-800 dark:text-neutral-200 border border-neutral-200/90 dark:border-neutral-700 shadow-xs">
                 PDF
               </span>
             </div>
           </div>
         ) : (
           /* ZIP, DOCX, XLSX, TXT, or PDF during extraction (Claude style) */
-          <div className="w-full h-full p-2.5 flex flex-col justify-between bg-white dark:bg-[#181818]">
-            <div className="pr-4">
-              <p className="text-xs font-normal text-neutral-800 dark:text-neutral-200 leading-snug line-clamp-3 break-words">
+          <div className="w-full h-full p-2 flex flex-col justify-between bg-white dark:bg-[#181818]">
+            <div className="pr-3">
+              <p className="text-[11px] font-normal text-neutral-800 dark:text-neutral-200 leading-tight line-clamp-2 break-words">
                 {attachment.name}
               </p>
               {attachment.isExtracting && (
-                <span className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-1">
+                <span className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">
                   <Loader2 className="w-2.5 h-2.5 animate-spin" />
                   <span>Reading...</span>
                 </span>
               )}
             </div>
             <div className="flex items-center">
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider ${meta.badgeClass}`}>
+              <span className={`px-1 py-0.2 rounded text-[8px] font-bold tracking-wider ${meta.badgeClass}`}>
                 {meta.badge}
               </span>
             </div>
@@ -1194,22 +1194,26 @@ export default function DashboardOverviewPage() {
                   <div className="flex flex-col items-end max-w-[85%] ml-auto gap-2">
                     {/* Document Preview Card (PDF first page thumbnail or Word, Excel, ZIP, Text) */}
                     {msg.attachment && msg.attachment.type === "pdf" && msg.attachment.previewUrl ? (
-                      <div className="relative w-28 h-28 rounded-xl border border-neutral-200 dark:border-neutral-700/80 bg-white dark:bg-neutral-900 overflow-hidden shadow-xs">
+                      <div
+                        onClick={() => msg.attachment?.previewUrl && window.open(msg.attachment.previewUrl, "_blank")}
+                        className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl border border-neutral-200 dark:border-neutral-700/80 bg-white dark:bg-neutral-900 overflow-hidden shadow-2xs cursor-pointer hover:opacity-90 transition-opacity"
+                        title="Klik untuk melihat PDF"
+                      >
                         <img
                           src={msg.attachment.previewUrl}
                           alt="PDF Page 1 preview"
                           className="w-full h-full object-cover object-top"
                         />
-                        <div className="absolute bottom-2 left-2 z-10 pointer-events-none">
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider bg-white/95 dark:bg-neutral-900/90 text-neutral-800 dark:text-neutral-200 border border-neutral-200/90 dark:border-neutral-700 shadow-xs">
+                        <div className="absolute bottom-1 left-1 z-10 pointer-events-none">
+                          <span className="px-1 py-0.2 rounded text-[8px] font-bold tracking-wider bg-white/95 dark:bg-neutral-900/90 text-neutral-800 dark:text-neutral-200 border border-neutral-200/90 dark:border-neutral-700 shadow-2xs">
                             PDF
                           </span>
                         </div>
                       </div>
                     ) : msg.attachment && msg.attachment.type !== "image" ? (
-                      <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xs max-w-[320px] sm:max-w-[380px]">
+                      <div className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-2xs max-w-[200px] sm:max-w-[240px]">
                         <div
-                          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 text-xs font-bold"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 text-[10px] font-bold"
                         >
                           {msg.attachment.type === "zip"
                             ? "ZIP"
@@ -1222,24 +1226,31 @@ export default function DashboardOverviewPage() {
                         <div className="flex flex-col min-w-0 flex-1 text-left">
                           <span
                             title={msg.attachment.name}
-                            className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 truncate"
+                            className="text-[11px] font-semibold text-neutral-900 dark:text-neutral-100 truncate"
                           >
-                            {truncateFileName(msg.attachment.name, 22)}
+                            {truncateFileName(msg.attachment.name, 18)}
                           </span>
-                          <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                          <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
                             {msg.attachment.type.toUpperCase()} • {msg.attachment.size}
                           </span>
                         </div>
                       </div>
                     ) : null}
 
-                    {/* Image Attachment */}
+                    {/* Image Attachment (Compact aesthetic thumbnail) */}
                     {((msg.attachment?.type === "image" && msg.attachment.previewUrl) || msg.image) && (
-                      <div className="rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-xs max-w-[280px] sm:max-w-[340px] bg-white dark:bg-neutral-900">
+                      <div
+                        onClick={() => {
+                          const src = msg.attachment?.previewUrl || msg.image;
+                          if (src) window.open(src, "_blank");
+                        }}
+                        className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-700/80 bg-neutral-50 dark:bg-neutral-900 shadow-2xs cursor-pointer hover:opacity-90 transition-opacity p-1 flex items-center justify-center"
+                        title="Klik untuk melihat gambar penuh"
+                      >
                         <img
                           src={msg.attachment?.previewUrl || msg.image}
                           alt="Uploaded attachment"
-                          className="w-full h-auto max-h-64 object-contain rounded-xl"
+                          className="w-full h-full object-contain rounded-lg"
                         />
                       </div>
                     )}
