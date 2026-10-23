@@ -21,7 +21,9 @@ import {
   History,
   UploadCloud,
   Folder,
+  ExternalLink,
 } from "lucide-react";
+import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { useSidebar } from "@/components/layout/SidebarContext";
 import { Button } from "@/components/ui/button";
@@ -68,6 +70,17 @@ export interface ChatAttachment {
   isExtracting?: boolean;
 }
 
+export interface ConnectorActionResult {
+  connector: "sheets" | "docs" | "slides" | "drive" | "slack" | "whatsapp" | "notion" | "telegram" | "calendar";
+  action: string;
+  status: "running" | "success" | "error";
+  title: string;
+  detail: string;
+  url?: string;
+  data?: any;
+  icon?: string;
+}
+
 interface ChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -76,6 +89,7 @@ interface ChatMessage {
   attachment?: ChatAttachment;
   isSearching?: boolean;
   isTyping?: boolean;
+  connectorActions?: ConnectorActionResult[];
 }
 
 const getAttachmentType = (file: File): "image" | "pdf" | "word" | "excel" | "zip" | "text" => {
@@ -255,6 +269,48 @@ export default function DashboardOverviewPage() {
   const [loading, setLoading] = useState(false);
   const [attachment, setAttachment] = useState<ChatAttachment | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [activeConnectors, setActiveConnectors] = useState<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const raw = localStorage.getItem("launcher_app_connectors");
+      if (raw) {
+        try {
+          setActiveConnectors(JSON.parse(raw));
+        } catch {}
+      }
+    }
+  }, []);
+
+  const connectedList = React.useMemo(() => {
+    if (!activeConnectors) return [];
+    const list: { id: string; name: string; icon: string }[] = [];
+    if (activeConnectors.sheets?.connected) {
+      list.push({ id: "sheets", name: "Sheets", icon: "/logo/App-connector/google-sheets-svgrepo-com.svg" });
+    }
+    if (activeConnectors.docs?.connected) {
+      list.push({ id: "docs", name: "Docs", icon: "/logo/App-connector/google-docs.webp" });
+    }
+    if (activeConnectors.slides?.connected) {
+      list.push({ id: "slides", name: "Slides", icon: "/logo/App-connector/google-slides.webp" });
+    }
+    if (activeConnectors.drive?.connected) {
+      list.push({ id: "drive", name: "Drive", icon: "/logo/App-connector/google-drive-svgrepo-com.svg" });
+    }
+    if (activeConnectors.slack?.connected) {
+      list.push({ id: "slack", name: "Slack", icon: "/logo/App-connector/slack-svgrepo-com.svg" });
+    }
+    if (activeConnectors.telegram?.connected) {
+      list.push({ id: "telegram", name: "Telegram", icon: "/logo/App-connector/telegram-svgrepo-com.svg" });
+    }
+    if (activeConnectors.whatsapp?.connected) {
+      list.push({ id: "whatsapp", name: "WhatsApp", icon: "/logo/App-connector/whatsapp-128-svgrepo-com.svg" });
+    }
+    if (activeConnectors.notion?.connected) {
+      list.push({ id: "notion", name: "Notion", icon: "/logo/App-connector/notion-logo-svgrepo-com.svg" });
+    }
+    return list;
+  }, [activeConnectors]);
 
   const handleCopyMessage = (id: string, text: string) => {
     if (!text) return;
@@ -721,6 +777,8 @@ export default function DashboardOverviewPage() {
       const activeProvider = typeof window !== "undefined" ? (localStorage.getItem("ai_provider") || "deepseek") : "deepseek";
       const storedApiKey = typeof window !== "undefined" ? (localStorage.getItem(`ai_key_${activeProvider}`) || localStorage.getItem("deepseek_api_key") || "") : "";
       const storedModel = typeof window !== "undefined" ? (localStorage.getItem(`ai_model_${activeProvider}`) || localStorage.getItem("deepseek_selected_model") || "") : "";
+      const storedConnectors = typeof window !== "undefined" ? localStorage.getItem("launcher_app_connectors") : null;
+      const connectorsPayload = storedConnectors ? JSON.parse(storedConnectors) : null;
 
       const response = await fetch("/api/generate-stream", {
         method: "POST",
@@ -737,6 +795,7 @@ export default function DashboardOverviewPage() {
           apiKey: storedApiKey,
           provider: activeProvider,
           selectedModel: storedModel,
+          connectors: connectorsPayload,
         }),
       });
 
@@ -763,11 +822,30 @@ export default function DashboardOverviewPage() {
           try {
             const data = JSON.parse(part.slice(6));
 
+            if (data.type === "connector_action") {
+              setMessages((prev) =>
+                prev.map((msg) => {
+                  if (msg.id === aiMsgId) {
+                    const existing = msg.connectorActions || [];
+                    const isDup = existing.some(
+                      (a) => a.connector === data.connector && a.action === data.action && a.detail === data.detail
+                    );
+                    return {
+                      ...msg,
+                      connectorActions: isDup ? existing : [...existing, data],
+                    };
+                  }
+                  return msg;
+                })
+              );
+            }
+
             if (data.type === "chat" || data.type === "chunk") {
               const chunkText = data.text || "";
               if (!chunkText.includes("🔍 *Mencari informasi") && !chunkText.includes("Mencari informasi")) {
+                const cleanChunk = chunkText.replace(/<<<ACTION:[\s\S]*?>>>/g, "");
                 // Append chunk to target text ref for typewriter queue
-                targetTextRef.current += chunkText;
+                targetTextRef.current += cleanChunk;
               }
             }
           } catch {
@@ -865,6 +943,35 @@ export default function DashboardOverviewPage() {
               className="hidden"
               onChange={handleFileChange}
             />
+
+            {/* Active Connectors Indicator Bar (Claude-style) */}
+            {connectedList.length > 0 && (
+              <div className="flex items-center justify-between px-3 py-1.5 mb-2 rounded-lg bg-neutral-100/70 dark:bg-neutral-900/60 border border-neutral-200/60 dark:border-white/5 text-[11px] text-neutral-500 dark:text-neutral-400">
+                <div className="flex items-center gap-1.5 overflow-x-auto clean-scrollbar">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 shrink-0">
+                    Active Connectors:
+                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {connectedList.map((c) => (
+                      <span
+                        key={c.id}
+                        title={`${c.name} is connected`}
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium text-[11px] shadow-2xs border border-neutral-200/50 dark:border-neutral-700/50"
+                      >
+                        <img src={c.icon} alt={c.name} className="w-3.5 h-3.5 object-contain" />
+                        <span>{c.name}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <Link
+                  href="/settings"
+                  className="ml-2 text-[10px] font-semibold text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 shrink-0 transition-colors"
+                >
+                  Manage →
+                </Link>
+              </div>
+            )}
 
             <form
               onSubmit={handlePromptSubmit}
@@ -995,19 +1102,67 @@ export default function DashboardOverviewPage() {
                         }`}
                       />
                     </div>
-                    {msg.text ? (
+                    {msg.text || (msg.connectorActions && msg.connectorActions.length > 0) ? (
                       <div className="flex-1 min-w-0 text-sm sm:text-base leading-relaxed text-neutral-900 dark:text-neutral-100 pt-0.5">
-                        <div className="relative">
-                          <div
-                            className="markdown-body prose dark:prose-invert max-w-none [overflow-wrap:break-word] [word-break:break-word]"
-                            dangerouslySetInnerHTML={{
-                              __html: marked.parse(msg.text) as string,
-                            }}
-                          />
-                          {msg.isTyping && (
-                            <span className="inline-block w-2 h-4.5 bg-[#FFDE3C] ml-1 align-middle animate-pulse rounded-xs shadow-xs" />
-                          )}
-                        </div>
+                        {/* Connector Action Badges (Claude-style Tool Action Execution) */}
+                        {msg.connectorActions && msg.connectorActions.length > 0 && (
+                          <div className="flex flex-col gap-1.5 mb-2.5">
+                            {msg.connectorActions.map((action, idx) => (
+                              <div
+                                key={idx}
+                                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border max-w-fit transition-all ${
+                                  action.status === "success"
+                                    ? "bg-neutral-50 dark:bg-neutral-900/80 border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 shadow-xs"
+                                    : "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300"
+                                }`}
+                              >
+                                {action.icon ? (
+                                  <img
+                                    src={action.icon}
+                                    alt={action.connector}
+                                    className="w-4 h-4 object-contain shrink-0"
+                                  />
+                                ) : (
+                                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                                )}
+                                <span className="font-semibold text-neutral-900 dark:text-neutral-100 capitalize">
+                                  {action.connector}
+                                </span>
+                                <span className="text-neutral-400 dark:text-neutral-500">•</span>
+                                <span className="truncate max-w-[280px] sm:max-w-md">{action.detail}</span>
+                                {action.url && (
+                                  <a
+                                    href={action.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="ml-1 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline shrink-0"
+                                  >
+                                    Buka
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {msg.text ? (
+                          <div className="relative">
+                            <div
+                              className="markdown-body prose dark:prose-invert max-w-none [overflow-wrap:break-word] [word-break:break-word]"
+                              dangerouslySetInnerHTML={{
+                                __html: marked.parse(msg.text) as string,
+                              }}
+                            />
+                            {msg.isTyping && (
+                              <span className="inline-block w-2 h-4.5 bg-[#FFDE3C] ml-1 align-middle animate-pulse rounded-xs shadow-xs" />
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-xs sm:text-sm text-neutral-400 dark:text-neutral-500 font-normal pt-1 select-none animate-pulse">
+                            Thinking...
+                          </div>
+                        )}
                         {!msg.isTyping && msg.text && (
                           <div className="flex items-center gap-2 mt-2 pt-1 text-neutral-400 dark:text-neutral-500">
                             <button
@@ -1120,6 +1275,35 @@ export default function DashboardOverviewPage() {
                   className="hidden"
                   onChange={handleFileChange}
                 />
+
+                {/* Active Connectors Indicator Bar (Claude-style) */}
+                {connectedList.length > 0 && (
+                  <div className="flex items-center justify-between px-3 py-1 mb-1.5 rounded-lg bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xs border border-neutral-200/60 dark:border-white/5 text-[11px] text-neutral-500 dark:text-neutral-400">
+                    <div className="flex items-center gap-1.5 overflow-x-auto clean-scrollbar">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 shrink-0">
+                        Connectors:
+                      </span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {connectedList.map((c) => (
+                          <span
+                            key={c.id}
+                            title={`${c.name} is active`}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium text-[10px]"
+                          >
+                            <img src={c.icon} alt={c.name} className="w-3 h-3 object-contain" />
+                            <span>{c.name}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <Link
+                      href="/settings"
+                      className="ml-2 text-[10px] font-semibold text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 shrink-0 transition-colors"
+                    >
+                      Manage →
+                    </Link>
+                  </div>
+                )}
 
                 <form
                   onSubmit={handlePromptSubmit}
