@@ -19,6 +19,8 @@ import {
   FileCode,
   X,
   History,
+  UploadCloud,
+  Folder,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useSidebar } from "@/components/layout/SidebarContext";
@@ -26,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { motion, type Variants } from "framer-motion";
 import { ChatHistoryDrawer, type ConversationSummary } from "@/components/chat/ChatHistoryDrawer";
+import { renderPdfFirstPage } from "@/lib/pdf-thumbnail";
 
 // Staggered upward animation from leftmost to rightmost
 const chipsContainerVariants: Variants = {
@@ -58,9 +61,9 @@ marked.use({ async: false, breaks: true });
 
 export interface ChatAttachment {
   name: string;
-  type: "image" | "pdf" | "word" | "excel" | "text";
+  type: "image" | "pdf" | "word" | "excel" | "zip" | "text";
   size: string;
-  previewUrl?: string; // For images
+  previewUrl?: string; // For images and PDF first page thumbnail
   extractedText?: string; // For documents
   isExtracting?: boolean;
 }
@@ -75,7 +78,7 @@ interface ChatMessage {
   isTyping?: boolean;
 }
 
-const getAttachmentType = (file: File): "image" | "pdf" | "word" | "excel" | "text" => {
+const getAttachmentType = (file: File): "image" | "pdf" | "word" | "excel" | "zip" | "text" => {
   const name = file.name.toLowerCase();
   const type = file.type.toLowerCase();
 
@@ -84,6 +87,14 @@ const getAttachmentType = (file: File): "image" | "pdf" | "word" | "excel" | "te
   }
   if (type === "application/pdf" || name.endsWith(".pdf")) {
     return "pdf";
+  }
+  if (
+    type.includes("zip") ||
+    type.includes("x-zip") ||
+    type.includes("compressed") ||
+    /\.(zip|tar|gz|rar|7z)$/i.test(name)
+  ) {
+    return "zip";
   }
   if (
     type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
@@ -120,6 +131,122 @@ const truncateFileName = (name: string, maxLen = 20): string => {
   return `${name.slice(0, maxLen - 3).trimEnd()}...`;
 };
 
+const getAttachmentBadgeMeta = (att: ChatAttachment) => {
+  const ext = att.name.split(".").pop()?.toUpperCase() || "";
+  if (att.type === "zip" || ext === "ZIP" || ext === "RAR" || ext === "7Z") {
+    return {
+      badge: ext || "ZIP",
+      badgeClass: "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700/80",
+    };
+  }
+  if (att.type === "word") {
+    return {
+      badge: ext === "DOC" ? "DOC" : "DOCX",
+      badgeClass: "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700/80",
+    };
+  }
+  if (att.type === "pdf") {
+    return {
+      badge: "PDF",
+      badgeClass: "bg-white/95 dark:bg-neutral-900/90 text-neutral-800 dark:text-neutral-200 border border-neutral-200/90 dark:border-neutral-700 shadow-xs",
+    };
+  }
+  if (att.type === "excel") {
+    return {
+      badge: ext === "CSV" ? "CSV" : "XLSX",
+      badgeClass: "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700/80",
+    };
+  }
+  return {
+    badge: ext || "TXT",
+    badgeClass: "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700/80",
+  };
+};
+
+/* Claude.ai exact square attachment card (PDF preview, Image preview, or Non-visual ZIP/Word/Excel) */
+function ClaudeAttachmentCard({
+  attachment,
+  onRemove,
+  onClick,
+}: {
+  attachment: ChatAttachment;
+  onRemove?: () => void;
+  onClick?: () => void;
+}) {
+  const meta = getAttachmentBadgeMeta(attachment);
+
+  return (
+    <div className="mb-2 inline-block">
+      <div
+        onClick={onClick}
+        className={`group relative w-28 h-28 rounded-xl border border-neutral-200 dark:border-neutral-700/80 bg-white dark:bg-[#181818] shadow-xs hover:border-neutral-400 dark:hover:border-neutral-500 transition-all overflow-hidden select-none ${
+          onClick ? "cursor-pointer" : ""
+        }`}
+        title={attachment.name}
+      >
+        {/* Remove Button on hover (Claude style) */}
+        {onRemove && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            className="absolute top-1.5 right-1.5 z-20 w-5 h-5 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-sm"
+            title="Remove attachment"
+          >
+            <X className="w-3 h-3 stroke-[2.5]" />
+          </button>
+        )}
+
+        {/* Content Rendering */}
+        {attachment.type === "image" && attachment.previewUrl ? (
+          <div className="w-full h-full flex items-center justify-center p-1 bg-neutral-50 dark:bg-neutral-900">
+            <img
+              src={attachment.previewUrl}
+              alt={attachment.name}
+              className="w-full h-full object-contain rounded-lg"
+            />
+          </div>
+        ) : attachment.type === "pdf" && attachment.previewUrl ? (
+          <div className="relative w-full h-full bg-white dark:bg-neutral-900">
+            <img
+              src={attachment.previewUrl}
+              alt="PDF Page 1 preview"
+              className="w-full h-full object-cover object-top"
+            />
+            <div className="absolute bottom-2 left-2 z-10 pointer-events-none">
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider bg-white/95 dark:bg-neutral-900/90 text-neutral-800 dark:text-neutral-200 border border-neutral-200/90 dark:border-neutral-700 shadow-xs">
+                PDF
+              </span>
+            </div>
+          </div>
+        ) : (
+          /* ZIP, DOCX, XLSX, TXT, or PDF during extraction (Claude style) */
+          <div className="w-full h-full p-2.5 flex flex-col justify-between bg-white dark:bg-[#181818]">
+            <div className="pr-4">
+              <p className="text-xs font-normal text-neutral-800 dark:text-neutral-200 leading-snug line-clamp-3 break-words">
+                {attachment.name}
+              </p>
+              {attachment.isExtracting && (
+                <span className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-1">
+                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                  <span>Reading...</span>
+                </span>
+              )}
+            </div>
+            <div className="flex items-center">
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider ${meta.badgeClass}`}>
+                {meta.badge}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardOverviewPage() {
   const { data: session } = authClient.useSession();
   const { collapsed } = useSidebar();
@@ -141,6 +268,8 @@ export default function DashboardOverviewPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomFileInputRef = useRef<HTMLInputElement>(null);
   const bottomTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleIncomingFile = async (file: File) => {
     if (file.size > 15 * 1024 * 1024) {
@@ -166,13 +295,31 @@ export default function DashboardOverviewPage() {
       return;
     }
 
-    // Document: PDF, Word, Excel, or Text
+    // Document: PDF, Word, Excel, ZIP, or Text
     setAttachment({
       name: file.name,
       type: attType,
       size: sizeFormatted,
-      isExtracting: true,
+      isExtracting: attType !== "zip",
     });
+
+    // If PDF, render first page as visual thumbnail
+    if (attType === "pdf") {
+      renderPdfFirstPage(file)
+        .then((thumb) => {
+          if (thumb) {
+            setAttachment((prev) =>
+              prev && prev.name === file.name ? { ...prev, previewUrl: thumb } : prev
+            );
+          }
+        })
+        .catch((err) => console.warn("[PDF Thumbnail Error]", err));
+    }
+
+    // If zip archive, skip text extraction
+    if (attType === "zip") {
+      return;
+    }
 
     try {
       const formData = new FormData();
@@ -200,6 +347,52 @@ export default function DashboardOverviewPage() {
       setAttachment(null);
     }
   };
+
+  // Full-window drag and drop listeners (Claude style)
+  useEffect(() => {
+    let counter = 0;
+    const onDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      counter++;
+      if (e.dataTransfer && Array.from(e.dataTransfer.types).includes("Files")) {
+        setIsDragging(true);
+      }
+    };
+    const onDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      counter--;
+      if (counter <= 0) {
+        setIsDragging(false);
+        counter = 0;
+      }
+    };
+    const onDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = "copy";
+      }
+    };
+    const onDrop = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      counter = 0;
+      if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+        handleIncomingFile(e.dataTransfer.files[0]);
+      }
+    };
+
+    window.addEventListener("dragenter", onDragEnter);
+    window.addEventListener("dragleave", onDragLeave);
+    window.addEventListener("dragover", onDragOver);
+    window.addEventListener("drop", onDrop);
+
+    return () => {
+      window.removeEventListener("dragenter", onDragEnter);
+      window.removeEventListener("dragleave", onDragLeave);
+      window.removeEventListener("dragover", onDragOver);
+      window.removeEventListener("drop", onDrop);
+    };
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -668,72 +861,21 @@ export default function DashboardOverviewPage() {
             <input
               type="file"
               ref={fileInputRef}
-              accept="image/*,.pdf,.docx,.doc,.xlsx,.xls,.csv,.txt,.md"
+              accept="image/*,.pdf,.docx,.doc,.xlsx,.xls,.csv,.txt,.md,.zip,.tar,.gz,.rar,.7z"
               className="hidden"
               onChange={handleFileChange}
             />
 
             <form
               onSubmit={handlePromptSubmit}
-              className="w-full bg-white dark:bg-[#111111] border border-neutral-200 dark:border-neutral-800 p-4 sm:p-5 flex flex-col gap-3.5 shadow-sm hover:border-neutral-400 dark:hover:border-neutral-700 transition-all rounded-xl"
+              className="w-full bg-white dark:bg-[#111111] border border-neutral-200 dark:border-neutral-800 p-4 sm:p-5 flex flex-col gap-3.5 shadow-sm hover:border-neutral-400 dark:hover:border-neutral-700 transition-all rounded-xl relative"
             >
-              {/* Attachment preview */}
+              {/* Attachment preview (Claude-style Exact Square Card) */}
               {attachment && (
-                <div className="relative inline-flex items-center gap-2.5 p-1.5 pr-2.5 bg-neutral-100 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 rounded-lg self-start group animate-in fade-in zoom-in-95 duration-150 shadow-xs max-w-full">
-                  {attachment.type === "image" && attachment.previewUrl ? (
-                    <div className="w-8 h-8 rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-neutral-200 dark:bg-neutral-900 shrink-0">
-                      <img src={attachment.previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div
-                      className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 border ${
-                        attachment.type === "pdf"
-                          ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                          : attachment.type === "word"
-                          ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                          : attachment.type === "excel"
-                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                      }`}
-                    >
-                      {attachment.isExtracting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : attachment.type === "excel" ? (
-                        <FileSpreadsheet className="w-4 h-4" />
-                      ) : (
-                        <FileText className="w-4 h-4" />
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex flex-col min-w-0 pr-1 text-left">
-                    <span
-                      title={attachment.name}
-                      className="text-xs font-medium text-neutral-800 dark:text-neutral-200 truncate max-w-[140px] sm:max-w-[200px]"
-                    >
-                      {truncateFileName(attachment.name, 18)}
-                    </span>
-                    <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
-                      {attachment.isExtracting ? (
-                        <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium font-sf">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                          Extracting document contents...
-                        </span>
-                      ) : (
-                        `${attachment.type.toUpperCase()} • ${attachment.size}`
-                      )}
-                    </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleRemoveAttachment}
-                    className="w-5 h-5 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-red-500 text-neutral-500 dark:text-neutral-400 flex items-center justify-center transition-colors cursor-pointer ml-0.5"
-                    title="Remove attachment"
-                  >
-                    <X className="w-3.5 h-3.5 stroke-[2.5]" />
-                  </button>
-                </div>
+                <ClaudeAttachmentCard
+                  attachment={attachment}
+                  onRemove={handleRemoveAttachment}
+                />
               )}
 
               <textarea
@@ -751,8 +893,8 @@ export default function DashboardOverviewPage() {
                     ? "Ask about market sizing, valuation, unit economics (CAC/LTV), financial models, or attach data..."
                     : docType === "STRATEGY"
                     ? "Describe your business dilemma, competitive moats (7 Powers), product strategy, or PRD requirements..."
-                    : docType === "GROWTH"
-                    ? "Ask about acquisition loops, viral coefficients, retention curves, funnel conversion, or campaigns..."
+                    : docType === "CURRICULUM_DECK"
+                    ? "Attach or paste a curriculum, syllabus, or lecture topic to generate a master 120-min slide outline..."
                     : docType === "REASONING"
                     ? "Present a complex strategic decision, conflicting trade-off, or hypothesis to stress-test from first principles..."
                     : "Ask anything, explore ideas, or attach documents (PDF, Word, Excel, Images)..."
@@ -807,7 +949,7 @@ export default function DashboardOverviewPage() {
                 { label: "General Chat", value: "" },
                 { label: "Market & Finance", value: "FINANCE" },
                 { label: "Product & Strategy", value: "STRATEGY" },
-                { label: "Growth & Marketing", value: "GROWTH" },
+                { label: "Curriculum to Outline", value: "CURRICULUM_DECK" },
                 { label: "Deep Reasoning", value: "REASONING" },
               ].map((tag) => (
                 <motion.button
@@ -895,25 +1037,32 @@ export default function DashboardOverviewPage() {
                 ) : (
                   /* User Message Bubble */
                   <div className="flex flex-col items-end max-w-[85%] ml-auto gap-2">
-                    {/* Document Preview Card (PDF, Word, Excel, Text) */}
-                    {msg.attachment && msg.attachment.type !== "image" && (
+                    {/* Document Preview Card (PDF first page thumbnail or Word, Excel, ZIP, Text) */}
+                    {msg.attachment && msg.attachment.type === "pdf" && msg.attachment.previewUrl ? (
+                      <div className="relative w-28 h-28 rounded-xl border border-neutral-200 dark:border-neutral-700/80 bg-white dark:bg-neutral-900 overflow-hidden shadow-xs">
+                        <img
+                          src={msg.attachment.previewUrl}
+                          alt="PDF Page 1 preview"
+                          className="w-full h-full object-cover object-top"
+                        />
+                        <div className="absolute bottom-2 left-2 z-10 pointer-events-none">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider bg-white/95 dark:bg-neutral-900/90 text-neutral-800 dark:text-neutral-200 border border-neutral-200/90 dark:border-neutral-700 shadow-xs">
+                            PDF
+                          </span>
+                        </div>
+                      </div>
+                    ) : msg.attachment && msg.attachment.type !== "image" ? (
                       <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xs max-w-[320px] sm:max-w-[380px]">
                         <div
-                          className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                            msg.attachment.type === "pdf"
-                              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                              : msg.attachment.type === "word"
-                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
-                              : msg.attachment.type === "excel"
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                              : "bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 border border-neutral-500/20"
-                          }`}
+                          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 text-xs font-bold"
                         >
-                          {msg.attachment.type === "excel" ? (
-                            <FileSpreadsheet className="w-5 h-5" />
-                          ) : (
-                            <FileText className="w-5 h-5" />
-                          )}
+                          {msg.attachment.type === "zip"
+                            ? "ZIP"
+                            : msg.attachment.type === "excel"
+                            ? "XLS"
+                            : msg.attachment.type === "word"
+                            ? "DOC"
+                            : "FILE"}
                         </div>
                         <div className="flex flex-col min-w-0 flex-1 text-left">
                           <span
@@ -927,7 +1076,7 @@ export default function DashboardOverviewPage() {
                           </span>
                         </div>
                       </div>
-                    )}
+                    ) : null}
 
                     {/* Image Attachment */}
                     {((msg.attachment?.type === "image" && msg.attachment.previewUrl) || msg.image) && (
@@ -967,72 +1116,21 @@ export default function DashboardOverviewPage() {
                 <input
                   type="file"
                   ref={bottomFileInputRef}
-                  accept="image/*,.pdf,.docx,.doc,.xlsx,.xls,.csv,.txt,.md"
+                  accept="image/*,.pdf,.docx,.doc,.xlsx,.xls,.csv,.txt,.md,.zip,.tar,.gz,.rar,.7z"
                   className="hidden"
                   onChange={handleFileChange}
                 />
 
                 <form
                   onSubmit={handlePromptSubmit}
-                  className="w-full bg-white dark:bg-[#141414] border border-neutral-200 dark:border-white/10 p-3 sm:p-4 flex flex-col gap-2.5 shadow-sm dark:shadow-2xl hover:border-neutral-300 dark:hover:border-white/20 transition-all rounded-2xl"
+                  className="w-full bg-white dark:bg-[#141414] border border-neutral-200 dark:border-white/10 p-3 sm:p-4 flex flex-col gap-2.5 shadow-sm dark:shadow-2xl hover:border-neutral-300 dark:hover:border-white/20 transition-all rounded-2xl relative"
                 >
-                  {/* Attachment preview */}
+                  {/* Attachment preview (Claude-style Exact Square Card) */}
                   {attachment && (
-                    <div className="relative inline-flex items-center gap-2 p-1.5 pr-2 bg-neutral-100 dark:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-700 rounded-md self-start group animate-in fade-in zoom-in-95 duration-150">
-                      {attachment.type === "image" && attachment.previewUrl ? (
-                        <div className="w-8 h-8 rounded-xs overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-neutral-200 dark:bg-neutral-900 shrink-0">
-                          <img src={attachment.previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                        </div>
-                      ) : (
-                        <div
-                          className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 border ${
-                            attachment.type === "pdf"
-                              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                              : attachment.type === "word"
-                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                              : attachment.type === "excel"
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                          }`}
-                        >
-                          {attachment.isExtracting ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : attachment.type === "excel" ? (
-                            <FileSpreadsheet className="w-4 h-4" />
-                          ) : (
-                            <FileText className="w-4 h-4" />
-                          )}
-                        </div>
-                      )}
-
-                      <div className="flex flex-col min-w-0 pr-1 text-left">
-                        <span
-                          title={attachment.name}
-                          className="text-xs font-medium text-neutral-800 dark:text-neutral-200 truncate max-w-[130px] sm:max-w-[180px]"
-                        >
-                          {truncateFileName(attachment.name, 18)}
-                        </span>
-                        <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
-                          {attachment.isExtracting ? (
-                            <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium font-sf">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                              Extracting document contents...
-                            </span>
-                          ) : (
-                            `${attachment.type.toUpperCase()} • ${attachment.size}`
-                          )}
-                        </span>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={handleRemoveAttachment}
-                        className="w-5 h-5 rounded-xs hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-red-500 text-neutral-500 dark:text-neutral-400 flex items-center justify-center transition-colors cursor-pointer ml-0.5"
-                        title="Remove attachment"
-                      >
-                        <X className="w-3 h-3 stroke-[2.5]" />
-                      </button>
-                    </div>
+                    <ClaudeAttachmentCard
+                      attachment={attachment}
+                      onRemove={handleRemoveAttachment}
+                    />
                   )}
 
                   <div className="flex items-end gap-2 pb-0.5">
@@ -1040,7 +1138,7 @@ export default function DashboardOverviewPage() {
                       type="button"
                       onClick={() => bottomFileInputRef.current?.click()}
                       className="h-9 w-9 rounded-lg flex items-center justify-center text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer shrink-0 mb-0.5"
-                      title="Attach File (Image, PDF, Word, Excel)"
+                      title="Attach File (PDF, Word, Excel, ZIP, Image)"
                     >
                       <Paperclip className="w-4 h-4" />
                     </button>
@@ -1087,7 +1185,7 @@ export default function DashboardOverviewPage() {
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-neutral-500 dark:text-neutral-400 pt-1 border-t border-neutral-100 dark:border-neutral-800">
-                    <span className="text-[10px] sm:text-[11px] text-neutral-400 truncate">Mendukung PDF, Word, Excel, Gambar</span>
+                    <span className="text-[10px] sm:text-[11px] text-neutral-400 truncate">Mendukung PDF, Word, Excel, ZIP, Gambar</span>
                     <span className="hidden sm:inline">Press Enter to send, Shift+Enter for new line</span>
                   </div>
                 </form>
@@ -1101,6 +1199,29 @@ export default function DashboardOverviewPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Claude-style Drag & Drop Overlay */}
+      {isDragging && (
+        <div className="fixed inset-0 z-50 pointer-events-none transition-all duration-200 flex items-center justify-center">
+          {/* Soft blurred backdrop */}
+          <div className="absolute inset-0 bg-white/80 dark:bg-[#141415]/85 backdrop-blur-xs" />
+
+          {/* Launcher OS Inset Perimeter Border */}
+          <div className="absolute inset-4 sm:inset-6 md:inset-8 border-2 border-[#E5BC10] dark:border-[#FFDE3C] rounded-2xl sm:rounded-3xl pointer-events-none shadow-[0_0_25px_rgba(229,188,16,0.18)]" />
+
+          {/* Launcher OS Center Icon Cluster + Drop files here */}
+          <div className="relative z-10 flex flex-col items-center justify-center select-none">
+            <div className="flex items-center justify-center gap-1.5 mb-2.5 text-[#B89200] dark:text-[#FFDE3C]">
+              <ImageIcon className="w-6 h-6 stroke-[1.8]" />
+              <FileText className="w-7 h-7 stroke-[1.8] -mx-0.5" />
+              <Folder className="w-6 h-6 stroke-[1.8]" />
+            </div>
+            <p className="text-base sm:text-lg font-semibold text-[#8C6D00] dark:text-[#FFDE3C] tracking-tight">
+              Drop files here
+            </p>
           </div>
         </div>
       )}

@@ -53,12 +53,15 @@ import {
   ArrowUp,
   ArrowDown,
   Edit3,
+  UploadCloud,
+  Folder,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/layout/SidebarContext";
 import { exportDeckToPptx } from "@/lib/deck-export";
 import { SlideChart } from "@/components/decks/SlideCharts";
+import { renderPdfFirstPage } from "@/lib/pdf-thumbnail";
 import {
   FlowDiagram,
   ComparisonTable,
@@ -1149,7 +1152,49 @@ interface AttachedSkill {
   title: string;
   content: string;
   badge?: string;
+  size?: string;
+  isExtracting?: boolean;
+  previewUrl?: string; // For images and PDF first page thumbnail
+  type?: "image" | "pdf" | "word" | "excel" | "zip" | "text";
 }
+
+const getSkillBadgeMeta = (name: string, customBadge?: string) => {
+  const ext = (customBadge || name.split(".").pop() || "MD").toUpperCase();
+  if (ext === "ZIP" || ext === "RAR" || ext === "7Z") {
+    return {
+      badge: ext,
+      badgeClass: "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700/80",
+    };
+  }
+  if (ext === "DOC" || ext === "DOCX") {
+    return {
+      badge: ext,
+      badgeClass: "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700/80",
+    };
+  }
+  if (ext === "PDF") {
+    return {
+      badge: "PDF",
+      badgeClass: "bg-white/95 dark:bg-neutral-900/90 text-neutral-800 dark:text-neutral-200 border border-neutral-200/90 dark:border-neutral-700 shadow-xs",
+    };
+  }
+  if (ext === "XLS" || ext === "XLSX" || ext === "CSV") {
+    return {
+      badge: ext === "CSV" ? "CSV" : "XLSX",
+      badgeClass: "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700/80",
+    };
+  }
+  if (ext === "PNG" || ext === "JPG" || ext === "JPEG" || ext === "WEBP") {
+    return {
+      badge: ext,
+      badgeClass: "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700/80",
+    };
+  }
+  return {
+    badge: ext,
+    badgeClass: "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700/80",
+  };
+};
 
 const ITB_SKILL_MD = `---
 name: itb-deck-design-rules
@@ -4363,6 +4408,174 @@ export default function DeckGeneratorPage() {
   const [attachedSkill, setAttachedSkill] = useState<AttachedSkill | null>(null);
   const [mode, setMode] = useState<ContentMode>("generate");
   const [slideCount, setSlideCount] = useState("8");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounter = useRef(0);
+
+  const formatDeckFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const handleIncomingFile = async (file: File) => {
+    if (file.size > 15 * 1024 * 1024) {
+      alert("Ukuran file maksimal 15MB.");
+      return;
+    }
+
+    const name = file.name;
+    const lowerName = name.toLowerCase();
+    const typeLower = file.type.toLowerCase();
+    const ext = name.split(".").pop()?.toUpperCase() || "FILE";
+    const sizeFormatted = formatDeckFileSize(file.size);
+
+    const isImg = typeLower.startsWith("image/") || /\.(png|jpe?g|webp|gif|svg|bmp)$/i.test(lowerName);
+    const isPdf = typeLower === "application/pdf" || lowerName.endsWith(".pdf");
+    const isZip = typeLower.includes("zip") || /\.(zip|tar|gz|rar|7z)$/i.test(lowerName);
+    const isMd = /\.(md|markdown|txt)$/i.test(lowerName);
+
+    // If Image
+    if (isImg) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAttachedSkill({
+          id: `file-${Date.now()}`,
+          name: file.name,
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          content: `[Image: ${file.name}]`,
+          badge: ext,
+          size: sizeFormatted,
+          previewUrl: e.target?.result as string,
+          type: "image",
+          isExtracting: false,
+        });
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // If pure text or markdown, read directly via FileReader
+    if (isMd) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = (e.target?.result as string) || "";
+        setAttachedSkill({
+          id: `file-${Date.now()}`,
+          name: file.name,
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          content: text,
+          badge: ext,
+          size: sizeFormatted,
+          type: "text",
+          isExtracting: false,
+        });
+      };
+      reader.readAsText(file);
+      return;
+    }
+
+    // Documents (PDF, Word, Excel, ZIP, etc.)
+    setAttachedSkill({
+      id: `file-${Date.now()}`,
+      name: file.name,
+      title: file.name.replace(/\.[^/.]+$/, ""),
+      content: "",
+      badge: ext,
+      size: sizeFormatted,
+      type: isPdf ? "pdf" : isZip ? "zip" : "word",
+      isExtracting: !isZip,
+    });
+
+    if (isPdf) {
+      renderPdfFirstPage(file)
+        .then((thumb) => {
+          if (thumb) {
+            setAttachedSkill((prev) =>
+              prev && prev.name === file.name ? { ...prev, previewUrl: thumb } : prev
+            );
+          }
+        })
+        .catch((err) => console.warn("[Deck PDF Thumbnail Error]", err));
+    }
+
+    if (isZip) {
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/extract-text", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Gagal membaca isi dokumen.");
+      }
+
+      setAttachedSkill((prev) =>
+        prev && prev.name === file.name
+          ? {
+              ...prev,
+              content: data.text || "",
+              isExtracting: false,
+            }
+          : prev
+      );
+    } catch (err: any) {
+      alert(err?.message || "Gagal memproses file. Pastikan format file sesuai.");
+      setAttachedSkill(null);
+    }
+  };
+
+  // Full-window drag and drop listeners (Claude style)
+  useEffect(() => {
+    let counter = 0;
+    const onDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      counter++;
+      if (e.dataTransfer && Array.from(e.dataTransfer.types).includes("Files")) {
+        setIsDragging(true);
+      }
+    };
+    const onDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      counter--;
+      if (counter <= 0) {
+        setIsDragging(false);
+        counter = 0;
+      }
+    };
+    const onDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = "copy";
+      }
+    };
+    const onDrop = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      counter = 0;
+      if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+        handleIncomingFile(e.dataTransfer.files[0]);
+      }
+    };
+
+    window.addEventListener("dragenter", onDragEnter);
+    window.addEventListener("dragleave", onDragLeave);
+    window.addEventListener("dragover", onDragOver);
+    window.addEventListener("drop", onDrop);
+
+    return () => {
+      window.removeEventListener("dragenter", onDragEnter);
+      window.removeEventListener("dragleave", onDragLeave);
+      window.removeEventListener("dragover", onDragOver);
+      window.removeEventListener("drop", onDrop);
+    };
+  }, []);
   
   // Custom Style State
   const [selectedPalette, setSelectedPalette] = useState<ColorPalette>(COLOR_PALETTES[0]);
@@ -4468,7 +4681,9 @@ export default function DeckGeneratorPage() {
     const effectiveContent =
       content.trim() ||
       (attachedSkill
-        ? "Program Eksekutif ITB × RevoU: Data-Driven & AI-Enabled Decision Making for Leaders (Governance, Risk & Compliance for Data and AI Strategy)"
+        ? (attachedSkill.id === "itb"
+            ? "Program Eksekutif ITB × RevoU: Data-Driven & AI-Enabled Decision Making for Leaders (Governance, Risk & Compliance for Data and AI Strategy)"
+            : attachedSkill.content)
         : "");
     if (!effectiveContent) return;
     setIsPlanningOutline(true);
@@ -4869,7 +5084,7 @@ async function streamBuildSlide(
       const markdownPayload =
         editableBreakdown.length > 0
           ? formatBreakdownToMarkdown(editableBreakdown)
-          : content;
+          : content.trim() || (attachedSkill ? attachedSkill.content : "");
 
       const effectiveSlideCount =
         editableBreakdown.length > 0
@@ -5279,41 +5494,88 @@ async function streamBuildSlide(
             </p>
           </div>
 
-          {/* Main Clean Textarea Input Area */}
-          <div className="max-w-2xl mx-auto bg-white dark:bg-[#121212] rounded-xl border border-neutral-200/90 dark:border-neutral-800 shadow-sm p-4 sm:p-5 relative transition-all focus-within:ring-2 focus-within:ring-[#FFE54C]/50 focus-within:border-[#E5BC10]">
-            {/* Attached Skill File Card (Claude-style Clean Minimalist Card) */}
+          {/* Main Clean Textarea Input Area with Drag & Drop */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept=".pdf,.docx,.doc,.xlsx,.xls,.csv,.txt,.md,.zip,.tar,.gz,.rar,.7z,image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleIncomingFile(file);
+              e.target.value = "";
+            }}
+          />
+
+          <div
+            className="max-w-2xl mx-auto bg-white dark:bg-[#121212] rounded-xl border border-neutral-200/90 dark:border-neutral-800 shadow-sm p-4 sm:p-5 relative transition-all focus-within:ring-2 focus-within:ring-[#FFE54C]/50 focus-within:border-[#E5BC10]"
+          >
+            {/* Attached Skill / File Card (Claude-style Exact Square Card) */}
             {attachedSkill && (
-              <div className="mb-3.5">
+              <div className="mb-3.5 inline-block">
                 <div
                   onClick={() => setShowSkillModal(true)}
-                  className="group relative w-32 h-26 p-2.5 rounded-lg border border-neutral-200/90 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 flex flex-col justify-between select-none transition-all hover:border-neutral-400 dark:hover:border-neutral-600 hover:bg-neutral-100/60 dark:hover:bg-neutral-900 cursor-pointer"
-                  title="Klik untuk membaca instruksi skill"
+                  className="group relative w-28 h-28 rounded-xl border border-neutral-200 dark:border-neutral-700/80 bg-white dark:bg-[#181818] shadow-xs hover:border-neutral-400 dark:hover:border-neutral-500 transition-all overflow-hidden select-none cursor-pointer"
+                  title="Klik untuk membaca instruksi skill / isi dokumen"
                 >
-                  <div>
-                    <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-snug line-clamp-2 break-all group-hover:text-neutral-950 dark:group-hover:text-white transition-colors">
-                      {attachedSkill.name}
-                    </p>
-                    <p className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-1 font-normal">
-                      {attachedSkill.content.split("\n").length} lines
-                    </p>
-                  </div>
+                  {/* Remove Button on hover */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAttachedSkill(null);
+                    }}
+                    className="absolute top-1.5 right-1.5 z-20 w-5 h-5 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-sm"
+                    title="Remove file"
+                  >
+                    <X className="w-3 h-3 stroke-[2.5]" />
+                  </button>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium text-neutral-500 dark:text-neutral-400 bg-neutral-200/60 dark:bg-neutral-800 tracking-wider">
-                      MD
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setAttachedSkill(null);
-                      }}
-                      className="p-1 -mr-1 -mb-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-200/60 dark:hover:bg-neutral-800 rounded-md transition-all cursor-pointer"
-                      title="Remove file"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  {/* Content Rendering */}
+                  {attachedSkill.type === "image" && attachedSkill.previewUrl ? (
+                    <div className="w-full h-full flex items-center justify-center p-1 bg-neutral-50 dark:bg-neutral-900">
+                      <img
+                        src={attachedSkill.previewUrl}
+                        alt={attachedSkill.name}
+                        className="w-full h-full object-contain rounded-lg"
+                      />
+                    </div>
+                  ) : attachedSkill.type === "pdf" && attachedSkill.previewUrl ? (
+                    <div className="relative w-full h-full bg-white dark:bg-neutral-900">
+                      <img
+                        src={attachedSkill.previewUrl}
+                        alt="PDF Page 1 preview"
+                        className="w-full h-full object-cover object-top"
+                      />
+                      <div className="absolute bottom-2 left-2 z-10 pointer-events-none">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider bg-white/95 dark:bg-neutral-900/90 text-neutral-800 dark:text-neutral-200 border border-neutral-200/90 dark:border-neutral-700 shadow-xs">
+                          PDF
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    /* ZIP, DOCX, XLSX, TXT, MD, or PDF during extraction */
+                    <div className="w-full h-full p-2.5 flex flex-col justify-between bg-white dark:bg-[#181818]">
+                      <div className="pr-4">
+                        <p className="text-xs font-normal text-neutral-800 dark:text-neutral-200 leading-snug line-clamp-3 break-words">
+                          {attachedSkill.name}
+                        </p>
+                        {attachedSkill.isExtracting && (
+                          <span className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-1">
+                            <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                            <span>Reading...</span>
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700/80">
+                          {attachedSkill.type === "pdf"
+                            ? "PDF"
+                            : getSkillBadgeMeta(attachedSkill.name, attachedSkill.badge).badge}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -5329,6 +5591,15 @@ async function streamBuildSlide(
             {/* Bottom Bar: Download Template & Clone Style on Left + Generate Button on Right */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-800/80">
               <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer border border-neutral-200/80 dark:border-neutral-700"
+                  title="Attach file (PDF, Word, Excel, TXT, MD)"
+                >
+                  <Paperclip className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
+                  <span>Attach File</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => setShowCloneStyleModal(true)}
@@ -6824,6 +7095,29 @@ async function streamBuildSlide(
         onClose={() => setShowSkillModal(false)}
         skill={attachedSkill}
       />
+
+      {/* Fullscreen Claude-style Drag & Drop Overlay */}
+      {isDragging && (
+        <div className="fixed inset-0 z-50 pointer-events-none transition-all duration-200 flex items-center justify-center">
+          {/* Soft blurred backdrop */}
+          <div className="absolute inset-0 bg-white/80 dark:bg-[#141415]/85 backdrop-blur-xs" />
+
+          {/* Launcher OS Inset Perimeter Border */}
+          <div className="absolute inset-4 sm:inset-6 md:inset-8 border-2 border-[#E5BC10] dark:border-[#FFDE3C] rounded-2xl sm:rounded-3xl pointer-events-none shadow-[0_0_25px_rgba(229,188,16,0.18)]" />
+
+          {/* Launcher OS Center Icon Cluster + Drop files here */}
+          <div className="relative z-10 flex flex-col items-center justify-center select-none">
+            <div className="flex items-center justify-center gap-1.5 mb-2.5 text-[#B89200] dark:text-[#FFDE3C]">
+              <ImageIcon className="w-6 h-6 stroke-[1.8]" />
+              <FileText className="w-7 h-7 stroke-[1.8] -mx-0.5" />
+              <Folder className="w-6 h-6 stroke-[1.8]" />
+            </div>
+            <p className="text-base sm:text-lg font-semibold text-[#8C6D00] dark:text-[#FFDE3C] tracking-tight">
+              Drop files here
+            </p>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
