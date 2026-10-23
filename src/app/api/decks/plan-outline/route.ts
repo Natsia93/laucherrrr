@@ -12,15 +12,19 @@ interface OutlineSlideItem {
   visualLayout: string;
   description: string;
   keyPoints?: string[];
+  speakerNotes?: string;
 }
 
 const OUTLINE_SYSTEM_PROMPT = `
-You are the Master Presentation Architect for Launcher OS (McKinsey / Bain / Apple executive standards).
+You are the Master Presentation Architect for Launcher OS (McKinsey, Bain, ITB, and Apple executive standards).
 Your job is to transform raw topics, curriculum, or business notes into a comprehensive, highly structured Master Slide Blueprint.
 
-=== CORE ARCHITECTURAL RULES ===
+=== UNIVERSAL ARCHITECTURAL RULES (FOR CLAUDE, DEEPSEEK, GPT, & GEMINI) ===
 1. TARGET SLIDE COUNT: Output EXACTLY the requested number of slides. Do not cut short! If 50 slides are requested, output exactly 50 slide items.
-2. STORYTELLING ARC & VISUAL PACING (Anti-Monoton):
+2. ACTION TITLES (MANDATORY):
+   - Every headline MUST be a substantive, informative sentence/claim (5-9 words), NEVER boring category labels like "Introduction", "Slide 3", or "Agenda".
+   - ACTION TITLE RULE: Left-aligned, one line where possible. NEVER end a slide title with a period!
+3. STORYTELLING ARC & VISUAL PACING (Anti-Monoton):
    - Slide 1: "Hero / Cover" (Grand strategic hook, executive subtitle, authoritative headline).
    - Slide 2: "Two Column" or "Bullets" (Context, friction, current state vs target vision).
    - Core Middle Slides: Dynamically rotate between layouts:
@@ -28,26 +32,27 @@ Your job is to transform raw topics, curriculum, or business notes into a compre
      * "Flow Diagram / Architecture"
      * "Timeline / Roadmap"
      * "Table Comparison / Matrix"
-     * "Stats / Key Metrics" (Only when real numbers or metrics are involved)
+     * "Stats / Key Metrics" (Only when real numbers or metrics are involved; NEVER invent fake numbers!)
      * "Bullets / Key Pillars"
      * "Two Column / Problem vs Solution"
    - Final Slide: "Bold Impact / Call to Action" (High-conviction strategic close).
    - NEVER repeat the exact same layout more than twice consecutively!
-3. HIGH EXECUTIVE SUBSTANCE:
-   - Headlines must be active, punchy, and informative (5-9 words), NOT boring ("Introduction", "Slide 3").
-   - Subheadlines must provide strategic context.
-   - Descriptions must contain clear operational or analytical depth (1-2 sentences).
+4. PRESENTER / SPEAKER NOTES:
+   - Provide "speakerNotes" for EVERY slide: 2 to 4 crisp sentences explaining the slide's core intent, key takeaway, timing, or mentor guidance.
+5. NO INVENTED METRICS:
+   - If exact metrics are absent from input material, use qualitative descriptions or visible bracket placeholders like [X]%.
 
 OUTPUT FORMAT:
 Return ONLY a valid, parseable JSON array of objects with schema:
 [
   {
     "slideNumber": 1,
-    "headline": "Active Executive Title",
-    "subheadline": "Strategic subheadline",
+    "headline": "Active Executive Claim Without Period",
+    "subheadline": "Strategic subheadline providing context",
     "visualLayout": "Hero" | "Two Column" | "Process" | "Timeline" | "Table Comparison" | "Flow Diagram" | "Bullets" | "Stats" | "Bold Impact",
     "description": "Substantive summary of what this slide covers",
-    "keyPoints": ["Bullet 1", "Bullet 2"]
+    "keyPoints": ["Bullet 1", "Bullet 2"],
+    "speakerNotes": "Executive talking points and facilitation timing guidance"
   }
 ]
 `;
@@ -111,6 +116,7 @@ Generate a master blueprint with EXACTLY ${count} sequential slides in strict JS
             visualLayout: String(item.visualLayout || "Bullets"),
             description: String(item.description || ""),
             bullets: Array.isArray(item.keyPoints) ? item.keyPoints.slice(0, 4) : undefined,
+            speakerNotes: item.speakerNotes ? String(item.speakerNotes) : undefined,
           }));
 
           return NextResponse.json({ success: true, outline: sanitized, source: "gemini" });
@@ -152,12 +158,58 @@ Generate a master blueprint with EXACTLY ${count} sequential slides in strict JS
             visualLayout: String(item.visualLayout || "Bullets"),
             description: String(item.description || ""),
             bullets: Array.isArray(item.keyPoints) ? item.keyPoints.slice(0, 4) : undefined,
+            speakerNotes: item.speakerNotes ? String(item.speakerNotes) : undefined,
           }));
 
           return NextResponse.json({ success: true, outline: sanitized, source: provider });
         }
       } catch (openAiErr: any) {
         console.warn("OpenAI/Deepseek outline error:", openAiErr?.message);
+      }
+    }
+
+    // 3. Try Anthropic (Claude 3.5 / 3.7)
+    const anthropicKey = (apiKey && provider === "anthropic" ? apiKey : null) || process.env.ANTHROPIC_API_KEY;
+    if (anthropicKey && (provider === "anthropic" || !geminiKey && !openAiKey)) {
+      try {
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": anthropicKey,
+            "anthropic-version": "2023-06-01",
+          },
+          body: JSON.stringify({
+            model: requestedModel || "claude-3-5-sonnet-20241022",
+            max_tokens: 4096,
+            temperature: 0.3,
+            system: OUTLINE_SYSTEM_PROMPT,
+            messages: [{ role: "user", content: userPrompt }],
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const raw = data.content?.[0]?.text || "";
+          const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
+          const parsed = JSON.parse(cleaned);
+
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const sanitized = parsed.map((item: any, idx: number) => ({
+              slideNumber: idx + 1,
+              headline: String(item.headline || `Slide ${idx + 1}`),
+              subheadline: String(item.subheadline || ""),
+              visualLayout: String(item.visualLayout || "Bullets"),
+              description: String(item.description || ""),
+              bullets: Array.isArray(item.keyPoints) ? item.keyPoints.slice(0, 4) : undefined,
+              speakerNotes: item.speakerNotes ? String(item.speakerNotes) : undefined,
+            }));
+
+            return NextResponse.json({ success: true, outline: sanitized, source: "anthropic" });
+          }
+        }
+      } catch (anthropicErr: any) {
+        console.warn("Anthropic Claude outline error:", anthropicErr?.message);
       }
     }
 

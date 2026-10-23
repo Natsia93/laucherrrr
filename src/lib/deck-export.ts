@@ -95,10 +95,11 @@ export interface SlideData {
   footer?: string;
   slideNumber?: string;
   imageUrl?: string;
+  speakerNotes?: string;
 }
 
-export type TitleFont = "sf-pro" | "bricolage" | "jakarta" | "outfit" | "lora" | "inter";
-export type BodyFont = "sf-pro" | "inter" | "jakarta" | "outfit";
+export type TitleFont = "sf-pro" | "bricolage" | "jakarta" | "outfit" | "lora" | "inter" | "red-hat" | "red-hat-display";
+export type BodyFont = "sf-pro" | "inter" | "jakarta" | "outfit" | "red-hat" | "red-hat-display";
 
 export interface ExportOptions {
   palette: {
@@ -136,6 +137,8 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
   const getPptxTitleFont = (tf?: TitleFont | string) => {
     switch (tf) {
+      case "red-hat":
+      case "red-hat-display": return "Red Hat Display";
       case "bricolage": return "Bricolage Grotesque";
       case "jakarta": return "Plus Jakarta Sans";
       case "outfit": return "Outfit";
@@ -148,6 +151,8 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
   const getPptxBodyFont = (bf?: BodyFont | string) => {
     switch (bf) {
+      case "red-hat":
+      case "red-hat-display": return "Red Hat Display";
       case "inter": return "Inter";
       case "jakarta": return "Plus Jakarta Sans";
       case "outfit": return "Outfit";
@@ -176,6 +181,11 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
   slides.forEach((slide, idx) => {
     const pSlide = pptx.addSlide();
+
+    // Export Speaker Notes into PowerPoint Presenter View
+    if (slide.speakerNotes || slide.description) {
+      pSlide.addNotes(slide.speakerNotes || slide.description || "");
+    }
 
     // Background matching selected theme or slide override
     const isBoldYellow = !isDualTone && slide.bgStyle === "boldYellow";

@@ -1024,6 +1024,17 @@ const COLOR_PALETTES: ColorPalette[] = [
     textPrimary: "text-emerald-950",
     badgeBg: "bg-emerald-600 text-white",
   },
+  {
+    id: "itb",
+    name: "ITB × RevoU Leadership",
+    primary: "#005AAB",
+    secondary: "#FFDD3C",
+    accent: "#FFEC8E",
+    bgLight: "bg-white",
+    bgDark: "dark:bg-[#00274D]",
+    textPrimary: "text-[#272525]",
+    badgeBg: "bg-[#005AAB] text-white",
+  },
 ];
 
 /* ───────────────────────────────────────────────────
@@ -6444,6 +6455,77 @@ async function streamBuildSlide(
 }
 
 const PROMPT_TEMPLATE_PRESETS = [
+  {
+    id: "itb-leadership",
+    title: "ITB × RevoU — Decision Making for Leaders",
+    badge: "ITB Academic",
+    desc: "Official institutional template: Red Hat Display, Deep Blue & Golden Yellow, Action Titles, Prompt Cards, and Speaker Notes.",
+    content: `#Headline: Data-Driven & AI-Enabled Decision Making for Leaders
+#Subheadline: Executive Framework for High-Stakes Institutional & Enterprise Governance
+#Description: Program Eksekutif ITB × RevoU: Mengembangkan kapabilitas kepemimpinan berbasis data dan adopsi AI strategis tanpa halusinasi.
+#Badge: ITB × REVOU
+#SpeakerNotes: Sambut para eksekutif dan sampaikan tujuan program dalam 1 menit: menjembatani jurang antara data mentah dengan keputusan strategis tingkat direksi.
+#Visual: Title / Hero
+
+-----
+
+#Headline: Framework 3 Pilar Kepemimpinan Berbasis AI & Data
+#Subheadline: Fondasi operasional untuk memitigasi risiko halusinasi dan bias analitik
+#Description: Setiap keputusan strategis harus melewati validasi arsitektur data berlapis sebelum eksekusi kebijakan organisasi.
+#Bullet:
+- Fondasi Data: Verifikasi single source of truth dan tata kelola data terstruktur
+- Validasi Model: Pembatasan parameter AI dengan ground-truth facts tanpa halusinasi
+- Tata Kelola Eksekutif: Accountability matrix dan audit trail kepatuhan regulasi
+#SpeakerNotes: Berikan penekanan pada pilar kedua: AI tidak boleh dibiarkan mengambil keputusan tanpa supervisi dan validasi data terverifikasi.
+#Visual: Key Insights / Bullets
+
+-----
+
+#Headline: Alur Kerja Validasi Keputusan Multi-Tahap
+#Subheadline: Dari identifikasi masalah bisnis hingga pemantauan dampak kebijakan
+#Description: Metodologi 4 tahap standar industri untuk mengevaluasi rekomendasi sistem cerdas secara objektif.
+#Bullet:
+- Tahap 01: Problem Formulation & Hypothesis Framing
+- Tahap 02: Deterministic Data Extraction & Verification
+- Tahap 03: Multi-Model Adversarial Stress Testing
+- Tahap 04: Policy Synthesis & Executive Board Sign-off
+#SpeakerNotes: Alokasikan 8 menit untuk bedah kasus di tahap 3. Pastikan peserta memahami teknik adversarial challenge terhadap rekomendasi AI.
+#Visual: Process / Workflow
+
+-----
+
+#Headline: [HANDS-ON] Eksekusi Audit Keputusan Menggunakan AI Prompt Card
+#Subheadline: Format terstruktur untuk mengevaluasi risiko keputusan strategis divisi
+#Description: Gunakan template prompt audit di bawah ini pada AI analitis untuk memetakan skenario terburuk dan asumsi tersembunyi.
+#Bullet:
+- PROMPT CARD: "Sebagai Chief Risk Officer, lakukan stress-test terhadap proposal [Nama Proposal] dengan asumsi penurunan pasar [X]% dan kenaikan biaya operasional [Y]%."
+- Evaluasi Tingkat Risiko: Klasifikasikan temuan ke dalam status OK, Risk, atau Critical Failure
+- Action Plan: Rumuskan langkah mitigasi sebelum presentasi di hadapan dewan pengawas
+#Badge: HANDS-ON 10 MIN
+#SpeakerNotes: Latihan squad 10 menit. Minta peserta mengisi placeholder bracket dengan kasus nyata dari unit kerja masing-masing.
+#Visual: Two Column / Comparison
+
+-----
+
+#Headline: Matriks Komparasi Keputusan Konvensional vs AI-Augmented
+#Subheadline: Perbandingan dampak operasional, akurasi, dan kecepatan respon organisasi
+#Description: Evaluasi komprehensif transisi tata kelola keputusan menuju organisasi adaptif.
+#Bullet:
+- Kecepatan Analisis: Hari ke jam dengan automatisasi sintesis dokumen
+- Cakupan Skenario: Dari analisis linear terbatas ke simulasi probabilistik multi-skenario
+- Auditability: Dokumentasi log keputusan otomatis yang siap diaudit kapan saja
+#SpeakerNotes: Ringkas slide komparasi ini dan tegaskan bahwa AI bukan pengganti intuisi pemimpin, melainkan pengungkit ketajaman analisis.
+#Visual: Table Comparison
+
+-----
+
+#Headline: Rangkuman Eksekutif & Agenda Sesi Mendatang
+#Subheadline: Implementasikan framework audit keputusan pada portfolio proyek minggu ini
+#Description: Langkah nyata pasca sesi: terapkan audit prompt card pada proposal strategis terdekat sebelum milestone evaluasi dewan.
+#Badge: NEXT STEPS
+#SpeakerNotes: Berikan penutup inspiratif. Ingatkan peserta tentang deadline submission case study sebelum sesi pendampingan minggu depan.
+#Visual: Bold Statement / CTA`,
+  },
   {
     id: "strategy",
     title: "Strategy & Business Solutions",
