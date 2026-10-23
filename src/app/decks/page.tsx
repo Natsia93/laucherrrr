@@ -184,12 +184,13 @@ type SlideLayout =
 type ContentMode = "generate" | "summarize" | "preserve";
 type BgStyle = "mixed" | "solid" | "dualtone" | "gradient" | "dark" | "warm";
 type FontPairing = "editorial" | "modern" | "creative";
-export type TitleFont = "sf-pro" | "bricolage" | "jakarta" | "outfit" | "lora" | "inter";
-export type BodyFont = "sf-pro" | "inter" | "jakarta" | "outfit";
+export type TitleFont = "sf-pro" | "bricolage" | "jakarta" | "outfit" | "lora" | "inter" | "red-hat" | "red-hat-display";
+export type BodyFont = "sf-pro" | "inter" | "jakarta" | "outfit" | "red-hat" | "red-hat-display";
 type LayoutMood = "executive" | "framework" | "data";
 
 export const TITLE_FONTS: Array<{ id: TitleFont; name: string; tag: string }> = [
   { id: "sf-pro", name: "SF Pro Display", tag: "Apple Modern • Recommended" },
+  { id: "red-hat", name: "Red Hat Display", tag: "ITB Academic Standard" },
   { id: "bricolage", name: "Bricolage Grotesque", tag: "Creative Neo • Bold" },
   { id: "jakarta", name: "Plus Jakarta Sans", tag: "Modern Geometric • Clean" },
   { id: "outfit", name: "Outfit", tag: "Tech Venture • Contemporary" },
@@ -199,6 +200,7 @@ export const TITLE_FONTS: Array<{ id: TitleFont; name: string; tag: string }> = 
 
 export const BODY_FONTS: Array<{ id: BodyFont; name: string; tag: string }> = [
   { id: "sf-pro", name: "SF Pro Text", tag: "Apple Default • High Legibility" },
+  { id: "red-hat", name: "Red Hat Display", tag: "ITB Academic Standard" },
   { id: "inter", name: "Inter Sans", tag: "Global UI Standard" },
   { id: "jakarta", name: "Plus Jakarta Sans", tag: "Modern Geometric" },
   { id: "outfit", name: "Outfit Sans", tag: "Contemporary Tech" },
@@ -206,6 +208,9 @@ export const BODY_FONTS: Array<{ id: BodyFont; name: string; tag: string }> = [
 
 export function getTitleFontClass(font: TitleFont = "sf-pro"): string {
   switch (font) {
+    case "red-hat":
+    case "red-hat-display":
+      return "font-sans font-bold tracking-tight";
     case "bricolage":
       return "font-bricolage font-extrabold tracking-tight";
     case "jakarta":
@@ -224,6 +229,9 @@ export function getTitleFontClass(font: TitleFont = "sf-pro"): string {
 
 export function getBodyFontClass(font: BodyFont = "sf-pro"): string {
   switch (font) {
+    case "red-hat":
+    case "red-hat-display":
+      return "font-sans";
     case "inter":
       return "font-inter";
     case "jakarta":
@@ -1131,6 +1139,58 @@ const DEMO_SLIDES: SlideData[] = [
     ctaText: "Launch With Launcher OS →",
   },
 ];
+
+/* ───────────────────────────────────────────────────
+ * Institutional Skills Context (e.g. template-ITB.md)
+ * ─────────────────────────────────────────────────── */
+interface AttachedSkill {
+  id: string;
+  name: string;
+  title: string;
+  content: string;
+  badge?: string;
+}
+
+const ITB_SKILL_MD = `---
+name: itb-deck-design-rules
+description: Visual design rules for ITB × RevoU "Data-Driven & AI-Enabled Decision Making for Leaders" slide decks. Use this skill whenever generating, rebuilding, restyling or reviewing any deck, slide, module deck, mentoring deck or GAMMA SLIDE OUTLINE for the ITB program, or any RevoU × ITB partnership deck that should match it.
+---
+
+# ITB × RevoU Deck Design Rules
+
+These rules keep every generated deck visually consistent, whatever the module or week. Follow them for every slide.
+
+The guiding idea: **one visual identity, many layouts.** Fonts, colors, backgrounds and components never change. The layout of each slide is chosen from what that slide has to say.
+
+---
+
+## 1. Canvas
+- 16:9, designed at 1920 × 1080 px. Minimum readable text size: 24 px. Keep ≤ 170 words per slide.
+
+## 2. Typography
+- One font family only: Red Hat Display (fallback: sans-serif). No second font.
+- Titles are left-aligned, one line where possible. Action titles are full claims. NEVER end a title with a period!
+
+## 3. Color Palette
+- Deep Blue: #005AAB (Titles, primary cards, table headers, key messages, icons)
+- Golden Yellow: #FFDD3C (Partner cards, accents, tags, HANDS-ON tag, highlights)
+- Blue gradient: #005AAB → #007AE8
+- Soft Yellow: #FFEC8E (Note boxes, highlighted cells, part tags)
+- Pale yellow: #FFF6CC (Background band)
+- Light blue: #EAF2FB (Table stripes, light rows)
+- Light grey: #F1F1F1 (Context boxes, "weak/before" panels)
+- Text: #272525 (All body text on light backgrounds)
+- White: #FFFFFF (Text on blue; card fill)
+- No emoji, no status colors (use words: OK / Risk / Wrong).
+
+## 4. Components & Cards
+- Rounded cards: radius 16–22 px, padding 22–36 px, no shadows.
+- Prompt card: white card, 3 px Deep Blue border, small blue uppercase label ("PROMPT", "TEMPLATE"), prompt text in quotes, blanks as [bold bracketed placeholders] in blue.
+- Note box: Soft Yellow #FFEC8E, radius 16, bold lead-in ("Note:", "Rule:", "Remember:").
+- Insight bar: Deep Blue with 14 px yellow left edge, white text ("Key insight:").
+- HANDS-ON tag: solid Golden Yellow pill beside title, meta line with timing ("10 minutes, squad").
+- Speaker notes: mandatory 2–4 sentences executive speaking guidance.
+`;
 
 /* ───────────────────────────────────────────────────
  * Dummy Showcase Decks (16:9 Aspect Ratio)
@@ -4124,6 +4184,7 @@ export default function DeckGeneratorPage() {
   const { setCollapsed } = useSidebar();
   const [step, setStep] = useState<"input" | "styler" | "confirm" | "slides">("input");
   const [content, setContent] = useState("");
+  const [attachedSkill, setAttachedSkill] = useState<AttachedSkill | null>(null);
   const [mode, setMode] = useState<ContentMode>("generate");
   const [slideCount, setSlideCount] = useState("8");
   
@@ -4227,7 +4288,12 @@ export default function DeckGeneratorPage() {
   const [isPlanningOutline, setIsPlanningOutline] = useState<boolean>(false);
 
   const handlePlanOutline = async (targetCount: number) => {
-    if (!content.trim()) return;
+    const effectiveContent =
+      content.trim() ||
+      (attachedSkill
+        ? "Program Eksekutif ITB × RevoU: Data-Driven & AI-Enabled Decision Making for Leaders (Governance, Risk & Compliance for Data and AI Strategy)"
+        : "");
+    if (!effectiveContent) return;
     setIsPlanningOutline(true);
 
     try {
@@ -4235,16 +4301,21 @@ export default function DeckGeneratorPage() {
       const storedApiKey = typeof window !== "undefined" ? (localStorage.getItem(`ai_key_${activeProvider}`) || "") : "";
       const storedModel = typeof window !== "undefined" ? (localStorage.getItem(`ai_model_${activeProvider}`) || "") : "";
 
+      const skillDirectives = attachedSkill
+        ? `=== INSTITUTIONAL SKILL ATTACHMENT (${attachedSkill.name}) ===\n${attachedSkill.content}\n`
+        : "";
+      const combinedDirectives = [skillDirectives, clonedStyle?.visualDirectives || ""].filter(Boolean).join("\n\n");
+
       const res = await fetch("/api/decks/plan-outline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content,
+          content: effectiveContent,
           targetCount,
           audience,
           purpose,
           layoutMood,
-          clonedStyleDirectives: clonedStyle?.visualDirectives || "",
+          clonedStyleDirectives: combinedDirectives,
           apiKey: storedApiKey,
           provider: activeProvider,
           model: storedModel,
@@ -4632,6 +4703,11 @@ async function streamBuildSlide(
             : "Auto"
           : slideCountPreference;
 
+      const skillDirectives = attachedSkill
+        ? `=== INSTITUTIONAL SKILL ATTACHMENT (${attachedSkill.name}) ===\n${attachedSkill.content}\n`
+        : "";
+      const effectiveDirectives = [skillDirectives, clonedStyle?.visualDirectives || ""].filter(Boolean).join("\n\n");
+
       // ──── HIGH-CAPACITY CHUNKED PIPELINE FOR 10 TO 100+ SLIDES ────
       if (editableBreakdown.length > 8) {
         const total = editableBreakdown.length;
@@ -4674,7 +4750,7 @@ async function streamBuildSlide(
                 density,
                 bgStylePreference: bgStyle,
                 customBgColors: isCustomBgColors ? bgColors : undefined,
-                clonedStyleDirectives: clonedStyle?.visualDirectives || "",
+                clonedStyleDirectives: effectiveDirectives,
                 clonedReferenceSummary: clonedStyle?.designDNASummary || "",
               },
               apiKey: storedApiKey,
@@ -4733,7 +4809,7 @@ async function streamBuildSlide(
           paletteId: selectedPalette.id,
           specialNotes,
           customBrainInstruction: storedCustomBrain,
-          clonedStyleDirectives: clonedStyle?.visualDirectives || "",
+          clonedStyleDirectives: effectiveDirectives,
           clonedReferenceSummary: clonedStyle?.designDNASummary || "",
           apiKey: storedApiKey,
           model: storedModel,
@@ -5028,12 +5104,44 @@ async function streamBuildSlide(
 
           {/* Main Clean Textarea Input Area */}
           <div className="max-w-2xl mx-auto bg-white dark:bg-[#121212] rounded-md border border-neutral-200/90 dark:border-neutral-800 shadow-sm p-4 sm:p-5 relative transition-all focus-within:ring-2 focus-within:ring-[#FFE54C]/50 focus-within:border-[#E5BC10]">
+            {/* Attached Skill File Tag (e.g. template-ITB.md) */}
+            {attachedSkill && (
+              <div className="mb-3 inline-flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200/90 dark:border-blue-800 text-blue-950 dark:text-blue-100 text-xs shadow-2xs animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className="w-5 h-5 rounded bg-[#005AAB] text-[#FFDD3C] flex items-center justify-center font-bold text-[9px] shrink-0 tracking-tighter">
+                  MD
+                </div>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-semibold text-xs font-mono text-[#005AAB] dark:text-blue-300">
+                    {attachedSkill.name}
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-[#FFDD3C] text-[#174A7F]">
+                    Skill ITB Aktif
+                  </span>
+                  <span className="text-neutral-500 dark:text-neutral-400 text-[11px] hidden sm:inline truncate max-w-[280px]">
+                    ({attachedSkill.title})
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAttachedSkill(null)}
+                  className="p-1 hover:bg-blue-200/60 dark:hover:bg-blue-900/60 rounded text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer ml-1 transition-colors"
+                  title="Lepas lampiran skill"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Type or paste in content here..."
-              rows={10}
-              className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm sm:text-base outline-none resize-none min-h-[220px] font-sans leading-relaxed"
+              placeholder={
+                attachedSkill
+                  ? "Ketik topik materi atau instruksi tambahan (opsional, aturan & format template-ITB.md sudah aktif)..."
+                  : "Type or paste in content here..."
+              }
+              rows={attachedSkill ? 8 : 10}
+              className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm sm:text-base outline-none resize-none min-h-[190px] font-sans leading-relaxed"
             />
 
             {/* Bottom Bar: Download Template & Clone Style on Left + Generate Button on Right */}
@@ -5088,10 +5196,10 @@ async function streamBuildSlide(
 
               <button
                 type="button"
-                disabled={!content.trim()}
+                disabled={!content.trim() && !attachedSkill}
                 onClick={() => setStep("styler")}
                 className={`h-8.5 px-4 rounded-md font-semibold text-xs flex items-center justify-center transition-all ${
-                  content.trim()
+                  content.trim() || attachedSkill
                     ? "bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 cursor-pointer active:scale-95 shadow-xs"
                     : "bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed opacity-50"
                 }`}
@@ -5111,10 +5219,22 @@ async function streamBuildSlide(
                   key={deck.id}
                   deck={deck}
                   onSelect={(selected) => {
-                    setContent(selected.sampleContent);
                     if (selected.id === "sc-itb") {
+                      // Kosongkan chatbox content agar tetap bersih
+                      setContent("");
+                      // Pasang file skill attachment template-ITB.md di atas chatbox
+                      setAttachedSkill({
+                        id: "itb",
+                        name: "template-ITB.md",
+                        title: "ITB × RevoU Deck Design Rules",
+                        content: ITB_SKILL_MD,
+                        badge: "ITB Skill Active",
+                      });
                       const itbPal = COLOR_PALETTES.find((p) => p.id === "itb");
                       if (itbPal) setSelectedPalette(itbPal);
+                      applyFontPreset("red-hat", "red-hat");
+                    } else {
+                      setContent(selected.sampleContent);
                     }
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
