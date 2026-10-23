@@ -59,23 +59,29 @@ export function LogoutConfirmModal({
             className="fixed inset-0 transition-all duration-300 bg-black/20 dark:bg-black/50 backdrop-blur-sm"
           />
 
-          {/* Modal Container: Compact, Minimalist, Modern */}
+          {/* Modal Container: Compact, Minimalist, Modern with MoodCheck Vertical Expand Animation */}
           <motion.div
             key="logout-modal-card"
-            initial={{ opacity: 0, scale: 0.96, y: 6 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
+            initial={{ opacity: 0, scaleY: 0.1, scaleX: 0.95 }}
+            animate={{ opacity: 1, scaleY: 1, scaleX: 1 }}
             exit={{
               opacity: 0,
-              scale: 0.96,
-              y: 6,
-              transition: { duration: 0.15 },
+              scaleY: 0.1,
+              scaleX: 0.95,
+              transition: {
+                type: "spring",
+                damping: 24,
+                stiffness: 300,
+                mass: 0.75,
+              },
             }}
             transition={{
               type: "spring",
-              damping: 28,
-              stiffness: 380,
-              mass: 0.7,
+              damping: 26,
+              stiffness: 340,
+              mass: 0.8,
             }}
+            style={{ transformOrigin: "center center" }}
             className="font-sf relative w-full max-w-[340px] bg-white dark:bg-[#141414] border border-neutral-200/90 dark:border-neutral-800 rounded-2xl shadow-xl dark:shadow-2xl p-5 z-10 space-y-4"
           >
             {/* Header & Description */}

@@ -63,7 +63,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LauncherSelect } from "@/components/automation/LauncherSelect";
 import type { GlobalVariable } from "@/components/automation/GlobalVariablesModal";
 
-type SettingsTab = "profile" | "apikeys" | "automation" | "decks" | "security";
+type SettingsTab = "profile" | "apikeys" | "automation" | "security";
 type AutomationSubView = "hub" | "variables" | "webhooks" | "connectors";
 type AIProvider = "deepseek" | "openai" | "anthropic" | "gemini";
 
@@ -154,68 +154,6 @@ const AI_PROVIDERS: Record<AIProvider, {
   },
 };
 
-const DENSITY_OPTIONS = [
-  { value: "brief", label: "Brief — Ringkas, padat & fokus pada metrik utama" },
-  { value: "medium", label: "Medium — Seimbang (rekomendasi eksekutif & framework)" },
-  { value: "detailed", label: "Detailed — Komprehensif dengan data analitis mendalam" },
-];
-
-const SLIDE_COUNT_OPTIONS = [
-  { value: "Auto", label: "Auto — Deteksi Cerdas Berdasarkan Materi" },
-  { value: "6", label: "6 Slides (Elevator Pitch / Summary)" },
-  { value: "8", label: "8 Slides (Standard Presentation)" },
-  { value: "10", label: "10 Slides (Strategy & Deep Roadmap)" },
-  { value: "12", label: "12 Slides (Comprehensive Deep Dive)" },
-  { value: "15", label: "15 Slides (Executive Masterclass)" },
-];
-
-const BRAIN_PRESETS = [
-  {
-    id: "mckinsey",
-    title: "McKinsey Executive",
-    icon: Zap,
-    instruction: `Persona: Senior Strategy Partner at Top-Tier Management Consulting (McKinsey / BCG).
-Tone & Style: Authoritative, sharp, data-driven, solution-oriented, and structured with the MECE principle (Mutually Exclusive, Collectively Exhaustive).
-Guidelines:
-- Use executive action titles that directly answer "So What?".
-- Every bullet point must have measurable business significance, never generic descriptions.
-- Prioritize analytical layouts: 2-column comparisons, quadrant matrices, phased frameworks, and split metric counters.`,
-  },
-  {
-    id: "startup",
-    title: "Tech Startup Pitch",
-    icon: Rocket,
-    instruction: `Persona: Y Combinator Pitch Deck Specialist & Silicon Valley Serial Entrepreneur.
-Tone & Style: Ambitious, visionary, persuasive, concise, and focused on growth metrics & traction.
-Guidelines:
-- Highlight pain point urgency, unfair competitive advantages, and TAM/SAM/SOM market sizing.
-- Avoid corporate fluff; make the core value proposition crystal clear within 3 seconds.
-- Maximize conversion funnel visuals, key traction metric callouts, and strategic milestones.`,
-  },
-  {
-    id: "workshop",
-    title: "Workshop & Training",
-    icon: GraduationCap,
-    instruction: `Persona: Master Facilitator & Instructional Learning Designer.
-Tone & Style: Educational, interactive, easy to understand, step-by-step systematic.
-Guidelines:
-- Present material in logical, actionable stages (Step 1, 2, 3) accompanied by real-world examples.
-- Include reflective checkpoint questions or interactive prompts for the audience.
-- Use horizontal process flows or structured cycles so learning flows naturally.`,
-  },
-  {
-    id: "minimalist",
-    title: "Minimalist & Data-Driven",
-    icon: BarChart3,
-    instruction: `Persona: Chief Data Officer & Minimalist Information Architect.
-Tone & Style: Clean, objective, to-the-point, strictly oriented around verifiable facts and metrics.
-Guidelines:
-- Maximum 3 key points per slide with high-contrast visual hierarchy.
-- Every primary claim must be backed by percentages, quantitative ratios, or measurable benchmarks.
-- Eliminate filler text and non-essential conversational decoration.`,
-  },
-];
-
 export default function SettingsPage() {
   const { data: session } = authClient.useSession();
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
@@ -246,13 +184,6 @@ export default function SettingsPage() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [selectedModel, setSelectedModel] = useState("deepseek-chat");
   const [testResult, setTestResult] = useState<ConnectionTestState>({ status: "idle" });
-
-  // Deck Defaults
-  const [defaultDensity, setDefaultDensity] = useState("medium");
-  const [defaultSlideCount, setDefaultSlideCount] = useState("8");
-  const [defaultPalette, setDefaultPalette] = useState("amber-ochre");
-  const [customDeckBrain, setCustomDeckBrain] = useState("");
-
   // Automation & Global Variables State
   const [globalVariables, setGlobalVariables] = useState<GlobalVariable[]>([]);
   const [newVarKey, setNewVarKey] = useState("");
@@ -335,16 +266,7 @@ export default function SettingsPage() {
       setApiKey(storedKey);
       setSelectedModel(storedModel);
 
-      // Load stored Deck Preferences
-      const storedDensity = localStorage.getItem("deck_default_density");
-      const storedCount = localStorage.getItem("deck_default_count");
-      const storedPalette = localStorage.getItem("deck_default_palette");
-      const storedBrain = localStorage.getItem("deck_custom_brain");
 
-      if (storedDensity) setDefaultDensity(storedDensity);
-      if (storedCount) setDefaultSlideCount(storedCount);
-      if (storedPalette) setDefaultPalette(storedPalette);
-      if (storedBrain) setCustomDeckBrain(storedBrain);
 
       // Load Global Variables (LocalStorage + Cloud Sync)
       try {
@@ -614,15 +536,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveDeckPreferences = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("deck_default_density", defaultDensity);
-      localStorage.setItem("deck_default_count", defaultSlideCount);
-      localStorage.setItem("deck_default_palette", defaultPalette);
-      localStorage.setItem("deck_custom_brain", customDeckBrain.trim());
-      triggerToast("Deck Preferences & AI Brain saved successfully!");
-    }
-  };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1176,13 +1089,6 @@ export default function SettingsPage() {
                 </>
               )}
 
-              {activeTab === "decks" && (
-                <>
-                  <span className="text-base sm:text-lg lg:text-xl text-neutral-300 dark:text-neutral-600 font-light select-none">/</span>
-                  <span className="text-2xl sm:text-3xl lg:text-[34px] font-medium text-neutral-950 dark:text-white">Deck Defaults</span>
-                </>
-              )}
-
               {activeTab === "security" && (
                 <>
                   <span className="text-base sm:text-lg lg:text-xl text-neutral-300 dark:text-neutral-600 font-light select-none">/</span>
@@ -1275,17 +1181,6 @@ export default function SettingsPage() {
             )}
           </button>
 
-          <button
-            onClick={() => setActiveTab("decks")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer ${
-              activeTab === "decks"
-                ? "bg-[#FCD62C] text-neutral-950 shadow-xs"
-                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
-            }`}
-          >
-            <Sliders className="w-4 h-4 shrink-0" />
-            <span>Deck Defaults</span>
-          </button>
 
           <button
             onClick={() => setActiveTab("security")}
@@ -3465,176 +3360,7 @@ export default function SettingsPage() {
         )}
 
         {/* ══════════════════════════════════════════════════════════
-         * TAB 4: DECK PREFERENCES & CUSTOM AI BRAIN
-         * ══════════════════════════════════════════════════════════ */}
-        {activeTab === "decks" && (
-          <div className="space-y-6">
-            {/* Card 1: Default Settings (Density & Slide Count) */}
-            <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl space-y-5 shadow-xs overflow-visible">
-              <div className="space-y-1 pb-3 border-b border-neutral-100 dark:border-neutral-800">
-                <div className="flex items-center gap-2">
-                  <Sliders className="w-4 h-4 text-neutral-800 dark:text-neutral-200" />
-                  <h2 className="text-sm sm:text-base font-medium text-neutral-950 dark:text-white leading-tight tracking-tight">
-                    Default Slide Generator Settings
-                  </h2>
-                </div>
-                <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 font-normal">
-                  Atur preferensi default kepadatan konten dan jumlah slide saat membuka Deck Generator
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative z-20">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                    Content Density (Default)
-                  </label>
-                  <LauncherSelect
-                    value={defaultDensity}
-                    onChange={(val) => setDefaultDensity(val)}
-                    options={DENSITY_OPTIONS}
-                  />
-                  <p className="text-[10.5px] text-neutral-400 dark:text-neutral-500">
-                    Set how dense the narrative and data detail should be per slide
-                  </p>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                    Target Default Slide Count
-                  </label>
-                  <LauncherSelect
-                    value={defaultSlideCount}
-                    onChange={(val) => setDefaultSlideCount(val)}
-                    options={SLIDE_COUNT_OPTIONS}
-                  />
-                  <p className="text-[10.5px] text-neutral-400 dark:text-neutral-500">
-                    Default target slide count when not specified in your prompt
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            {/* Card 2: Custom AI Brain Instructions */}
-            <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl space-y-5 shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-100 dark:border-neutral-800">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <div className="w-6 h-6 rounded-md bg-[#FCD62C]/20 text-neutral-950 dark:text-amber-300 flex items-center justify-center">
-                      <Brain className="w-3.5 h-3.5 text-neutral-900 dark:text-[#FCD62C]" />
-                    </div>
-                    <h2 className="text-sm sm:text-base font-medium text-neutral-950 dark:text-white leading-tight tracking-tight">
-                      Custom AI Presentation Brain
-                    </h2>
-                    <span className="text-[10px] font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 px-2 py-0.5 rounded-md">
-                      Optional
-                    </span>
-                    {customDeckBrain.trim().length > 0 ? (
-                      <span className="text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Custom Brain Active ({customDeckBrain.trim().length} chars)
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
-                        <Sparkles className="w-2.5 h-2.5" />
-                        Default Launcher OS Brain
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 font-normal">
-                    System instructions to guide AI persona, writing style, thinking frameworks, or specific generation rules.
-                  </p>
-                </div>
-
-                {customDeckBrain.trim().length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setCustomDeckBrain("")}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 px-2.5 py-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer self-start sm:self-auto"
-                    title="Clear custom instructions and use default AI brain"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span>Reset to Default</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Quick Starter Presets */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3 text-amber-500" />
-                    <span>Choose Quick AI Brain Preset Template (1-Click):</span>
-                  </label>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {BRAIN_PRESETS.map((preset) => {
-                    const isSelected = customDeckBrain.trim() === preset.instruction.trim();
-                    const IconComponent = preset.icon;
-                    return (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        onClick={() => setCustomDeckBrain(preset.instruction)}
-                        className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${
-                          isSelected
-                            ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-950 border-neutral-900 dark:border-white shadow-xs"
-                            : "bg-neutral-50/80 dark:bg-neutral-900/60 hover:bg-neutral-100 dark:hover:bg-neutral-800/80 border-neutral-200/80 dark:border-neutral-800 text-neutral-800 dark:text-neutral-200"
-                        }`}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          <IconComponent className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-amber-300 dark:text-amber-500" : "text-neutral-700 dark:text-neutral-300"}`} />
-                          <span className="text-xs font-semibold leading-tight">{preset.title}</span>
-                        </div>
-                        <span className={`text-[10px] leading-tight line-clamp-2 ${isSelected ? "text-neutral-300 dark:text-neutral-600" : "text-neutral-500 dark:text-neutral-400"}`}>
-                          {preset.instruction.slice(0, 75)}...
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Custom Brain Textarea */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                    Custom AI Brain Instructions (System Persona & Guidelines)
-                  </label>
-                  <span className="text-[10.5px] font-mono text-neutral-400">
-                    {customDeckBrain.length} characters
-                  </span>
-                </div>
-                <textarea
-                  value={customDeckBrain}
-                  onChange={(e) => setCustomDeckBrain(e.target.value)}
-                  placeholder={`Example custom instructions:\n- Act as a Senior Partner at McKinsey with sharp, data-driven reasoning.\n- Always use the MECE framework and executive action titles that answer 'So What?'.\n- Avoid passive generic bullet points; use quantitative comparisons instead.\n- Language: English professional tone.`}
-                  rows={8}
-                  className="w-full text-xs font-mono leading-relaxed p-3.5 rounded-lg border border-neutral-300/90 dark:border-neutral-700/80 bg-neutral-50/50 dark:bg-[#0c0c0c] text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-neutral-400 dark:focus:ring-white/30 focus:border-neutral-400 transition-all resize-y"
-                />
-                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200/60 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 text-[11px] leading-relaxed">
-                  <Info className="w-3.5 h-3.5 shrink-0 text-neutral-500 mt-0.5" />
-                  <span>
-                    These instructions will be injected directly into the presentation generator&apos;s AI brain whenever you create new slides in Deck Generator.
-                  </span>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 flex justify-end">
-                <Button
-                  type="button"
-                  onClick={handleSaveDeckPreferences}
-                  className="h-9.5 bg-[#FCD62C] hover:bg-[#ebd524] text-neutral-950 font-semibold text-sm px-5 rounded-md shadow-xs flex items-center justify-center cursor-pointer active:scale-98 transition-all"
-                >
-                  <Check className="w-4 h-4 mr-1.5" />
-                  <span>Save Preferences & AI Brain</span>
-                </Button>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {/* ══════════════════════════════════════════════════════════
-         * TAB 5: SECURITY & CLOUD
+         * TAB 4: SECURITY & CLOUD
          * ══════════════════════════════════════════════════════════ */}
         {activeTab === "security" && (
           <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl space-y-5 shadow-xs">
