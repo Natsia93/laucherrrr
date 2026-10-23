@@ -48,6 +48,17 @@ function LoginPageContent() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
 
+  // Always enforce light mode on the login page and reset session theme
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("theme", "light");
+      sessionStorage.removeItem("launcher_session_theme_set");
+      sessionStorage.removeItem("launcher_overview_theme_initialized");
+      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("light");
+    }
+  }, []);
+
   // Check if user came from a logout action
   useEffect(() => {
     if (searchParams.get("loggedOut") === "true") {
@@ -55,6 +66,11 @@ function LoginPageContent() {
       // Clean cookies & sign out in background
       try {
         if (typeof window !== "undefined") {
+          localStorage.setItem("theme", "light");
+          sessionStorage.removeItem("launcher_session_theme_set");
+          sessionStorage.removeItem("launcher_overview_theme_initialized");
+          document.documentElement.classList.remove("dark");
+          document.documentElement.classList.add("light");
           document.cookie = "better-auth.session_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
           document.cookie = "better-auth.session_data=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         }
@@ -135,6 +151,11 @@ function LoginPageContent() {
     setSignOutLoading(true);
     try {
       if (typeof window !== "undefined") {
+        localStorage.setItem("theme", "light");
+        sessionStorage.removeItem("launcher_session_theme_set");
+        sessionStorage.removeItem("launcher_overview_theme_initialized");
+        document.documentElement.classList.remove("dark");
+        document.documentElement.classList.add("light");
         localStorage.removeItem("user_daily_mood");
         sessionStorage.removeItem("user_mood_checked_session");
         sessionStorage.removeItem("overview_charts_animated");
@@ -159,6 +180,10 @@ function LoginPageContent() {
 
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("user_mood_checked_session");
+      localStorage.setItem("theme", "light");
+      sessionStorage.removeItem("launcher_overview_theme_initialized");
+      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("light");
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -184,6 +209,12 @@ function LoginPageContent() {
           },
           {
             onSuccess: () => {
+              if (typeof window !== "undefined") {
+                localStorage.setItem("theme", "light");
+                sessionStorage.removeItem("launcher_overview_theme_initialized");
+                document.documentElement.classList.remove("dark");
+                document.documentElement.classList.add("light");
+              }
               router.push("/overview");
             },
             onError: (ctx) => {
@@ -207,6 +238,12 @@ function LoginPageContent() {
           },
           {
             onSuccess: () => {
+              if (typeof window !== "undefined") {
+                localStorage.setItem("theme", "light");
+                sessionStorage.removeItem("launcher_overview_theme_initialized");
+                document.documentElement.classList.remove("dark");
+                document.documentElement.classList.add("light");
+              }
               router.push("/overview");
             },
             onError: (ctx) => {
@@ -225,6 +262,12 @@ function LoginPageContent() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     setError("");
+    if (typeof window !== "undefined") {
+      localStorage.setItem("theme", "light");
+      sessionStorage.removeItem("launcher_overview_theme_initialized");
+      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("light");
+    }
     try {
       await authClient.signIn.social(
         {

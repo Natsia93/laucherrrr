@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useEffect } from "react";
+import { useTheme } from "next-themes";
 import { AppShell } from "@/components/layout/AppShell";
-import { useSidebar } from "@/components/layout/SidebarContext";
 
 // Modular Overview Components
 import { GreetingHeader } from "@/components/overview/GreetingHeader";
@@ -14,6 +13,21 @@ import { OverviewScratchpad } from "@/components/overview/OverviewScratchpad";
 import { OverviewAgenda } from "@/components/overview/OverviewAgenda";
 
 export default function OverviewPage() {
+  const { setTheme } = useTheme();
+
+  // Enforce light mode on every fresh session / login entry
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasInitialized = sessionStorage.getItem("launcher_overview_theme_initialized");
+    if (!hasInitialized) {
+      setTheme("light");
+      localStorage.setItem("theme", "light");
+      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("light");
+      sessionStorage.setItem("launcher_overview_theme_initialized", "true");
+    }
+  }, [setTheme]);
+
   return (
     <AppShell>
       <div className="max-w-[1200px] mx-auto px-2 sm:px-4 lg:px-6 space-y-6 pb-12">

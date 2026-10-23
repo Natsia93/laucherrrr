@@ -16,5 +16,23 @@ if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
 }
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Check if new browser session / fresh login
+    const hasInitialized = sessionStorage.getItem("launcher_session_theme_set");
+    if (!hasInitialized) {
+      // Force default light mode on every fresh login / new session
+      localStorage.setItem("theme", "light");
+      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("light");
+      sessionStorage.setItem("launcher_session_theme_set", "true");
+    }
+  }, []);
+
+  return (
+    <NextThemesProvider {...props} defaultTheme="light" enableSystem={false}>
+      {children}
+    </NextThemesProvider>
+  );
 }

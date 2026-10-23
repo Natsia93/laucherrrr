@@ -66,7 +66,7 @@ export function ThemeToggle() {
         type="button"
         onClick={() => handleThemeChange("dark")}
         className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
-          theme === "dark" || !theme ? "text-[#ffd100] font-bold" : "text-neutral-500 hover:text-neutral-900"
+          theme === "dark" ? "text-[#ffd100] font-bold" : "text-neutral-500 hover:text-neutral-900"
         }`}
       >
         <Moon className="h-4 w-4" />
@@ -76,7 +76,7 @@ export function ThemeToggle() {
       {/* Sliding background pill */}
       <div 
         className={`absolute left-1 top-1 h-7 w-7 rounded-full bg-neutral-100 dark:bg-neutral-800 transition-transform duration-300 ${
-          theme === "dark" || !theme ? "translate-x-7" : "translate-x-0"
+          theme === "dark" ? "translate-x-7" : "translate-x-0"
         }`}
       ></div>
     </div>
