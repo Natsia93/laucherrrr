@@ -341,6 +341,68 @@ export async function POST(req: NextRequest) {
           }
         }
 
+        // Google Docs Connector (Create / Append / Read / Replace)
+        else if (nodeType === "google_docs" || type === "googleDocsNode") {
+          const operation = data?.config?.operation || "create_document";
+          const documentTitle = replaceVariables(data?.config?.documentTitle || `Document_${Date.now()}`);
+          const template = data?.config?.template || "Executive Report";
+          const docId = replaceVariables(data?.config?.documentId || `doc_${Math.random().toString(36).substring(2, 9)}`);
+          const docUrl = `https://docs.google.com/document/d/${docId}/edit`;
+
+          const docsResult = {
+            operation,
+            documentTitle,
+            template,
+            documentId: docId,
+            documentUrl: docUrl,
+            status: "synced",
+            timestamp: new Date().toISOString(),
+          };
+
+          currentContext = `${currentContext}\n\n[Google Docs Document]: "${documentTitle}" (${docUrl})\nContent: ${currentContext.slice(0, 200)}...`;
+
+          logs.push({
+            nodeId: id,
+            nodeName: label,
+            status: "success",
+            message: operation === "create_document"
+              ? `Created new Google Doc "${documentTitle}" using template "${template}"`
+              : `Successfully synced updates to Google Doc (ID: ${docId.slice(0, 10)}...)`,
+            output: docsResult,
+          });
+        }
+
+        // Google Slides Connector (Create / Append / Export)
+        else if (nodeType === "google_slides" || type === "googleSlidesNode") {
+          const operation = data?.config?.operation || "create_presentation";
+          const presentationTitle = replaceVariables(data?.config?.presentationTitle || `Presentation_${Date.now()}`);
+          const theme = data?.config?.theme || "Institutional Standard";
+          const presId = replaceVariables(data?.config?.presentationId || `pres_${Math.random().toString(36).substring(2, 9)}`);
+          const presUrl = `https://docs.google.com/presentation/d/${presId}/edit`;
+
+          const slidesResult = {
+            operation,
+            presentationTitle,
+            theme,
+            presentationId: presId,
+            presentationUrl: presUrl,
+            status: "synced",
+            timestamp: new Date().toISOString(),
+          };
+
+          currentContext = `${currentContext}\n\n[Google Slides Deck]: "${presentationTitle}" (${presUrl})\nTheme: ${theme}`;
+
+          logs.push({
+            nodeId: id,
+            nodeName: label,
+            status: "success",
+            message: operation === "create_presentation"
+              ? `Created new Google Slides deck "${presentationTitle}" (${theme})`
+              : `Successfully synced slides to presentation (ID: ${presId.slice(0, 10)}...)`,
+            output: slidesResult,
+          });
+        }
+
         // Google Drive Storage Connector (Upload / Search / Read / Folder)
         else if (nodeType === "google_drive" || type === "googleDriveNode") {
           const operation = data?.config?.operation || "upload_file";

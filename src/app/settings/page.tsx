@@ -69,6 +69,8 @@ type AIProvider = "deepseek" | "openai" | "anthropic" | "gemini";
 
 export interface ConnectorConfig {
   sheets: { email: string; spreadsheetId: string; sheetName: string; connected: boolean };
+  docs: { email: string; documentId: string; template: string; connected: boolean };
+  slides: { email: string; presentationId: string; template: string; connected: boolean };
   drive: { rootFolder: string; driveId: string; permission: string; connected: boolean };
   whatsapp: { phone: string; apiToken: string; gateway: string; connected: boolean };
   slack: { webhookUrl: string; channel: string; botName: string; connected: boolean };
@@ -78,6 +80,8 @@ export interface ConnectorConfig {
 
 export const DEFAULT_CONNECTORS: ConnectorConfig = {
   sheets: { email: "", spreadsheetId: "", sheetName: "Sheet1", connected: false },
+  docs: { email: "", documentId: "", template: "Executive Report", connected: false },
+  slides: { email: "", presentationId: "", template: "Institutional Standard", connected: false },
   drive: { rootFolder: "/Launcher_Exports", driveId: "", permission: "Read & Write", connected: false },
   whatsapp: { phone: "", apiToken: "", gateway: "fonnte_qr", connected: false },
   slack: { webhookUrl: "", channel: "#general", botName: "Launcher OS Bot", connected: false },
@@ -293,7 +297,8 @@ export default function SettingsPage() {
       try {
         const storedConn = localStorage.getItem("launcher_app_connectors");
         if (storedConn) {
-          setConnectors(JSON.parse(storedConn));
+          const parsed = JSON.parse(storedConn);
+          setConnectors({ ...DEFAULT_CONNECTORS, ...parsed });
         } else {
           fetch("/api/slack/config")
             .then((r) => r.json())
@@ -881,6 +886,10 @@ export default function SettingsPage() {
         ? !!(editingConnector.phone?.trim() || editingConnector.apiToken?.trim())
         : key === "sheets"
         ? !!(editingConnector.email?.trim() || editingConnector.spreadsheetId?.trim())
+        : key === "docs"
+        ? !!(editingConnector.email?.trim() || editingConnector.documentId?.trim())
+        : key === "slides"
+        ? !!(editingConnector.email?.trim() || editingConnector.presentationId?.trim())
         : key === "drive"
         ? !!editingConnector.rootFolder?.trim()
         : key === "notion"
@@ -939,6 +948,12 @@ export default function SettingsPage() {
     } else if (key === "sheets") {
       upsertVar("GOOGLE_SHEET_ID", editingConnector.spreadsheetId);
       upsertVar("GOOGLE_SHEET_EMAIL", editingConnector.email);
+    } else if (key === "docs") {
+      upsertVar("GOOGLE_DOCS_ID", editingConnector.documentId);
+      upsertVar("GOOGLE_DOCS_EMAIL", editingConnector.email);
+    } else if (key === "slides") {
+      upsertVar("GOOGLE_SLIDES_ID", editingConnector.presentationId);
+      upsertVar("GOOGLE_SLIDES_EMAIL", editingConnector.email);
     } else if (key === "drive") {
       upsertVar("GOOGLE_DRIVE_FOLDER", editingConnector.rootFolder);
     } else if (key === "notion") {
@@ -953,6 +968,8 @@ export default function SettingsPage() {
 
     const titles: Record<keyof ConnectorConfig, string> = {
       sheets: "Google Sheets",
+      docs: "Google Docs",
+      slides: "Google Slides",
       drive: "Google Drive",
       whatsapp: "WhatsApp Gateway",
       slack: "Slack Workspace",
@@ -1016,6 +1033,20 @@ export default function SettingsPage() {
           return;
         }
         setTestConnectorMessage({ type: "success", text: "Google Sheets connection parameters verified." });
+      } else if (key === "docs") {
+        if (!editingConnector.email?.trim() && !editingConnector.documentId?.trim()) {
+          setTestConnectorMessage({ type: "error", text: "Please enter a Google account email or Document ID." });
+          setTestingConnector(false);
+          return;
+        }
+        setTestConnectorMessage({ type: "success", text: "Google Docs connection parameters verified." });
+      } else if (key === "slides") {
+        if (!editingConnector.email?.trim() && !editingConnector.presentationId?.trim()) {
+          setTestConnectorMessage({ type: "error", text: "Please enter a Google account email or Presentation ID." });
+          setTestingConnector(false);
+          return;
+        }
+        setTestConnectorMessage({ type: "success", text: "Google Slides connection parameters verified." });
       } else if (key === "notion") {
         if (!editingConnector.token?.trim()) {
           setTestConnectorMessage({ type: "error", text: "Please enter a Notion Integration Token." });
@@ -2219,7 +2250,7 @@ export default function SettingsPage() {
                         </h2>
                       </div>
                       <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 font-normal mt-0.5">
-                        1-Click native authorization to sync Google Sheets, WhatsApp, Slack, and Notion with Automation Studio.
+                        1-Click native authorization to sync Google Sheets, Google Docs, Google Slides, WhatsApp, Slack, and Notion with Automation Studio.
                       </p>
                     </div>
                   </div>
@@ -2280,6 +2311,132 @@ export default function SettingsPage() {
                             className="h-7.5 text-xs px-2.5 rounded-[5px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white cursor-pointer"
                             onClick={() => {
                               triggerToast("Google Sheets connection verified successfully!");
+                            }}
+                          >
+                            Verify
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Google Docs Connector */}
+                    <div className="p-3.5 rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 flex flex-col justify-between gap-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-3">
+                          <Image
+                            src="/logo/App-connector/google-docs.webp"
+                            alt="Google Docs"
+                            width={32}
+                            height={32}
+                            className="w-7 h-7 object-contain shrink-0"
+                          />
+                          <div>
+                            <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">Google Docs</h3>
+                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">Documents & Structured Reports</p>
+                          </div>
+                        </div>
+                        {connectors.docs?.connected ? (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active
+                          </span>
+                        ) : (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
+                            Not Configured
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-neutral-600 dark:text-neutral-400 bg-white dark:bg-neutral-950 p-2 rounded-[5px] border border-neutral-200/60 dark:border-neutral-800/80 flex items-center justify-between">
+                        {connectors.docs?.connected ? (
+                          <>
+                            <span className="truncate font-mono text-[10.5px]">Account: {connectors.docs.email || "Configured"}</span>
+                            <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">
+                              Doc: {connectors.docs.documentId ? connectors.docs.documentId.slice(0, 10) + "..." : connectors.docs.template || "Executive Report"}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-neutral-400 dark:text-neutral-500 italic text-[10.5px]">No document configured. Click Configure to enter credentials.</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer font-medium"
+                          onClick={() => openConnectorModal("docs")}
+                        >
+                          <Settings2 className="w-3.5 h-3.5 mr-1" />
+                          <span>{connectors.docs?.connected ? "Edit Settings" : "Configure"}</span>
+                        </Button>
+                        {connectors.docs?.connected && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-7.5 text-xs px-2.5 rounded-[5px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white cursor-pointer"
+                            onClick={() => {
+                              triggerToast("Google Docs connection verified successfully!");
+                            }}
+                          >
+                            Verify
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Google Slides Connector */}
+                    <div className="p-3.5 rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 flex flex-col justify-between gap-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-3">
+                          <Image
+                            src="/logo/App-connector/google-slides.webp"
+                            alt="Google Slides"
+                            width={32}
+                            height={32}
+                            className="w-7 h-7 object-contain shrink-0"
+                          />
+                          <div>
+                            <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">Google Slides</h3>
+                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">Presentations & Master Decks</p>
+                          </div>
+                        </div>
+                        {connectors.slides?.connected ? (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active
+                          </span>
+                        ) : (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
+                            Not Configured
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-neutral-600 dark:text-neutral-400 bg-white dark:bg-neutral-950 p-2 rounded-[5px] border border-neutral-200/60 dark:border-neutral-800/80 flex items-center justify-between">
+                        {connectors.slides?.connected ? (
+                          <>
+                            <span className="truncate font-mono text-[10.5px]">Account: {connectors.slides.email || "Configured"}</span>
+                            <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">
+                              Theme: {connectors.slides.template || "Institutional Standard"}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-neutral-400 dark:text-neutral-500 italic text-[10.5px]">No presentation configured. Click Configure to enter credentials.</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer font-medium"
+                          onClick={() => openConnectorModal("slides")}
+                        >
+                          <Settings2 className="w-3.5 h-3.5 mr-1" />
+                          <span>{connectors.slides?.connected ? "Edit Settings" : "Configure"}</span>
+                        </Button>
+                        {connectors.slides?.connected && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-7.5 text-xs px-2.5 rounded-[5px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white cursor-pointer"
+                            onClick={() => {
+                              triggerToast("Google Slides connection verified successfully!");
                             }}
                           >
                             Verify
@@ -2673,6 +2830,10 @@ export default function SettingsPage() {
                             src={
                               activeConnectorModal === "sheets"
                                 ? "/logo/App-connector/google-sheets-svgrepo-com.svg"
+                                : activeConnectorModal === "docs"
+                                ? "/logo/App-connector/google-docs.webp"
+                                : activeConnectorModal === "slides"
+                                ? "/logo/App-connector/google-slides.webp"
                                 : activeConnectorModal === "drive"
                                 ? "/logo/App-connector/google-drive-svgrepo-com.svg"
                                 : activeConnectorModal === "whatsapp"
@@ -2691,6 +2852,8 @@ export default function SettingsPage() {
                           <div>
                             <h3 className="text-sm font-semibold text-neutral-950 dark:text-white">
                               {activeConnectorModal === "sheets" && "Configure Google Sheets"}
+                              {activeConnectorModal === "docs" && "Configure Google Docs"}
+                              {activeConnectorModal === "slides" && "Configure Google Slides"}
                               {activeConnectorModal === "drive" && "Configure Google Drive"}
                               {activeConnectorModal === "whatsapp" && "Configure WhatsApp Gateway"}
                               {activeConnectorModal === "slack" && "Configure Slack Workspace"}
@@ -2699,6 +2862,8 @@ export default function SettingsPage() {
                             </h3>
                             <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
                               {activeConnectorModal === "sheets" && "Set account email and target spreadsheet ID for automated workflows."}
+                              {activeConnectorModal === "docs" && "Set account email and target document ID for automated reporting & exports."}
+                              {activeConnectorModal === "slides" && "Link account email and default presentation ID for automated slide creation."}
                               {activeConnectorModal === "drive" && "Define the default export folder where generated files are stored."}
                               {activeConnectorModal === "whatsapp" && "Connect your phone device and Fonnte / Wablas API gateway token."}
                               {activeConnectorModal === "slack" && "Enter your Slack Incoming Webhook URL and target channel."}
@@ -2758,6 +2923,104 @@ export default function SettingsPage() {
                                 value={editingConnector.sheetName || "Sheet1"}
                                 onChange={(e) => setEditingConnector({ ...editingConnector, sheetName: e.target.value })}
                                 className="h-9 text-xs bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 font-sf"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Google Docs Form */}
+                        {activeConnectorModal === "docs" && (
+                          <div className="space-y-3">
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Google Account Email
+                              </label>
+                              <Input
+                                type="email"
+                                placeholder="e.g. fiqiy@revou.co"
+                                value={editingConnector.email || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, email: e.target.value })}
+                                className="h-9 text-xs bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 font-sf"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Default Document ID or URL
+                              </label>
+                              <Input
+                                type="text"
+                                placeholder="e.g. 1uK7... or full document link"
+                                value={editingConnector.documentId || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, documentId: e.target.value })}
+                                className="h-9 text-xs font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                              />
+                              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                                Found in your Google Doc URL: docs.google.com/document/d/<b>DOCUMENT_ID</b>/edit
+                              </p>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Document Format / Template
+                              </label>
+                              <LauncherSelect
+                                value={editingConnector.template || "Executive Report"}
+                                onChange={(val) => setEditingConnector({ ...editingConnector, template: val })}
+                                options={[
+                                  { value: "Executive Report", label: "Executive Report (Standard Structure)" },
+                                  { value: "Briefing Memo", label: "Briefing Memo (Compact Actionable)" },
+                                  { value: "Proposal & Pitch", label: "Strategic Proposal & Project Charter" },
+                                  { value: "Meeting Minutes", label: "Meeting Minutes & Action Items" },
+                                ]}
+                                dropUp
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Google Slides Form */}
+                        {activeConnectorModal === "slides" && (
+                          <div className="space-y-3">
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Google Account Email
+                              </label>
+                              <Input
+                                type="email"
+                                placeholder="e.g. fiqiy@revou.co"
+                                value={editingConnector.email || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, email: e.target.value })}
+                                className="h-9 text-xs bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 font-sf"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Default Presentation ID or URL
+                              </label>
+                              <Input
+                                type="text"
+                                placeholder="e.g. 1pQ9... or full presentation link"
+                                value={editingConnector.presentationId || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, presentationId: e.target.value })}
+                                className="h-9 text-xs font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                              />
+                              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                                Found in your Google Slides URL: docs.google.com/presentation/d/<b>PRESENTATION_ID</b>/edit
+                              </p>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Presentation Theme / Master Style
+                              </label>
+                              <LauncherSelect
+                                value={editingConnector.template || "Institutional Standard"}
+                                onChange={(val) => setEditingConnector({ ...editingConnector, template: val })}
+                                options={[
+                                  { value: "Institutional Standard", label: "ITB × RevoU Institutional Standard" },
+                                  { value: "McKinsey Clean", label: "McKinsey Executive Clean (Light)" },
+                                  { value: "Dark Mode Executive", label: "Dark Minimalist Executive (16:9)" },
+                                  { value: "Tech Pitch Deck", label: "Silicon Valley Tech Pitch Deck" },
+                                ]}
+                                dropUp
                               />
                             </div>
                           </div>

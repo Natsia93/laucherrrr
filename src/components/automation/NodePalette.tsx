@@ -285,6 +285,45 @@ const PALETTE_ITEMS: PaletteItem[] = [
     ],
   },
   {
+    type: "googleDocsNode",
+    category: "integration",
+    nodeType: "google_docs",
+    label: "Google Docs Connector",
+    description: "Create, append, or sync structured document reports to Google Docs",
+    defaultConfig: {
+      operation: "create_document",
+      documentTitle: "Laporan_Eksekutif_{{timestamp}}",
+      template: "Executive Report",
+    },
+    inputs: [{ id: "content_in", label: "Document Content / Text", type: "text" }],
+    outputs: [
+      { id: "doc_url_out", label: "Google Doc URL", type: "text" },
+      { id: "doc_id_out", label: "Document ID", type: "text" },
+      { id: "status_out", label: "Status", type: "json" },
+    ],
+  },
+  {
+    type: "googleSlidesNode",
+    category: "integration",
+    nodeType: "google_slides",
+    label: "Google Slides Connector",
+    description: "Generate, append, or export presentation decks into Google Slides",
+    defaultConfig: {
+      operation: "create_presentation",
+      presentationTitle: "Deck_Master_{{timestamp}}",
+      theme: "Institutional Standard",
+    },
+    inputs: [
+      { id: "outline_in", label: "Slide Outline / Deck", type: "any" },
+      { id: "title_in", label: "Deck Title", type: "text" },
+    ],
+    outputs: [
+      { id: "presentation_url_out", label: "Presentation URL", type: "text" },
+      { id: "presentation_id_out", label: "Presentation ID", type: "text" },
+      { id: "status_out", label: "Status", type: "json" },
+    ],
+  },
+  {
     type: "googleDriveNode",
     category: "integration",
     nodeType: "google_drive",

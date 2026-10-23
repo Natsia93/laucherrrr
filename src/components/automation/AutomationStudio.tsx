@@ -29,6 +29,8 @@ import { LoopBatchNode } from "./nodes/LoopBatchNode";
 import { ScheduleTriggerNode } from "./nodes/ScheduleTriggerNode";
 import { NoteNode } from "./nodes/NoteNode";
 import { GoogleSheetsNode } from "./nodes/GoogleSheetsNode";
+import { GoogleDocsNode } from "./nodes/GoogleDocsNode";
+import { GoogleSlidesNode } from "./nodes/GoogleSlidesNode";
 import { GoogleDriveNode } from "./nodes/GoogleDriveNode";
 import { WhatsAppNode } from "./nodes/WhatsAppNode";
 import dynamic from "next/dynamic";
@@ -81,6 +83,8 @@ const nodeTypes = {
   scheduleTriggerNode: ScheduleTriggerNode,
   noteNode: NoteNode,
   googleSheetsNode: GoogleSheetsNode,
+  googleDocsNode: GoogleDocsNode,
+  googleSlidesNode: GoogleSlidesNode,
   googleDriveNode: GoogleDriveNode,
   whatsappNode: WhatsAppNode,
 };
