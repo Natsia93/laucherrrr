@@ -145,6 +145,47 @@ const truncateFileName = (name: string, maxLen = 20): string => {
   return `${name.slice(0, maxLen - 3).trimEnd()}...`;
 };
 
+async function rasterizeSvgToPng(svgFile: File): Promise<{ pngUrl: string; svgText: string }> {
+  const svgText = await svgFile.text();
+  return new Promise((resolve) => {
+    try {
+      const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          const width = img.naturalWidth || 512;
+          const height = img.naturalHeight || 512;
+          canvas.width = Math.min(Math.max(width, 256), 1024);
+          canvas.height = Math.min(Math.max(height, 256), 1024);
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const pngUrl = canvas.toDataURL("image/png");
+            URL.revokeObjectURL(url);
+            resolve({ pngUrl, svgText });
+            return;
+          }
+        } catch (e) {
+          console.warn("[SVG canvas render warning]", e);
+        }
+        URL.revokeObjectURL(url);
+        resolve({ pngUrl: "", svgText });
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve({ pngUrl: "", svgText });
+      };
+      img.src = url;
+    } catch {
+      resolve({ pngUrl: "", svgText });
+    }
+  });
+}
+
 const getAttachmentBadgeMeta = (att: ChatAttachment) => {
   const ext = att.name.split(".").pop()?.toUpperCase() || "";
   if (att.type === "zip" || ext === "ZIP" || ext === "RAR" || ext === "7Z") {
@@ -337,6 +378,24 @@ export default function DashboardOverviewPage() {
     const sizeFormatted = formatFileSize(file.size);
 
     if (attType === "image") {
+      const isSvg = file.name.toLowerCase().endsWith(".svg") || file.type.includes("svg");
+      if (isSvg) {
+        try {
+          const { pngUrl, svgText } = await rasterizeSvgToPng(file);
+          setAttachment({
+            name: file.name,
+            type: "image",
+            size: sizeFormatted,
+            previewUrl: pngUrl || URL.createObjectURL(file),
+            extractedText: svgText,
+            isExtracting: false,
+          });
+          return;
+        } catch (svgErr) {
+          console.warn("[SVG parse fallback]", svgErr);
+        }
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         setAttachment({
@@ -734,7 +793,11 @@ export default function DashboardOverviewPage() {
     if (currentAttachment) {
       if (currentAttachment.type === "image") {
         imageToSend = currentAttachment.previewUrl;
-        rawPromptToSend = currentPrompt || "Analisis dan jelaskan gambar yang diunggah secara mendalam.";
+        let basePrompt = currentPrompt || "Analisis dan jelaskan gambar yang diunggah secara mendalam.";
+        if (currentAttachment.extractedText) {
+          basePrompt += `\n\n[FILE ASLI BERFORMAT VEKTOR SVG: ${currentAttachment.name}]\n${currentAttachment.extractedText.slice(0, 10000)}`;
+        }
+        rawPromptToSend = basePrompt;
       } else {
         const docHeader = `[DOKUMEN DILAMPIRKAN: ${currentAttachment.name} (${currentAttachment.type.toUpperCase()})]\n\n--- KONTEN DOKUMEN ---\n${currentAttachment.extractedText || "Teks dokumen tidak dapat diekstrak atau kosong."}\n--- AKHIR KONTEN DOKUMEN ---`;
         rawPromptToSend = currentPrompt

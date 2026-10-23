@@ -1981,15 +1981,25 @@ ${liveConnectorContext}`;
              
              // Extract image part for Gemini if present
              let geminiImagePart: any = null;
+             let svgTextFallback = "";
              if (image) {
                const imgMatch = image.match(/^data:([^;]+);base64,(.+)$/);
                if (imgMatch) {
-                 geminiImagePart = {
-                   inlineData: {
-                     mimeType: imgMatch[1],
-                     data: imgMatch[2]
+                 const mime = imgMatch[1].toLowerCase();
+                 if (mime === "image/svg+xml" || mime.includes("svg")) {
+                   try {
+                     svgTextFallback = Buffer.from(imgMatch[2], "base64").toString("utf-8");
+                   } catch (e) {
+                     console.warn("[SVG decode error]", e);
                    }
-                 };
+                 } else {
+                   geminiImagePart = {
+                     inlineData: {
+                       mimeType: imgMatch[1],
+                       data: imgMatch[2]
+                     }
+                   };
+                 }
                }
              }
 
@@ -2022,9 +2032,13 @@ ${liveConnectorContext}`;
                 if (geminiImagePart) {
                   userParts.push(geminiImagePart);
                 }
-                userParts.push({ text: userPrompt || "Jelaskan dan analisis gambar ini." });
+                let finalUserPrompt = userPrompt || "Jelaskan dan analisis gambar ini.";
+                if (svgTextFallback) {
+                  finalUserPrompt += `\n\n[FILE VEKTOR GAMBAR SVG]:\n${svgTextFallback.slice(0, 10000)}`;
+                }
+                userParts.push({ text: finalUserPrompt });
 
-                 const result = await chat.sendMessageStream(userParts.length === 1 && !geminiImagePart ? userPrompt : userParts);
+                 const result = await chat.sendMessageStream(userParts.length === 1 && !geminiImagePart && !svgTextFallback ? userPrompt : userParts);
                 let geminiInThought = false;
                 let geminiBuffer = "";
 
@@ -2125,15 +2139,21 @@ ${liveConnectorContext}`;
           
           try {
              send({ type: "stage", stage: 1, label: `${isAssistant ? 'Membalas Chat' : 'Menyusun Konten'} dengan ${finalProvider}...` });
-             if (requestedModel === "deepseek" || byokProvider !== "gemini" || byokApiKey) await attemptDeepSeek();
-             else await attemptGemini("gemini-1.5-flash-latest");
+             if (image) {
+                // If user uploaded an image/SVG, route directly to Gemini 2.5 Flash for instant vision recognition
+                await attemptGemini("gemini-2.5-flash");
+             } else if (requestedModel === "deepseek" || byokProvider !== "gemini" || byokApiKey) {
+                await attemptDeepSeek();
+             } else {
+                await attemptGemini("gemini-2.5-flash");
+             }
           } catch (e: any) {
              console.error("Primary model failed:", e.message);
              fullText = "";
              try {
-                finalProvider = "Gemini 1.5 Flash (Fallback)";
+                finalProvider = "Gemini 2.5 Flash (Fallback)";
                 send({ type: "stage", stage: 2, label: "Mencoba Jalur Alternatif..." });
-                await attemptGemini("gemini-1.5-flash-latest");
+                await attemptGemini("gemini-2.5-flash");
              } catch (e2) {
                 console.error("Secondary fallback failed...");
                 send({ type: "error", message: "Sistem AI sedang sibuk. Silakan coba lagi." });
