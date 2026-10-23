@@ -5588,54 +5588,17 @@ async function streamBuildSlide(
               className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm sm:text-base outline-none resize-none min-h-[180px] font-sans leading-relaxed"
             />
 
-            {/* Bottom Bar: Download Template & Clone Style on Left + Generate Button on Right */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-800/80">
-              <div className="flex flex-wrap items-center gap-2">
+            {/* Bottom Bar: Attach File on Left + Generate Button on Right */}
+            <div className="flex items-center justify-between gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-800/80">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer border border-neutral-200/80 dark:border-neutral-700"
-                  title="Attach file (PDF, Word, Excel, TXT, MD)"
+                  title="Attach file (PDF, Word, Excel, TXT, MD, ZIP, Gambar)"
                 >
                   <Paperclip className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
                   <span>Attach File</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCloneStyleModal(true)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer border ${
-                    clonedStyle
-                      ? "bg-[#FFDE3C]/20 border-[#FFDE3C] text-neutral-900 dark:text-amber-300 shadow-2xs"
-                      : "bg-amber-500/10 hover:bg-amber-500/20 text-neutral-800 dark:text-neutral-200 border-amber-500/30"
-                  }`}
-                  title="Analisis dan tiru gaya visual dari slide contoh (gambar / PDF)"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>{clonedStyle ? "Style Terkloning Aktif" : "Clone Style dari Slide"}</span>
-                  {clonedStyle && (
-                    <span className="flex items-center gap-1 ml-0.5">
-                      <span className="w-2.5 h-2.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.primary }} />
-                      <span className="w-2.5 h-2.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.secondary }} />
-                      <span className="w-2.5 h-2.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.accent }} />
-                    </span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDownloadTemplateMd}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer border border-neutral-200/80 dark:border-neutral-700"
-                  title="Download File Template .md"
-                >
-                  <Download className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Download Template .md</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowTemplateModal(true)}
-                  className="inline-flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 underline cursor-pointer hidden sm:inline-flex"
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>View Format</span>
                 </button>
                 {customBrainActive && (
                   <span
