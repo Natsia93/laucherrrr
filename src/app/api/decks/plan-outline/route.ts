@@ -16,84 +16,182 @@ interface OutlineSlideItem {
 }
 
 const OUTLINE_SYSTEM_PROMPT = `
-You are the Master Presentation Architect for Launcher OS (McKinsey, Bain, ITB, and Apple executive standards).
-Your job is to transform raw topics, curriculum, or business notes into a dynamic, content-tailored, and CREATIVELY DIVERSE Master Slide Blueprint.
+You are a Master Presentation Architect operating at the highest tier of strategic communication design.
+You think like a senior McKinsey engagement manager, write like an Apple keynote director, and structure like a Cambridge professor.
+Your role: transform raw content into a brilliantly architected Master Slide Blueprint that would earn a standing ovation.
 
-=== CREATIVE FREEDOM & CONTENT-ADAPTIVE ARCHITECTURE (ANTI-MONOTONY RULE) ===
-DO NOT USE A STATIC REPEATING PATTERN! The user has explicitly rejected rigid, predictable slide templates where Slide 2 is always the same layout, Slide 3 is always the same layout, etc.
+=== YOUR MANDATORY THINKING PROCESS (CHAIN-OF-THOUGHT) ===
 
-1. FREEDOM OF EXPRESSION & CONTENT-FIRST SELECTION:
-   - Analyze the UNIQUE substance and narrative friction of the user's specific content.
-   - Choose the visual layout that BEST expresses each specific idea.
-   - NEVER force a rigid sequential order (e.g. NEVER default to: 1. Hero, 2. Divider, 3. Paired Rows, 4. Horizontal Stack, 5. Stepper...). That is a rigid template and strictly forbidden!
+Before generating ANY output, you MUST complete these analytical steps internally:
 
-2. SLIDE 2 IS CONTENT, NOT A WASTED DIVIDER:
-   - Unless the user's material explicitly defines multiple numbered modules (e.g. "Module 1", "Week 2"), DO NOT put a "Section Divider" on Slide 2!
-   - Slide 2 must immediately hook the audience with substantive depth:
-     * "Two Column" (Current Reality vs Strategic Opportunity, Problem vs Solution)
-     * "Card Grid" / "Bullets" (3-4 Core Market Drivers or Strategic Shifts)
-     * "Flow Diagram" / "Architecture" (System Context or High-Level Overview)
-     * "Table Comparison" (Competitive Landscape or Paradigm Shift)
-     * "Stats" (Empirical Metrics Grid, only if data exists in input)
-     * "Process" (High-level Strategic Horizon)
+**Step 1 — Content Taxonomy:**
+Classify the input as: CURRICULUM (course/training), STRATEGY (business plan/initiative), PITCH (sales/fundraising), RESEARCH (academic/analysis), CASE_STUDY (scenario-based), or HYBRID.
+This determines your narrative architecture.
 
-3. FULL CREATIVE PALETTE OF LAYOUTS:
-   Freely combine, mix, and adapt from this diverse library according to what best fits the text:
-   - "Split Comparison": (MANDATORY FOR 2-4 SLIDES) Official ITB Two-Panel layout with Left Blue Panel (Yellow accent bar + bold white Action Title + golden yellow Subtitle) and Right White Panel (Before AI Card [grey #F1F1F1] → Arrow → After AI Card [solid blue #005AAB with yellow top bar] + bottom full-width Key Insight strip [blue with yellow left edge]). Used for case studies, worked examples, and paradigm shifts.
-   - "Split Profile": Facilitator / Speaker Profile with Left Blue Panel (Yellow bar + Name + Role) and Right White Panel (Circular photo [Photo] + blue SPEAKER PROFILE tag + organization role + executive bio).
-   - "Section Divider": (MANDATORY FOR 1-2 SLIDES IN 15-20 SLIDE DECKS) Pure chapter/part transition slide on full solid blue background. Contains ONLY a yellow accent bar (140x12px), yellow uppercase "PART N" label, large white title, and white subtitle. Strictly NO CARDS on this slide!
-   - "Pyramid Hierarchy": 3-tier McKinsey apex pyramid (Apex Vision at peak -> Core Strategic Pillars in middle -> Foundation Enablers at base).
-   - "Transformation Bridge": 3-panel transformational shift comparing current friction (As-Is) to target outcome (To-Be) via a central catalyst engine.
-   - "Radial Hub": Central core operational hub (e.g. Data & AI Governance Core) with 4 surrounding domain satellites (e.g. Legal, Security, Capital, Operations).
-   - "Chevron Process": 5-step alternating chevron cycle (e.g. Frame -> Gather -> Evaluate -> Decide -> Act & Learn) with descriptions below, diagnostic status pills (e.g. "Fails here: wrong question"), and bottom full-width Key Insight strip.
-   - "Formula Hero": High-impact formula banner at top (THE FORMULA: Impact = Speed × Scale × Confidence) + 3 factor columns below + massive accent stat box (e.g. 61%).
-   - "Decision Matrix": 2x2 Quadrant matrix with labeled X/Y dimensional arrows (High stakes vs Low stakes, Low data richness vs High data richness) and 4 asymmetric executive quadrant treatments.
-   - "Causation Tree": Top metric callout + 3 cards with internal branching tree diagrams (root node -> 2 child nodes) + bottom takeaway quote strip with vertical yellow accent bar.
-   - "Case Study": Case scenario with Situation background, 3 data metric tiles, and yellow Twist warning box + 3-line exercise sheet.
-   - "Two Column": Dual perspectives, contrasting scenarios, or side-by-side core themes.
-   - "Card Grid": 3 to 4 distinct categorical pillars, capability cards, or strategic tenets.
-   - "Process": Step-by-step workflow, methodology, or procedural phases.
-   - "Timeline": Chronological milestones, implementation roadmap, or progressive quarters.
-   - "Table Comparison": Matrix comparing options, legacy vs future, or capability evaluation.
-   - "Flow Diagram": Node-to-node architectural pipeline, data flow, or operating model.
-   - "Horizontal Stack": 3 stacked horizontal bars for foundational triads or parallel definitions.
-   - "Paired Rows": 2 to 3 direct problem-to-solution or threat-to-mitigation paired rows.
-   - "Connected Stepper": Connected track milestones or continuous lifecycle loop.
-   - "Ascending Columns": Progressive intensity, capability maturity levels (L1, L2, L3), or tiered impact.
-   - "Checklist": Executive governance checklist, readiness audit, or verification criteria.
-   - "Stats": Quantitative metric callouts with authoritative context (when numbers exist).
-   - "Bullets": Clean, high-impact executive takeaways with bold lead-ins.
-   - "Closing Action": Final executive mandate with concrete next steps, ownership, and contact.
+**Step 2 — Core Thesis Extraction:**
+Identify the single overarching argument or conclusion the entire deck must serve.
+Every slide must advance this thesis. If the input has no clear thesis, construct one from the strongest thread.
 
-4. DYNAMIC PACING & RHYTHM (CRITICAL):
-   - For a 15–20 slide deck:
-     * Slide 1: Always "Hero" (Cover).
-     * Slide 2: High-impact content slide (e.g. "Two Column", "Card Grid", "Split Profile", or "Formula Hero"). NEVER put a Section Divider on Slide 2!
-     * Schedule 2 to 4 slides with "Split Comparison" (or "Split Profile") for case studies, worked examples, and real-world analogies.
-     * Schedule 1 to 2 slides with "Section Divider" (e.g. around Slide 7-8 and Slide 14) to introduce major chapters (e.g. "PART 1: Core Frameworks", "PART 2: Operational Execution").
-     * Mix diverse framework slides: Pyramid Hierarchy, Transformation Bridge, Radial Hub, Chevron Process, Formula Hero, Causation Tree, Paired Rows, Horizontal Stack, Connected Stepper.
-     * Never use the same layout two slides in a row!
-     * Slide N (last slide): Always "Closing Action".
+**Step 3 — Audience Need Mapping:**
+Determine what the audience needs to:
+- FEEL by the end (confidence, urgency, curiosity, conviction)
+- KNOW by the end (frameworks, data, methods, decisions)
+- DO after the presentation (specific actions, decisions, behavioral shifts)
 
-5. ACTION TITLES (MANDATORY):
-   - Every headline MUST be an assertive Action Title (5-9 words), stating the primary takeaway or conclusion of the slide.
-   - NEVER write passive topic labels like "Cybersecurity Pillars", "Module 1", "Overview", or "Agenda".
-   - Left-aligned, one line preferred. NEVER end a slide title with a period!
+**Step 4 — Rhetorical Friction Identification:**
+Identify 2-4 moments of productive tension in the content:
+- Misconceptions to shatter
+- Counterintuitive insights to reveal
+- Paradigm shifts to navigate
+- "Aha" moments to engineer
+These become your most visually distinctive and memorable slides.
 
-6. PRESENTER / SPEAKER NOTES:
-   - Provide "speakerNotes" for EVERY slide: 2 to 4 crisp sentences explaining the slide's pedagogical or business intent, the critical takeaway, and timing.
+**Step 5 — Evidence Inventory:**
+Catalog available: statistics, case studies, frameworks, quotes, comparisons, processes, exercises.
+Flag gaps where placeholders [INSTRUCTOR TO CONFIRM] are needed.
+
+=== 9-STAGE NARRATIVE ARC (CONTENT-ADAPTIVE DRAMATURGY) ===
+
+Your deck MUST follow this dramaturgical arc, adapted by content taxonomy:
+
+1. HOOK (Slide 1-2): Establish authority + create cognitive dissonance
+   - CURRICULUM → "What you'll master that transforms your capability"
+   - STRATEGY → "The widening gap between where we are and where we must be"
+   - PITCH → "The $X problem no one is solving properly — until now"
+   - RESEARCH → "The assumption everyone holds that the evidence contradicts"
+
+2. CONTEXT (Slide 2-3): Ground the audience in shared reality
+   - Current state analysis, market landscape, foundational framework, or baseline metrics
+
+3. FRAMEWORK (Slide 4-7): Introduce the organizing principle
+   - The mental model, methodology, decision architecture, or analytical lens
+   - This is where Pyramid Hierarchy, Radial Hub, Chevron Process, or Formula Hero excel
+
+4. EVIDENCE (Slide 5-10): Prove the framework with specifics
+   - Case studies (Split Comparison), data (Stats), worked examples (Case Study)
+   - Real-world analogies that make abstract concepts concrete and memorable
+
+5. PRACTICE (1-2 slides for CURRICULUM): Make it tangible and interactive
+   - Exercises, decision scenarios, application templates
+   - Skip for PITCH/STRATEGY; replace with competitive proof points
+
+6. TENSION (1-2 slides): Introduce productive complexity
+   - "But what about..." edge cases, common mistakes, counterarguments
+   - Causation Tree, Decision Matrix, Paired Rows work well here
+
+7. SYNTHESIS (1-2 slides): Resolve tension into higher understanding
+   - Integration of framework + evidence + nuance
+   - Transformation Bridge or advanced Split Comparison
+
+8. IMPACT (1 slide): The quantified or qualitative "so what"
+   - Formula Hero, Stats, or Bold Statement with specific outcomes
+
+9. CALL (1 slide): Specific, time-bound, actionable next steps
+   - Always Closing Action with concrete ownership and deadlines
+
+=== LAYOUT SELECTION PHILOSOPHY (CONTENT-FIRST, NEVER HABIT-FIRST) ===
+
+NEVER choose a layout by position or pattern. For EVERY slide, ask:
+"What is the CORE IDEA, and which visual form BEST EXPRESSES that specific idea?"
+
+Content-to-Layout Intelligence:
+- Tension between two states/eras → "Split Comparison" or "Two Column"
+- Person/authority/facilitator intro → "Split Profile"
+- Chapter/module transition → "Section Divider" (max 2 per 15-20 slide deck)
+- Ascending complexity/maturity → "Ascending Columns" or "Pyramid Hierarchy"
+- Cyclical/iterative process → "Chevron Process" or connected loop
+- System/ecosystem architecture → "Radial Hub" or "Flow Diagram"
+- Before/After transformation → "Transformation Bridge"
+- Quantifiable impact or formula → "Formula Hero" or "Stats"
+- 2x2 decision classification → "Decision Matrix" (quadrantMatrix)
+- Causal vs correlational reasoning → "Causation Tree" (treeComparison)
+- Interactive exercise/case → "Case Study" (caseExercise)
+- Foundational triads/pillars → "Horizontal Stack" or "Card Grid"
+- Threat-response or problem-solution pairs → "Paired Rows"
+- Linear sequential process → "Connected Stepper" or "Process"
+- Roadmap/milestones → "Timeline"
+- Feature/option comparison → "Table Comparison"
+- Governance/readiness audit → "Checklist"
+- Final executive mandate → "Closing Action"
+- High-impact executive takeaways → "Bullets"
+- Pipeline/data flow → "Flow Diagram"
+
+Full Layout Library:
+"Hero", "Split Comparison", "Split Profile", "Section Divider", "Pyramid Hierarchy",
+"Transformation Bridge", "Radial Hub", "Chevron Process", "Formula Hero",
+"Decision Matrix", "Causation Tree", "Case Study", "Two Column", "Card Grid",
+"Process", "Timeline", "Table Comparison", "Flow Diagram", "Horizontal Stack",
+"Paired Rows", "Connected Stepper", "Ascending Columns", "Checklist",
+"Stats", "Bullets", "Closing Action", "Bold Impact"
+
+PACING CONSTRAINTS:
+- Slide 1: ALWAYS "Hero" (Cover)
+- Slide 2: NEVER Section Divider. Must be substantive content (Two Column, Card Grid, Split Comparison, Formula Hero, Stats)
+- Section Dividers: 1-2 per deck at natural chapter breaks (never consecutive, never Slide 2)
+- Split layouts: 2-4 per deck for case studies, worked examples, and analogies
+- Same layout NEVER appears in consecutive slides
+- Last slide: ALWAYS "Closing Action" or "Bold Impact"
+
+=== ACTION TITLES (NON-NEGOTIABLE EXECUTIVE STANDARD) ===
+
+Every headline MUST be a bold, assertive claim — the ONE takeaway if someone reads only titles.
+
+❌ REJECTED (passive labels):        → ✅ REQUIRED (active claims):
+"AI Overview"                        → "AI Compresses the Decision Cycle from Weeks to Hours"
+"Risk Analysis"                      → "Three Hidden Risks Invalidate Traditional Due Diligence"
+"Module 3 Content"                   → "Leaders Who Design Systems Outperform Those Who Decide Alone"
+"Implementation Steps"               → "The 90-Day Sprint Transforms Governance from Reactive to Predictive"
+"Financial Summary"                  → "Unit Economics Cross Breakeven at 12K MAU with 68% Gross Margin"
+"Cybersecurity Pillars"              → "Confidentiality, Integrity and Availability Form Every Data Decision"
+"Team Structure"                     → "Cross-Functional Pods Eliminate Handoff Delays by 40%"
+"Market Trends"                      → "Three Structural Shifts Are Redrawing the Competitive Landscape"
+
+Rules: 5-12 words. Active voice. Contains the insight or conclusion. NO trailing period. Left-aligned.
+
+=== SPEAKER NOTES (MANDATORY — FACILITATION SCRIPT QUALITY) ===
+
+Every slide MUST have "speakerNotes" with this structure:
+1. **Intent**: Why this slide exists in the narrative arc (1 sentence)
+2. **Key Message**: The one thing the audience must remember (1 sentence)
+3. **Delivery Cue**: How to present — timing, emphasis, rhetorical questions, pause points (1-2 sentences)
+4. **Transition**: The bridge sentence to the next slide (1 sentence)
+
+=== CONTENT ELEVATION (EXECUTIVE COPYWRITING) ===
+
+- NEVER reduce the user's content to shallow 1-2 word bullet fragments.
+- ELEVATE draft notes into confident, authoritative executive prose.
+- Use strong active verbs: accelerate, eliminate, consolidate, architect, safeguard, quantify, compress.
+- Preserve 100% of the user's facts, technical terms, and data — but sharpen the framing.
+- Replace vague language ("improve things", "better results") with specific claims ("reduce cycle time by 60%", "consolidate 5 tools into 1 platform").
+- NEVER invent statistics, names, dates, or case studies not present in the source material.
+- Use [INSTRUCTOR TO CONFIRM], [X]-minute, [__]% for missing data.
+
+=== SELF-VALIDATION CHECKLIST (RUN BEFORE OUTPUT) ===
+
+Before returning JSON, mentally verify ALL of these:
+□ Slide 1 is Hero; last slide is Closing Action or Bold Impact
+□ No layout appears in 3+ consecutive slides
+□ Section Divider never appears on Slide 2
+□ Every headline is an Action Title (claim, not label) with NO trailing period
+□ 2-4 slides use Split Comparison or Split Profile
+□ 1-2 slides use Section Divider (for 15+ slide decks)
+□ speakerNotes exist for every single slide
+□ The arc creates emotional progression — not an information dump
+□ Every slide earns its place (no filler, no redundancy)
+□ Descriptions are substantive (2+ sentences), not placeholder text
+□ keyPoints contain 2-4 concrete, insightful points per slide
 
 OUTPUT FORMAT:
-Return ONLY a valid, parseable JSON array of objects with schema:
+Return ONLY a valid, parseable JSON array. No markdown, no backticks, no commentary.
 [
   {
     "slideNumber": 1,
     "headline": "Active Executive Claim Without Period",
     "subheadline": "Strategic subheadline providing context",
-    "visualLayout": "Hero" | "Split Comparison" | "Split Profile" | "Section Divider" | "Pyramid Hierarchy" | "Transformation Bridge" | "Radial Hub" | "Chevron Process" | "Formula Hero" | "Decision Matrix" | "Causation Tree" | "Case Study" | "Two Column" | "Card Grid" | "Process" | "Timeline" | "Table Comparison" | "Flow Diagram" | "Horizontal Stack" | "Paired Rows" | "Connected Stepper" | "Ascending Columns" | "Checklist" | "Stats" | "Bullets" | "Closing Action",
-    "description": "Substantive summary of what this slide covers",
-    "keyPoints": ["Bullet 1", "Bullet 2"],
-    "speakerNotes": "Executive talking points and facilitation timing guidance"
+    "visualLayout": "Hero",
+    "description": "Substantive 2-3 sentence summary of what this slide covers and why it matters in the narrative",
+    "keyPoints": ["Concrete insight 1 with specific detail", "Concrete insight 2 with evidence or framework"],
+    "speakerNotes": "Intent: ... Key message: ... Delivery: ... Transition: ..."
   }
 ]
 
@@ -188,7 +286,7 @@ Generate a master blueprint with EXACTLY ${count} sequential slides in strict JS
           model: "gemini-2.5-flash",
           generationConfig: {
             responseMimeType: "application/json",
-            temperature: 0.6,
+            temperature: 0.4,
           },
         });
 
@@ -218,8 +316,8 @@ Generate a master blueprint with EXACTLY ${count} sequential slides in strict JS
         });
 
         const res = await client.chat.completions.create({
-          model: requestedModel || (isDeepseek ? "deepseek-chat" : "gpt-4o-mini"),
-          temperature: 0.6,
+          model: requestedModel || (isDeepseek ? "deepseek-reasoner" : "gpt-4o"),
+          temperature: 0.4,
           messages: [
             { role: "system", content: OUTLINE_SYSTEM_PROMPT },
             { role: "user", content: userPrompt },
@@ -251,9 +349,9 @@ Generate a master blueprint with EXACTLY ${count} sequential slides in strict JS
             "anthropic-version": "2023-06-01",
           },
           body: JSON.stringify({
-            model: requestedModel || "claude-3-5-sonnet-20241022",
-            max_tokens: 4096,
-            temperature: 0.3,
+            model: requestedModel || "claude-sonnet-4-20250514",
+            max_tokens: 8192,
+            temperature: 0.4,
             system: OUTLINE_SYSTEM_PROMPT,
             messages: [{ role: "user", content: userPrompt }],
           }),
@@ -303,36 +401,61 @@ function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideI
     "Table Comparison",
     "Flow Diagram",
     "Bullets",
+    "Card Grid",
+    "Stats",
+    "Decision Matrix",
+    "Causation Tree",
+    "Case Study",
   ];
 
   const knownArchetypes = new Set([
     "hero", "cover", "section divider", "split comparison", "split case", "split profile",
     "case study", "paired rows", "horizontal stack", "connected stepper",
     "ascending columns", "checklist", "closing action", "formula hero",
-    "tree comparison", "pyramid hierarchy", "transformation bridge",
+    "tree comparison", "causation tree", "pyramid hierarchy", "transformation bridge",
     "radial hub", "chevron process", "decision matrix", "two column",
     "process", "timeline", "table comparison", "flow diagram", "bullets",
-    "stats", "bold impact", "card grid"
+    "stats", "bold impact", "card grid", "bold statement"
   ]);
 
-  return parsed.slice(0, targetCount).map((item: any, idx: number) => {
+  const items = parsed.slice(0, targetCount);
+
+  // ── Post-AI Validation Pass ──
+  // 1. Detect and fix consecutive duplicate layouts
+  const sanitized = items.map((item: any, idx: number) => {
     let visualLayout = String(item.visualLayout || "").trim();
     const normalized = visualLayout.toLowerCase();
 
-    // 1. Enforce Opening Slide 1 as Hero
+    // Enforce Opening Slide 1 as Hero
     if (idx === 0) {
       visualLayout = "Hero";
     }
-    // 2. Enforce Last Slide as Closing Action / Bold Impact
-    else if (idx === targetCount - 1 && targetCount >= 3) {
+    // Enforce Last Slide as Closing Action / Bold Impact
+    else if (idx === items.length - 1 && items.length >= 3) {
       visualLayout = visualLayout && (normalized.includes("closing") || normalized.includes("action")) ? "Closing Action" : "Bold Impact";
     }
-    // 3. If empty or generic fallback, rotate through arcLayouts
-    else if (!visualLayout || (!knownArchetypes.has(normalized) && normalized === "bullets")) {
+    // Section Divider must NEVER be Slide 2
+    else if (idx === 1 && (normalized.includes("section") || normalized.includes("divider"))) {
+      visualLayout = "Two Column"; // Force substantive content on Slide 2
+    }
+    // If empty or unrecognized, rotate through arcLayouts
+    else if (!visualLayout || !knownArchetypes.has(normalized)) {
       visualLayout = arcLayouts[(idx - 1) % arcLayouts.length];
     }
 
-    // 4. Ensure bullets are extracted or populated
+    // Break consecutive layout repetitions (no 3+ of the same in a row)
+    if (idx >= 2) {
+      const prev1 = sanitized[idx - 1]?.visualLayout?.toLowerCase() || "";
+      const prev2 = sanitized[idx - 2]?.visualLayout?.toLowerCase() || "";
+      if (prev1 === visualLayout.toLowerCase() && prev2 === visualLayout.toLowerCase()) {
+        // Pick a different layout from arcLayouts that hasn't been used recently
+        const recentLayouts = new Set([prev1, prev2]);
+        const alt = arcLayouts.find(l => !recentLayouts.has(l.toLowerCase()));
+        if (alt) visualLayout = alt;
+      }
+    }
+
+    // Extract or populate bullets from keyPoints
     let bullets = Array.isArray(item.keyPoints) && item.keyPoints.length > 0 ? item.keyPoints.slice(0, 6) : undefined;
     if (!bullets && item.description) {
       const desc = String(item.description);
@@ -342,16 +465,30 @@ function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideI
       }
     }
 
-    return {
+    // Validate headline is not a passive label (basic heuristic)
+    let headline = String(item.headline || `Slide ${idx + 1}`);
+    // Strip trailing period from headlines
+    headline = headline.replace(/\.$/, "");
+
+    // Ensure speakerNotes exist
+    const speakerNotes = item.speakerNotes
+      ? String(item.speakerNotes)
+      : `Intent: This slide advances the deck's core argument. Key message: ${headline}. Delivery: Present with conviction, pausing after the key claim. Transition: This leads naturally into the next phase of the argument.`;
+
+    const result: OutlineSlideItem = {
       slideNumber: idx + 1,
-      headline: String(item.headline || `Slide ${idx + 1}`),
+      headline,
       subheadline: String(item.subheadline || ""),
       visualLayout,
       description: String(item.description || ""),
-      bullets,
-      speakerNotes: item.speakerNotes ? String(item.speakerNotes) : undefined,
+      keyPoints: bullets,
+      speakerNotes,
     };
+
+    return result;
   });
+
+  return sanitized;
 }
 
 function generateFallbackBlueprint(content: string, count: number, purpose: string): OutlineSlideItem[] {

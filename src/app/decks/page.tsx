@@ -862,11 +862,17 @@ export function normalizeSlide(raw: any, index: number = 0, totalSlides: number 
     "splitMetric", "horizontalMilestones", "bubbleCluster", "connectedRings",
     "asymmetricMatrix", "boldStatement", "imageSplitMetric", "boldImpact", "cta",
     "actionList", "cardGrid", "caseStudy", "splitPoll", "interactiveCase", "breakSlide", "keyInsight",
-    "sectionDivider", "pairedRows", "horizontalStack", "connectedRailStepper", "ascendingColumns", "checklist", "closingAction"
+    "sectionDivider", "pairedRows", "horizontalStack", "connectedRailStepper", "ascendingColumns", "checklist", "closingAction",
+    "formulaHero", "treeComparison", "caseExercise", "pyramidHierarchy", "transformationBridge", "radialHub", "splitComparison", "splitProfile"
   ];
   let layout: SlideLayout = raw.layout || "twoColumn";
   if (!validLayouts.includes(layout)) {
-    layout = raw.bullets?.length ? "twoColumn" : (raw.processSteps?.length ? "process" : "hero");
+    const mapped = mapVisualLayoutToLayout(layout);
+    if (validLayouts.includes(mapped)) {
+      layout = mapped;
+    } else {
+      layout = raw.bullets?.length ? "twoColumn" : (raw.processSteps?.length ? "process" : "hero");
+    }
   }
 
   // Smart Layout Optimization: Ensure Opening Slide 1 is Hero, not a split-screen bullets slide
@@ -1241,6 +1247,12 @@ export function normalizeSlide(raw: any, index: number = 0, totalSlides: number 
     noteBoxText: raw.noteBoxText ? safeString(raw.noteBoxText) : undefined,
     contactFooterText: raw.contactFooterText ? safeString(raw.contactFooterText) : undefined,
     speakerNotes: raw.speakerNotes ? safeString(raw.speakerNotes) : undefined,
+    formulaData: raw.formulaData,
+    treeData: raw.treeData,
+    exerciseData: raw.exerciseData,
+    beforeCard: raw.beforeCard,
+    afterCard: raw.afterCard,
+    profileData: raw.profileData,
     topRightPill: raw.topRightPill ? safeString(raw.topRightPill) : undefined,
     ctaText: raw.ctaText ? safeString(raw.ctaText) : undefined,
     footer: raw.footer ? safeString(raw.footer) : undefined,
@@ -6784,6 +6796,13 @@ async function streamBuildSlide(
                       templateName: attachedSkill?.name || "ITB_Gamma_Deck_Rules.md",
                       clonedStyleDirectives: effectiveDirectives,
                       clonedReferenceSummary: clonedStyle?.designDNASummary || "",
+                      previousSlideSummary: startIdx > 0 ? {
+                        slideNumber: startIdx,
+                        title: workingBreakdown[startIdx - 1]?.headline,
+                        layout: workingBreakdown[startIdx - 1]?.visualLayout,
+                        description: workingBreakdown[startIdx - 1]?.description,
+                      } : null,
+                      fullOutlineOverview: workingBreakdown.map((b) => `#${b.slideNumber}: ${b.headline} [${b.visualLayout}]`),
                     },
                     apiKey: storedApiKey,
                     model: storedModel,
