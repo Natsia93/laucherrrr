@@ -464,13 +464,13 @@ Generate exactly ${outlines.length} complete, production-ready slide objects for
       }
     }
 
-    // 4. Google Gemini (Active Model Cascade)
-    const geminiKey = (effectiveProvider === "gemini" ? apiKey : null) || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || (apiKey && !apiKey.startsWith("sk-") ? apiKey : null);
-    if (geminiKey) {
-      const geminiModels = [requestedModel, "gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-latest"].filter(Boolean) as string[];
-      for (const mName of geminiModels) {
+    // 4. Google Gemini
+    if (effectiveProvider === "gemini") {
+      const geminiKey = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+      if (geminiKey) {
         try {
           const genAI = new GoogleGenerativeAI(geminiKey);
+          const mName = requestedModel || "gemini-3.8-flash";
           const model = genAI.getGenerativeModel({
             model: mName,
             generationConfig: {
@@ -494,7 +494,7 @@ Generate exactly ${outlines.length} complete, production-ready slide objects for
             });
           }
         } catch (gemErr: any) {
-          console.warn(`Chunk ${chunkIndex} Gemini error (${mName}):`, gemErr?.message);
+          console.warn(`Chunk ${chunkIndex} Gemini error:`, gemErr?.message);
         }
       }
     }
