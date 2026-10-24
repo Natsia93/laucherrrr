@@ -817,3 +817,22 @@ html.theme-transitioning::view-transition-new(root) {
     animation: none !important;
   }
 }
+
+/* ==========================================================================
+   Presentation Deck Slides — Guaranteed Zero Inner Scrollbars
+   Ensures cards, diagrams, text blocks, and previews never display browser scrollbars
+   ========================================================================== */
+.slide-canvas,
+.slide-canvas *,
+[data-slide-canvas],
+[data-slide-canvas] * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.slide-canvas *::-webkit-scrollbar,
+[data-slide-canvas] *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}

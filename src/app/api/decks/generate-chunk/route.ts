@@ -325,6 +325,8 @@ MANDATORY COMPLIANCE INSTRUCTIONS:
   * "Stats" -> output "layout": "stats", with "stats": [{ "value": "...", "label": "...", "subtext": "..." }]
   * "Two Column" -> output "layout": "twoColumn", with "bullets": ["..."]
 - Strictly adhere to the typography floor: content text must be substantive, informative, and never placeholder brackets.
+- ABSOLUTELY NEVER place facilitator directions, internal meeting reminders, or bracketed placeholders like "[Facilitator Name]", "[date/time]", "Next step: [Facilitator...", or "[kontak...]" on the slide canvas or in contactFooterText. All facilitator directions belong EXCLUSIVELY in speakerNotes!
+- If contactFooterText is not an actual public contact channel (e.g. security@corp.com), omit it entirely.
 - Titles MUST be Action Titles (claims, not labels), 5-12 words, NO trailing period.
 - Speaker notes MUST contain Intent, Key Message, Delivery Cue, and Transition.
 
@@ -920,57 +922,44 @@ function resolveSlideBackgroundForChunk(
   const lowerLayout = (layout || "").toLowerCase();
   const lowerTitle = (title || "").toLowerCase();
 
-  // Closing / Wrap-up
+  // Closing / Wrap-up (strictly for the final slide only per Rule §5)
   if (
-    isLast ||
-    lowerLayout.includes("closing") ||
-    lowerTitle.includes("closing") ||
-    lowerTitle.includes("penutup") ||
-    lowerTitle.includes("kesimpulan") ||
-    lowerTitle.includes("next step") ||
-    lowerTitle.includes("langkah berikutnya") ||
-    lowerTitle.includes("tindakan selanjutnya") ||
-    lowerTitle.includes("action plan") ||
-    lowerTitle.includes("terima kasih") ||
-    lowerTitle.includes("thank you")
+    isLast &&
+    (lowerLayout.includes("closing") ||
+      lowerTitle.includes("closing") ||
+      lowerTitle.includes("penutup") ||
+      lowerTitle.includes("kesimpulan") ||
+      lowerTitle.includes("next step") ||
+      lowerTitle.includes("langkah berikutnya") ||
+      lowerTitle.includes("tindakan selanjutnya") ||
+      lowerTitle.includes("action plan") ||
+      lowerTitle.includes("terima kasih") ||
+      lowerTitle.includes("thank you") ||
+      slideNum >= totalSlides)
   ) {
     return "/bg-deck/itb-deck/closing-deck.png";
   }
 
-  // Section divider / Part transition (can repeat multiple times)
+  // Section divider / Part transition (Rule §5: Section dividers "Part N", break, guest hand-over)
   if (
     lowerLayout.includes("section") ||
     lowerLayout.includes("divider") ||
-    lowerTitle.includes("bagian ") ||
-    lowerTitle.includes("part ") ||
-    lowerTitle.includes("modul ") ||
-    lowerTitle.includes("bab ") ||
-    lowerTitle.includes("agenda utama")
+    /^(part|bagian|agenda utama|modul|bab)\s+\d+/i.test(lowerTitle.trim())
   ) {
     return "/bg-deck/itb-deck/part-deck.png";
   }
 
-  // Task / Workshop / Exercise / Speaker / Case study / Split layout (can repeat multiple times)
+  // Task / Split comparison / Case study (Rule §5: 2-4 per deck for split case comparisons & profiles)
   if (
     lowerLayout.includes("split") ||
     lowerLayout.includes("case") ||
     lowerLayout.includes("profile") ||
-    lowerLayout.includes("poll") ||
-    lowerTitle.includes("hands-on") ||
-    lowerTitle.includes("latihan") ||
-    lowerTitle.includes("workshop") ||
-    lowerTitle.includes("tugas") ||
-    lowerTitle.includes("speaker") ||
-    lowerTitle.includes("pembicara") ||
-    lowerTitle.includes("fasilitator") ||
-    lowerTitle.includes("instruktur") ||
-    lowerTitle.includes("studi kasus") ||
-    lowerTitle.includes("simulasi")
+    lowerLayout.includes("poll")
   ) {
     return "/bg-deck/itb-deck/task-speaker-deck.png";
   }
 
-  // Default: Content deck (most frequent, vast majority of slides)
+  // Default: Content deck (Rule §5: all standard content slides)
   return "/bg-deck/itb-deck/content-deck.png";
 }
 

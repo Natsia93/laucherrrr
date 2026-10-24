@@ -107,7 +107,7 @@ export function FlowDiagram({
   const items = nodes;
 
   return (
-    <div className="w-full flex items-center justify-between gap-1.5 sm:gap-3 overflow-x-auto py-2">
+    <div className="w-full flex items-center justify-between gap-1.5 sm:gap-3 overflow-hidden scrollbar-none py-2">
       {items.map((node, i) => (
         <React.Fragment key={i}>
           <motion.div
@@ -1646,11 +1646,11 @@ export function InsightBar({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       className={`w-full rounded-md flex items-center overflow-hidden shrink-0 ${
-        isPresentation ? "p-4 sm:p-5 text-sm sm:text-base" : "py-2 px-3 sm:px-3.5 text-[11px] sm:text-xs"
+        isPresentation ? "p-2.5 sm:p-3.5 text-xs sm:text-sm" : "py-1.5 px-3 text-[10.5px] sm:text-xs"
       }`}
       style={{
         backgroundColor: primaryColor,
-        borderLeft: `10px solid ${accentColor}`,
+        borderLeft: `6px solid ${accentColor}`,
         color: "#FFFFFF",
       }}
     >
@@ -1891,10 +1891,10 @@ export function ConnectedRailStepper({
         return (
           <div key={i} className="flex-1 flex flex-col items-center text-center relative z-10 min-w-0">
             {/* Continuous Rail Line Behind */}
-            <div className="w-full flex items-center justify-center relative mb-3">
+            <div className="w-full flex items-center justify-center relative mb-1.5 sm:mb-2">
               {/* Left track connector */}
               <div
-                className={`flex-1 h-1.5 ${i === 0 ? "opacity-0" : ""}`}
+                className={`flex-1 h-1 sm:h-1.5 ${i === 0 ? "opacity-0" : ""}`}
                 style={{ backgroundColor: primaryColor }}
               />
               {/* Center Circle Node */}
@@ -1903,7 +1903,7 @@ export function ConnectedRailStepper({
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.3, delay: i * 0.08 }}
                 className={`shrink-0 rounded-full flex items-center justify-center font-black ${
-                  isPresentation ? "w-14 h-14 sm:w-16 sm:h-16 text-xl sm:text-2xl" : "w-9 h-9 sm:w-11 sm:h-11 text-sm sm:text-base"
+                  isPresentation ? "w-11 h-11 sm:w-12 sm:h-12 text-base sm:text-lg" : "w-8 h-8 sm:w-9 sm:h-9 text-xs sm:text-sm"
                 }`}
                 style={{ backgroundColor: circleBg, color: circleText }}
               >
@@ -1911,20 +1911,20 @@ export function ConnectedRailStepper({
               </motion.div>
               {/* Right track connector */}
               <div
-                className={`flex-1 h-1.5 ${i === count - 1 ? "opacity-0" : ""}`}
+                className={`flex-1 h-1 sm:h-1.5 ${i === count - 1 ? "opacity-0" : ""}`}
                 style={{ backgroundColor: primaryColor }}
               />
             </div>
 
             {/* Title & Description */}
-            <h4 className={`font-bold text-neutral-900 dark:text-white leading-snug px-1 ${
-              isPresentation ? "text-base sm:text-lg" : "text-xs sm:text-sm"
+            <h4 className={`font-bold text-neutral-900 dark:text-white leading-tight px-1 line-clamp-2 ${
+              isPresentation ? "text-xs sm:text-sm" : "text-[11px] sm:text-xs"
             }`}>
               {step.title}
             </h4>
             {step.description && (
-              <p className={`text-neutral-600 dark:text-neutral-400 mt-1 leading-snug px-1 line-clamp-3 ${
-                isPresentation ? "text-xs sm:text-sm" : "text-[10px] sm:text-xs"
+              <p className={`text-neutral-600 dark:text-neutral-400 mt-0.5 leading-snug px-1 line-clamp-2 ${
+                isPresentation ? "text-[11px] sm:text-xs" : "text-[9.5px] sm:text-[10.5px]"
               }`}>
                 {step.description}
               </p>
@@ -2166,7 +2166,7 @@ export function ClosingAction({
   title,
   subtitle,
   actions,
-  contactText = "Insiden atau pertanyaan: [kontak tim keamanan]",
+  contactText,
   primaryColor = "#005AAB",
   accentColor = "#FFDD3C",
   isPresentation = false,
@@ -2182,6 +2182,14 @@ export function ClosingAction({
   isPresentation?: boolean;
   transparentBg?: boolean;
 }) {
+  // Sanitize contactText: per ITB rules §11, facilitator directions and bracketed placeholders
+  // like [Facilitator Name], [kontak...], [date/time] must NEVER appear on the visual slide canvas.
+  const isCleanContact =
+    contactText &&
+    !contactText.includes("[") &&
+    !contactText.includes("]") &&
+    !/facilitator|narasumber|pembicara/i.test(contactText);
+
   return (
     <div className={`w-full h-full flex flex-col justify-between relative overflow-hidden ${transparentBg ? "bg-transparent" : "bg-white dark:bg-[#111114]"}`}>
       {/* Top 75% Primary Gradient Area */}
@@ -2239,9 +2247,9 @@ export function ClosingAction({
         )}
       </div>
 
-      {/* Bottom 25% Clean Contact / Reminder Band */}
-      {contactText && (
-        <div className={`h-14 sm:h-16 px-[6%] sm:px-[7%] flex items-center text-xs sm:text-sm font-semibold ${transparentBg ? "bg-transparent text-neutral-800" : "text-neutral-600 dark:text-neutral-400"}`}>
+      {/* Bottom Clean Contact / Reminder Band (only if clean public contact, never facilitator scripts) */}
+      {isCleanContact && (
+        <div className={`h-12 sm:h-14 px-[6%] sm:px-[7%] flex items-center text-xs sm:text-sm font-semibold ${transparentBg ? "bg-transparent text-neutral-800" : "text-neutral-600 dark:text-neutral-400"}`}>
           {contactText}
         </div>
       )}
@@ -2636,24 +2644,24 @@ export function PyramidHierarchy({
   ];
 
   return (
-    <div className="w-full flex-1 flex flex-col justify-between my-auto gap-3 overflow-hidden py-1">
+    <div className="w-full flex-1 flex flex-col justify-center my-auto gap-1.5 sm:gap-2 overflow-hidden py-0.5">
       {/* Tier 3: Apex Peak */}
       <div className="flex justify-center w-full">
         <div
-          className="w-full max-w-xl rounded-lg p-3 sm:p-4 text-center shadow-xs border border-[#005AAB]"
+          className="w-full max-w-lg rounded-lg p-2 sm:p-2.5 text-center shadow-xs border border-[#005AAB]"
           style={{ backgroundColor: primaryColor, color: "#FFFFFF" }}
         >
           <span
-            className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-widest block mb-0.5"
+            className="text-[9px] sm:text-[9.5px] font-extrabold uppercase tracking-widest block mb-0.5"
             style={{ color: accentColor }}
           >
             {items[0]?.level || "TIER 3 · APEX VISION"}
           </span>
-          <h4 className="text-sm sm:text-base font-black leading-tight">
+          <h4 className="text-xs sm:text-[13.5px] font-bold leading-tight line-clamp-1">
             {items[0]?.title}
           </h4>
           {items[0]?.description && (
-            <p className="text-[11px] sm:text-xs text-white/85 font-normal mt-1 leading-snug">
+            <p className="text-[10px] sm:text-[11px] text-white/90 font-normal mt-0.5 leading-tight line-clamp-2">
               {items[0]?.description}
             </p>
           )}
@@ -2663,28 +2671,28 @@ export function PyramidHierarchy({
       {/* Tier 2: Mid-Level Strategic Thrusts */}
       <div className="flex justify-center w-full">
         <div
-          className="w-full max-w-3xl rounded-lg p-3 sm:p-3.5 shadow-xs border border-[#E5C310] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+          className="w-full max-w-2xl rounded-lg p-2 sm:p-2.5 shadow-xs border border-[#E5C310] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5"
           style={{ backgroundColor: accentColor, color: "#111111" }}
         >
-          <div className="flex-1">
-            <span className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider opacity-80 block mb-0.5">
+          <div className="flex-1 min-w-0">
+            <span className="text-[9px] sm:text-[9.5px] font-extrabold uppercase tracking-wider opacity-80 block mb-0.5">
               {items[1]?.level || "TIER 2 · STRATEGIC PILLARS"}
             </span>
-            <h5 className="text-xs sm:text-sm font-bold leading-tight">
+            <h5 className="text-xs sm:text-[13px] font-bold leading-tight line-clamp-1">
               {items[1]?.title}
             </h5>
             {items[1]?.description && (
-              <p className="text-[10.5px] sm:text-[11.5px] font-normal opacity-90 mt-0.5 leading-snug">
+              <p className="text-[10px] sm:text-[11px] font-normal opacity-90 mt-0.5 leading-tight line-clamp-2">
                 {items[1]?.description}
               </p>
             )}
           </div>
           {items[1]?.items && items[1].items.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 shrink-0 sm:max-w-[280px]">
+            <div className="flex flex-wrap gap-1 shrink-0 sm:max-w-[260px]">
               {items[1].items.map((it, idx) => (
                 <span
                   key={idx}
-                  className="px-2 py-0.5 rounded-md bg-neutral-900 text-white text-[9.5px] font-bold"
+                  className="px-1.5 py-0.5 rounded bg-neutral-900 text-white text-[9px] font-bold truncate max-w-[120px]"
                 >
                   {it}
                 </span>
@@ -2696,26 +2704,26 @@ export function PyramidHierarchy({
 
       {/* Tier 1: Foundation Base */}
       <div className="flex justify-center w-full">
-        <div className="w-full rounded-lg p-3 sm:p-3.5 bg-neutral-50/90 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-2xs">
-          <div className="flex-1">
-            <span className="text-[9.5px] sm:text-[10px] font-bold uppercase tracking-wider text-neutral-500 block mb-0.5">
+        <div className="w-full max-w-3xl rounded-lg p-2 sm:p-2.5 bg-neutral-50/90 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 shadow-2xs">
+          <div className="flex-1 min-w-0">
+            <span className="text-[9px] sm:text-[9.5px] font-bold uppercase tracking-wider text-neutral-500 block mb-0.5">
               {items[2]?.level || "TIER 1 · FOUNDATION & ENABLERS"}
             </span>
-            <h5 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-neutral-100 leading-tight">
+            <h5 className="text-xs sm:text-[13px] font-bold text-neutral-900 dark:text-neutral-100 leading-tight line-clamp-1">
               {items[2]?.title}
             </h5>
             {items[2]?.description && (
-              <p className="text-[10.5px] sm:text-[11.5px] text-neutral-600 dark:text-neutral-400 font-normal mt-0.5 leading-snug">
+              <p className="text-[10px] sm:text-[11px] text-neutral-600 dark:text-neutral-400 font-normal mt-0.5 leading-tight line-clamp-2">
                 {items[2]?.description}
               </p>
             )}
           </div>
           {items[2]?.items && items[2].items.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 shrink-0 sm:max-w-[340px]">
+            <div className="flex flex-wrap gap-1 shrink-0 sm:max-w-[280px]">
               {items[2].items.map((it, idx) => (
                 <span
                   key={idx}
-                  className="px-2 py-0.5 rounded-md bg-neutral-200/80 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-[9.5px] font-semibold border border-neutral-300/60 dark:border-neutral-700"
+                  className="px-1.5 py-0.5 rounded bg-neutral-200/80 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-[9px] font-semibold border border-neutral-300/60 dark:border-neutral-700 truncate max-w-[130px]"
                 >
                   {it}
                 </span>
@@ -3064,13 +3072,13 @@ export function SplitCaseComparison({
             <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-[#595959] dark:text-neutral-400 mb-2 block">
               {beforeTitle}
             </span>
-            <div className="space-y-1.5 text-xs sm:text-[13px] text-[#272525] dark:text-neutral-200 leading-relaxed overflow-y-auto">
+            <div className="space-y-1.5 text-xs sm:text-[13px] text-[#272525] dark:text-neutral-200 leading-relaxed overflow-hidden scrollbar-none">
               {beforeItems && beforeItems.length > 0 ? (
                 beforeItems.map((item, idx) => (
-                  <p key={idx} className="leading-snug">{item}</p>
+                  <p key={idx} className="leading-snug line-clamp-3 sm:line-clamp-4">{item}</p>
                 ))
               ) : (
-                <p className="leading-snug">
+                <p className="leading-snug line-clamp-4 sm:line-clamp-5">
                   {beforeText || "Rule-based dispatch and human coordination across hundreds of concurrent requests. Bottleneck: human bandwidth caps matching quality."}
                 </p>
               )}
@@ -3088,13 +3096,13 @@ export function SplitCaseComparison({
             <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-[#FFDD3C] mb-2 block">
               {afterTitle}
             </span>
-            <div className="space-y-1.5 text-xs sm:text-[13px] text-white/95 leading-relaxed overflow-y-auto">
+            <div className="space-y-1.5 text-xs sm:text-[13px] text-white/95 leading-relaxed overflow-hidden scrollbar-none">
               {afterItems && afterItems.length > 0 ? (
                 afterItems.map((item, idx) => (
-                  <p key={idx} className="leading-snug font-medium">{item}</p>
+                  <p key={idx} className="leading-snug font-medium line-clamp-3 sm:line-clamp-4">{item}</p>
                 ))
               ) : (
-                <p className="leading-snug font-medium">
+                <p className="leading-snug font-medium line-clamp-4 sm:line-clamp-5">
                   {afterText || "ML allocation optimises several objectives at once with real-time feedback loops. Leaders set pricing logic, fairness guardrails and escalation rules."}
                 </p>
               )}

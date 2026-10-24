@@ -235,6 +235,13 @@ AUDIENCE: ${audience}
 PURPOSE: ${purpose}
 LAYOUT MOOD: ${layoutMood}
 
+CRITICAL REQUIREMENT — EXACT SLIDE COUNT ENFORCEMENT:
+- Target Slide Count is STRICTLY ${count} slides.
+- You MUST generate a JSON array with EXACTLY ${count} items (numbered 1 to ${count}).
+- Generating fewer than ${count} slides (e.g. generating only 8 slides when ${count} is requested) is a FATAL ERROR.
+- If the raw topic is brief, expand the narrative arc intelligently: insert comparative case studies, risk matrices, telemetry/architecture hubs, implementation checklists, and execution roadmaps so the total count is EXACTLY ${count}.
+- Array length MUST equal ${count}.
+
 ${rulesDoc.length > 0 ? `
 ================================================================================
 👑 GOVERNING DESIGN CONTRACT & ARCHITECTURAL RULES (.MD) (UNABRIDGED & MANDATORY):
@@ -444,7 +451,71 @@ function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideI
     "stats", "bold impact", "card grid", "bold statement"
   ]);
 
-  const items = parsed.slice(0, targetCount);
+  // Enforce exact targetCount: expand if LLM generated fewer slides, trim if generated more
+  let items: any[] = Array.isArray(parsed) ? [...parsed] : [];
+
+  if (items.length < targetCount) {
+    const deficit = targetCount - items.length;
+    const lastItem = items.length > 0 ? items[items.length - 1] : null;
+    const initialItems = items.length > 1 ? items.slice(0, -1) : items;
+
+    const expansionTemplates = [
+      {
+        headline: "Studi Komparasi Dampak & Efektivitas Solusi",
+        subheadline: "Evaluasi terukur performa operasional sebelum dan sesudah penerapan inisiatif",
+        visualLayout: "Split Comparison",
+        description: "Analisis empiris membuktikan efisiensi waktu siklus dan mitigasi risiko signifikan pasca transformasi.",
+      },
+      {
+        headline: "Matriks Evaluasi Risiko & Prioritas Keputusan",
+        subheadline: "Klasifikasi keputusan strategis berdasarkan dampak finansial dan tingkat urgensi",
+        visualLayout: "Table Comparison",
+        description: "Pemetaan multidimensi untuk menentukan urutan eksekusi inisiatif dengan rasio nilai tertinggi.",
+      },
+      {
+        headline: "Pusat Integrasi Ekosistem & Telemetri Terpadu",
+        subheadline: "Mengonsolidasikan alur data dan koordinasi lintas unit dalam satu arsitektur terintegrasi",
+        visualLayout: "Radial Hub",
+        description: "Menghubungkan simpul-simpul operasional kunci untuk menciptakan visibilitas menyeluruh tanpa friksi.",
+      },
+      {
+        headline: "Checklist Kesiapan Tata Kelola & Pengawasan Sistem",
+        subheadline: "Verifikasi standar operasional baku dan kepatuhan sebelum peluncuran sistemik",
+        visualLayout: "Checklist",
+        description: "Protokol audit ketat memastikan stabilitas operasional, akuntabilitas, dan kepatuhan menyeluruh.",
+      },
+      {
+        headline: "Peta Jalan Implementasi & Milestones Strategis",
+        subheadline: "Linimasa bertahap dengan checkpoint evaluasi performa terukur per horizon",
+        visualLayout: "Timeline",
+        description: "Distribusi target pencapaian terstruktur guna mengamankan nilai bisnis secara berkelanjutan.",
+      },
+      {
+        headline: "Persamaan Keberhasilan: Visibilitas × Kecepatan Respons",
+        subheadline: "Kalkulasi return on investment dan optimasi biaya bagi kelangsungan organisasi",
+        visualLayout: "Formula Hero",
+        description: "Model kuantitatif membuktikan bahwa otomatisasi deteksi secara langsung memangkas kerugian operasional.",
+      },
+    ];
+
+    const added: any[] = [];
+    for (let k = 0; k < deficit; k++) {
+      const tmpl = expansionTemplates[k % expansionTemplates.length];
+      added.push({
+        slideNumber: initialItems.length + k + 1,
+        headline: tmpl.headline,
+        subheadline: tmpl.subheadline,
+        visualLayout: tmpl.visualLayout,
+        description: tmpl.description,
+      });
+    }
+
+    items = lastItem && items.length > 1 ? [...initialItems, ...added, lastItem] : [...initialItems, ...added];
+  } else if (items.length > targetCount) {
+    const firstPart = items.slice(0, targetCount - 1);
+    const lastPart = items[items.length - 1];
+    items = [...firstPart, lastPart];
+  }
 
   // ── Post-AI Validation Pass ──
   const sanitized = items.map((item: any, idx: number) => {

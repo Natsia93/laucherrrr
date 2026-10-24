@@ -166,58 +166,45 @@ export function resolveSlideBackground(
   const categoryLower = String(slide?.category || "").toLowerCase();
   const combined = `${titleLower} ${subtitleLower} ${badgeLower} ${categoryLower}`;
 
-  // Rule 2: Closing slide
+  // Rule 2: Closing slide — strictly for the final slide of the deck (Rule §5: Last slide only)
   const isClosing =
-    isLast ||
-    layout === "closingAction" ||
-    layout === "cta" ||
-    combined.includes("closing") ||
-    combined.includes("penutup") ||
-    combined.includes("next step") ||
-    combined.includes("langkah berikutnya") ||
-    combined.includes("tindakan selanjutnya") ||
-    combined.includes("kesimpulan") ||
-    combined.includes("wrap up") ||
-    combined.includes("terima kasih") ||
-    combined.includes("thank you");
+    isLast &&
+    (layout === "closingAction" ||
+      layout === "cta" ||
+      combined.includes("closing") ||
+      combined.includes("penutup") ||
+      combined.includes("next step") ||
+      combined.includes("langkah berikutnya") ||
+      combined.includes("tindakan selanjutnya") ||
+      combined.includes("kesimpulan") ||
+      combined.includes("wrap up") ||
+      combined.includes("terima kasih") ||
+      combined.includes("thank you") ||
+      index === totalSlides - 1);
 
   if (isClosing) {
     return "/bg-deck/itb-deck/closing-deck.png";
   }
 
-  // Rule 3: Section Divider / Part header
+  // Rule 3: Section Divider / Part header (Rule §5: Section dividers "Part N", break, guest hand-over)
   const isPart =
     layout === "sectionDivider" ||
     layout === "breakSlide" ||
-    combined.includes("bagian ") ||
-    combined.includes("part ") ||
-    combined.includes("modul ") ||
-    combined.includes("module ") ||
-    combined.includes("bab ") ||
-    combined.includes("agenda utama");
+    /^(part|bagian|agenda utama|modul|bab)\s+\d+/i.test(titleLower.trim());
 
   if (isPart) {
     return "/bg-deck/itb-deck/part-deck.png";
   }
 
-  // Rule 4: Task / Speaker / Workshop / Exercise / Case Study
+  // Rule 4: Split / Task / Workshop / Exercise / Case Study (Rule §5: 2-4 per deck for split case comparisons & profiles)
   const isTaskSpeaker =
     layout === "splitComparison" ||
     layout === "splitProfile" ||
     layout === "interactiveCase" ||
     layout === "splitPoll" ||
     layout === "caseStudy" ||
-    combined.includes("hands-on") ||
-    combined.includes("latihan") ||
-    combined.includes("workshop") ||
-    combined.includes("tugas") ||
-    combined.includes("speaker") ||
-    combined.includes("pembicara") ||
-    combined.includes("narasumber") ||
-    combined.includes("fasilitator") ||
-    combined.includes("instruktur") ||
-    combined.includes("studi kasus") ||
-    combined.includes("simulasi");
+    layout === "caseExercise" ||
+    (layout === "twoColumn" && (badgeLower.includes("case") || badgeLower.includes("hands-on") || titleLower.includes("studi kasus")));
 
   if (isTaskSpeaker) {
     return "/bg-deck/itb-deck/task-speaker-deck.png";
@@ -346,11 +333,24 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
     CARD_PAD: 0.3,      // padding inside card shapes for text
   };
 
+  function getSanitizedSlideBg(s: SlideData, i: number, total: number): string {
+    let bg = s.backgroundImage || resolveSlideBackground(s, i, total);
+    // ITB Rule §5: closing-deck.png is ONLY for the last slide
+    if (bg && bg.includes("closing-deck.png") && i < total - 1) {
+      bg = "/bg-deck/itb-deck/content-deck.png";
+    }
+    // ITB Rule §5: cover-deck.png is ONLY for slide 1
+    if (bg && bg.includes("cover-deck.png") && i > 0) {
+      bg = "/bg-deck/itb-deck/content-deck.png";
+    }
+    return bg;
+  }
+
   // Pre-load all slide background images as base64 to ensure 100% rendering in PowerPoint and Google Slides
   const bgCache = new Map<string, string | null>();
   for (let i = 0; i < slides.length; i++) {
     const s = slides[i];
-    const bgUrl = s.backgroundImage || resolveSlideBackground(s, i, slides.length);
+    const bgUrl = getSanitizedSlideBg(s, i, slides.length);
     if (bgUrl && !bgCache.has(bgUrl)) {
       bgCache.set(bgUrl, await fetchImageAsBase64(bgUrl));
     }
@@ -365,7 +365,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
     }
 
     // Resolve template background image (Base64 embedded as layer 0 so Google Slides & PPT render flawlessly)
-    const bgUrl = slide.backgroundImage || resolveSlideBackground(slide, idx, slides.length);
+    const bgUrl = getSanitizedSlideBg(slide, idx, slides.length);
     const bgBase64 = bgUrl ? bgCache.get(bgUrl) : null;
     const hasTemplateBg = Boolean(bgBase64);
 
@@ -451,28 +451,33 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
       case "title":
       case "hero": {
         if (hasTemplateBg) {
-          // ITB Template Cover (55% max width on left, prominent title, Deep Blue subtitle, 3 meta lines)
+          // ITB Template Cover (Safe zone: x 125–1360, y 300–1000 per Rule §5)
+          // Logos are located at y: 0.6–2.0 in. Title MUST start at y >= 2.35 in to prevent logo overlap.
           pSlide.addText(slide.title, {
             x: 0.9,
-            y: 1.6,
-            w: 7.5,
-            h: 2.5,
-            fontSize: 48,
+            y: 2.35,
+            w: 7.8,
+            h: 1.85,
+            fontSize: 40,
             color: "174A7F", // Navy Deep Blue per ITB rules
             bold: true,
             fontFace: fontTitle,
+            margin: 0,
+            valign: "top",
           });
 
           if (slide.subtitle) {
             pSlide.addText(slide.subtitle, {
               x: 0.9,
-              y: 4.2,
-              w: 7.5,
-              h: 1.1,
-              fontSize: 22,
+              y: 4.3,
+              w: 7.8,
+              h: 0.85,
+              fontSize: 19,
               bold: true,
               color: "005AAB", // Deep Blue
               fontFace: fontTitle,
+              margin: 0,
+              valign: "top",
             });
           }
 
@@ -482,13 +487,15 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           const metaLine3 = slide.quote?.author || slide.badge || "Direktorat Pendidikan Non Reguler ITB & RevoU";
           pSlide.addText(`${metaLine1}\n${metaLine2}\n${metaLine3}`, {
             x: 0.9,
-            y: 5.4,
-            w: 7.5,
-            h: 1.3,
-            fontSize: 14,
+            y: 5.35,
+            w: 7.8,
+            h: 1.25,
+            fontSize: 13,
             italic: true,
             color: "595959",
             fontFace: fontBody,
+            margin: 0,
+            valign: "top",
           });
 
           // Slide number at bottom-right
@@ -1267,28 +1274,35 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               fontFace: fontBody,
             });
 
-            pSlide.addText(bTitle, {
-              x: x + 0.9,
-              y: y + 0.16,
-              w: cWidth - 1.15,
-              h: 0.44,
-              fontSize: 17.5,
-              bold: true,
-              color: cTitleColor,
-              fontFace: fontTitle,
-              valign: "middle",
-            });
-
-            pSlide.addText(bDesc, {
-              x: x + 0.25,
-              y: y + 0.6,
-              w: cWidth - 0.5,
-              h: cHeight - 0.72,
-              fontSize: 14.5,
-              color: cDescColor,
-              fontFace: fontBody,
+            // Unified Title + Description in ONE single text box so they naturally flow and never collide
+            pSlide.addText([
+              {
+                text: bTitle + "\n",
+                options: {
+                  bold: true,
+                  fontSize: 14,
+                  color: cTitleColor,
+                  fontFace: fontTitle,
+                  lineSpacingMultiple: 1.15,
+                },
+              },
+              {
+                text: bDesc,
+                options: {
+                  bold: false,
+                  fontSize: 11,
+                  color: cDescColor,
+                  fontFace: fontBody,
+                  lineSpacingMultiple: 1.2,
+                },
+              },
+            ], {
+              x: x + 0.88,
+              y: y + 0.18,
+              w: cWidth - 1.1,
+              h: cHeight - 0.28,
               valign: "top",
-              lineSpacingMultiple: 1.2,
+              margin: 0,
             });
           });
         } else {
@@ -3835,26 +3849,33 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           line: { color: "E5E7EB", width: 1 },
         });
 
-        pSlide.addText(bTitle, {
+        pSlide.addText([
+          {
+            text: bTitle.toUpperCase() + "\n\n",
+            options: {
+              bold: true,
+              fontSize: 12,
+              color: "595959",
+              fontFace: fontTitle,
+            },
+          },
+          {
+            text: bText,
+            options: {
+              bold: false,
+              fontSize: 11,
+              color: "272525",
+              fontFace: fontBody,
+              lineSpacingMultiple: 1.2,
+            },
+          },
+        ], {
           x: 5.2,
-          y: 1.45,
+          y: 1.4,
           w: 3.0,
-          h: 0.35,
-          fontSize: 13,
-          bold: true,
-          color: "595959",
-          fontFace: fontTitle,
-        });
-
-        pSlide.addText(bText, {
-          x: 5.2,
-          y: 1.9,
-          w: 3.0,
-          h: 2.8,
-          fontSize: 13,
-          color: "272525",
-          fontFace: fontBody,
-          lineSpacingMultiple: 1.25,
+          h: 3.35,
+          valign: "top",
+          margin: 0,
         });
 
         // Arrow in middle
@@ -3890,26 +3911,33 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           rectRadius: 0.02,
         });
 
-        pSlide.addText(aTitle, {
+        pSlide.addText([
+          {
+            text: aTitle.toUpperCase() + "\n\n",
+            options: {
+              bold: true,
+              fontSize: 12,
+              color: secondaryHex,
+              fontFace: fontTitle,
+            },
+          },
+          {
+            text: aText,
+            options: {
+              bold: false,
+              fontSize: 11,
+              color: "FFFFFF",
+              fontFace: fontBody,
+              lineSpacingMultiple: 1.2,
+            },
+          },
+        ], {
           x: 9.35,
-          y: 1.58,
+          y: 1.6,
           w: 3.1,
-          h: 0.35,
-          fontSize: 13,
-          bold: true,
-          color: secondaryHex,
-          fontFace: fontTitle,
-        });
-
-        pSlide.addText(aText, {
-          x: 9.35,
-          y: 2.0,
-          w: 3.1,
-          h: 2.7,
-          fontSize: 13,
-          color: "FFFFFF",
-          fontFace: fontBody,
-          lineSpacingMultiple: 1.25,
+          h: 3.15,
+          valign: "top",
+          margin: 0,
         });
 
         // Bottom Insight Bar: Solid Deep Blue with Yellow Left Border
@@ -4562,36 +4590,46 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             fontFace: fontTitle,
           });
 
-          // Title below rail — with 0.3 gap from rail
-          const titleY = railY + 0.55;
-          pSlide.addText(s.title, {
-            x: PAD.LEFT + sIdx * stepSpanW + PAD.INNER,
-            y: titleY,
-            w: stepSpanW - PAD.INNER * 2,
-            h: 0.45,
-            fontSize: 16,
-            bold: true,
-            color: "005AAB",
-            align: "center",
-            fontFace: fontTitle,
-          });
+          // Unified Title + Description in ONE single text box placed cleanly below the circle
+          const textTopY = railY + nodeW / 2 + 0.2;
+          const textH = PAD.FOOTER_Y - textTopY - 0.2;
 
-          // Description — with 0.15 gap from title, capped before footer
-          if (s.description) {
-            const descY = titleY + 0.45 + PAD.GAP_V;
-            const maxDescH = PAD.CONTENT_BOTTOM - descY;
-            pSlide.addText(s.description, {
-              x: PAD.LEFT + sIdx * stepSpanW + PAD.INNER,
-              y: descY,
-              w: stepSpanW - PAD.INNER * 2,
-              h: Math.min(1.3, maxDescH),
-              fontSize: 13.5,
-              color: "272525",
-              align: "center",
-              fontFace: fontBody,
-              lineSpacingMultiple: 1.2,
-            });
-          }
+          pSlide.addText([
+            {
+              text: s.title + "\n\n",
+              options: {
+                bold: true,
+                fontSize: 12.5,
+                color: "005AAB",
+                fontFace: fontTitle,
+                align: "center" as const,
+                lineSpacingMultiple: 1.15,
+              },
+            },
+            ...(s.description && s.description !== s.title
+              ? [
+                  {
+                    text: s.description,
+                    options: {
+                      bold: false,
+                      fontSize: 10,
+                      color: "272525",
+                      fontFace: fontBody,
+                      align: "center" as const,
+                      lineSpacingMultiple: 1.2,
+                    },
+                  },
+                ]
+              : []),
+          ], {
+            x: PAD.LEFT + sIdx * stepSpanW + 0.1,
+            y: textTopY,
+            w: stepSpanW - 0.2,
+            h: textH,
+            valign: "top" as const,
+            align: "center" as const,
+            margin: 0,
+          });
         });
 
         // Bottom Insight Bar — pinned at PAD.FOOTER_Y
@@ -4942,16 +4980,25 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           );
         });
 
-        // Bottom Contact Strip in White Area
-        pSlide.addText(slide.contactFooterText || "Insiden atau pertanyaan: [kontak tim keamanan]", {
-          x: 1.0,
-          y: 6.2,
-          w: 11.0,
-          h: 0.6,
-          fontSize: 13.5,
-          color: "272525",
-          fontFace: fontBody,
-        });
+        // Bottom Contact Strip in White Area (only if clean public contact, never facilitator scripts or bracketed placeholders)
+        const exportContact = slide.contactFooterText;
+        const isCleanContact =
+          exportContact &&
+          !exportContact.includes("[") &&
+          !exportContact.includes("]") &&
+          !/facilitator|narasumber|pembicara/i.test(exportContact);
+
+        if (isCleanContact) {
+          pSlide.addText(exportContact, {
+            x: 1.0,
+            y: 6.2,
+            w: 11.0,
+            h: 0.6,
+            fontSize: 13.5,
+            color: "272525",
+            fontFace: fontBody,
+          });
+        }
         break;
       }
     }

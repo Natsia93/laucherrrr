@@ -226,6 +226,7 @@ Choose the layout that BEST visualizes the specific slide content, or follows th
   * Do not invent arbitrary decorations not supported by the template.
 - ACTION TITLES: Every slide title MUST state the core conclusion/claim in an active sentence (5-9 words), NEVER end with a period.
 - SPEAKER NOTES: Provide "speakerNotes" for EVERY slide (2-4 sentences explaining pedagogical intent, key takeaway, and timing).
+- NO FACILITATOR SCRIPTS ON SLIDE: Absolutely never put facilitator notes, meeting coordination ("Next step: [Facilitator Name] convenes..."), or bracketed placeholders on the slide canvas. Facilitator instructions belong EXCLUSIVELY in speakerNotes.
 - NO INVENTED NUMBERS: Never invent fake metrics. If numbers are not in the prompt, use qualitative logic or visible bracket placeholders like [X]%.
 
 === 4. OUTPUT FORMAT ===
@@ -279,7 +280,17 @@ export async function POST(req: NextRequest) {
       clonedReferenceSummary = "",
     } = body;
 
-    const rulesDoc = (templateRulesMarkdown || clonedStyleDirectives || "").trim();
+    let rulesDoc = (templateRulesMarkdown || clonedStyleDirectives || "").trim();
+    if (!rulesDoc) {
+      try {
+        const fs = await import("fs/promises");
+        const path = await import("path");
+        const skillPath = path.join(process.cwd(), ".agents/skills/itb-deck-design-rules/SKILL.md");
+        rulesDoc = await fs.readFile(skillPath, "utf-8");
+      } catch (err) {
+        console.warn("Could not load default ITB skill file in generate-stream:", err);
+      }
+    }
 
     // ──── LANGUAGE DETECTION ────
     let detectedLanguage = "";

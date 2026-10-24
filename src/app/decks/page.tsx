@@ -785,41 +785,38 @@ export function resolveSlideBackground(
   const categoryLower = String(slide?.category || "").toLowerCase();
   const combined = `${titleLower} ${subtitleLower} ${badgeLower} ${categoryLower}`;
 
-  // Rule 2: Closing slide — can repeat mid-deck (e.g. part wrap-ups, action plans) and always on the final slide
+  // Rule 2: Closing slide — strictly for the final slide of the deck (Rule §5: Last slide only)
+  // Intermediate slides must NEVER use closing-deck.png even if they discuss next steps or conclusions.
   const isClosing =
-    isLast ||
-    layout === "closingAction" ||
-    layout === "cta" ||
-    combined.includes("closing") ||
-    combined.includes("penutup") ||
-    combined.includes("next step") ||
-    combined.includes("langkah berikutnya") ||
-    combined.includes("tindakan selanjutnya") ||
-    combined.includes("kesimpulan") ||
-    combined.includes("wrap up") ||
-    combined.includes("terima kasih") ||
-    combined.includes("thank you");
+    isLast &&
+    (layout === "closingAction" ||
+      layout === "cta" ||
+      combined.includes("closing") ||
+      combined.includes("penutup") ||
+      combined.includes("next step") ||
+      combined.includes("langkah berikutnya") ||
+      combined.includes("tindakan selanjutnya") ||
+      combined.includes("kesimpulan") ||
+      combined.includes("wrap up") ||
+      combined.includes("terima kasih") ||
+      combined.includes("thank you") ||
+      index === totalSlides - 1);
 
   if (isClosing) {
     return "/bg-deck/itb-deck/closing-deck.png";
   }
 
-  // Rule 3: Section Divider / Part header — can repeat multiple times across sections
+  // Rule 3: Section Divider / Part header (Rule §5: Section dividers "Part N", break, guest hand-over)
   const isPart =
     layout === "sectionDivider" ||
     layout === "breakSlide" ||
-    combined.includes("bagian ") ||
-    combined.includes("part ") ||
-    combined.includes("modul ") ||
-    combined.includes("module ") ||
-    combined.includes("bab ") ||
-    combined.includes("agenda utama");
+    /^(part|bagian|agenda utama|modul|bab)\s+\d+/i.test(titleLower.trim());
 
   if (isPart) {
     return "/bg-deck/itb-deck/part-deck.png";
   }
 
-  // Rule 4: Task / Speaker / Workshop / Exercise / Case Study — can repeat multiple times
+  // Rule 4: Split / Task / Workshop / Exercise / Case Study (Rule §5: 2-4 per deck for split case comparisons & profiles)
   const isTaskSpeaker =
     layout === "splitComparison" ||
     layout === "splitProfile" ||
@@ -827,23 +824,13 @@ export function resolveSlideBackground(
     layout === "splitPoll" ||
     layout === "caseStudy" ||
     layout === "caseExercise" ||
-    combined.includes("hands-on") ||
-    combined.includes("latihan") ||
-    combined.includes("workshop") ||
-    combined.includes("tugas") ||
-    combined.includes("speaker") ||
-    combined.includes("pembicara") ||
-    combined.includes("narasumber") ||
-    combined.includes("fasilitator") ||
-    combined.includes("instruktur") ||
-    combined.includes("studi kasus") ||
-    combined.includes("simulasi");
+    (layout === "twoColumn" && (badgeLower.includes("case") || badgeLower.includes("hands-on") || titleLower.includes("studi kasus")));
 
   if (isTaskSpeaker) {
     return "/bg-deck/itb-deck/task-speaker-deck.png";
   }
 
-  // Rule 5: Default content deck — the vast majority of regular content slides
+  // Rule 5: Default content deck — all other standard content slides (process, rail, timeline, bullets, etc.)
   return "/bg-deck/itb-deck/content-deck.png";
 }
 
@@ -1248,8 +1235,26 @@ export function normalizeSlide(raw: any, index: number = 0, totalSlides: number 
     checklistItems,
     insightBarText: raw.insightBarText ? safeString(raw.insightBarText) : undefined,
     noteBoxText: raw.noteBoxText ? safeString(raw.noteBoxText) : undefined,
-    contactFooterText: raw.contactFooterText ? safeString(raw.contactFooterText) : undefined,
-    speakerNotes: raw.speakerNotes ? safeString(raw.speakerNotes) : undefined,
+    contactFooterText: (() => {
+      const rawContact = raw.contactFooterText ? safeString(raw.contactFooterText) : undefined;
+      if (!rawContact) return undefined;
+      // Per ITB Skill Rule §11: Facilitator instructions and bracketed placeholders like [Facilitator Name],
+      // [date/time], [kontak...] must NEVER appear on the visible slide.
+      if (rawContact.includes("[") || rawContact.includes("]") || /facilitator|narasumber|pembicara|compliance readiness/i.test(rawContact)) {
+        return undefined;
+      }
+      return rawContact;
+    })(),
+    speakerNotes: (() => {
+      let notes = raw.speakerNotes ? safeString(raw.speakerNotes) : "";
+      const rawContact = raw.contactFooterText ? safeString(raw.contactFooterText) : undefined;
+      if (rawContact && (rawContact.includes("[") || rawContact.includes("]") || /facilitator|narasumber|pembicara|compliance readiness/i.test(rawContact))) {
+        if (!notes.includes(rawContact)) {
+          notes = notes ? `${notes}\n\n[Catatan Fasilitator]: ${rawContact}` : `[Catatan Fasilitator]: ${rawContact}`;
+        }
+      }
+      return notes || undefined;
+    })(),
     formulaData: raw.formulaData,
     treeData: raw.treeData,
     exerciseData: raw.exerciseData,
@@ -1260,8 +1265,16 @@ export function normalizeSlide(raw: any, index: number = 0, totalSlides: number 
     ctaText: raw.ctaText ? safeString(raw.ctaText) : undefined,
     footer: raw.footer ? safeString(raw.footer) : undefined,
     slideNumber: raw.slideNumber ? safeString(raw.slideNumber) : undefined,
-    imageUrl: raw.imageUrl ? safeString(raw.imageUrl) : undefined,
-    backgroundImage: raw.backgroundImage ? safeString(raw.backgroundImage) : resolveSlideBackground(raw, index, totalSlides),
+    backgroundImage: (() => {
+      let bg = raw.backgroundImage ? safeString(raw.backgroundImage) : resolveSlideBackground(raw, index, totalSlides);
+      if (bg && bg.includes("closing-deck.png") && index < totalSlides - 1) {
+        bg = "/bg-deck/itb-deck/content-deck.png";
+      }
+      if (bg && bg.includes("cover-deck.png") && index > 0) {
+        bg = "/bg-deck/itb-deck/content-deck.png";
+      }
+      return bg;
+    })(),
     isGeneratingSlide: Boolean(raw.isGeneratingSlide),
   };
 }
@@ -2157,7 +2170,15 @@ function SlideRenderer({
   const slide = normalizeSlide(rawSlide, slideIndex, totalSlides);
   const isGeneratingSlide = Boolean(slide.isGeneratingSlide);
 
-  const bgImage = resolveSlideBackground(slide, slideIndex, totalSlides);
+  let bgImage = resolveSlideBackground(slide, slideIndex, totalSlides);
+  // ITB Rule §5: closing-deck.png is ONLY for the last slide
+  if (bgImage && bgImage.includes("closing-deck.png") && slideIndex < totalSlides - 1) {
+    bgImage = "/bg-deck/itb-deck/content-deck.png";
+  }
+  // ITB Rule §5: cover-deck.png is ONLY for slide 1
+  if (bgImage && bgImage.includes("cover-deck.png") && slideIndex > 0) {
+    bgImage = "/bg-deck/itb-deck/content-deck.png";
+  }
   // User Rule: Sembunyikan background gambar saat proses generate! Kanvas harus warna putih polos.
   // Baru setelah selesai generate, tampilkan hasil generate beserta background gambarnya.
   const hasTemplateBg = !isGeneratingSlide && Boolean(bgImage);
@@ -2302,12 +2323,13 @@ function SlideRenderer({
 
   const renderSlideHeader = (customTitleClass?: string) => {
     const isHandsOn = (slide.badge || slide.highlight || "").toUpperCase().includes("HANDS-ON");
+    const isDarkBg = isPartBg || isClosingBg;
     return (
       <div className={`shrink-0 ${isPresentation ? "mb-3 sm:mb-4" : "mb-2 sm:mb-2.5"} max-w-[94%]`}>
         <div className="flex items-center gap-2.5 flex-wrap">
           <motion.h2
             {...anim(0.06)}
-            className={customTitleClass || `${isPresentation ? "text-2xl sm:text-3xl lg:text-4xl" : "text-xl sm:text-2xl lg:text-[25px]"} font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight tracking-tight line-clamp-2`}
+            className={customTitleClass || `${isPresentation ? "text-2xl sm:text-3xl lg:text-4xl" : "text-xl sm:text-2xl lg:text-[25px]"} font-bold ${headingFontClass} ${isDarkBg ? "text-white" : "text-[#005AAB] dark:text-[#005AAB]"} leading-tight tracking-tight line-clamp-2`}
           >
             {safeString(slide.title)}
           </motion.h2>
@@ -2320,7 +2342,7 @@ function SlideRenderer({
         {slide.subtitle && (
           <motion.p
             {...anim(0.12)}
-            className={`${isPresentation ? "text-sm sm:text-base lg:text-lg mt-1.5" : "text-[11px] sm:text-xs mt-0.5"} text-[#272525] dark:text-neutral-300 font-medium leading-snug line-clamp-2 max-w-[90%]`}
+            className={`${isPresentation ? "text-sm sm:text-base lg:text-lg mt-1.5" : "text-[11px] sm:text-xs mt-0.5"} ${isDarkBg ? "text-white/90" : "text-[#272525] dark:text-neutral-300"} font-medium leading-snug line-clamp-2 max-w-[90%]`}
           >
             {safeString(slide.subtitle)}
           </motion.p>
@@ -5070,25 +5092,27 @@ function SlideRenderer({
         <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
           {renderSlideHeader()}
 
-          <div className="my-auto w-full flex-1 flex flex-col justify-center min-h-0 py-1 sm:py-2">
-            <ConnectedRailStepper
-              steps={railSteps}
-              primaryColor={palette.primary}
-              secondaryColor={palette.secondary || palette.accent || "#FFDD3C"}
-              isPresentation={isPresentation}
-            />
-          </div>
-
-          {(slide.insightBarText || slide.description) && (
-            <div className="mt-2 shrink-0">
-              <InsightBar
-                text={slide.insightBarText || slide.description || "Siapa memutuskan apa harus jelas sebelum insiden terjadi."}
+          <div className="my-auto w-full flex-1 flex flex-col justify-between min-h-0 py-1 gap-2 overflow-hidden">
+            <div className="my-auto w-full">
+              <ConnectedRailStepper
+                steps={railSteps}
                 primaryColor={palette.primary}
-                accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+                secondaryColor={palette.secondary || palette.accent || "#FFDD3C"}
                 isPresentation={isPresentation}
               />
             </div>
-          )}
+
+            {(slide.insightBarText || slide.description) && (
+              <div className="shrink-0 mt-auto">
+                <InsightBar
+                  text={slide.insightBarText || slide.description || "Siapa memutuskan apa harus jelas sebelum insiden terjadi."}
+                  primaryColor={palette.primary}
+                  accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+                  isPresentation={isPresentation}
+                />
+              </div>
+            )}
+          </div>
 
           {renderSlideFooter()}
         </div>
@@ -5193,7 +5217,7 @@ function SlideRenderer({
           title={safeString(slide.title)}
           subtitle={safeString(slide.subtitle)}
           actions={actions}
-          contactText={slide.contactFooterText || slide.footer || "Insiden atau pertanyaan: [kontak tim keamanan]"}
+          contactText={slide.contactFooterText}
           primaryColor={palette.primary}
           accentColor={palette.secondary || palette.accent || "#FFDD3C"}
           isPresentation={isPresentation}
@@ -5422,12 +5446,14 @@ function SlideRenderer({
       return (
         <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
           {renderSlideHeader()}
-          <PyramidHierarchy
-            tiers={tiers}
-            primaryColor={palette.primary}
-            accentColor={palette.secondary || palette.accent || "#FFDD3C"}
-            isPresentation={isPresentation}
-          />
+          <div className="my-auto w-full flex-1 flex flex-col justify-center min-h-0 overflow-hidden py-1">
+            <PyramidHierarchy
+              tiers={tiers}
+              primaryColor={palette.primary}
+              accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+              isPresentation={isPresentation}
+            />
+          </div>
           {renderSlideFooter()}
         </div>
       );
@@ -5642,7 +5668,8 @@ function SlideRenderer({
 
   return (
     <div
-      className={`w-full h-full ${bodyFontClass} select-text overflow-hidden relative`}
+      className={`w-full h-full ${bodyFontClass} select-text overflow-hidden relative slide-canvas`}
+      data-slide-canvas="true"
       style={
         hasTemplateBg
           ? {
@@ -5834,8 +5861,8 @@ export default function DeckGeneratorPage() {
   const [step, setStep] = useState<"input" | "styler" | "confirm" | "slides">("input");
   const [content, setContent] = useState("");
   const [attachedSkill, setAttachedSkill] = useState<AttachedSkill | null>(null);
-  const [mode, setMode] = useState<ContentMode>("generate");
-  const [slideCount, setSlideCount] = useState("8");
+  const [slideCount, setSlideCount] = useState("10");
+  const [selectedTargetCount, setSelectedTargetCount] = useState<number>(10);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -6106,6 +6133,10 @@ export default function DeckGeneratorPage() {
   const [isPlanningOutline, setIsPlanningOutline] = useState<boolean>(false);
 
   const handlePlanOutline = async (targetCount: number) => {
+    setSelectedTargetCount(targetCount);
+    setSlideCount(String(targetCount));
+    setSlideCountPreference(`${targetCount} Slides`);
+
     const effectiveContent =
       content.trim() ||
       (attachedSkill
@@ -6146,9 +6177,26 @@ export default function DeckGeneratorPage() {
 
       const data = await res.json();
       if (data.success && Array.isArray(data.outline) && data.outline.length > 0) {
+        let finalOutline = data.outline;
+        if (finalOutline.length < targetCount) {
+          const needed = targetCount - finalOutline.length;
+          const last = finalOutline[finalOutline.length - 1];
+          const middle = finalOutline.slice(0, -1);
+          const extra = Array.from({ length: needed }, (_, i) => ({
+            slideNumber: middle.length + i + 1,
+            headline: `Inisiatif Strategis ${middle.length + i + 1}`,
+            subheadline: "Analisis mendalam dimensi operasional dan tata kelola",
+            visualLayout: "Card Grid",
+            description: "Uraian komprehensif kapabilitas sistemik untuk mendukung keputusan kepemimpinan.",
+          }));
+          finalOutline = [...middle, ...extra, last];
+        } else if (finalOutline.length > targetCount) {
+          finalOutline = [...finalOutline.slice(0, targetCount - 1), finalOutline[finalOutline.length - 1]];
+        }
+
         setEditableBreakdown(
-          data.outline.map((o: any, idx: number) => ({
-            slideNumber: o.slideNumber || idx + 1,
+          finalOutline.map((o: any, idx: number) => ({
+            slideNumber: idx + 1,
             headline: o.headline,
             subheadline: o.subheadline,
             visualLayout: o.visualLayout,
@@ -6157,8 +6205,9 @@ export default function DeckGeneratorPage() {
             speakerNotes: o.speakerNotes,
           }))
         );
-        setSlideCountPreference(`${data.outline.length} Slides`);
-        setSlideCount(String(data.outline.length));
+        setSelectedTargetCount(finalOutline.length);
+        setSlideCountPreference(`${finalOutline.length} Slides`);
+        setSlideCount(String(finalOutline.length));
       }
     } catch (err) {
       console.error("Plan outline error:", err);
@@ -6276,14 +6325,16 @@ export default function DeckGeneratorPage() {
       const parsed = parsePromptBreakdown(content);
       if (parsed.length > 0) {
         setEditableBreakdown(parsed);
+        setSelectedTargetCount(parsed.length);
       } else {
-        let targetCount = parseInt(slideCount, 10) || 8;
+        let targetCount = parseInt(slideCount, 10) || 10;
         const countMatch = (content + " " + (attachedSkill.content || "")).match(/(\d+)\s*(slide|deck|halaman)/i);
         if (countMatch && parseInt(countMatch[1], 10) > 0) {
           targetCount = Math.min(Math.max(parseInt(countMatch[1], 10), 3), 100);
           setSlideCount(String(targetCount));
           setSlideCountPreference(`${targetCount} Slides`);
         }
+        setSelectedTargetCount(targetCount);
         handlePlanOutline(targetCount);
       }
 
@@ -6310,6 +6361,7 @@ export default function DeckGeneratorPage() {
         } else {
           setSlideCountPreference(`${storedCount} Slides`);
           setSlideCount(storedCount);
+          setSelectedTargetCount(parseInt(storedCount, 10) || 10);
         }
       }
       if (storedBrain && storedBrain.trim().length > 0) {
@@ -6335,32 +6387,42 @@ export default function DeckGeneratorPage() {
 
   // Synchronize editable breakdown cards when content contains explicit multi-slide outline
   useEffect(() => {
-    if (content.trim()) {
+    if (step === "input" && content.trim()) {
       const parsed = parsePromptBreakdown(content);
       if (parsed.length >= 2) {
         setEditableBreakdown(parsed);
+        setSelectedTargetCount(parsed.length);
       }
     }
-  }, [content]);
+  }, [content, step]);
 
   const handleAddSlideCard = () => {
-    setEditableBreakdown((prev) => [
-      ...prev,
-      {
-        slideNumber: prev.length + 1,
-        headline: `Slide ${prev.length + 1}: Inisiatif & Poin Baru`,
-        subheadline: "Subjudul penjelasan materi slide",
-        visualLayout: "Visual & Diagram Flow",
-        description: "Tuliskan poin penjelasan atau narasi utama untuk slide ini...",
-      },
-    ]);
+    setEditableBreakdown((prev) => {
+      const next = [
+        ...prev,
+        {
+          slideNumber: prev.length + 1,
+          headline: `Slide ${prev.length + 1}: Inisiatif & Poin Baru`,
+          subheadline: "Subjudul penjelasan materi slide",
+          visualLayout: "Visual & Diagram Flow",
+          description: "Tuliskan poin penjelasan atau narasi utama untuk slide ini...",
+        },
+      ];
+      setSelectedTargetCount(next.length);
+      setSlideCount(String(next.length));
+      setSlideCountPreference(`${next.length} Slides`);
+      return next;
+    });
   };
 
   const handleDeleteSlideCard = (index: number) => {
     setEditableBreakdown((prev) => {
       if (prev.length <= 1) return prev;
-      const next = prev.filter((_, i) => i !== index);
-      return next.map((item, i) => ({ ...item, slideNumber: i + 1 }));
+      const next = prev.filter((_, i) => i !== index).map((item, i) => ({ ...item, slideNumber: i + 1 }));
+      setSelectedTargetCount(next.length);
+      setSlideCount(String(next.length));
+      setSlideCountPreference(`${next.length} Slides`);
+      return next;
     });
   };
 
@@ -8060,7 +8122,7 @@ async function streamBuildSlide(
                     disabled={isPlanningOutline}
                     onClick={() => handlePlanOutline(num)}
                     className={`px-3 py-1.5 rounded-[5px] text-xs sm:text-[13px] transition-all cursor-pointer ${
-                      editableBreakdown.length === num
+                      editableBreakdown.length === num || selectedTargetCount === num
                         ? "bg-white dark:bg-neutral-700 text-neutral-950 dark:text-white shadow-2xs font-bold"
                         : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white font-medium"
                     }`}
