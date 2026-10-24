@@ -150,9 +150,10 @@ const AI_PROVIDERS: Record<AIProvider, {
     dashboardUrl: "https://aistudio.google.com/apikey",
     dashboardLabel: "Get Key from Google AI Studio",
     models: [
-      { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash (Fastest)" },
-      { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash" },
-      { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" },
+      { value: "gemini-3.8-flash", label: "Gemini 3.8 Flash (Latest & Recommended)" },
+      { value: "gemini-3.5-flash", label: "Gemini 3.5 Flash" },
+      { value: "gemini-flash-latest", label: "Gemini Flash Latest" },
+      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
     ],
     color: "#4285F4",
   },

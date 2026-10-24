@@ -6114,9 +6114,9 @@ export default function DeckGeneratorPage() {
     setIsPlanningOutline(true);
 
     try {
-      const activeProvider = typeof window !== "undefined" ? (localStorage.getItem("ai_provider") || "gemini") : "gemini";
-      const storedApiKey = typeof window !== "undefined" ? (localStorage.getItem(`ai_key_${activeProvider}`) || "") : "";
-      const storedModel = typeof window !== "undefined" ? (localStorage.getItem(`ai_model_${activeProvider}`) || "") : "";
+      const activeProvider = typeof window !== "undefined" ? (localStorage.getItem("ai_provider") || "deepseek") : "deepseek";
+      const storedApiKey = typeof window !== "undefined" ? (localStorage.getItem(`ai_key_${activeProvider}`) || (activeProvider === "deepseek" ? localStorage.getItem("deepseek_api_key") : "") || "") : "";
+      const storedModel = typeof window !== "undefined" ? (localStorage.getItem(`ai_model_${activeProvider}`) || (activeProvider === "deepseek" ? localStorage.getItem("deepseek_selected_model") : "") || (activeProvider === "deepseek" ? "deepseek-chat" : "")) : "deepseek-chat";
 
       const skillDirectives = attachedSkill
         ? `=== INSTITUTIONAL SKILL ATTACHMENT (${attachedSkill.name}) ===\n${attachedSkill.content}\n`

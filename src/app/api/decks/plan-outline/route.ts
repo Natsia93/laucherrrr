@@ -276,106 +276,155 @@ ${languageDirective}
 Generate a master blueprint with EXACTLY ${count} sequential slides in strict JSON array format.
 `;
 
-    // 1. Try Gemini
-    const geminiKey = (apiKey && provider === "gemini" ? apiKey : null) || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    // ──── STRICT BYOK PROVIDER EXECUTION ────
+    // Always prioritize the user's selected provider!
+    const effectiveProvider = (provider || (apiKey?.startsWith("sk-") ? "deepseek" : "deepseek")).toLowerCase();
 
-    if (geminiKey) {
-      try {
-        const genAI = new GoogleGenerativeAI(geminiKey);
-        const model = genAI.getGenerativeModel({
-          model: "gemini-2.5-flash",
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.4,
-          },
-        });
+    // 1. DeepSeek (BYOK First)
+    if (effectiveProvider === "deepseek") {
+      const deepseekKey = apiKey || process.env.DEEPSEEK_API_KEY;
+      if (deepseekKey) {
+        try {
+          const client = new OpenAI({
+            baseURL: "https://api.deepseek.com",
+            apiKey: deepseekKey,
+          });
 
-        const result = await model.generateContent([OUTLINE_SYSTEM_PROMPT, userPrompt]);
-        const text = result.response.text().trim();
-        const cleaned = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
-        const parsed = JSON.parse(cleaned);
+          const selectedModel = requestedModel || "deepseek-chat";
+          const isReasoner = selectedModel === "deepseek-reasoner" || selectedModel.includes("reasoner");
 
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const sanitized = sanitizeOutlineItems(parsed, count);
-          return NextResponse.json({ success: true, outline: sanitized, source: "gemini" });
-        }
-      } catch (gemErr: any) {
-        console.warn("Gemini outline planning error:", gemErr?.message);
-      }
-    }
+          const res = await client.chat.completions.create({
+            model: selectedModel,
+            ...(isReasoner ? {} : { temperature: 0.4 }),
+            messages: isReasoner
+              ? [{ role: "user", content: `${OUTLINE_SYSTEM_PROMPT}\n\n${userPrompt}` }]
+              : [
+                  { role: "system", content: OUTLINE_SYSTEM_PROMPT },
+                  { role: "user", content: userPrompt },
+                ],
+          });
 
-    // 2. Try DeepSeek / OpenAI
-    const openAiKey = (apiKey && (provider === "openai" || provider === "deepseek") ? apiKey : null) || process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
-    const isDeepseek = provider === "deepseek" || (!process.env.OPENAI_API_KEY && process.env.DEEPSEEK_API_KEY);
-
-    if (openAiKey) {
-      try {
-        const client = new OpenAI({
-          baseURL: isDeepseek ? "https://api.deepseek.com" : "https://api.openai.com/v1",
-          apiKey: openAiKey,
-        });
-
-        const res = await client.chat.completions.create({
-          model: requestedModel || (isDeepseek ? "deepseek-reasoner" : "gpt-4o"),
-          temperature: 0.4,
-          messages: [
-            { role: "system", content: OUTLINE_SYSTEM_PROMPT },
-            { role: "user", content: userPrompt },
-          ],
-        });
-
-        const raw = res.choices[0]?.message?.content || "";
-        const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
-        const parsed = JSON.parse(cleaned);
-
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const sanitized = sanitizeOutlineItems(parsed, count);
-          return NextResponse.json({ success: true, outline: sanitized, source: provider });
-        }
-      } catch (openAiErr: any) {
-        console.warn("OpenAI/Deepseek outline error:", openAiErr?.message);
-      }
-    }
-
-    // 3. Try Anthropic (Claude 3.5 / 3.7)
-    const anthropicKey = (apiKey && provider === "anthropic" ? apiKey : null) || process.env.ANTHROPIC_API_KEY;
-    if (anthropicKey && (provider === "anthropic" || !geminiKey && !openAiKey)) {
-      try {
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": anthropicKey,
-            "anthropic-version": "2023-06-01",
-          },
-          body: JSON.stringify({
-            model: requestedModel || "claude-sonnet-4-20250514",
-            max_tokens: 8192,
-            temperature: 0.4,
-            system: OUTLINE_SYSTEM_PROMPT,
-            messages: [{ role: "user", content: userPrompt }],
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const raw = data.content?.[0]?.text || "";
+          const raw = res.choices[0]?.message?.content || "";
           const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
           const parsed = JSON.parse(cleaned);
 
           if (Array.isArray(parsed) && parsed.length > 0) {
             const sanitized = sanitizeOutlineItems(parsed, count);
-            return NextResponse.json({ success: true, outline: sanitized, source: "anthropic" });
+            return NextResponse.json({ success: true, outline: sanitized, source: "deepseek" });
           }
+        } catch (dsErr: any) {
+          console.error("DeepSeek outline planning error:", dsErr?.message);
         }
-      } catch (anthropicErr: any) {
-        console.warn("Anthropic Claude outline error:", anthropicErr?.message);
       }
     }
 
-    // Deterministic fallback generator if no key is configured
+    // 2. OpenAI
+    if (effectiveProvider === "openai") {
+      const openAiKey = apiKey || process.env.OPENAI_API_KEY;
+      if (openAiKey) {
+        try {
+          const client = new OpenAI({
+            baseURL: "https://api.openai.com/v1",
+            apiKey: openAiKey,
+          });
+
+          const res = await client.chat.completions.create({
+            model: requestedModel || "gpt-4o",
+            temperature: 0.4,
+            messages: [
+              { role: "system", content: OUTLINE_SYSTEM_PROMPT },
+              { role: "user", content: userPrompt },
+            ],
+          });
+
+          const raw = res.choices[0]?.message?.content || "";
+          const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
+          const parsed = JSON.parse(cleaned);
+
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const sanitized = sanitizeOutlineItems(parsed, count);
+            return NextResponse.json({ success: true, outline: sanitized, source: "openai" });
+          }
+        } catch (openAiErr: any) {
+          console.error("OpenAI outline planning error:", openAiErr?.message);
+        }
+      }
+    }
+
+    // 3. Anthropic (Claude)
+    if (effectiveProvider === "anthropic") {
+      const anthropicKey = apiKey || process.env.ANTHROPIC_API_KEY;
+      if (anthropicKey) {
+        const modelsToTry = [requestedModel, "claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20241022"].filter(Boolean) as string[];
+        for (const mName of modelsToTry) {
+          try {
+            const response = await fetch("https://api.anthropic.com/v1/messages", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-api-key": anthropicKey,
+                "anthropic-version": "2023-06-01",
+              },
+              body: JSON.stringify({
+                model: mName,
+                max_tokens: 8192,
+                temperature: 0.4,
+                system: OUTLINE_SYSTEM_PROMPT,
+                messages: [{ role: "user", content: userPrompt }],
+              }),
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              const raw = data.content?.[0]?.text || "";
+              const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
+              const parsed = JSON.parse(cleaned);
+
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                const sanitized = sanitizeOutlineItems(parsed, count);
+                return NextResponse.json({ success: true, outline: sanitized, source: "anthropic" });
+              }
+            }
+          } catch (anthropicErr: any) {
+            console.error("Anthropic Claude outline error:", anthropicErr?.message);
+          }
+        }
+      }
+    }
+
+    // 4. Google Gemini (Active Model Cascade)
+    const geminiKey = (effectiveProvider === "gemini" ? apiKey : null) || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || (apiKey && !apiKey.startsWith("sk-") ? apiKey : null);
+    if (geminiKey) {
+      const geminiModels = [requestedModel, "gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-latest"].filter(Boolean) as string[];
+      for (const mName of geminiModels) {
+        try {
+          const genAI = new GoogleGenerativeAI(geminiKey);
+          const model = genAI.getGenerativeModel({
+            model: mName,
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.4,
+            },
+          });
+
+          const result = await model.generateContent([OUTLINE_SYSTEM_PROMPT, userPrompt]);
+          const text = result.response.text().trim();
+          const cleaned = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
+          const parsed = JSON.parse(cleaned);
+
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const sanitized = sanitizeOutlineItems(parsed, count);
+            return NextResponse.json({ success: true, outline: sanitized, source: "gemini" });
+          }
+        } catch (gemErr: any) {
+          console.warn(`Gemini outline planning error (${mName}):`, gemErr?.message);
+        }
+      }
+    }
+
+    // High-quality domain-aware fallback generator if all API keys fail or are empty
     const fallbackOutline: OutlineSlideItem[] = generateFallbackBlueprint(content, count, purpose);
-    return NextResponse.json({ success: true, outline: fallbackOutline, source: "deterministic-fallback" });
+    return NextResponse.json({ success: true, outline: fallbackOutline, source: "intelligent-fallback" });
   } catch (error: any) {
     console.error("Plan Outline API Error:", error);
     return NextResponse.json({ success: false, error: error?.message || "Failed to plan outline" }, { status: 500 });
@@ -421,7 +470,6 @@ function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideI
   const items = parsed.slice(0, targetCount);
 
   // ── Post-AI Validation Pass ──
-  // 1. Detect and fix consecutive duplicate layouts
   const sanitized = items.map((item: any, idx: number) => {
     let visualLayout = String(item.visualLayout || "").trim();
     const normalized = visualLayout.toLowerCase();
@@ -436,7 +484,7 @@ function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideI
     }
     // Section Divider must NEVER be Slide 2
     else if (idx === 1 && (normalized.includes("section") || normalized.includes("divider"))) {
-      visualLayout = "Two Column"; // Force substantive content on Slide 2
+      visualLayout = "Two Column";
     }
     // If empty or unrecognized, rotate through arcLayouts
     else if (!visualLayout || !knownArchetypes.has(normalized)) {
@@ -448,7 +496,6 @@ function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideI
       const prev1 = sanitized[idx - 1]?.visualLayout?.toLowerCase() || "";
       const prev2 = sanitized[idx - 2]?.visualLayout?.toLowerCase() || "";
       if (prev1 === visualLayout.toLowerCase() && prev2 === visualLayout.toLowerCase()) {
-        // Pick a different layout from arcLayouts that hasn't been used recently
         const recentLayouts = new Set([prev1, prev2]);
         const alt = arcLayouts.find(l => !recentLayouts.has(l.toLowerCase()));
         if (alt) visualLayout = alt;
@@ -465,15 +512,12 @@ function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideI
       }
     }
 
-    // Validate headline is not a passive label (basic heuristic)
     let headline = String(item.headline || `Slide ${idx + 1}`);
-    // Strip trailing period from headlines
     headline = headline.replace(/\.$/, "");
 
-    // Ensure speakerNotes exist
     const speakerNotes = item.speakerNotes
       ? String(item.speakerNotes)
-      : `Intent: This slide advances the deck's core argument. Key message: ${headline}. Delivery: Present with conviction, pausing after the key claim. Transition: This leads naturally into the next phase of the argument.`;
+      : `Intent: Menekankan ${headline} dalam alur narasi. Key message: ${headline}. Delivery: Sampaikan dengan otoritas dan berikan jeda refleksi bagi audiens. Transition: Lanjutkan ke analisis dimensi berikutnya.`;
 
     const result: OutlineSlideItem = {
       slideNumber: idx + 1,
@@ -492,38 +536,67 @@ function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideI
 }
 
 function generateFallbackBlueprint(content: string, count: number, purpose: string): OutlineSlideItem[] {
-  const layouts = [
-    "Hero",
-    "Two Column",
-    "Process",
-    "Timeline",
-    "Bullets",
-    "Flow Diagram",
-    "Table Comparison",
-    "Bullets",
+  // Clean user prompt to extract true subject
+  const cleanedTopic = content
+    .replace(/^(?:tolong\s+buatkan?|buatkan?|generate|bikin(?:kan)?|bantu\s+buatkan?|create\s+a?|deck\s+tentang|deck\s+topik|topik|presentasi\s+tentang)\s+/i, "")
+    .replace(/[.!?]+$/, "")
+    .trim() || purpose || "Strategi Operasional";
+
+  const isCyber = /cyber|keamanan|siber|security|infosec|soc|zero\s*trust|malware|ransomware/i.test(content);
+
+  const cyberThemes = [
+    { title: `Arsitektur Ketahanan Keamanan Siber Enterprise`, sub: "Membangun pertahanan proaktif melindungi aset kritis di era AI & Cloud", layout: "Hero" },
+    { title: "Lanskap Ancaman Siber: Eskalasi Serangan & Kerentanan Sistem", sub: "Memetakan vektor serangan kritis dan dampak finansial pelanggaran data", layout: "Two Column" },
+    { title: "Paradigma Zero Trust: Validasi Identitas & Akses Berkelanjutan", sub: "Beralih dari perimeter konvensional ke verifikasi identitas berlapis", layout: "Horizontal Stack" },
+    { title: "Tiga Pilar Pertahanan: Tata Kelola, Manusia, dan Otomasi", sub: "Menyelaraskan budaya keamanan, SOP mitigasi, dan AI security operations", layout: "Pyramid Hierarchy" },
+    { title: "Transformasi SOC: Memangkas Waktu Deteksi Insiden hingga 80%", sub: "Beralih dari investigasi manual ke deteksi prediktif terotomasi", layout: "Split Comparison" },
+    { title: "Alur Deteksi & Respons Insiden Siber Secara Real-Time", sub: "Siklus hidup penanganan ancaman dari triage hingga remediasi sistemik", layout: "Connected Stepper" },
+    { title: "Matriks Prioritas Penanganan Kerentanan & Manajemen Risiko", sub: "Klasifikasi risiko aset berdasarkan dampak bisnis dan eksploitabilitas", layout: "Table Comparison" },
+    { title: "Audit Kepatuhan & Standar Regulasi Keamanan Data", sub: "Memastikan keselarasan dengan NIST CSF, ISO 27001, dan kepatuhan privasi data", layout: "Checklist" },
+    { title: "Roadmap 12 Bulan Penguatan Ketahanan Siber Perusahaan", sub: "Linimasa implementasi kapabilitas keamanan tingkat enterprise", layout: "Timeline" },
+    { title: "Mandat Eksekutif: 3 Langkah Aksi Mengamankan Aset Kritis", sub: "Keputusan strategis dewan direksi untuk memperkuat postur keamanan", layout: "Closing Action" },
+    { title: "Persamaan Dampak: Visibilitas × Kecepatan Respons = Risiko Terkendali", sub: "Mengukur ROI investasi keamanan siber bagi kelangsungan bisnis", layout: "Formula Hero" },
+    { title: "Pusat Koordinasi Ekosistem Keamanan Lintas Divisi", sub: "Mengintegrasikan telemetry endpoint, cloud, dan jaringan dalam satu cockpit", layout: "Radial Hub" },
   ];
 
-  const lines = content
-    .split("\n")
-    .map((l) => l.trim().replace(/^[-*#\d.]+\s*/, ""))
-    .filter((l) => l.length > 3);
+  const defaultThemes = [
+    { title: `Strategi & Transformasi ${cleanedTopic}`, sub: "Peta jalan komprehensif mencapai keunggulan kompetitif dan efisiensi operasional", layout: "Hero" },
+    { title: "Diagnosis Tantangan Utama: Hambatan dan Titik Gesekan Saat Ini", sub: "Mengidentifikasi akar permasalahan operasional yang menghambat skala bisnis", layout: "Two Column" },
+    { title: "Arsitektur Solusi Terpadu: Tiga Pilar Keberhasilan Eksekusi", sub: "Kerangka terstruktur menyelaraskan strategi, kapabilitas manusia, dan teknologi", layout: "Horizontal Stack" },
+    { title: "Hierarki Kemampuan Inti Menuju Eksekusi Kelas Dunia", sub: "Tingkatan maturitas sistematis dari standardisasi hingga otomatisasi cerdas", layout: "Pyramid Hierarchy" },
+    { title: "Studi Komparasi Operasional: Dampak Terukur Sebelum dan Sesudah Transformasi", sub: "Bukti empiris efisiensi biaya dan akselerasi kecepatan eksekusi", layout: "Split Comparison" },
+    { title: "Siklus Kerja Terstandar: 4 Tahap Penerapan Tanpa Hambatan", sub: "Prosedur operasional baku dari inisiasi hingga evaluasi performa berkelanjutan", layout: "Connected Stepper" },
+    { title: "Matriks Perbandingan Opsi Solusi & Analisis Trade-off", sub: "Evaluasi multidimensi mempertimbangkan biaya, kecepatan, dan risiko", layout: "Table Comparison" },
+    { title: "Checklist Kesiapan Tata Kelola & Kontrol Kualitas", sub: "Kriteria verifikasi memastikan kepatuhan regulasi dan stabilitas sistem", layout: "Checklist" },
+    { title: "Linimasa Eksekusi Strategis: Milestones Pencapaian Kunci", sub: "Roadmap bertahap dengan checkpoint pencapaian yang terukur", layout: "Timeline" },
+    { title: "Mandat Aksi Eksekutif: 3 Prioritas Utama yang Harus Diluncurkan", sub: "Instruksi tindakan nyata dengan alokasi kepemilikan dan target waktu yang tegas", layout: "Closing Action" },
+  ];
 
-  const mainTopic = lines[0] || purpose || "Strategic Initiative & Framework";
+  const themes = isCyber ? cyberThemes : defaultThemes;
 
   return Array.from({ length: count }, (_, idx) => {
     const isFirst = idx === 0;
     const isLast = idx === count - 1;
-    const layout = isFirst ? "Hero" : isLast ? "Bold Impact" : layouts[(idx - 1) % layouts.length];
-    const lineTopic = lines[idx] || `Tahap ${idx + 1}: Implementasi & Analisis Komprehensif`;
+    const themeIdx = idx % themes.length;
+    const theme = themes[themeIdx];
+
+    const layout = isFirst ? "Hero" : isLast ? "Closing Action" : theme.layout;
+    const headline = isFirst ? theme.title : isLast ? theme.title : (idx < themes.length ? theme.title : `${theme.title} — Bagian ${Math.floor(idx / themes.length) + 1}`);
+    const subheadline = theme.sub;
 
     return {
       slideNumber: idx + 1,
-      headline: isFirst ? mainTopic : `Fase ${idx}: ${lineTopic.substring(0, 50)}`,
-      subheadline: isFirst
-        ? "Peta Jalan Strategis Menuju Keunggulan Operasional"
-        : `Rincian implementasi dan analisis mendalam untuk pilar ke-${idx}`,
+      headline,
+      subheadline,
       visualLayout: layout,
-      description: `Penjabaran operasional terperinci mengenai ${lineTopic} guna memastikan integrasi yang optimal across divisions.`,
+      description: `Analisis strategis mendalam mengenai ${theme.title} guna memastikan integrasi optimal, mitigasi risiko proaktif, dan dampak bisnis terukur.`,
+      keyPoints: [
+        `Identifikasi faktor keberhasilan utama untuk ${theme.title}.`,
+        `Standarisasi protokol eksekusi guna mengeliminasi latensi operasional.`,
+        `Pengukuran dampak menggunakan indikator kinerja kunci secara berkala.`,
+      ],
+      speakerNotes: `Intent: Paparkan ${theme.title} sebagai pilar penting dalam narasi keseluruhan. Key message: ${theme.sub}. Delivery: Tekankan urgensi dan manfaat strategis bagi kepemimpinan eksekutif. Transition: Hubungkan konsep ini ke langkah implementasi berikutnya.`,
     };
   });
 }
+

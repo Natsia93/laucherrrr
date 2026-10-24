@@ -334,100 +334,34 @@ ${languageDirective}
 Generate exactly ${outlines.length} complete, production-ready slide objects for this batch in strict JSON array format.
 `;
 
-    // 1. Try Gemini
-    const geminiKey = (apiKey && provider === "gemini" ? apiKey : null) || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    // ──── STRICT BYOK PROVIDER EXECUTION ────
+    const effectiveProvider = (provider || (apiKey?.startsWith("sk-") ? "deepseek" : "deepseek")).toLowerCase();
 
-    if (geminiKey) {
-      try {
-        const genAI = new GoogleGenerativeAI(geminiKey);
-        const model = genAI.getGenerativeModel({
-          model: "gemini-2.5-flash",
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.3,
-          },
-        });
-
-        const result = await model.generateContent([CHUNK_SYSTEM_PROMPT, userPrompt]);
-        const text = result.response.text().trim();
-        const cleaned = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
-        const parsed = JSON.parse(cleaned);
-
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const sanitized = sanitizeChunkSlides(parsed, outlines, chunkIndex, totalChunks);
-          return NextResponse.json({
-            success: true,
-            chunkIndex,
-            slides: sanitized,
-            source: "gemini-chunk",
+    // 1. DeepSeek (BYOK First)
+    if (effectiveProvider === "deepseek") {
+      const deepseekKey = apiKey || process.env.DEEPSEEK_API_KEY;
+      if (deepseekKey) {
+        try {
+          const client = new OpenAI({
+            baseURL: "https://api.deepseek.com",
+            apiKey: deepseekKey,
           });
-        }
-      } catch (gemErr: any) {
-        console.warn(`Chunk ${chunkIndex} Gemini error:`, gemErr?.message);
-      }
-    }
 
-    // 2. Try OpenAI / DeepSeek
-    const openAiKey = (apiKey && (provider === "openai" || provider === "deepseek") ? apiKey : null) || process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
-    const isDeepseek = provider === "deepseek" || (!process.env.OPENAI_API_KEY && process.env.DEEPSEEK_API_KEY);
+          const selectedModel = requestedModel || "deepseek-chat";
+          const isReasoner = selectedModel === "deepseek-reasoner" || selectedModel.includes("reasoner");
 
-    if (openAiKey) {
-      try {
-        const client = new OpenAI({
-          baseURL: isDeepseek ? "https://api.deepseek.com" : "https://api.openai.com/v1",
-          apiKey: openAiKey,
-        });
-
-        const res = await client.chat.completions.create({
-          model: requestedModel || (isDeepseek ? "deepseek-reasoner" : "gpt-4o"),
-          temperature: 0.3,
-          messages: [
-            { role: "system", content: CHUNK_SYSTEM_PROMPT },
-            { role: "user", content: userPrompt },
-          ],
-        });
-
-        const raw = res.choices[0]?.message?.content || "";
-        const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
-        const parsed = JSON.parse(cleaned);
-
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const sanitized = sanitizeChunkSlides(parsed, outlines, chunkIndex, totalChunks);
-          return NextResponse.json({
-            success: true,
-            chunkIndex,
-            slides: sanitized,
-            source: provider,
+          const res = await client.chat.completions.create({
+            model: selectedModel,
+            ...(isReasoner ? {} : { temperature: 0.3 }),
+            messages: isReasoner
+              ? [{ role: "user", content: `${CHUNK_SYSTEM_PROMPT}\n\n${userPrompt}` }]
+              : [
+                  { role: "system", content: CHUNK_SYSTEM_PROMPT },
+                  { role: "user", content: userPrompt },
+                ],
           });
-        }
-      } catch (openAiErr: any) {
-        console.warn(`Chunk ${chunkIndex} OpenAI/Deepseek error:`, openAiErr?.message);
-      }
-    }
 
-    // 3. Try Anthropic (Claude 3.5 / 3.7)
-    const anthropicKey = (apiKey && provider === "anthropic" ? apiKey : null) || process.env.ANTHROPIC_API_KEY;
-    if (anthropicKey && (provider === "anthropic" || !geminiKey && !openAiKey)) {
-      try {
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": anthropicKey,
-            "anthropic-version": "2023-06-01",
-          },
-          body: JSON.stringify({
-            model: requestedModel || "claude-sonnet-4-20250514",
-            max_tokens: 8192,
-            temperature: 0.3,
-            system: CHUNK_SYSTEM_PROMPT,
-            messages: [{ role: "user", content: userPrompt }],
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const raw = data.content?.[0]?.text || "";
+          const raw = res.choices[0]?.message?.content || "";
           const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
           const parsed = JSON.parse(cleaned);
 
@@ -437,12 +371,131 @@ Generate exactly ${outlines.length} complete, production-ready slide objects for
               success: true,
               chunkIndex,
               slides: sanitized,
-              source: "anthropic",
+              source: "deepseek",
             });
           }
+        } catch (dsErr: any) {
+          console.error(`Chunk ${chunkIndex} DeepSeek error:`, dsErr?.message);
         }
-      } catch (anthropicErr: any) {
-        console.warn(`Chunk ${chunkIndex} Anthropic Claude error:`, anthropicErr?.message);
+      }
+    }
+
+    // 2. OpenAI
+    if (effectiveProvider === "openai") {
+      const openAiKey = apiKey || process.env.OPENAI_API_KEY;
+      if (openAiKey) {
+        try {
+          const client = new OpenAI({
+            baseURL: "https://api.openai.com/v1",
+            apiKey: openAiKey,
+          });
+
+          const res = await client.chat.completions.create({
+            model: requestedModel || "gpt-4o",
+            temperature: 0.3,
+            messages: [
+              { role: "system", content: CHUNK_SYSTEM_PROMPT },
+              { role: "user", content: userPrompt },
+            ],
+          });
+
+          const raw = res.choices[0]?.message?.content || "";
+          const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
+          const parsed = JSON.parse(cleaned);
+
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const sanitized = sanitizeChunkSlides(parsed, outlines, chunkIndex, totalChunks);
+            return NextResponse.json({
+              success: true,
+              chunkIndex,
+              slides: sanitized,
+              source: "openai",
+            });
+          }
+        } catch (openAiErr: any) {
+          console.error(`Chunk ${chunkIndex} OpenAI error:`, openAiErr?.message);
+        }
+      }
+    }
+
+    // 3. Anthropic (Claude)
+    if (effectiveProvider === "anthropic") {
+      const anthropicKey = apiKey || process.env.ANTHROPIC_API_KEY;
+      if (anthropicKey) {
+        const modelsToTry = [requestedModel, "claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20241022"].filter(Boolean) as string[];
+        for (const mName of modelsToTry) {
+          try {
+            const response = await fetch("https://api.anthropic.com/v1/messages", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-api-key": anthropicKey,
+                "anthropic-version": "2023-06-01",
+              },
+              body: JSON.stringify({
+                model: mName,
+                max_tokens: 8192,
+                temperature: 0.3,
+                system: CHUNK_SYSTEM_PROMPT,
+                messages: [{ role: "user", content: userPrompt }],
+              }),
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              const raw = data.content?.[0]?.text || "";
+              const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
+              const parsed = JSON.parse(cleaned);
+
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                const sanitized = sanitizeChunkSlides(parsed, outlines, chunkIndex, totalChunks);
+                return NextResponse.json({
+                  success: true,
+                  chunkIndex,
+                  slides: sanitized,
+                  source: "anthropic",
+                });
+              }
+            }
+          } catch (anthropicErr: any) {
+            console.error(`Chunk ${chunkIndex} Anthropic Claude error:`, anthropicErr?.message);
+          }
+        }
+      }
+    }
+
+    // 4. Google Gemini (Active Model Cascade)
+    const geminiKey = (effectiveProvider === "gemini" ? apiKey : null) || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || (apiKey && !apiKey.startsWith("sk-") ? apiKey : null);
+    if (geminiKey) {
+      const geminiModels = [requestedModel, "gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-latest"].filter(Boolean) as string[];
+      for (const mName of geminiModels) {
+        try {
+          const genAI = new GoogleGenerativeAI(geminiKey);
+          const model = genAI.getGenerativeModel({
+            model: mName,
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.3,
+            },
+          });
+
+          const result = await model.generateContent([CHUNK_SYSTEM_PROMPT, userPrompt]);
+          const text = result.response.text().trim();
+          const cleaned = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
+          const parsed = JSON.parse(cleaned);
+
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const sanitized = sanitizeChunkSlides(parsed, outlines, chunkIndex, totalChunks);
+            return NextResponse.json({
+              success: true,
+              chunkIndex,
+              slides: sanitized,
+              source: "gemini",
+            });
+          }
+        } catch (gemErr: any) {
+          console.warn(`Chunk ${chunkIndex} Gemini error (${mName}):`, gemErr?.message);
+        }
       }
     }
 
