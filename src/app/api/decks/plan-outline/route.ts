@@ -148,55 +148,32 @@ Every headline MUST be a bold, assertive claim — the ONE takeaway if someone r
 
 Rules: 5-12 words. Active voice. Contains the insight or conclusion. NO trailing period. Left-aligned.
 
-=== SPEAKER NOTES (MANDATORY — FACILITATION SCRIPT QUALITY) ===
+=== ARCHITECTURAL BLUEPRINT RULES (SPEED & PRECISION) ===
 
-Every slide MUST have "speakerNotes" with this structure:
-1. **Intent**: Why this slide exists in the narrative arc (1 sentence)
-2. **Key Message**: The one thing the audience must remember (1 sentence)
-3. **Delivery Cue**: How to present — timing, emphasis, rhetorical questions, pause points (1-2 sentences)
-4. **Transition**: The bridge sentence to the next slide (1 sentence)
+For this outline planning stage, produce the Master Architectural Blueprint of the presentation.
+Every slide must have:
+1. "slideNumber": sequential integer from 1 to the requested count.
+2. "headline": Assertive Action Title (5-10 words, contains the core takeaway/claim, NO trailing period, left-aligned).
+3. "subheadline": Strategic context or framing (1 concise sentence).
+4. "visualLayout": Selected intelligently from the archetype library (Hero, Split Comparison, Split Profile, Pyramid Hierarchy, Transformation Bridge, Radial Hub, Chevron Process, Formula Hero, Decision Matrix, Causation Tree, Case Study, Paired Rows, Horizontal Stack, Connected Stepper, Ascending Columns, Checklist, Closing Action, Section Divider, Table Comparison, Flow Diagram, Timeline, Stats, Two Column, Card Grid).
+5. "description": 1-2 crisp, authoritative sentences outlining what the slide proves or covers.
 
-=== CONTENT ELEVATION (EXECUTIVE COPYWRITING) ===
-
-- NEVER reduce the user's content to shallow 1-2 word bullet fragments.
-- ELEVATE draft notes into confident, authoritative executive prose.
-- Use strong active verbs: accelerate, eliminate, consolidate, architect, safeguard, quantify, compress.
-- Preserve 100% of the user's facts, technical terms, and data — but sharpen the framing.
-- Replace vague language ("improve things", "better results") with specific claims ("reduce cycle time by 60%", "consolidate 5 tools into 1 platform").
-- NEVER invent statistics, names, dates, or case studies not present in the source material.
-- Use [INSTRUCTOR TO CONFIRM], [X]-minute, [__]% for missing data.
-
-=== SELF-VALIDATION CHECKLIST (RUN BEFORE OUTPUT) ===
-
-Before returning JSON, mentally verify ALL of these:
-□ Slide 1 is Hero; last slide is Closing Action or Bold Impact
-□ No layout appears in 3+ consecutive slides
-□ Section Divider never appears on Slide 2
-□ Every headline is an Action Title (claim, not label) with NO trailing period
-□ 2-4 slides use Split Comparison or Split Profile
-□ 1-2 slides use Section Divider (for 15+ slide decks)
-□ speakerNotes exist for every single slide
-□ The arc creates emotional progression — not an information dump
-□ Every slide earns its place (no filler, no redundancy)
-□ Descriptions are substantive (2+ sentences), not placeholder text
-□ keyPoints contain 2-4 concrete, insightful points per slide
+NOTE: Detailed multi-paragraph copywriting, full card contents, tables, and 4-part speaker notes are generated in parallel during the slide rendering phase. Keep this blueprint concise, authoritative, and fast.
 
 OUTPUT FORMAT:
-Return ONLY a valid, parseable JSON array. No markdown, no backticks, no commentary.
+Return ONLY a valid, parseable JSON array. No markdown, no backticks, no preamble.
 [
   {
     "slideNumber": 1,
     "headline": "Active Executive Claim Without Period",
     "subheadline": "Strategic subheadline providing context",
     "visualLayout": "Hero",
-    "description": "Substantive 2-3 sentence summary of what this slide covers and why it matters in the narrative",
-    "keyPoints": ["Concrete insight 1 with specific detail", "Concrete insight 2 with evidence or framework"],
-    "speakerNotes": "Intent: ... Key message: ... Delivery: ... Transition: ..."
+    "description": "Crisp 1-2 sentence core message of what this slide covers in the narrative arc"
   }
 ]
 
 === LANGUAGE RULE (SUPREME PRIORITY) ===
-If the user's raw content explicitly requests a specific language (e.g. "in English", "bahasa inggris", "dalam bahasa Inggris", "use English"), ALL generated text — headlines, subheadlines, descriptions, keyPoints, and speakerNotes — MUST be written ENTIRELY in that requested language. Do NOT mix languages. Do NOT default to Indonesian if the user asked for English. The user's language instruction ALWAYS overrides any template examples.
+If the user's raw content explicitly requests a specific language (e.g. "in English", "bahasa inggris", "dalam bahasa Inggris", "use English"), ALL generated text — headlines, subheadlines, and descriptions — MUST be written ENTIRELY in that requested language. Do NOT mix languages. Do NOT default to Indonesian if the user asked for English. The user's language instruction ALWAYS overrides any template examples.
 `;
 
 export async function POST(req: NextRequest) {
@@ -536,16 +513,34 @@ function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideI
 }
 
 function generateFallbackBlueprint(content: string, count: number, purpose: string): OutlineSlideItem[] {
+  // Detect requested language
+  const isEnglish = /(?:in\s+english|bahasa\s*inggris|dalam\s*(?:bahasa\s*)?inggris|use\s+english|english\s+(?:language|version|deck|presentation))/i.test(content);
+
   // Clean user prompt to extract true subject
   const cleanedTopic = content
     .replace(/^(?:tolong\s+buatkan?|buatkan?|generate|bikin(?:kan)?|bantu\s+buatkan?|create\s+a?|deck\s+tentang|deck\s+topik|topik|presentasi\s+tentang)\s+/i, "")
     .replace(/[.!?]+$/, "")
-    .trim() || purpose || "Strategi Operasional";
+    .trim() || purpose || (isEnglish ? "Enterprise Operational Strategy" : "Strategi Operasional");
 
   const isCyber = /cyber|keamanan|siber|security|infosec|soc|zero\s*trust|malware|ransomware/i.test(content);
 
-  const cyberThemes = [
-    { title: `Arsitektur Ketahanan Keamanan Siber Enterprise`, sub: "Membangun pertahanan proaktif melindungi aset kritis di era AI & Cloud", layout: "Hero" },
+  const englishCyberThemes = [
+    { title: "Enterprise Cybersecurity Resilience Architecture", sub: "Architecting proactive defense to safeguard critical digital assets across Cloud and AI", layout: "Hero" },
+    { title: "The Modern Cyber Threat Landscape: Escalation Vectors & Attack Surface", sub: "Mapping systemic vulnerabilities, ransomware economics, and operational breach impact", layout: "Two Column" },
+    { title: "Zero Trust Architecture: Continuous Identity Verification & Microsegmentation", sub: "Transitioning from vulnerable perimeter assumptions to perpetual least-privilege enforcement", layout: "Horizontal Stack" },
+    { title: "The Three Pillars of Defense: People, Governance, and Autonomous Security", sub: "Synchronizing threat intelligence, human vigilance, and AI-accelerated response telemetry", layout: "Pyramid Hierarchy" },
+    { title: "Next-Gen SOC Transformation: Compressing Incident Detection Time by 80%", sub: "Replacing reactive manual alert triage with automated telemetry and predictive containment", layout: "Split Comparison" },
+    { title: "Real-Time Incident Response Lifecycle: From Ingestion to Neutralization", sub: "Continuous lifecycle workflow across detection, forensics, containment, and system hardening", layout: "Connected Stepper" },
+    { title: "Vulnerability Prioritization & Risk Exposure Scoring Matrix", sub: "Classifying enterprise assets against business impact, exploitability, and compliance exposure", layout: "Table Comparison" },
+    { title: "Enterprise Governance, Regulatory Compliance & Data Protection Audit", sub: "Enforcing alignment with NIST CSF 2.0, ISO 27001, and cross-border privacy mandates", layout: "Checklist" },
+    { title: "12-Month Cybersecurity Capability Maturity Roadmap", sub: "Phased milestone execution establishing institutional security maturity across all business units", layout: "Timeline" },
+    { title: "Executive Mandate: Three Immediate Directives for the Board", sub: "Actionable governance decisions required to fortify organizational resilience against systemic breach", layout: "Closing Action" },
+    { title: "The Resilience Formula: Visibility × Speed of Neutralization = Controlled Risk", sub: "Quantifying security return on investment and financial risk reduction for enterprise leadership", layout: "Formula Hero" },
+    { title: "Unified Security Operations Ecosystem & Telemetry Hub", sub: "Consolidating endpoint, cloud identity, and network telemetry into an integrated defense fabric", layout: "Radial Hub" },
+  ];
+
+  const indonesianCyberThemes = [
+    { title: "Arsitektur Ketahanan Keamanan Siber Enterprise", sub: "Membangun pertahanan proaktif melindungi aset kritis di era AI & Cloud", layout: "Hero" },
     { title: "Lanskap Ancaman Siber: Eskalasi Serangan & Kerentanan Sistem", sub: "Memetakan vektor serangan kritis dan dampak finansial pelanggaran data", layout: "Two Column" },
     { title: "Paradigma Zero Trust: Validasi Identitas & Akses Berkelanjutan", sub: "Beralih dari perimeter konvensional ke verifikasi identitas berlapis", layout: "Horizontal Stack" },
     { title: "Tiga Pilar Pertahanan: Tata Kelola, Manusia, dan Otomasi", sub: "Menyelaraskan budaya keamanan, SOP mitigasi, dan AI security operations", layout: "Pyramid Hierarchy" },
@@ -559,7 +554,20 @@ function generateFallbackBlueprint(content: string, count: number, purpose: stri
     { title: "Pusat Koordinasi Ekosistem Keamanan Lintas Divisi", sub: "Mengintegrasikan telemetry endpoint, cloud, dan jaringan dalam satu cockpit", layout: "Radial Hub" },
   ];
 
-  const defaultThemes = [
+  const englishDefaultThemes = [
+    { title: `${cleanedTopic}: Strategic Architecture & Leadership Roadmap`, sub: "Comprehensive framework to establish operational excellence and sustainable competitive advantage", layout: "Hero" },
+    { title: "Strategic Diagnosis: Core Frictions and Market Constraints", sub: "Pinpointing root-cause bottlenecks and systemic friction inhibiting organizational velocity", layout: "Two Column" },
+    { title: "Integrated Solution Architecture: Three Strategic Transformation Pillars", sub: "A structured triad aligning organizational governance, human capability, and technology platforms", layout: "Horizontal Stack" },
+    { title: "Capability Maturity Hierarchy: The Ascent to World-Class Execution", sub: "Progressive capability tiers advancing from baseline standardization to intelligent autonomous workflows", layout: "Pyramid Hierarchy" },
+    { title: "Comparative Impact Study: Measurable Operational Performance Shifts", sub: "Empirical proof demonstrating cycle time compression and significant cost reduction", layout: "Split Comparison" },
+    { title: "Standardized Execution Pipeline: End-to-End Delivery Stepper", sub: "Systematic operational lifecycle from inception through automated deployment and continuous evaluation", layout: "Connected Stepper" },
+    { title: "Strategic Options Evaluation Matrix & Multi-Factor Trade-Offs", sub: "Multi-dimensional decision matrix assessing cost, speed of value capture, and systemic risk", layout: "Table Comparison" },
+    { title: "Governance Readiness & Operational Quality Verification Checklist", sub: "Executive criteria ensuring strict regulatory compliance, stability, and audit readiness", layout: "Checklist" },
+    { title: "Strategic Execution Roadmap: Core Value-Capture Milestones", sub: "Phased implementation timeline with empirical checkpoints across immediate and future horizons", layout: "Timeline" },
+    { title: "Executive Mandate: Three Critical Directives to Deploy", sub: "Decisive action priorities with clear ownership allocation and aggressive timeline targets", layout: "Closing Action" },
+  ];
+
+  const indonesianDefaultThemes = [
     { title: `Strategi & Transformasi ${cleanedTopic}`, sub: "Peta jalan komprehensif mencapai keunggulan kompetitif dan efisiensi operasional", layout: "Hero" },
     { title: "Diagnosis Tantangan Utama: Hambatan dan Titik Gesekan Saat Ini", sub: "Mengidentifikasi akar permasalahan operasional yang menghambat skala bisnis", layout: "Two Column" },
     { title: "Arsitektur Solusi Terpadu: Tiga Pilar Keberhasilan Eksekusi", sub: "Kerangka terstruktur menyelaraskan strategi, kapabilitas manusia, dan teknologi", layout: "Horizontal Stack" },
@@ -572,7 +580,9 @@ function generateFallbackBlueprint(content: string, count: number, purpose: stri
     { title: "Mandat Aksi Eksekutif: 3 Prioritas Utama yang Harus Diluncurkan", sub: "Instruksi tindakan nyata dengan alokasi kepemilikan dan target waktu yang tegas", layout: "Closing Action" },
   ];
 
-  const themes = isCyber ? cyberThemes : defaultThemes;
+  const themes = isEnglish
+    ? (isCyber ? englishCyberThemes : englishDefaultThemes)
+    : (isCyber ? indonesianCyberThemes : indonesianDefaultThemes);
 
   return Array.from({ length: count }, (_, idx) => {
     const isFirst = idx === 0;
@@ -581,7 +591,8 @@ function generateFallbackBlueprint(content: string, count: number, purpose: stri
     const theme = themes[themeIdx];
 
     const layout = isFirst ? "Hero" : isLast ? "Closing Action" : theme.layout;
-    const headline = isFirst ? theme.title : isLast ? theme.title : (idx < themes.length ? theme.title : `${theme.title} — Bagian ${Math.floor(idx / themes.length) + 1}`);
+    const partSuffix = isEnglish ? ` — Part ${Math.floor(idx / themes.length) + 1}` : ` — Bagian ${Math.floor(idx / themes.length) + 1}`;
+    const headline = isFirst ? theme.title : isLast ? theme.title : (idx < themes.length ? theme.title : `${theme.title}${partSuffix}`);
     const subheadline = theme.sub;
 
     return {
@@ -589,13 +600,9 @@ function generateFallbackBlueprint(content: string, count: number, purpose: stri
       headline,
       subheadline,
       visualLayout: layout,
-      description: `Analisis strategis mendalam mengenai ${theme.title} guna memastikan integrasi optimal, mitigasi risiko proaktif, dan dampak bisnis terukur.`,
-      keyPoints: [
-        `Identifikasi faktor keberhasilan utama untuk ${theme.title}.`,
-        `Standarisasi protokol eksekusi guna mengeliminasi latensi operasional.`,
-        `Pengukuran dampak menggunakan indikator kinerja kunci secara berkala.`,
-      ],
-      speakerNotes: `Intent: Paparkan ${theme.title} sebagai pilar penting dalam narasi keseluruhan. Key message: ${theme.sub}. Delivery: Tekankan urgensi dan manfaat strategis bagi kepemimpinan eksekutif. Transition: Hubungkan konsep ini ke langkah implementasi berikutnya.`,
+      description: isEnglish
+        ? `Authoritative strategic analysis of ${theme.title} establishing operational clarity and driving measurable executive impact.`
+        : `Analisis strategis mendalam mengenai ${theme.title} guna memastikan integrasi optimal, mitigasi risiko proaktif, dan dampak bisnis terukur.`,
     };
   });
 }

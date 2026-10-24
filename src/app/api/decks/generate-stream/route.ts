@@ -406,13 +406,17 @@ Generate exactly ${targetSlides} structured slides in strict JSON array format.
           timeout: 45000,
         });
 
+        const isReasoner = modelToUse === "deepseek-reasoner" || modelToUse.includes("reasoner");
+
         const response = await aiClient.chat.completions.create({
           model: modelToUse,
-          temperature: 0.3,
-          messages: [
-            { role: "system", content: LAUNCHER_SYSTEM_PROMPT },
-            { role: "user", content: userPrompt },
-          ],
+          ...(isReasoner ? {} : { temperature: 0.3 }),
+          messages: isReasoner
+            ? [{ role: "user", content: `${LAUNCHER_SYSTEM_PROMPT}\n\n${userPrompt}` }]
+            : [
+                { role: "system", content: LAUNCHER_SYSTEM_PROMPT },
+                { role: "user", content: userPrompt },
+              ],
           stream: false,
         });
 

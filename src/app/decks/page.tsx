@@ -630,8 +630,11 @@ export function parsePromptBreakdown(text: string): ParsedSlideBreakdown[] {
     });
   }
 
-  // 4. Fallback: Split by paragraphs (preserve all paragraphs, no arbitrary cap)
+  // 4. Fallback: Split by paragraphs ONLY if there are at least 2 distinct paragraphs.
+  // A single paragraph or prompt is an instruction for the AI, not a pre-formatted multi-slide deck!
   const paras = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  if (paras.length < 2) return [];
+
   return paras.map((p, i) => ({
     slideNumber: i + 1,
     headline: p.split("\n")[0]?.replace(/^[#\s*•-]+/, "").trim() || `Slide ${i + 1}`,
@@ -6330,10 +6333,13 @@ export default function DeckGeneratorPage() {
   const detectedSlideCount = detectPromptSlideCount(content);
   const [editableBreakdown, setEditableBreakdown] = useState<ParsedSlideBreakdown[]>([]);
 
-  // Synchronize editable breakdown cards whenever content or step changes
+  // Synchronize editable breakdown cards when content contains explicit multi-slide outline
   useEffect(() => {
     if (content.trim()) {
-      setEditableBreakdown(parsePromptBreakdown(content));
+      const parsed = parsePromptBreakdown(content);
+      if (parsed.length >= 2) {
+        setEditableBreakdown(parsed);
+      }
     }
   }, [content]);
 
@@ -6654,7 +6660,7 @@ async function streamBuildSlide(
       // deck is custom-tailored to the user's actual content — never static.
       let workingBreakdown = editableBreakdown;
 
-      if (workingBreakdown.length === 0) {
+      if (workingBreakdown.length <= 1) {
         setGeneratingProgress(8);
         setGeneratingStage("🔍 Fase 1/3 — AI menganalisis struktur konten, mendeteksi topik & pola...");
 
@@ -6664,8 +6670,8 @@ async function streamBuildSlide(
         const targetCount = detectedCount && detectedCount >= 1 && detectedCount <= 100
           ? detectedCount
           : slideCountPreference === "Auto"
-          ? detectedSlideCount.count || 8
-          : parseInt(slideCountPreference.match(/\d+/)?.[0] || "8", 10);
+          ? detectedSlideCount.count || 20
+          : parseInt(slideCountPreference.match(/\d+/)?.[0] || "20", 10);
 
         try {
           setGeneratingProgress(12);
@@ -8047,7 +8053,7 @@ async function streamBuildSlide(
                 Target Slide:
               </span>
               <div className="inline-flex p-0.5 rounded-md bg-neutral-200/60 dark:bg-neutral-800 border border-neutral-200/60 dark:border-neutral-750 gap-0.5">
-                {[5, 10, 20, 35, 50, 75, 100].map((num) => (
+                {[5, 10, 20, 30, 35, 50, 75, 100].map((num) => (
                   <button
                     key={num}
                     type="button"
