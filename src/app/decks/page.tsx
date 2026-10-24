@@ -5713,7 +5713,7 @@ function SlideThumbnail({
   onClick: () => void;
 }) {
   return (
-    <div className="flex items-center gap-2 group w-full select-none">
+    <div id={`thumb-item-${index}`} className="flex items-center gap-2 group w-full select-none">
       <span
         className={`w-3.5 text-[11px] font-bold text-right tabular-nums transition-colors shrink-0 ${
           isActive
@@ -6455,6 +6455,16 @@ export default function DeckGeneratorPage() {
   const [slides, setSlides] = useState<SlideData[]>([]);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [isPresentation, setIsPresentation] = useState(false);
+
+  // Google Slides style: smoothly scroll active thumbnail into view within the filmstrip
+  useEffect(() => {
+    if (step === "slides") {
+      const el = document.getElementById(`thumb-item-${activeSlideIndex}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  }, [activeSlideIndex, step]);
 
   // Real-time Studio Monitor States
   const [generatingStage, setGeneratingStage] = useState("Menghubungkan ke AI...");
@@ -8459,11 +8469,11 @@ async function streamBuildSlide(
           {/* Main Studio Workspace Layout */}
           <div className="flex gap-3 sm:gap-4 min-h-[calc(100vh-210px)] relative">
             
-            {/* ──── LEFT COLUMN: VERTICAL NUMBERED SLIDE THUMBNAILS ──── */}
+            {/* ──── LEFT COLUMN: VERTICAL NUMBERED SLIDE THUMBNAILS (GOOGLE SLIDES STYLE FILMSTRIP) ──── */}
             {!isThumbnailCollapsed && (
-              <div className="hidden md:flex flex-col w-[175px] lg:w-[210px] shrink-0 border-r border-neutral-200/80 dark:border-neutral-800/80 pr-3 select-none justify-between">
-                {/* Thumbnails Scroll List: perfectly fits 5 slides in viewport, slide 6 requires scroll */}
-                <div className="flex-1 min-h-0 space-y-3.5 overflow-y-auto pr-1 scrollbar-hide pb-2">
+              <div className="hidden md:flex flex-col w-[185px] lg:w-[220px] shrink-0 border-r border-neutral-200/80 dark:border-neutral-800/80 pr-2 select-none justify-between sticky top-3.5 h-[calc(100vh-145px)] max-h-[calc(100vh-145px)]">
+                {/* Thumbnails Scroll List: Google Slides-style independent vertical scroll with visible scrollbar */}
+                <div className="flex-1 min-h-0 space-y-3 overflow-y-auto pr-1.5 pb-2 overscroll-contain slide-filmstrip-scroll">
                   {slides.map((slide, i) => (
                     <SlideThumbnail
                       key={`slide-thumb-${slide.id || 'item'}-${i}`}
@@ -8494,7 +8504,7 @@ async function streamBuildSlide(
                 </div>
 
                 {/* Bottom Left Toolbar Controls */}
-                <div className="pt-3 border-t border-neutral-200/80 dark:border-neutral-800 flex items-center justify-between text-neutral-400 text-xs shrink-0">
+                <div className="pt-2.5 border-t border-neutral-200/80 dark:border-neutral-800 flex items-center justify-between text-neutral-400 text-xs shrink-0">
                   <button
                     type="button"
                     onClick={() => {}}
@@ -8824,7 +8834,7 @@ async function streamBuildSlide(
             </div>
 
             {/* ──── RIGHT COLUMN: STUDIO ACTION TOOLBAR (MATCHING USER SCREENSHOT) ──── */}
-            <div className="hidden xl:flex flex-col items-center gap-4 py-2 px-1 border-l border-neutral-200/80 dark:border-neutral-800/80 pl-3 select-none">
+            <div className="hidden xl:flex flex-col items-center gap-4 py-2 px-1 border-l border-neutral-200/80 dark:border-neutral-800/80 pl-3 select-none sticky top-3.5 self-start">
               
               <button
                 type="button"

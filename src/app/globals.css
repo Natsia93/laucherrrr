@@ -836,3 +836,46 @@ html.theme-transitioning::view-transition-new(root) {
   width: 0 !important;
   height: 0 !important;
 }
+
+/* ==========================================================================
+   Google Slides Style Thumbnail Filmstrip Scrollbar
+   Dedicated sleek, always-scrollable vertical scrollbar for the left thumbnail list
+   ========================================================================== */
+.slide-filmstrip-scroll {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(160, 160, 160, 0.45) transparent !important;
+  overscroll-behavior: contain;
+}
+
+.slide-filmstrip-scroll::-webkit-scrollbar {
+  display: block !important;
+  width: 7px !important;
+}
+
+.slide-filmstrip-scroll::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.slide-filmstrip-scroll::-webkit-scrollbar-thumb {
+  background: rgba(160, 160, 160, 0.4) !important;
+  border-radius: 9999px !important;
+  transition: background 0.15s ease;
+}
+
+.slide-filmstrip-scroll:hover::-webkit-scrollbar-thumb,
+.slide-filmstrip-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(110, 110, 110, 0.65) !important;
+}
+
+.dark .slide-filmstrip-scroll {
+  scrollbar-color: rgba(130, 130, 130, 0.45) transparent !important;
+}
+
+.dark .slide-filmstrip-scroll::-webkit-scrollbar-thumb {
+  background: rgba(130, 130, 130, 0.4) !important;
+}
+
+.dark .slide-filmstrip-scroll:hover::-webkit-scrollbar-thumb,
+.dark .slide-filmstrip-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(180, 180, 180, 0.65) !important;
+}
