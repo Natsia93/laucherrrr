@@ -39,6 +39,14 @@ DO NOT USE A STATIC REPEATING PATTERN! The user has explicitly rejected rigid, p
 
 3. FULL CREATIVE PALETTE OF LAYOUTS:
    Freely combine, mix, and adapt from this diverse library according to what best fits the text:
+   - "Pyramid Hierarchy": 3-tier McKinsey apex pyramid (Apex Vision at peak -> Core Strategic Pillars in middle -> Foundation Enablers at base).
+   - "Transformation Bridge": 3-panel transformational shift comparing current friction (As-Is) to target outcome (To-Be) via a central catalyst engine.
+   - "Radial Hub": Central core operational hub (e.g. Data & AI Governance Core) with 4 surrounding domain satellites (e.g. Legal, Security, Capital, Operations).
+   - "Chevron Process": 5-step alternating chevron cycle (e.g. Frame -> Gather -> Evaluate -> Decide -> Act & Learn) with descriptions below, diagnostic status pills (e.g. "Fails here: wrong question"), and bottom full-width Key Insight strip.
+   - "Formula Hero": High-impact formula banner at top (THE FORMULA: Impact = Speed × Scale × Confidence) + 3 factor columns below + massive accent stat box (e.g. 61%).
+   - "Decision Matrix": 2x2 Quadrant matrix with labeled X/Y dimensional arrows (High stakes vs Low stakes, Low data richness vs High data richness) and 4 asymmetric executive quadrant treatments.
+   - "Causation Tree": Top metric callout + 3 cards with internal branching tree diagrams (root node -> 2 child nodes) + bottom takeaway quote strip with vertical yellow accent bar.
+   - "Case Study": Split layout: Left column with Situation background, 3 data metric tiles, and yellow Twist warning box; Right column with 3-line exercise sheet and numbered circles.
    - "Two Column": Dual perspectives, contrasting scenarios, or side-by-side core themes.
    - "Card Grid": 3 to 4 distinct categorical pillars, capability cards, or strategic tenets.
    - "Process": Step-by-step workflow, methodology, or procedural phases.
@@ -50,7 +58,6 @@ DO NOT USE A STATIC REPEATING PATTERN! The user has explicitly rejected rigid, p
    - "Connected Stepper": Connected track milestones or continuous lifecycle loop.
    - "Ascending Columns": Progressive intensity, capability maturity levels (L1, L2, L3), or tiered impact.
    - "Checklist": Executive governance checklist, readiness audit, or verification criteria.
-   - "Case Study": Real-world case study, scenario workout, or applied example.
    - "Stats": Quantitative metric callouts with authoritative context (when numbers exist).
    - "Bullets": Clean, high-impact executive takeaways with bold lead-ins.
    - "Closing Action": Final executive mandate with concrete next steps, ownership, and contact.
@@ -75,7 +82,7 @@ Return ONLY a valid, parseable JSON array of objects with schema:
     "slideNumber": 1,
     "headline": "Active Executive Claim Without Period",
     "subheadline": "Strategic subheadline providing context",
-    "visualLayout": "Hero" | "Two Column" | "Card Grid" | "Process" | "Timeline" | "Table Comparison" | "Flow Diagram" | "Horizontal Stack" | "Paired Rows" | "Connected Stepper" | "Ascending Columns" | "Checklist" | "Stats" | "Bullets" | "Case Study" | "Closing Action",
+    "visualLayout": "Hero" | "Pyramid Hierarchy" | "Transformation Bridge" | "Radial Hub" | "Chevron Process" | "Formula Hero" | "Decision Matrix" | "Causation Tree" | "Case Study" | "Two Column" | "Card Grid" | "Process" | "Timeline" | "Table Comparison" | "Flow Diagram" | "Horizontal Stack" | "Paired Rows" | "Connected Stepper" | "Ascending Columns" | "Checklist" | "Stats" | "Bullets" | "Closing Action",
     "description": "Substantive summary of what this slide covers",
     "keyPoints": ["Bullet 1", "Bullet 2"],
     "speakerNotes": "Executive talking points and facilitation timing guidance"
@@ -142,8 +149,8 @@ ${rulesDoc}
 ================================================================================
 MANDATORY COMPLIANCE INSTRUCTIONS:
 - Faithfully study and execute the governing .md document above in its entirety.
-- Map the presentation arc to the archetype layouts defined in the document (Hero, Section Divider, Paired Rows, Horizontal Stack, Connected Stepper, Ascending Columns, Checklist, Closing Action).
-- Obey the Rule of Rhythm: Never repeat the same layout more than twice in a row.
+- FREEDOM & CONTENT-FIRST SELECTION: Do NOT apply a rigid, identical layout sequence across decks! Intelligently map each slide to the visual archetype that BEST expresses its specific content from the entire library (Formula Hero, Chevron Process, Decision Matrix, Causation Tree, Case Study, Flow Diagram, Architecture Stack, Strategic Roadmap Timeline, Table Comparison, Horizontal Stack, Paired Rows, Connected Stepper, Ascending Columns, Checklist, Bar Chart, Donut Chart, Stats Grid, Two Column, Card Grid).
+- Obey the Rule of Rhythm: Never repeat the same layout more than twice in a row. Create a rich, diverse presentation rhythm.
 - Formulate substantive Action Titles (5-9 words) with NO trailing period.
 ` : ""}
 
@@ -161,7 +168,7 @@ Generate a master blueprint with EXACTLY ${count} sequential slides in strict JS
           model: "gemini-2.5-flash",
           generationConfig: {
             responseMimeType: "application/json",
-            temperature: 0.3,
+            temperature: 0.6,
           },
         });
 
@@ -192,7 +199,7 @@ Generate a master blueprint with EXACTLY ${count} sequential slides in strict JS
 
         const res = await client.chat.completions.create({
           model: requestedModel || (isDeepseek ? "deepseek-chat" : "gpt-4o-mini"),
-          temperature: 0.3,
+          temperature: 0.6,
           messages: [
             { role: "system", content: OUTLINE_SYSTEM_PROMPT },
             { role: "user", content: userPrompt },

@@ -59,7 +59,7 @@ motion.h3.displayName = "StaticMotionH3";
 motion.h4.displayName = "StaticMotionH4";
 motion.h5.displayName = "StaticMotionH5";
 
-import { ArrowRight, Check, X, Sparkles, Layers, Cpu, Database, Globe } from "lucide-react";
+import { ArrowRight, Check, X, Sparkles, Layers, Cpu, Database, Globe, AlertTriangle } from "lucide-react";
 
 function safeString(val: any, fallback = ""): string {
   if (val === null || val === undefined) return fallback;
@@ -254,16 +254,16 @@ export function ComparisonTable({
   };
 
   return (
-    <div className="w-full flex-1 min-h-0 overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-[#151515]/95">
-      <table className="w-full text-left border-collapse text-[11px] sm:text-xs">
+    <div className={`w-full flex-1 min-h-0 overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-[#151515]/95 shadow-2xs flex flex-col ${isPresentation ? "my-auto justify-center" : ""}`}>
+      <table className={`w-full text-left border-collapse ${isPresentation ? "text-xs sm:text-sm lg:text-[15px] h-full" : "text-[11px] sm:text-xs"}`}>
         <thead>
           <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/90 dark:bg-neutral-900/70 sticky top-0 z-10 backdrop-blur-xs">
             {tableHeaders.map((hdr, i) => (
               <th
                 key={i}
-                className={`p-1.5 sm:p-2 font-bold uppercase tracking-wider ${
+                className={`font-bold uppercase tracking-wider ${
                   i === 0 ? "text-neutral-700 dark:text-neutral-200" : "text-center text-neutral-500 dark:text-neutral-400"
-                } ${isPresentation ? "text-xs" : "text-[10px] sm:text-[11px]"}`}
+                } ${isPresentation ? "text-xs sm:text-sm lg:text-sm p-3 sm:p-4" : "p-1.5 sm:p-2 text-[10px] sm:text-[11px]"}`}
                 style={i === tableHeaders.length - 1 && !hasCustomHeaders ? { color: primaryColor === "#FFDE3C" ? "#B45309" : primaryColor } : undefined}
               >
                 {hdr}
@@ -271,33 +271,33 @@ export function ComparisonTable({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/80">
-          {items.slice(0, 4).map((row, idx) => (
+        <tbody className={`divide-y divide-neutral-100 dark:divide-neutral-800/80 ${isPresentation ? "divide-y-2" : ""}`}>
+          {items.slice(0, 5).map((row, idx) => (
             <motion.tr
               key={idx}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25, delay: idx * 0.05, ease: "easeOut" }}
-              className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30 transition-colors"
+              className={`hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30 transition-colors ${isPresentation ? "min-h-[48px]" : ""}`}
             >
               {isMultiCol && row.cells ? (
                 row.cells.map((cellVal, cIdx) => (
                   <td
                     key={cIdx}
-                    className={`p-1.5 sm:p-2 ${cIdx === 0 ? "font-semibold text-neutral-900 dark:text-white" : "text-center text-neutral-700 dark:text-neutral-300"}`}
+                    className={`${isPresentation ? "p-3 sm:p-4 lg:p-4.5" : "p-1.5 sm:p-2"} ${cIdx === 0 ? "font-semibold text-neutral-900 dark:text-white" : "text-center text-neutral-700 dark:text-neutral-300"}`}
                   >
                     {renderCellContent(cellVal, cIdx === row.cells!.length - 1)}
                   </td>
                 ))
               ) : (
                 <>
-                  <td className="p-1.5 sm:p-2 font-semibold text-neutral-800 dark:text-neutral-200">
+                  <td className={`${isPresentation ? "p-3 sm:p-4 lg:p-4.5" : "p-1.5 sm:p-2"} font-semibold text-neutral-800 dark:text-neutral-200`}>
                     {row.feature || ""}
                   </td>
-                  <td className="p-1.5 sm:p-2 text-center text-neutral-600 dark:text-neutral-400">
+                  <td className={`${isPresentation ? "p-3 sm:p-4 lg:p-4.5" : "p-1.5 sm:p-2"} text-center text-neutral-600 dark:text-neutral-400`}>
                     {renderCellContent(row.current)}
                   </td>
-                  <td className="p-1.5 sm:p-2 text-center font-bold text-neutral-950 dark:text-white">
+                  <td className={`${isPresentation ? "p-3 sm:p-4 lg:p-4.5" : "p-1.5 sm:p-2"} text-center font-bold text-neutral-950 dark:text-white`}>
                     {renderCellContent(row.proposed, true)}
                   </td>
                 </>
@@ -458,69 +458,144 @@ export interface QuadrantData {
   yAxisLabel?: string;
 }
 
+export interface QuadrantItem {
+  title: string;
+  subtitle?: string;
+}
+
+export interface QuadrantData {
+  q1?: QuadrantItem[];
+  q2?: QuadrantItem[];
+  q3?: QuadrantItem[];
+  q4?: QuadrantItem[];
+  yAxisTop?: string;
+  yAxisBottom?: string;
+  xAxisLeft?: string;
+  xAxisRight?: string;
+}
+
 export function QuadrantMatrix({
   data,
-  primaryColor = "#FFDE3C",
+  primaryColor = "#005AAB",
+  accentColor = "#FFDD3C",
   isPresentation = false,
 }: {
   data?: QuadrantData;
   primaryColor?: string;
+  accentColor?: string;
   isPresentation?: boolean;
 }) {
-  if (!data || (!data.q1?.length && !data.q2?.length && !data.q3?.length && !data.q4?.length)) return null;
-  const matrix = data;
+  const matrix = data || {};
+  const q1Items = matrix.q1 && matrix.q1.length > 0 ? matrix.q1 : [{ title: "Human judgment only", subtitle: "You decide. AI may inform, but does not drive the call." }];
+  const q2Items = matrix.q2 && matrix.q2.length > 0 ? matrix.q2 : [{ title: "Augment with AI", subtitle: "AI proposes. You stress-test it, decide and own the reasoning." }];
+  const q3Items = matrix.q3 && matrix.q3.length > 0 ? matrix.q3 : [{ title: "Automate with caution", subtitle: "Automate the routine, but sample and audit the results." }];
+  const q4Items = matrix.q4 && matrix.q4.length > 0 ? matrix.q4 : [{ title: "Delegate to AI", subtitle: "AI decides within rules you set. You monitor and audit." }];
 
-  const quadrants = [
-    { title: "Quick Wins", badge: "High Impact • Low Effort", items: matrix.q1 || [], bg: "bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-200" },
-    { title: "Major Strategic Bets", badge: "High Impact • High Effort", items: matrix.q2 || [], bg: "bg-blue-500/10 border-blue-500/30 text-blue-900 dark:text-blue-200" },
-    { title: "Fill-In Tasks", badge: "Low Impact • Low Effort", items: matrix.q3 || [], bg: "bg-neutral-500/10 border-neutral-500/20 text-neutral-800 dark:text-neutral-300" },
-    { title: "Deprioritize / Avoid", badge: "Low Impact • High Effort", items: matrix.q4 || [], bg: "bg-rose-500/10 border-rose-500/20 text-rose-900 dark:text-rose-300" },
+  // 4 Asymmetric Executive Quadrants matching Slide 3 Pattern:
+  // Q1 (Top-Left): Solid Primary Blue with Yellow Lead
+  // Q2 (Top-Right): Solid Accent Yellow with Dark Text
+  // Q3 (Bottom-Left): Light Bordered Card
+  // Q4 (Bottom-Right): Blue Bordered Card
+  const qList = [
+    {
+      items: q1Items,
+      defaultTitle: "High Stakes & Direct Action",
+      style: {
+        container: "bg-[#005AAB] text-white border border-[#005AAB] shadow-xs",
+        title: "text-[#FFDD3C] font-bold",
+        desc: "text-white/90 font-medium",
+      },
+    },
+    {
+      items: q2Items,
+      defaultTitle: "Augment with Strategy",
+      style: {
+        container: "bg-[#FFDD3C] text-neutral-950 border border-[#E5C310] shadow-xs",
+        title: "text-neutral-950 font-bold",
+        desc: "text-neutral-800 font-medium",
+      },
+    },
+    {
+      items: q3Items,
+      defaultTitle: "Automate with Caution",
+      style: {
+        container: "bg-white dark:bg-[#161616] text-neutral-900 dark:text-neutral-100 border border-neutral-200 dark:border-neutral-800 shadow-2xs",
+        title: "text-neutral-900 dark:text-white font-bold",
+        desc: "text-neutral-600 dark:text-neutral-400 font-normal",
+      },
+    },
+    {
+      items: q4Items,
+      defaultTitle: "Delegate & Supervise",
+      style: {
+        container: "bg-white dark:bg-[#161616] text-neutral-900 dark:text-neutral-100 border-2 border-[#005AAB] shadow-2xs",
+        title: "text-[#005AAB] dark:text-[#60A5FA] font-bold",
+        desc: "text-neutral-600 dark:text-neutral-400 font-normal",
+      },
+    },
   ];
 
+  const yTop = matrix.yAxisTop || "High stakes";
+  const yBottom = matrix.yAxisBottom || "Low stakes";
+  const xLeft = matrix.xAxisLeft || "Low data richness";
+  const xRight = matrix.xAxisRight || "High data richness";
+
   return (
-    <div className="w-full h-full flex flex-col justify-center">
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full">
-        {quadrants.map((quad, idx) => (
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.35, delay: idx * 0.08, ease: "easeOut" }}
-            className={`rounded-md border p-2.5 sm:p-3 flex flex-col justify-between min-h-[90px] sm:min-h-[110px] ${quad.bg}`}
-          >
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className={`${isPresentation ? "text-xs" : "text-[10px] sm:text-[11px]"} font-bold uppercase tracking-wider`}>
-                  {quad.title}
-                </span>
-                <span className="text-[9px] opacity-75 hidden sm:inline-block font-sf font-semibold">
-                  {quad.badge}
-                </span>
+    <div className="w-full flex-1 flex flex-col justify-center my-auto relative pl-6 pb-6 pt-2 pr-2">
+      {/* Y-Axis Arrow and Labels */}
+      <div className="absolute left-0 top-0 bottom-6 w-5 flex flex-col justify-between items-center text-[10px] sm:text-[11px] font-bold text-[#005AAB] dark:text-[#60A5FA] select-none">
+        <span className="text-center leading-tight tracking-tight">{yTop}</span>
+        <div className="w-0.5 flex-1 my-1 bg-[#005AAB] relative flex items-start justify-center">
+          <div className="w-0 h-0 border-l-[3.5px] border-l-transparent border-r-[3.5px] border-r-transparent border-b-[6px] border-b-[#005AAB] absolute -top-1" />
+        </div>
+        <span className="text-center leading-tight tracking-tight text-neutral-500">{yBottom}</span>
+      </div>
+
+      {/* 2x2 Quadrant Grid */}
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5 w-full h-full">
+        {qList.map((q, idx) => {
+          const first = q.items[0];
+          const title = first?.title || q.defaultTitle;
+          const desc = first?.subtitle || q.items.slice(1).map(it => it.title).join(". ") || "";
+
+          return (
+            <div
+              key={idx}
+              className={`rounded-lg p-3 sm:p-4.5 flex flex-col justify-between min-h-[95px] sm:min-h-[125px] transition-transform hover:scale-[1.008] ${q.style.container}`}
+            >
+              <div>
+                <h5 className={`${isPresentation ? "text-sm sm:text-base lg:text-lg" : "text-xs sm:text-[13.5px]"} ${q.style.title} leading-tight mb-1 tracking-tight`}>
+                  {title}
+                </h5>
+                {desc && (
+                  <p className={`${isPresentation ? "text-xs sm:text-sm" : "text-[10.5px] sm:text-xs"} ${q.style.desc} leading-relaxed mt-1`}>
+                    {desc}
+                  </p>
+                )}
               </div>
 
-              <div className="space-y-1 sm:space-y-1.5 mt-1.5">
-                {quad.items.map((item, itemIdx) => (
-                  <motion.div
-                    key={itemIdx}
-                    initial={{ opacity: 0, x: -4 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.25, delay: idx * 0.08 + itemIdx * 0.05 }}
-                    className="bg-white/80 dark:bg-black/40 rounded px-2 py-1 border border-black/5 dark:border-white/10"
-                  >
-                    <div className={`${isPresentation ? "text-xs sm:text-sm" : "text-[11px] sm:text-xs"} font-semibold text-neutral-900 dark:text-white leading-tight`}>
-                      {item.title}
+              {q.items.length > 1 && !first?.subtitle && (
+                <div className="space-y-1 mt-2 pt-1 border-t border-black/10 dark:border-white/10">
+                  {q.items.slice(1, 3).map((it, iIdx) => (
+                    <div key={iIdx} className="text-[10px] sm:text-[11px] opacity-90 truncate flex items-center gap-1.5">
+                      <span>•</span>
+                      <span>{it.title}</span>
                     </div>
-                    {item.subtitle && (
-                      <div className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">
-                        {item.subtitle}
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </motion.div>
-        ))}
+          );
+        })}
+      </div>
+
+      {/* X-Axis Arrow and Labels */}
+      <div className="absolute left-6 right-0 bottom-0 h-5 flex items-center justify-between text-[10px] sm:text-[11px] font-bold select-none">
+        <span className="text-neutral-500">{xLeft}</span>
+        <div className="flex-1 mx-3 h-0.5 bg-[#005AAB] relative flex items-center justify-end">
+          <div className="w-0 h-0 border-t-[3.5px] border-t-transparent border-b-[3.5px] border-b-transparent border-l-[6px] border-l-[#005AAB] absolute -right-1" />
+        </div>
+        <span className="text-[#005AAB] dark:text-[#60A5FA]">{xRight}</span>
       </div>
     </div>
   );
@@ -681,59 +756,67 @@ export interface ChevronStep {
   percentage?: string;
   description?: string;
   position?: "top" | "bottom";
+  pill?: string;
+  pillType?: "blue" | "yellow" | "neutral" | "danger";
 }
 
 export function ChevronProcessBar({
   steps,
-  primaryColor = "#FFDE3C",
+  primaryColor = "#005AAB",
+  accentColor = "#FFDD3C",
+  keyInsight,
   isPresentation = false,
 }: {
   steps?: ChevronStep[];
   primaryColor?: string;
+  accentColor?: string;
+  keyInsight?: string;
   isPresentation?: boolean;
 }) {
   if (!steps || steps.length === 0) return null;
   const items = steps;
 
-  return (
-    <div className="w-full flex flex-col justify-center py-2">
-      {/* Top Percentage Callouts */}
-      <div className="grid grid-cols-5 gap-1 mb-2">
-        {items.map((step, i) => (
-          <div key={i} className="text-center px-1">
-            {step.position === "top" && (
-              <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: i * 0.08 }}
-                className="flex flex-col items-center"
-              >
-                <span className={`${isPresentation ? "text-2xl" : "text-sm sm:text-base"} font-black text-neutral-900 dark:text-white`}>
-                  {step.percentage}
-                </span>
-                <p className={`${isPresentation ? "text-xs" : "text-[9px]"} text-neutral-500 truncate max-w-full`}>
-                  {step.description}
-                </p>
-              </motion.div>
-            )}
-          </div>
-        ))}
-      </div>
+  // Determine if this is the modern ITB multi-part cycle layout with descriptions below
+  const hasBottomDetails = items.some((s) => s.description || s.pill);
 
-      {/* Connected Chevron Shape Chain */}
-      <div className="w-full flex items-center h-8 sm:h-10">
+  return (
+    <div className="w-full flex flex-col justify-center my-auto py-1">
+      {/* Top Percentage Callouts (Legacy compatibility if position: top) */}
+      {!hasBottomDetails && (
+        <div className="grid grid-cols-5 gap-1 mb-2">
+          {items.map((step, i) => (
+            <div key={i} className="text-center px-1">
+              {step.position === "top" && (
+                <div className="flex flex-col items-center">
+                  <span className={`${isPresentation ? "text-2xl" : "text-sm sm:text-base"} font-black text-neutral-900 dark:text-white`}>
+                    {step.percentage}
+                  </span>
+                  <p className={`${isPresentation ? "text-xs" : "text-[9px]"} text-neutral-500 truncate max-w-full`}>
+                    {step.description}
+                  </p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Connected Chevron Shape Chain (Alternating Accent Yellow & Deep Blue) */}
+      <div className={`w-full flex items-center ${isPresentation ? "h-11 sm:h-14" : "h-9 sm:h-10"}`}>
         {items.map((step, i) => {
           const isYellow = i % 2 === 0;
+          const bg = isYellow ? accentColor : primaryColor;
+          const textColor = isYellow ? "#111111" : "#FFFFFF";
+
           return (
-            <motion.div
+            <div
               key={i}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: i * 0.08, ease: "easeOut" }}
-              className="flex-1 h-full flex items-center justify-center relative font-bold text-[10px] sm:text-xs transition-transform hover:scale-[1.02]"
+              className={`flex-1 h-full flex items-center justify-center relative font-bold ${
+                isPresentation ? "text-xs sm:text-sm lg:text-[15px]" : "text-[10px] sm:text-xs"
+              } transition-transform hover:scale-[1.01]`}
               style={{
-                backgroundColor: isYellow ? primaryColor : "#181818",
-                color: isYellow ? "#111111" : "#FFFFFF",
+                backgroundColor: bg,
+                color: textColor,
                 clipPath:
                   i === 0
                     ? "polygon(0% 0%, 88% 0%, 100% 50%, 88% 100%, 0% 100%)"
@@ -744,34 +827,74 @@ export function ChevronProcessBar({
                 zIndex: items.length - i,
               }}
             >
-              <span className="truncate px-3 font-sf font-bold">{step.title}</span>
-            </motion.div>
+              <span className="truncate px-2 sm:px-3 font-bold tracking-tight">
+                {step.title}
+              </span>
+            </div>
           );
         })}
       </div>
 
-      {/* Bottom Percentage Callouts */}
-      <div className="grid grid-cols-5 gap-1 mt-2">
-        {items.map((step, i) => (
-          <div key={i} className="text-center px-1">
-            {step.position === "bottom" && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: i * 0.08 }}
-                className="flex flex-col items-center"
-              >
-                <span className={`${isPresentation ? "text-2xl" : "text-sm sm:text-base"} font-black text-neutral-900 dark:text-white`}>
-                  {step.percentage}
-                </span>
-                <p className={`${isPresentation ? "text-xs" : "text-[9px]"} text-neutral-500 truncate max-w-full`}>
+      {/* Under-Chevron Step Descriptions & Status Pills (Slide 1 Pattern) */}
+      {hasBottomDetails ? (
+        <div className={`grid grid-cols-${items.length} gap-2 sm:gap-3.5 mt-2.5 sm:mt-3`}>
+          {items.map((step, i) => (
+            <div key={i} className="flex flex-col justify-start items-start text-left px-1">
+              {step.description && (
+                <p className={`text-neutral-700 dark:text-neutral-300 ${
+                  isPresentation ? "text-xs sm:text-sm leading-relaxed" : "text-[10px] sm:text-[11px] leading-snug"
+                } line-clamp-3 font-normal`}>
                   {step.description}
                 </p>
-              </motion.div>
-            )}
+              )}
+              {step.pill && (
+                <div className="mt-2">
+                  <span className={`inline-block px-2.5 py-1 rounded-full font-semibold ${
+                    isPresentation ? "text-[11px] sm:text-xs" : "text-[9.5px] sm:text-[10px]"
+                  } ${
+                    step.pillType === "neutral"
+                      ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700"
+                      : "bg-[#005AAB] text-white shadow-2xs"
+                  }`}>
+                    {step.pill}
+                  </span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* Legacy Bottom Percentage Callouts */
+        <div className="grid grid-cols-5 gap-1 mt-2">
+          {items.map((step, i) => (
+            <div key={i} className="text-center px-1">
+              {step.position === "bottom" && (
+                <div className="flex flex-col items-center">
+                  <span className={`${isPresentation ? "text-2xl" : "text-sm sm:text-base"} font-black text-neutral-900 dark:text-white`}>
+                    {step.percentage}
+                  </span>
+                  <p className={`${isPresentation ? "text-xs" : "text-[9px]"} text-neutral-500 truncate max-w-full`}>
+                    {step.description}
+                  </p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Full-Width Key Insight Bar (Slide 1 Bottom Pattern) */}
+      {keyInsight && (
+        <div className={`w-full mt-3 sm:mt-4 rounded-md overflow-hidden flex items-stretch border border-neutral-200/80 dark:border-neutral-800 shadow-2xs`} style={{ backgroundColor: primaryColor }}>
+          <div className="w-2 sm:w-2.5 shrink-0" style={{ backgroundColor: accentColor }} />
+          <div className={`p-2.5 sm:p-3 text-white font-medium ${
+            isPresentation ? "text-xs sm:text-sm lg:text-[15px]" : "text-[11px] sm:text-xs"
+          } leading-snug`}>
+            <strong className="font-bold mr-1.5" style={{ color: accentColor }}>Key insight:</strong>
+            <span>{keyInsight}</span>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1583,8 +1706,8 @@ export interface PairedRowItem {
 
 export function PairedRows({
   items,
-  leftHeader = "MASALAH",
-  rightHeader = "PERBAIKAN",
+  leftHeader,
+  rightHeader,
   primaryColor = "#005AAB",
   isPresentation = false,
 }: {
@@ -1596,14 +1719,33 @@ export function PairedRows({
 }) {
   if (!items || items.length === 0) return null;
 
+  // Auto-detect language if headers are not explicitly provided
+  const sampleText = items
+    .map((r) => `${r.left || ""} ${r.right || ""} ${r.leftLead || ""} ${r.rightLead || ""}`)
+    .join(" ");
+  const isEnglish = /\b(the|and|for|our|with|from|action|outcome|strategy|strategic|market|value|approach|problem|solution|system|model|impact|growth|result|deliver|health|risk|care|data|platform)\b/i.test(sampleText);
+  const hasActionOutcome = /\b(?:strategic\s*action|action|mandat|inisiatif)\b/i.test(sampleText);
+
+  const defaultLeft = isEnglish
+    ? hasActionOutcome ? "STRATEGIC ACTION" : "CHALLENGE"
+    : "MASALAH";
+  const defaultRight = isEnglish
+    ? hasActionOutcome ? "TANGIBLE OUTCOME" : "SOLUTION"
+    : "PERBAIKAN";
+
+  const resolvedLeftHeader = leftHeader || defaultLeft;
+  const resolvedRightHeader = rightHeader || defaultRight;
+
   return (
-    <div className="w-full flex flex-col gap-1.5 sm:gap-2 my-auto max-h-full overflow-hidden">
+    <div className={`w-full flex flex-col ${isPresentation ? "gap-3 sm:gap-4.5" : "gap-1.5 sm:gap-2.5"} my-auto max-h-full overflow-hidden`}>
       {/* Header Tags with safe vertical spacing */}
-      {(leftHeader || rightHeader) && (
-        <div className="flex items-center gap-3 sm:gap-4 px-1 mb-0.5 text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-neutral-500">
-          <div className="flex-1">{leftHeader}</div>
+      {(resolvedLeftHeader || resolvedRightHeader) && (
+        <div className={`flex items-center gap-3 sm:gap-4 px-1 mb-1 font-bold tracking-widest uppercase ${
+          isPresentation ? "text-xs sm:text-sm lg:text-[15px]" : "text-[10px] sm:text-[11px]"
+        } text-neutral-500`}>
+          <div className="flex-1">{resolvedLeftHeader}</div>
           <div className="w-6 sm:w-8 shrink-0 text-center opacity-0">→</div>
-          <div className="flex-1" style={{ color: primaryColor }}>{rightHeader}</div>
+          <div className="flex-1" style={{ color: primaryColor }}>{resolvedRightHeader}</div>
         </div>
       )}
 
@@ -1611,22 +1753,32 @@ export function PairedRows({
       {items.slice(0, 3).map((row, i) => (
         <div
           key={i}
-          className="flex items-center gap-2 sm:gap-3 w-full min-h-0"
+          className={`flex items-center gap-2.5 sm:gap-4 w-full min-h-0`}
         >
           {/* Left Problem Box (Neutral Wash) */}
-          <div className="flex-1 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200/80 dark:border-neutral-700/80 py-1.5 sm:py-2 px-3 text-[11px] sm:text-xs text-neutral-800 dark:text-neutral-200 font-medium leading-snug line-clamp-2 overflow-hidden">
+          <div className={`flex-1 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200/80 dark:border-neutral-700/80 ${
+            isPresentation
+              ? "py-3 sm:py-4 px-4 sm:px-5 text-xs sm:text-sm lg:text-[15px]"
+              : "py-2 sm:py-2.5 px-3.5 text-[11px] sm:text-xs"
+          } text-neutral-800 dark:text-neutral-200 font-medium leading-relaxed line-clamp-2 overflow-hidden shadow-2xs`}>
             {row.leftLead && <strong className="font-bold text-neutral-950 dark:text-white mr-1.5">{row.leftLead}</strong>}
             {row.left}
           </div>
 
           {/* Directional Arrow */}
-          <div className="shrink-0 flex items-center justify-center font-bold text-base sm:text-xl" style={{ color: primaryColor }}>
+          <div className={`shrink-0 flex items-center justify-center font-bold ${
+            isPresentation ? "text-xl sm:text-2xl lg:text-3xl" : "text-base sm:text-xl"
+          }`} style={{ color: primaryColor }}>
             →
           </div>
 
           {/* Right Fix Box (Solid Primary Brand) */}
           <div
-            className="flex-1 rounded-lg py-1.5 sm:py-2 px-3 text-[11px] sm:text-xs font-semibold leading-snug text-white line-clamp-2 overflow-hidden"
+            className={`flex-1 rounded-lg ${
+              isPresentation
+                ? "py-3 sm:py-4 px-4 sm:px-5 text-xs sm:text-sm lg:text-[15px]"
+                : "py-2 sm:py-2.5 px-3.5 text-[11px] sm:text-xs"
+            } font-semibold leading-relaxed text-white line-clamp-2 overflow-hidden shadow-2xs`}
             style={{ backgroundColor: primaryColor }}
           >
             {row.rightLead && <strong className="font-bold text-white mr-1.5">{row.rightLead}</strong>}
@@ -2093,6 +2245,745 @@ export function ClosingAction({
           {contactText}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ───────────────────────────────────────────────────
+ * 23. Formula Hero with Split Factors & Massive Stat Box (Slide 2 Pattern)
+ * ─────────────────────────────────────────────────── */
+export interface FormulaHeroProps {
+  formulaLabel?: string;
+  formula: string;
+  formulaSubtext?: string;
+  factors?: Array<{
+    title: string;
+    description: string;
+  }>;
+  statBox?: {
+    value: string;
+    description: string;
+    source?: string;
+  };
+  primaryColor?: string;
+  accentColor?: string;
+  isPresentation?: boolean;
+}
+
+export function FormulaHeroSplit({
+  formulaLabel = "THE FORMULA",
+  formula,
+  formulaSubtext,
+  factors = [],
+  statBox,
+  primaryColor = "#005AAB",
+  accentColor = "#FFDD3C",
+  isPresentation = false,
+}: FormulaHeroProps) {
+  return (
+    <div className="w-full flex-1 flex flex-col justify-between my-auto gap-3 sm:gap-4 overflow-hidden">
+      {/* Top Hero Formula Banner */}
+      <div
+        className="w-full rounded-lg p-3.5 sm:p-5 shadow-xs flex flex-col justify-center"
+        style={{ backgroundColor: primaryColor }}
+      >
+        <span
+          className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest mb-1 block"
+          style={{ color: accentColor }}
+        >
+          {formulaLabel}
+        </span>
+        <h3 className={`text-lg sm:text-2xl lg:text-[28px] font-black text-white leading-tight tracking-tight`}>
+          {formula}
+        </h3>
+        {formulaSubtext && (
+          <p className="text-white/85 text-xs sm:text-[13px] mt-1 font-medium leading-relaxed">
+            {formulaSubtext}
+          </p>
+        )}
+      </div>
+
+      {/* Bottom Split Row: 3 Factor Columns Left + 1 Big Accent Stat Card Right */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-stretch flex-1">
+        {/* Left Factor Columns (8 of 12 cols if statBox exists, else 12) */}
+        <div className={`${statBox ? "md:col-span-8" : "md:col-span-12"} grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 items-stretch`}>
+          {factors.slice(0, 3).map((f, idx) => (
+            <div
+              key={idx}
+              className="p-3 sm:p-3.5 rounded-lg bg-neutral-50/80 dark:bg-neutral-900/50 border border-neutral-200/80 dark:border-neutral-800 flex flex-col justify-start"
+            >
+              <div className="flex items-center gap-2 mb-1.5">
+                <span
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
+                  style={{
+                    backgroundColor: idx % 2 === 0 ? primaryColor : accentColor,
+                    color: idx % 2 === 0 ? "#FFFFFF" : "#111111",
+                  }}
+                >
+                  {idx + 1}
+                </span>
+                <span className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-neutral-100 leading-tight">
+                  {f.title}
+                </span>
+              </div>
+              <p className="text-[11px] sm:text-xs text-neutral-600 dark:text-neutral-400 font-normal leading-relaxed line-clamp-3">
+                {f.description}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Right Big Accent Stat Box (4 of 12 cols) */}
+        {statBox && (
+          <div
+            className="md:col-span-4 rounded-lg p-4 sm:p-5 flex flex-col justify-center items-center text-center shadow-xs border border-[#E5C310]"
+            style={{ backgroundColor: accentColor, color: "#111111" }}
+          >
+            <span className={`${isPresentation ? "text-4xl sm:text-6xl" : "text-3xl sm:text-5xl"} font-black tracking-tight leading-none mb-1.5`}>
+              {statBox.value}
+            </span>
+            <p className="text-xs sm:text-[13px] font-semibold leading-snug max-w-[220px]">
+              {statBox.description}
+            </p>
+            {statBox.source && (
+              <span className="text-[9.5px] sm:text-[10px] font-medium opacity-75 italic mt-2">
+                {statBox.source}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────────────────────────────────
+ * 24. Tree Comparison Cards with Top Callout & Bottom Quote Strip (Slide 4 Pattern)
+ * ─────────────────────────────────────────────────── */
+export interface TreeCardItem {
+  title: string;
+  description: string;
+  rootNode: string;
+  childNodes: [string, string];
+}
+
+export interface TreeComparisonProps {
+  topCallout?: {
+    stat?: string;
+    label?: string;
+    note?: string;
+  };
+  cards: TreeCardItem[];
+  bottomTakeaway?: string;
+  primaryColor?: string;
+  accentColor?: string;
+  isPresentation?: boolean;
+}
+
+export function TreeComparisonCards({
+  topCallout,
+  cards = [],
+  bottomTakeaway,
+  primaryColor = "#005AAB",
+  accentColor = "#FFDD3C",
+  isPresentation = false,
+}: TreeComparisonProps) {
+  return (
+    <div className="w-full flex-1 flex flex-col justify-between my-auto gap-3 sm:gap-4 overflow-hidden">
+      {/* Top Compact Stat Callout Banner */}
+      {topCallout && (topCallout.stat || topCallout.note) && (
+        <div className="flex items-center gap-3 sm:gap-4">
+          {topCallout.stat && (
+            <div
+              className="px-3.5 py-1.5 rounded-lg flex items-center gap-2 shadow-2xs shrink-0"
+              style={{ backgroundColor: accentColor, color: "#111111" }}
+            >
+              <span className="text-sm sm:text-base font-black">{topCallout.stat}</span>
+              {topCallout.label && (
+                <span className="text-[10px] sm:text-[11px] font-semibold leading-tight">{topCallout.label}</span>
+              )}
+            </div>
+          )}
+          {topCallout.note && (
+            <p className="text-xs sm:text-sm font-semibold text-neutral-800 dark:text-neutral-200 leading-snug">
+              {topCallout.note}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* 3 Diagram Cards with Visual Tree / Node Branches inside */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 items-stretch flex-1">
+        {cards.slice(0, 3).map((c, i) => (
+          <div
+            key={i}
+            className="rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-[#161616] p-3.5 sm:p-4 flex flex-col justify-between shadow-2xs hover:border-neutral-400 dark:hover:border-neutral-700 transition-colors"
+          >
+            <div>
+              <h5 className="text-xs sm:text-sm font-bold text-[#005AAB] dark:text-[#60A5FA] mb-3">
+                {c.title}
+              </h5>
+
+              {/* Mini Flow Tree Diagram inside Card */}
+              <div className="flex flex-col items-center my-2 select-none">
+                {/* Root Node */}
+                <div
+                  className="px-3 py-1 rounded text-[10.5px] sm:text-xs font-bold text-white shadow-2xs text-center"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  {c.rootNode || "Core Driver"}
+                </div>
+
+                {/* Branching SVG Connector Line */}
+                <svg className="w-24 h-4 my-0.5 text-neutral-400" viewBox="0 0 100 20" fill="none">
+                  <path d="M 50 0 L 50 10 L 20 10 L 20 20 M 50 10 L 80 10 L 80 20" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+
+                {/* 2 Child Nodes */}
+                <div className="flex items-center justify-between w-full gap-2">
+                  <div
+                    className="flex-1 py-1 px-1.5 rounded text-[10px] font-bold text-center truncate shadow-2xs"
+                    style={{
+                      backgroundColor: i % 2 === 0 ? accentColor : "#E2E8F0",
+                      color: "#111111",
+                    }}
+                  >
+                    {c.childNodes?.[0] || "Branch A"}
+                  </div>
+                  <div
+                    className="flex-1 py-1 px-1.5 rounded text-[10px] font-bold text-center truncate shadow-2xs"
+                    style={{
+                      backgroundColor: i % 2 === 0 ? accentColor : "#E2E8F0",
+                      color: "#111111",
+                    }}
+                  >
+                    {c.childNodes?.[1] || "Branch B"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-[10.5px] sm:text-xs text-neutral-600 dark:text-neutral-400 font-normal leading-relaxed mt-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800 line-clamp-3">
+              {c.description}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Bottom Takeaway Quote Strip with Vertical Yellow Bar Accent */}
+      {bottomTakeaway && (
+        <div className="flex items-stretch gap-2.5 mt-1">
+          <div className="w-1.5 rounded-full shrink-0" style={{ backgroundColor: accentColor }} />
+          <p className="text-[11px] sm:text-xs text-neutral-700 dark:text-neutral-300 font-medium leading-relaxed">
+            {bottomTakeaway}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ───────────────────────────────────────────────────
+ * 25. Split Case Study with Data Tiles & 3-Line Exercise (Slide 5 Pattern)
+ * ─────────────────────────────────────────────────── */
+export interface CaseStudyExerciseProps {
+  situationTitle?: string;
+  situationText: string;
+  dataMetrics?: Array<{
+    value: string;
+    label: string;
+  }>;
+  twistBox?: string;
+  exerciseTitle?: string;
+  exerciseLines?: string[];
+  primaryColor?: string;
+  accentColor?: string;
+  isPresentation?: boolean;
+}
+
+export function CaseStudyExercise({
+  situationTitle = "SITUATION",
+  situationText,
+  dataMetrics = [],
+  twistBox,
+  exerciseTitle = "WHAT TO WRITE · 3 LINES",
+  exerciseLines = [],
+  primaryColor = "#005AAB",
+  accentColor = "#FFDD3C",
+  isPresentation = false,
+}: CaseStudyExerciseProps) {
+  return (
+    <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 my-auto items-stretch overflow-hidden">
+      {/* Left Column (7 of 12 cols): Scenario + Data Tiles + Twist Warning */}
+      <div className="md:col-span-7 flex flex-col justify-between gap-2.5">
+        {/* Situation Block */}
+        <div className="p-3 sm:p-3.5 rounded-lg bg-neutral-100/80 dark:bg-neutral-850/70 border border-neutral-200/70 dark:border-neutral-800">
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-neutral-500 block mb-1">
+            {situationTitle}
+          </span>
+          <p className="text-[11.5px] sm:text-xs text-neutral-800 dark:text-neutral-200 leading-relaxed font-normal">
+            {situationText}
+          </p>
+        </div>
+
+        {/* Data Metric Tiles */}
+        {dataMetrics && dataMetrics.length > 0 && (
+          <div className={`grid grid-cols-${Math.min(dataMetrics.length, 3)} gap-2`}>
+            {dataMetrics.slice(0, 3).map((m, mIdx) => (
+              <div
+                key={mIdx}
+                className="p-2 sm:p-2.5 rounded-lg bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/50 dark:border-blue-900/40 flex flex-col justify-center"
+              >
+                <span className="text-base sm:text-lg font-black text-[#005AAB] dark:text-[#60A5FA] leading-tight">
+                  {m.value}
+                </span>
+                <span className="text-[10px] text-neutral-600 dark:text-neutral-400 font-medium leading-tight mt-0.5">
+                  {m.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Yellow Warning Twist Box */}
+        {twistBox && (
+          <div
+            className="p-2.5 sm:p-3 rounded-lg flex items-center gap-2.5 text-xs font-semibold shadow-2xs border border-[#E5C310]"
+            style={{ backgroundColor: accentColor, color: "#111111" }}
+          >
+            <AlertTriangle className="w-4 h-4 shrink-0 text-neutral-950" />
+            <div className="leading-snug">
+              <strong className="font-extrabold mr-1">Twist:</strong>
+              <span>{twistBox}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Right Column (5 of 12 cols): 3-Line Exercise Sheet with Dashed Dividers */}
+      <div className="md:col-span-5 rounded-lg border-2 border-[#005AAB] p-3.5 sm:p-4 bg-white dark:bg-[#161616] shadow-2xs flex flex-col justify-between">
+        <span className="text-[10.5px] sm:text-xs font-bold uppercase tracking-wider text-[#005AAB] dark:text-[#60A5FA] block pb-2 border-b border-neutral-100 dark:border-neutral-800">
+          {exerciseTitle}
+        </span>
+
+        <div className="space-y-2.5 sm:space-y-3.5 my-auto py-2 divide-y divide-dashed divide-neutral-200 dark:divide-neutral-800">
+          {(exerciseLines.length > 0 ? exerciseLines : [
+            "Which AIDM mode fits the monthly replacement queue? Why?",
+            "Which part of the decision must stay Override, and why?",
+            "One escalation rule the AI must follow.",
+          ]).slice(0, 3).map((line, idx) => (
+            <div key={idx} className={`flex items-start gap-2.5 ${idx > 0 ? "pt-2.5 sm:pt-3.5" : ""}`}>
+              <span
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[10.5px] font-bold text-neutral-950 shrink-0 mt-0.5"
+                style={{ backgroundColor: accentColor }}
+              >
+                {idx + 1}
+              </span>
+              <p className="text-[11px] sm:text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-snug">
+                {line}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────────────────────────────────
+ * 26. Strategic Pyramid Hierarchy (McKinsey 3-Tier Apex)
+ * ─────────────────────────────────────────────────── */
+export interface PyramidTier {
+  level: string; // e.g. "Tier 3 · Apex", "Tier 2 · Core Pillars", "Tier 1 · Foundation"
+  title: string;
+  description?: string;
+  items?: string[];
+  tag?: string;
+}
+
+export function PyramidHierarchy({
+  tiers = [],
+  primaryColor = "#005AAB",
+  accentColor = "#FFDD3C",
+  isPresentation = false,
+}: {
+  tiers?: PyramidTier[];
+  primaryColor?: string;
+  accentColor?: string;
+  isPresentation?: boolean;
+}) {
+  const items: PyramidTier[] = tiers.length > 0 ? tiers : [
+    {
+      level: "Apex · Strategic Vision",
+      title: "Sustainable Market Leadership & 35% Operating Margin",
+      description: "Unified corporate North Star driving all capital allocation and executive accountability",
+      tag: "GOAL",
+    },
+    {
+      level: "Pillars · Core Strategic Thrusts",
+      title: "Autonomous Decision Pipelines & Real-Time Customer 360",
+      description: "Compress decision latency from 14 days to 4 hours across business units",
+      items: ["Continuous Risk Scoring", "Self-Optimizing Logistics", "Algorithmic Pricing"],
+      tag: "STRATEGY",
+    },
+    {
+      level: "Foundation · Enabling Capabilities",
+      title: "Enterprise Data Fabric, Strict Governance & Cross-Functional Squads",
+      description: "Single source of truth with 99.9% uptime SLA and zero-trust security architecture",
+      items: ["Zero-Trust Infrastructure", "Modern Data Lake", "Cross-Functional Pods"],
+      tag: "FOUNDATION",
+    },
+  ];
+
+  return (
+    <div className="w-full flex-1 flex flex-col justify-between my-auto gap-3 overflow-hidden py-1">
+      {/* Tier 3: Apex Peak */}
+      <div className="flex justify-center w-full">
+        <div
+          className="w-full max-w-xl rounded-lg p-3 sm:p-4 text-center shadow-xs border border-[#005AAB]"
+          style={{ backgroundColor: primaryColor, color: "#FFFFFF" }}
+        >
+          <span
+            className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-widest block mb-0.5"
+            style={{ color: accentColor }}
+          >
+            {items[0]?.level || "TIER 3 · APEX VISION"}
+          </span>
+          <h4 className="text-sm sm:text-base font-black leading-tight">
+            {items[0]?.title}
+          </h4>
+          {items[0]?.description && (
+            <p className="text-[11px] sm:text-xs text-white/85 font-normal mt-1 leading-snug">
+              {items[0]?.description}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Tier 2: Mid-Level Strategic Thrusts */}
+      <div className="flex justify-center w-full">
+        <div
+          className="w-full max-w-3xl rounded-lg p-3 sm:p-3.5 shadow-xs border border-[#E5C310] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+          style={{ backgroundColor: accentColor, color: "#111111" }}
+        >
+          <div className="flex-1">
+            <span className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-wider opacity-80 block mb-0.5">
+              {items[1]?.level || "TIER 2 · STRATEGIC PILLARS"}
+            </span>
+            <h5 className="text-xs sm:text-sm font-bold leading-tight">
+              {items[1]?.title}
+            </h5>
+            {items[1]?.description && (
+              <p className="text-[10.5px] sm:text-[11.5px] font-normal opacity-90 mt-0.5 leading-snug">
+                {items[1]?.description}
+              </p>
+            )}
+          </div>
+          {items[1]?.items && items[1].items.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 shrink-0 sm:max-w-[280px]">
+              {items[1].items.map((it, idx) => (
+                <span
+                  key={idx}
+                  className="px-2 py-0.5 rounded-md bg-neutral-900 text-white text-[9.5px] font-bold"
+                >
+                  {it}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Tier 1: Foundation Base */}
+      <div className="flex justify-center w-full">
+        <div className="w-full rounded-lg p-3 sm:p-3.5 bg-neutral-50/90 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-2xs">
+          <div className="flex-1">
+            <span className="text-[9.5px] sm:text-[10px] font-bold uppercase tracking-wider text-neutral-500 block mb-0.5">
+              {items[2]?.level || "TIER 1 · FOUNDATION & ENABLERS"}
+            </span>
+            <h5 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-neutral-100 leading-tight">
+              {items[2]?.title}
+            </h5>
+            {items[2]?.description && (
+              <p className="text-[10.5px] sm:text-[11.5px] text-neutral-600 dark:text-neutral-400 font-normal mt-0.5 leading-snug">
+                {items[2]?.description}
+              </p>
+            )}
+          </div>
+          {items[2]?.items && items[2].items.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 shrink-0 sm:max-w-[340px]">
+              {items[2].items.map((it, idx) => (
+                <span
+                  key={idx}
+                  className="px-2 py-0.5 rounded-md bg-neutral-200/80 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-[9.5px] font-semibold border border-neutral-300/60 dark:border-neutral-700"
+                >
+                  {it}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────────────────────────────────
+ * 27. Transformation Delta Bridge (As-Is → Catalyst → To-Be)
+ * ─────────────────────────────────────────────────── */
+export interface TransformationProps {
+  asIs: {
+    title: string;
+    points: string[];
+    tag?: string;
+  };
+  catalyst: {
+    title: string;
+    description: string;
+    metricChange?: string;
+  };
+  toBe: {
+    title: string;
+    points: string[];
+    tag?: string;
+  };
+  primaryColor?: string;
+  accentColor?: string;
+  isPresentation?: boolean;
+}
+
+export function TransformationBridge({
+  asIs,
+  catalyst,
+  toBe,
+  primaryColor = "#005AAB",
+  accentColor = "#FFDD3C",
+  isPresentation = false,
+}: TransformationProps) {
+  const currentAsIs = asIs || {
+    title: "Legacy Operating Model",
+    tag: "CURRENT FRICTION (AS-IS)",
+    points: [
+      "Fragmented data silos across 5 business units",
+      "Manual 10-day approval cycles per transaction",
+      "Reactive incident response with high error margin",
+    ],
+  };
+
+  const currentCatalyst = catalyst || {
+    title: "AI & Decision Fabric Engine",
+    description: "Centralized intelligence layer standardizing policy enforcement & automated verification",
+    metricChange: "70% Faster Cycle",
+  };
+
+  const currentToBe = toBe || {
+    title: "Autonomous Target State",
+    tag: "TARGET OUTCOME (TO-BE)",
+    points: [
+      "Unified telemetry and real-time executive visibility",
+      "Sub-hour autonomous execution with human-in-the-loop",
+      "Proactive risk mitigation and 99.9% compliance audit",
+    ],
+  };
+
+  return (
+    <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 my-auto items-stretch overflow-hidden py-1">
+      {/* Left Panel: As-Is State (4 of 12 cols) */}
+      <div className="md:col-span-4 rounded-lg bg-neutral-50/90 dark:bg-neutral-900/50 border border-neutral-200/80 dark:border-neutral-800 p-3.5 sm:p-4 flex flex-col justify-between shadow-2xs">
+        <div>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 block mb-1">
+            {currentAsIs.tag || "CURRENT (AS-IS)"}
+          </span>
+          <h4 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-neutral-100 mb-2.5">
+            {currentAsIs.title}
+          </h4>
+          <ul className="space-y-1.5">
+            {currentAsIs.points.map((pt, i) => (
+              <li key={i} className="text-[11px] sm:text-xs text-neutral-600 dark:text-neutral-400 flex items-start gap-1.5 leading-snug">
+                <span className="text-rose-500 font-bold shrink-0">✕</span>
+                <span>{pt}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <span className="text-[9.5px] font-medium text-neutral-400 italic mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+          Status Quo Baseline
+        </span>
+      </div>
+
+      {/* Center Panel: Catalyst / Transformation Engine (4 of 12 cols) */}
+      <div
+        className="md:col-span-4 rounded-lg p-3.5 sm:p-4 flex flex-col justify-between text-center shadow-xs border border-[#005AAB] relative"
+        style={{ backgroundColor: primaryColor, color: "#FFFFFF" }}
+      >
+        <span
+          className="text-[9.5px] sm:text-[10px] font-extrabold uppercase tracking-widest block"
+          style={{ color: accentColor }}
+        >
+          TRANSFORMATION CATALYST
+        </span>
+        <div className="my-auto py-2">
+          <h4 className="text-sm sm:text-base font-black leading-tight mb-1.5">
+            {currentCatalyst.title}
+          </h4>
+          <p className="text-[11px] sm:text-xs text-white/85 leading-relaxed font-medium">
+            {currentCatalyst.description}
+          </p>
+        </div>
+        {currentCatalyst.metricChange && (
+          <div
+            className="rounded-md py-1.5 px-3 mx-auto text-xs font-black tracking-wide"
+            style={{ backgroundColor: accentColor, color: "#111111" }}
+          >
+            {currentCatalyst.metricChange}
+          </div>
+        )}
+      </div>
+
+      {/* Right Panel: To-Be State (4 of 12 cols) */}
+      <div className="md:col-span-4 rounded-lg bg-blue-50/40 dark:bg-blue-950/20 border-2 border-[#005AAB] p-3.5 sm:p-4 flex flex-col justify-between shadow-2xs">
+        <div>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#005AAB] dark:text-[#60A5FA] block mb-1">
+            {currentToBe.tag || "TARGET OUTCOME (TO-BE)"}
+          </span>
+          <h4 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-neutral-100 mb-2.5">
+            {currentToBe.title}
+          </h4>
+          <ul className="space-y-1.5">
+            {currentToBe.points.map((pt, i) => (
+              <li key={i} className="text-[11px] sm:text-xs text-neutral-700 dark:text-neutral-300 flex items-start gap-1.5 leading-snug">
+                <span className="text-[#005AAB] dark:text-[#60A5FA] font-bold shrink-0">✓</span>
+                <span>{pt}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <span className="text-[9.5px] font-bold text-[#005AAB] dark:text-[#60A5FA] mt-3 pt-2 border-t border-blue-100 dark:border-blue-900/40">
+          Target State Benchmark
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────────────────────────────────
+ * 28. Radial Hub & Ecosystem (Core Mandate + 4 Domain Orbit Cards)
+ * ─────────────────────────────────────────────────── */
+export interface HubSatellite {
+  title: string;
+  description: string;
+  metric?: string;
+  tag?: string;
+}
+
+export function RadialHubEcosystem({
+  coreHubTitle = "Core Governance & Control",
+  coreHubSub = "Single Orchestration Spine",
+  satellites = [],
+  primaryColor = "#005AAB",
+  accentColor = "#FFDD3C",
+  isPresentation = false,
+}: {
+  coreHubTitle?: string;
+  coreHubSub?: string;
+  satellites?: HubSatellite[];
+  primaryColor?: string;
+  accentColor?: string;
+  isPresentation?: boolean;
+}) {
+  const cards: HubSatellite[] = satellites.length > 0 ? satellites : [
+    { title: "Legal & Regulatory", description: "Continuous compliance audit across global standards", metric: "100% Audit", tag: "COMPLIANCE" },
+    { title: "Risk & Resilience", description: "Automated threat detection and disaster failover", metric: "99.9% Uptime", tag: "SECURITY" },
+    { title: "Capital & Revenue", description: "Predictive ROI modeling for every resource shift", metric: "+24% Margin", tag: "FINANCE" },
+    { title: "Talent & Culture", description: "Empowered squads operating with clear algorithmic rails", metric: "4x Velocity", tag: "OPERATIONS" },
+  ];
+
+  return (
+    <div className="w-full flex-1 flex flex-col justify-center my-auto gap-3 overflow-hidden py-1">
+      {/* 2 Top Satellites */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {cards.slice(0, 2).map((sat, i) => (
+          <div
+            key={i}
+            className="rounded-lg p-3 sm:p-3.5 bg-neutral-50/80 dark:bg-neutral-900/50 border border-neutral-200/80 dark:border-neutral-800 flex items-center justify-between gap-3 shadow-2xs"
+          >
+            <div>
+              {sat.tag && (
+                <span className="text-[9.5px] font-bold uppercase tracking-wider text-[#005AAB] dark:text-[#60A5FA] block mb-0.5">
+                  {sat.tag}
+                </span>
+              )}
+              <h5 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-neutral-100 leading-tight">
+                {sat.title}
+              </h5>
+              <p className="text-[10.5px] sm:text-[11.5px] text-neutral-600 dark:text-neutral-400 leading-snug mt-0.5">
+                {sat.description}
+              </p>
+            </div>
+            {sat.metric && (
+              <span
+                className="px-2 py-1 rounded-md text-[10.5px] font-black shrink-0"
+                style={{ backgroundColor: accentColor, color: "#111111" }}
+              >
+                {sat.metric}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Central Connecting Core Hub */}
+      <div className="flex justify-center w-full">
+        <div
+          className="w-full max-w-lg rounded-full py-2.5 px-6 shadow-xs border-2 border-[#005AAB] flex items-center justify-between gap-4"
+          style={{ backgroundColor: primaryColor, color: "#FFFFFF" }}
+        >
+          <div className="flex items-center gap-2">
+            <span
+              className="w-2.5 h-2.5 rounded-full animate-pulse shrink-0"
+              style={{ backgroundColor: accentColor }}
+            />
+            <span className="text-xs sm:text-sm font-black tracking-wide">
+              {coreHubTitle}
+            </span>
+          </div>
+          <span className="text-[10px] sm:text-[11px] font-medium text-white/80 shrink-0">
+            {coreHubSub}
+          </span>
+        </div>
+      </div>
+
+      {/* 2 Bottom Satellites */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {cards.slice(2, 4).map((sat, i) => (
+          <div
+            key={i}
+            className="rounded-lg p-3 sm:p-3.5 bg-neutral-50/80 dark:bg-neutral-900/50 border border-neutral-200/80 dark:border-neutral-800 flex items-center justify-between gap-3 shadow-2xs"
+          >
+            <div>
+              {sat.tag && (
+                <span className="text-[9.5px] font-bold uppercase tracking-wider text-[#005AAB] dark:text-[#60A5FA] block mb-0.5">
+                  {sat.tag}
+                </span>
+              )}
+              <h5 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-neutral-100 leading-tight">
+                {sat.title}
+              </h5>
+              <p className="text-[10.5px] sm:text-[11.5px] text-neutral-600 dark:text-neutral-400 leading-snug mt-0.5">
+                {sat.description}
+              </p>
+            </div>
+            {sat.metric && (
+              <span
+                className="px-2 py-1 rounded-md text-[10.5px] font-black shrink-0"
+                style={{ backgroundColor: accentColor, color: "#111111" }}
+              >
+                {sat.metric}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

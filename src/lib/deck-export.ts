@@ -48,7 +48,13 @@ export interface SlideData {
     | "connectedRailStepper"
     | "ascendingColumns"
     | "checklist"
-    | "closingAction";
+    | "closingAction"
+    | "formulaHero"
+    | "treeComparison"
+    | "caseExercise"
+    | "pyramidHierarchy"
+    | "transformationBridge"
+    | "radialHub";
   bgStyle?: "white" | "yellowGradient" | "boldYellow";
   title: string;
   subtitle?: string;
@@ -322,13 +328,13 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
     // Vertical zones — content flows top-to-bottom in these bands
     TITLE_Y: 0.5,       // slide title top
-    TITLE_H: 0.7,       // slide title height
-    SUB_Y: 1.3,         // subtitle top  (TITLE_Y + TITLE_H + 0.1 gap)
-    SUB_H: 0.4,         // subtitle height
-    CONTENT_Y: 2.0,     // first content element top (SUB_Y + SUB_H + 0.3 gap)
+    TITLE_H: 0.82,      // slide title height (supports bold 34pt 2 lines cleanly)
+    SUB_Y: 1.35,        // subtitle top
+    SUB_H: 0.45,        // subtitle height
+    CONTENT_Y: 1.95,    // first content element top
     FOOTER_Y: 6.0,      // bottom bar / insight bar top
     FOOTER_H: 0.7,      // bottom bar height
-    CONTENT_BOTTOM: 5.8, // content must not exceed this Y (FOOTER_Y - 0.2 gap)
+    CONTENT_BOTTOM: 5.9, // content must not exceed this Y
     GAP_V: 0.2,         // minimum vertical gap between stacked elements
     CARD_PAD: 0.3,      // padding inside card shapes for text
   };
@@ -376,7 +382,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
     }
 
     const currentTextColor = isDarkTheme ? "FFFFFF" : "171717";
-    const currentMutedColor = isDarkTheme ? "999999" : "666666";
+    const currentMutedColor = isDarkTheme ? "CBD5E1" : "272525";
     const footerColor = isDarkTheme ? "999999" : "888888";
 
     // If Dual-Tone and not template, draw split color block on the left
@@ -441,10 +447,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           // ITB Template Cover (55% max width on left, prominent title, Deep Blue subtitle, 3 meta lines)
           pSlide.addText(slide.title, {
             x: 0.9,
-            y: 1.8,
-            w: 7.3,
-            h: 2.2,
-            fontSize: 40,
+            y: 1.6,
+            w: 7.5,
+            h: 2.5,
+            fontSize: 48,
             color: "174A7F", // Navy Deep Blue per ITB rules
             bold: true,
             fontFace: fontTitle,
@@ -453,10 +459,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           if (slide.subtitle) {
             pSlide.addText(slide.subtitle, {
               x: 0.9,
-              y: 4.1,
-              w: 7.3,
+              y: 4.2,
+              w: 7.5,
               h: 1.1,
-              fontSize: 18,
+              fontSize: 22,
               bold: true,
               color: "005AAB", // Deep Blue
               fontFace: fontTitle,
@@ -469,12 +475,12 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           const metaLine3 = slide.quote?.author || slide.badge || "Direktorat Pendidikan Non Reguler ITB & RevoU";
           pSlide.addText(`${metaLine1}\n${metaLine2}\n${metaLine3}`, {
             x: 0.9,
-            y: 5.5,
-            w: 7.3,
-            h: 1.2,
-            fontSize: 11,
+            y: 5.4,
+            w: 7.5,
+            h: 1.3,
+            fontSize: 14,
             italic: true,
-            color: "666666",
+            color: "595959",
             fontFace: fontBody,
           });
 
@@ -507,7 +513,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               y: 1.43,
               w: badgeW,
               h: 0.32,
-              fontSize: 9,
+              fontSize: 11,
               bold: true,
               color: primaryContrastColor,
               align: "center",
@@ -517,10 +523,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
           pSlide.addText(slide.title, {
             x: 1.0,
-            y: 2.1,
+            y: 2.0,
             w: 11.2,
-            h: 1.8,
-            fontSize: 34,
+            h: 2.0,
+            fontSize: 44,
             color: titleColor,
             bold: true,
             fontFace: fontTitle,
@@ -531,9 +537,9 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               x: 1.0,
               y: 4.3,
               w: 10.8,
-              h: 0.8,
-              fontSize: 16,
-              color: "475569",
+              h: 0.9,
+              fontSize: 20,
+              color: "272525",
               fontFace: fontBody,
             });
           }
@@ -541,10 +547,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           if (slide.description) {
             pSlide.addText(slide.description, {
               x: 1.0,
-              y: 5.6,
+              y: 5.5,
               w: 11.0,
               h: 1.2,
-              fontSize: 12,
+              fontSize: 14,
               color: currentMutedColor,
               fontFace: fontBody,
             });
@@ -560,7 +566,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -572,21 +578,26 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
         }
 
-        // 4 Stat Cards - alternating Soft Yellow and Soft Blue
+        // Stat Cards - alternating Soft Yellow and Soft Blue (authentic ITB colors)
         const stats = slide.stats || [];
-        const cardW = (PAD.CONTENT_W - PAD.GAP_H) / 2;
-        const cardH = 1.65;
-        stats.forEach((st, sIdx) => {
-          const col = sIdx % 2;
-          const row = Math.floor(sIdx / 2);
+        const sCount = Math.min(stats.length, 4);
+        const cols = sCount === 1 ? 1 : 2;
+        const rows = Math.ceil(sCount / cols);
+        const cardW = (PAD.CONTENT_W - (cols - 1) * PAD.GAP_H) / cols;
+        const cardH = rows === 1 ? 3.5 : 1.65;
+        const startY = PAD.CONTENT_Y + 0.1;
+
+        stats.slice(0, 4).forEach((st, sIdx) => {
+          const col = sIdx % cols;
+          const row = Math.floor(sIdx / cols);
           const x = PAD.LEFT + col * (cardW + PAD.GAP_H);
-          const y = PAD.CONTENT_Y + row * (cardH + PAD.GAP_V);
+          const y = startY + row * (cardH + PAD.GAP_V);
           const isYellow = sIdx % 2 === 0;
 
           // Card Box
@@ -595,19 +606,19 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y,
             w: cardW,
             h: cardH,
-            fill: { color: isDarkTheme ? "1E293B" : (isYellow ? "FFFDF5" : "F5F9FE") },
+            fill: { color: isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB") },
             line: { color: isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB"), width: 1.5 },
-            rectRadius: 0.05,
+            rectRadius: 0.06,
           });
 
           // Stat Value
           pSlide.addText(st.value, {
             x: x + PAD.CARD_PAD,
-            y: y + 0.15,
+            y: y + (rows === 1 ? 0.55 : 0.18),
             w: cardW - PAD.CARD_PAD * 2,
-            h: 0.65,
-            fontSize: 28,
-            color: isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "D97706" : "005AAB"),
+            h: rows === 1 ? 1.2 : 0.7,
+            fontSize: rows === 1 ? 48 : 34,
+            color: isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "B45309" : "005AAB"),
             bold: true,
             fontFace: fontTitle,
           });
@@ -615,11 +626,12 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           // Stat Label
           pSlide.addText(st.label, {
             x: x + PAD.CARD_PAD,
-            y: y + 0.85,
+            y: y + (rows === 1 ? 1.85 : 0.88),
             w: cardW - PAD.CARD_PAD * 2,
-            h: 0.65,
-            fontSize: 12,
-            color: isDarkTheme ? "E2E8F0" : "475569",
+            h: rows === 1 ? 1.2 : 0.65,
+            fontSize: rows === 1 ? 18 : 15,
+            color: isDarkTheme ? "E2E8F0" : (isYellow ? "272525" : "005AAB"),
+            bold: true,
             fontFace: fontBody,
           });
         });
@@ -632,7 +644,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -644,7 +656,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 14,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -652,182 +664,322 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
         const rStats = slide.stats || [];
         const bullets = slide.bullets || [];
-        const colW = (PAD.CONTENT_W - PAD.GAP_H) / 2;
 
         if (rStats.length > 0) {
-          // Left Column (Description) - Soft Blue
-          pSlide.addShape(pptx.ShapeType.roundRect, {
-            x: PAD.LEFT,
-            y: PAD.CONTENT_Y,
-            w: colW,
-            h: 3.7,
-            fill: { color: isDarkTheme ? "1E293B" : "F5F9FE" },
-            line: { color: isDarkTheme ? "334155" : "005AAB", width: 1.5 },
-            rectRadius: 0.05,
-          });
+          // Render stats as side-by-side metric cards (matching decks/page.tsx)
+          const sCount = Math.min(rStats.length, 4);
+          const cols = sCount === 1 ? 1 : 2;
+          const rows = Math.ceil(sCount / cols);
+          const colW = (PAD.CONTENT_W - (cols - 1) * PAD.GAP_H) / cols;
+          const rowH = rows === 1 ? 3.6 : (3.6 - (rows - 1) * PAD.GAP_V) / rows;
+          const startY = PAD.CONTENT_Y + 0.1;
 
-          pSlide.addText(slide.description || "Key contextual insights and strategic execution overview.", {
-            x: PAD.LEFT + PAD.CARD_PAD,
-            y: PAD.CONTENT_Y + PAD.CARD_PAD,
-            w: colW - PAD.CARD_PAD * 2,
-            h: 3.7 - PAD.CARD_PAD * 2,
-            fontSize: 13,
-            color: isDarkTheme ? "FFFFFF" : "272525",
-            fontFace: fontBody,
-          });
+          rStats.slice(0, 4).forEach((st, sIdx) => {
+            const c = sIdx % cols;
+            const r = Math.floor(sIdx / cols);
+            const x = PAD.LEFT + c * (colW + PAD.GAP_H);
+            const y = startY + r * (rowH + PAD.GAP_V);
+            const isYellow = sIdx % 2 === 0;
 
-          // Right Column (Stats/Comparison) - Soft Yellow
-          const statCardH = (3.7 - (rStats.length - 1) * PAD.GAP_V) / Math.max(rStats.length, 1);
-          rStats.forEach((st, sIdx) => {
-            const y = PAD.CONTENT_Y + sIdx * (statCardH + PAD.GAP_V);
-            const isY = sIdx % 2 === 0;
             pSlide.addShape(pptx.ShapeType.roundRect, {
-              x: PAD.LEFT + colW + PAD.GAP_H,
+              x,
               y,
               w: colW,
-              h: statCardH,
-              fill: { color: isDarkTheme ? "1E293B" : (isY ? "FFFDF5" : "F5F9FE") },
-              line: { color: isDarkTheme ? "334155" : (isY ? "FFDD3C" : "005AAB"), width: 1.5 },
-              rectRadius: 0.05,
+              h: rowH,
+              fill: { color: isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB") },
+              line: { color: isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB"), width: 1.5 },
+              rectRadius: 0.06,
             });
 
             pSlide.addText(st.value, {
-              x: PAD.LEFT + colW + PAD.GAP_H + PAD.CARD_PAD,
-              y: y + 0.2,
+              x: x + PAD.CARD_PAD,
+              y: y + (rows === 1 ? 0.55 : 0.2),
               w: colW - PAD.CARD_PAD * 2,
-              h: 0.65,
-              fontSize: 26,
-              color: isDarkTheme ? (isY ? "FFDD3C" : "93C5FD") : (isY ? "D97706" : "005AAB"),
+              h: rows === 1 ? 1.1 : 0.65,
+              fontSize: rows === 1 ? 46 : 32,
+              color: isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "B45309" : "005AAB"),
               bold: true,
               fontFace: fontTitle,
             });
 
             pSlide.addText(st.label, {
-              x: PAD.LEFT + colW + PAD.GAP_H + PAD.CARD_PAD,
-              y: y + 0.85,
+              x: x + PAD.CARD_PAD,
+              y: y + (rows === 1 ? 1.8 : 0.88),
               w: colW - PAD.CARD_PAD * 2,
-              h: Math.max(statCardH - 0.95, 0.4),
-              fontSize: 12,
-              color: isDarkTheme ? "E2E8F0" : "475569",
+              h: rows === 1 ? 1.2 : Math.max(rowH - 1.0, 0.4),
+              fontSize: rows === 1 ? 16 : 14,
+              color: isDarkTheme ? "E2E8F0" : (isYellow ? "272525" : "005AAB"),
+              bold: true,
               fontFace: fontBody,
             });
           });
-        } else if (bullets.length === 3) {
-          // 3 Strategic Pillars side by side - Alternating Yellow & Blue
-          const cWidth = (PAD.CONTENT_W - 2 * PAD.GAP_H) / 3;
-          bullets.forEach((b, bIdx) => {
-            const x = PAD.LEFT + bIdx * (cWidth + PAD.GAP_H);
-            const parts = b.split(/[:—–-]/);
-            const bTitle = parts[0]?.trim() || `Pillar 0${bIdx + 1}`;
-            const bDesc = parts.slice(1).join(" — ").trim() || b;
-            const isYellow = bIdx % 2 === 0;
-            const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFFDF5" : "F5F9FE");
-            const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
-            const pillBg = isYellow ? "FFDE3C" : "005AAB";
-            const pillFg = isYellow ? "111111" : "FFFFFF";
+        } else if (bullets.length > 0) {
+          // Render structured bullet cards (1, 2, 3, or 4 items) exactly matching decks/page.tsx
+          const items = bullets.slice(0, 4);
+          const count = items.length;
 
-            pSlide.addShape(pptx.ShapeType.roundRect, {
-              x,
-              y: PAD.CONTENT_Y,
-              w: cWidth,
-              h: 3.8,
-              fill: { color: cardBg },
-              line: { color: cardBorder, width: 1.5 },
-              rectRadius: 0.05,
-            });
+          if (count === 3) {
+            // 3 Columns side-by-side (Alternating Yellow -> Blue -> Yellow)
+            const cWidth = (PAD.CONTENT_W - 2 * PAD.GAP_H) / 3;
+            const cardH = 3.6;
+            const cardY = PAD.CONTENT_Y + 0.1;
 
-            // Accent pill
-            pSlide.addShape(pptx.ShapeType.roundRect, {
-              x: x + PAD.CARD_PAD,
-              y: PAD.CONTENT_Y + 0.25,
-              w: 0.8,
-              h: 0.3,
-              fill: { color: pillBg },
-              rectRadius: 0.04,
-            });
+            items.forEach((bullet, i) => {
+              const x = PAD.LEFT + i * (cWidth + PAD.GAP_H);
+              const parts = bullet.split(/:\s*|\s*-\s*|\s*—\s*/);
+              const bTitle = parts.length > 1 ? parts[0]?.trim() : `Pillar 0${i + 1}`;
+              const bDesc = parts.length > 1 ? parts.slice(1).join(" — ").trim() : bullet;
+              const isYellow = i % 2 === 0;
 
-            pSlide.addText(`0${bIdx + 1}`, {
-              x: x + PAD.CARD_PAD,
-              y: PAD.CONTENT_Y + 0.28,
-              w: 0.8,
-              h: 0.25,
-              fontSize: 9,
-              bold: true,
-              color: pillFg,
-              align: "center",
-              fontFace: fontBody,
-            });
+              const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB");
+              const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
+              const pillBg = isYellow ? "FFDD3C" : "005AAB";
+              const pillFg = isYellow ? "272525" : "FFFFFF";
+              const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "272525" : "005AAB");
+              const cDescColor = isDarkTheme ? "E2E8F0" : (isYellow ? "4A4545" : "334155");
 
-            pSlide.addText(bTitle, {
-              x: x + PAD.CARD_PAD,
-              y: PAD.CONTENT_Y + 0.7,
-              w: cWidth - PAD.CARD_PAD * 2,
-              h: 0.6,
-              fontSize: 13,
-              bold: true,
-              color: isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : "005AAB",
-              fontFace: fontTitle,
-            });
+              pSlide.addShape(pptx.ShapeType.roundRect, {
+                x,
+                y: cardY,
+                w: cWidth,
+                h: cardH,
+                fill: { color: cardBg },
+                line: { color: cardBorder, width: 1.5 },
+                rectRadius: 0.06,
+              });
 
-            pSlide.addText(bDesc, {
-              x: x + PAD.CARD_PAD,
-              y: PAD.CONTENT_Y + 1.4,
-              w: cWidth - PAD.CARD_PAD * 2,
-              h: 2.2,
-              fontSize: 11,
-              color: isDarkTheme ? "E2E8F0" : "475569",
-              fontFace: fontBody,
+              // Pill badge
+              pSlide.addShape(pptx.ShapeType.roundRect, {
+                x: x + 0.3,
+                y: cardY + 0.3,
+                w: 0.58,
+                h: 0.34,
+                fill: { color: pillBg },
+                rectRadius: 0.04,
+              });
+
+              pSlide.addText(`0${i + 1}`, {
+                x: x + 0.3,
+                y: cardY + 0.32,
+                w: 0.58,
+                h: 0.3,
+                fontSize: 11.5,
+                bold: true,
+                color: pillFg,
+                align: "center",
+                valign: "middle",
+                fontFace: fontBody,
+              });
+
+              // Title
+              pSlide.addText(bTitle, {
+                x: x + 1.0,
+                y: cardY + 0.24,
+                w: cWidth - 1.3,
+                h: 0.52,
+                fontSize: 18.5,
+                bold: true,
+                color: cTitleColor,
+                fontFace: fontTitle,
+                valign: "middle",
+              });
+
+              // Description
+              pSlide.addText(bDesc, {
+                x: x + 0.3,
+                y: cardY + 0.85,
+                w: cWidth - 0.6,
+                h: cardH - 1.05,
+                fontSize: 15.5,
+                color: cDescColor,
+                fontFace: fontBody,
+                valign: "top",
+                lineSpacingMultiple: 1.25,
+              });
             });
-          });
-        } else {
-          // Left Column (Description / Target State) - Soft Blue
+          } else if (count === 4) {
+            // 2x2 Grid (matching 4 items in decks/page.tsx)
+            const cWidth = (PAD.CONTENT_W - PAD.GAP_H) / 2;
+            const cHeight = (3.6 - PAD.GAP_V) / 2;
+            const startY = PAD.CONTENT_Y + 0.1;
+
+            items.forEach((bullet, i) => {
+              const col = i % 2;
+              const row = Math.floor(i / 2);
+              const x = PAD.LEFT + col * (cWidth + PAD.GAP_H);
+              const y = startY + row * (cHeight + PAD.GAP_V);
+              const isYellow = i % 2 === 0;
+
+              const parts = bullet.split(/:\s*|\s*-\s*|\s*—\s*/);
+              const bTitle = parts.length > 1 ? parts[0]?.trim() : `Pillar 0${i + 1}`;
+              const bDesc = parts.length > 1 ? parts.slice(1).join(" — ").trim() : bullet;
+
+              const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB");
+              const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
+              const pillBg = isYellow ? "FFDD3C" : "005AAB";
+              const pillFg = isYellow ? "272525" : "FFFFFF";
+              const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "272525" : "005AAB");
+              const cDescColor = isDarkTheme ? "E2E8F0" : (isYellow ? "4A4545" : "334155");
+
+              pSlide.addShape(pptx.ShapeType.roundRect, {
+                x,
+                y,
+                w: cWidth,
+                h: cHeight,
+                fill: { color: cardBg },
+                line: { color: cardBorder, width: 1.5 },
+                rectRadius: 0.05,
+              });
+
+              pSlide.addShape(pptx.ShapeType.roundRect, {
+                x: x + 0.3,
+                y: y + 0.22,
+                w: 0.52,
+                h: 0.32,
+                fill: { color: pillBg },
+                rectRadius: 0.04,
+              });
+
+              pSlide.addText(`0${i + 1}`, {
+                x: x + 0.3,
+                y: y + 0.24,
+                w: 0.52,
+                h: 0.28,
+                fontSize: 12,
+                bold: true,
+                color: pillFg,
+                align: "center",
+                valign: "middle",
+                fontFace: fontBody,
+              });
+
+              pSlide.addText(bTitle, {
+                x: x + 0.95,
+                y: y + 0.16,
+                w: cWidth - 1.25,
+                h: 0.44,
+                fontSize: 17.5,
+                bold: true,
+                color: cTitleColor,
+                fontFace: fontTitle,
+                valign: "middle",
+              });
+
+              pSlide.addText(bDesc, {
+                x: x + 0.3,
+                y: y + 0.65,
+                w: cWidth - 0.6,
+                h: cHeight - 0.8,
+                fontSize: 14.5,
+                color: cDescColor,
+                fontFace: fontBody,
+                valign: "top",
+                lineSpacingMultiple: 1.2,
+              });
+            });
+          } else {
+            // count === 2 (Standard Two-Column) OR count === 1
+            const cWidth = count === 1 ? 8.0 : (PAD.CONTENT_W - PAD.GAP_H) / 2;
+            const startX = count === 1 ? PAD.LEFT + (PAD.CONTENT_W - 8.0) / 2 : PAD.LEFT;
+            const cardH = 3.6;
+            const cardY = PAD.CONTENT_Y + 0.1;
+
+            items.forEach((bullet, i) => {
+              const x = startX + i * (cWidth + PAD.GAP_H);
+              const parts = bullet.split(/:\s*|\s*-\s*|\s*—\s*/);
+              const bTitle = parts.length > 1 ? parts[0]?.trim() : `Pillar 0${i + 1}`;
+              const bDesc = parts.length > 1 ? parts.slice(1).join(" — ").trim() : bullet;
+              const isYellow = i % 2 === 0;
+
+              const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB");
+              const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
+              const pillBg = isYellow ? "FFDD3C" : "005AAB";
+              const pillFg = isYellow ? "272525" : "FFFFFF";
+              const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "272525" : "005AAB");
+              const cDescColor = isDarkTheme ? "E2E8F0" : (isYellow ? "4A4545" : "334155");
+
+              pSlide.addShape(pptx.ShapeType.roundRect, {
+                x,
+                y: cardY,
+                w: cWidth,
+                h: cardH,
+                fill: { color: cardBg },
+                line: { color: cardBorder, width: 1.5 },
+                rectRadius: 0.06,
+              });
+
+              // Pill badge
+              pSlide.addShape(pptx.ShapeType.roundRect, {
+                x: x + 0.35,
+                y: cardY + 0.35,
+                w: 0.58,
+                h: 0.36,
+                fill: { color: pillBg },
+                rectRadius: 0.04,
+              });
+
+              pSlide.addText(`0${i + 1}`, {
+                x: x + 0.35,
+                y: cardY + 0.37,
+                w: 0.58,
+                h: 0.32,
+                fontSize: 12,
+                bold: true,
+                color: pillFg,
+                align: "center",
+                valign: "middle",
+                fontFace: fontBody,
+              });
+
+              // Title (bold, prominent)
+              pSlide.addText(bTitle, {
+                x: x + 1.1,
+                y: cardY + 0.26,
+                w: cWidth - 1.45,
+                h: 0.58,
+                fontSize: 20.5,
+                bold: true,
+                color: cTitleColor,
+                fontFace: fontTitle,
+                valign: "middle",
+              });
+
+              // Description (clearly legible, balanced padding)
+              pSlide.addText(bDesc, {
+                x: x + 0.35,
+                y: cardY + 0.95,
+                w: cWidth - 0.7,
+                h: cardH - 1.15,
+                fontSize: 16.5,
+                color: cDescColor,
+                fontFace: fontBody,
+                valign: "top",
+                lineSpacingMultiple: 1.3,
+              });
+            });
+          }
+        } else if (slide.description) {
+          // Single contextual narrative card (clean, no dummy placeholders)
           pSlide.addShape(pptx.ShapeType.roundRect, {
             x: PAD.LEFT,
-            y: PAD.CONTENT_Y,
-            w: colW,
-            h: 3.8,
-            fill: { color: isDarkTheme ? "1E293B" : "F5F9FE" },
+            y: PAD.CONTENT_Y + 0.1,
+            w: PAD.CONTENT_W,
+            h: 3.5,
+            fill: { color: isDarkTheme ? "1E293B" : "EAF2FB" },
             line: { color: isDarkTheme ? "334155" : "005AAB", width: 1.5 },
-            rectRadius: 0.05,
+            rectRadius: 0.06,
           });
 
-          pSlide.addText(slide.description || "Executive framework and strategic target state.", {
-            x: PAD.LEFT + PAD.CARD_PAD,
-            y: PAD.CONTENT_Y + PAD.CARD_PAD,
-            w: colW - PAD.CARD_PAD * 2,
-            h: 3.8 - PAD.CARD_PAD * 2,
-            fontSize: 13,
+          pSlide.addText(slide.description, {
+            x: PAD.LEFT + 0.5,
+            y: PAD.CONTENT_Y + 0.5,
+            w: PAD.CONTENT_W - 1.0,
+            h: 2.7,
+            fontSize: 18,
             color: isDarkTheme ? "FFFFFF" : "272525",
             fontFace: fontBody,
-          });
-
-          // Right Column (Key Points / Bullets Cards) - Soft Yellow
-          const rightItems = bullets.length > 0 ? bullets : [
-            "Continuous automated monitoring across infrastructure",
-            "Cross-functional governance with clear compliance protocols",
-          ];
-          const rCardH = Math.min((3.8 - (rightItems.length - 1) * PAD.GAP_V) / rightItems.length, 1.8);
-          rightItems.forEach((item, i) => {
-            const y = PAD.CONTENT_Y + i * (rCardH + PAD.GAP_V);
-            pSlide.addShape(pptx.ShapeType.roundRect, {
-              x: PAD.LEFT + colW + PAD.GAP_H,
-              y,
-              w: colW,
-              h: rCardH,
-              fill: { color: isDarkTheme ? "1E293B" : "FFFDF5" },
-              line: { color: isDarkTheme ? "334155" : "FFDD3C", width: 1.5 },
-              rectRadius: 0.05,
-            });
-
-            pSlide.addText(item, {
-              x: PAD.LEFT + colW + PAD.GAP_H + PAD.CARD_PAD,
-              y: y + 0.2,
-              w: colW - PAD.CARD_PAD * 2,
-              h: rCardH - 0.4,
-              fontSize: 12,
-              color: isDarkTheme ? "FFFFFF" : "272525",
-              fontFace: fontBody,
-            });
+            valign: "top",
+            lineSpacingMultiple: 1.3,
           });
         }
         break;
@@ -839,7 +991,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -851,63 +1003,97 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
         }
 
-        const steps = slide.processSteps || [];
-        const sCount = Math.max(steps.length, 1);
-        const stepH = Math.min((3.8 - (sCount - 1) * 0.12) / sCount, 0.95);
-        steps.forEach((step, sIdx) => {
-          const y = PAD.CONTENT_Y + sIdx * (stepH + 0.12);
+        const rawSteps = (slide.processSteps && slide.processSteps.length > 0)
+          ? slide.processSteps
+          : (slide.bullets && slide.bullets.length > 0)
+          ? slide.bullets.map((b, idx) => {
+              const parts = b.split(/:\s*|\s*-\s*|\s*—\s*/);
+              return {
+                title: parts.length > 1 ? parts[0]?.trim() : `Pillar 0${idx + 1}`,
+                description: parts.length > 1 ? parts.slice(1).join(" — ").trim() : b,
+              };
+            })
+          : [];
+
+        const sCount = Math.max(rawSteps.length, 1);
+        const stepH = Math.min((3.7 - (sCount - 1) * 0.16) / sCount, 1.05);
+        rawSteps.forEach((step, sIdx) => {
+          const y = PAD.CONTENT_Y + 0.1 + sIdx * (stepH + 0.16);
           const isYellow = sIdx % 2 === 0;
 
-          // Number Icon
+          const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB");
+          const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
+          const numBg = isYellow ? "FFDD3C" : "005AAB";
+          const numFg = isYellow ? "272525" : "FFFFFF";
+          const sTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "272525" : "005AAB");
+
+          // Step Container Card
           pSlide.addShape(pptx.ShapeType.roundRect, {
             x: PAD.LEFT,
-            y: y + 0.05,
-            w: 0.65,
-            h: 0.65,
-            fill: { color: isYellow ? "FFDE3C" : "005AAB" },
+            y,
+            w: PAD.CONTENT_W,
+            h: stepH,
+            fill: { color: cardBg },
+            line: { color: cardBorder, width: 1.5 },
             rectRadius: 0.05,
           });
 
+          // Square Number Badge
+          pSlide.addShape(pptx.ShapeType.roundRect, {
+            x: PAD.LEFT + 0.25,
+            y: y + (stepH - 0.54) / 2,
+            w: 0.54,
+            h: 0.54,
+            fill: { color: numBg },
+            rectRadius: 0.04,
+          });
+
           pSlide.addText(String(sIdx + 1).padStart(2, "0"), {
-            x: PAD.LEFT,
-            y: y + 0.12,
-            w: 0.65,
-            h: 0.45,
-            fontSize: 12,
+            x: PAD.LEFT + 0.25,
+            y: y + (stepH - 0.54) / 2 + 0.02,
+            w: 0.54,
+            h: 0.5,
+            fontSize: 15,
             bold: true,
-            color: isYellow ? "111111" : "FFFFFF",
+            color: numFg,
             align: "center",
+            valign: "middle",
             fontFace: fontBody,
           });
 
-          // Title
+          // Step Title
           pSlide.addText(step.title, {
-            x: PAD.LEFT + 0.9,
-            y,
-            w: PAD.CONTENT_W - 0.9,
-            h: 0.35,
-            fontSize: 13,
+            x: PAD.LEFT + 0.98,
+            y: y + 0.1,
+            w: PAD.CONTENT_W - 1.25,
+            h: 0.4,
+            fontSize: 18.5,
             bold: true,
-            color: isDarkTheme ? "FFFFFF" : "005AAB",
+            color: sTitleColor,
             fontFace: fontTitle,
+            valign: "middle",
           });
 
-          // Description (12pt standard)
-          pSlide.addText(step.description, {
-            x: PAD.LEFT + 0.9,
-            y: y + 0.38,
-            w: PAD.CONTENT_W - 0.9,
-            h: Math.max(stepH - 0.38, 0.4),
-            fontSize: 12,
-            color: isDarkTheme ? "CCCCCC" : "475569",
-            fontFace: fontBody,
-          });
+          // Step Description
+          if (step.description && step.description !== step.title) {
+            pSlide.addText(step.description, {
+              x: PAD.LEFT + 0.98,
+              y: y + 0.48,
+              w: PAD.CONTENT_W - 1.25,
+              h: Math.max(stepH - 0.54, 0.35),
+              fontSize: 15,
+              color: isDarkTheme ? "E2E8F0" : "272525",
+              fontFace: fontBody,
+              valign: "top",
+              lineSpacingMultiple: 1.2,
+            });
+          }
         });
         break;
       }
@@ -918,7 +1104,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -930,131 +1116,289 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 14,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
         }
 
         const bullets = slide.bullets || (slide.description ? [slide.description] : ["Strategic objective implementation"]);
-        const bCount = bullets.length;
+        const items = bullets.slice(0, 6);
+        const count = items.length;
+        const hasInsight = Boolean(slide.insightBarText || (slide.description && slide.description !== slide.title && !slide.bullets?.includes(slide.description)));
+        const availableH = hasInsight ? 3.0 : 3.6;
 
-        if (bCount === 3) {
-          // 3 Column Cards - Alternating Yellow & Blue
+        if (count === 3) {
+          // 3 Strategic Pillars side-by-side (Alternating Yellow -> Blue -> Yellow)
           const cWidth = (PAD.CONTENT_W - 2 * PAD.GAP_H) / 3;
-          bullets.forEach((b, bIdx) => {
+          items.forEach((b, bIdx) => {
             const x = PAD.LEFT + bIdx * (cWidth + PAD.GAP_H);
-            const parts = b.split(/[:—–-]/);
-            const bTitle = parts[0]?.trim() || `Pillar 0${bIdx + 1}`;
-            const bDesc = parts.slice(1).join(" — ").trim() || b;
+            const parts = b.split(/:\s*|\s*-\s*|\s*—\s*/);
+            const bTitle = parts.length > 1 ? parts[0]?.trim() : `Pillar 0${bIdx + 1}`;
+            const bDesc = parts.length > 1 ? parts.slice(1).join(" — ").trim() : b;
             const isYellow = bIdx % 2 === 0;
+
+            const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB");
+            const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
+            const pillBg = isYellow ? "FFDD3C" : "005AAB";
+            const pillFg = isYellow ? "272525" : "FFFFFF";
+            const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "272525" : "005AAB");
+            const cDescColor = isDarkTheme ? "E2E8F0" : (isYellow ? "4A4545" : "334155");
 
             pSlide.addShape(pptx.ShapeType.roundRect, {
               x,
-              y: PAD.CONTENT_Y,
+              y: PAD.CONTENT_Y + 0.1,
               w: cWidth,
-              h: 3.8,
-              fill: { color: isDarkTheme ? "1E293B" : (isYellow ? "FFFDF5" : "F5F9FE") },
-              line: { color: isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB"), width: 1.5 },
-              rectRadius: 0.05,
+              h: availableH,
+              fill: { color: cardBg },
+              line: { color: cardBorder, width: 1.5 },
+              rectRadius: 0.06,
             });
 
             // Accent pill
             pSlide.addShape(pptx.ShapeType.roundRect, {
-              x: x + PAD.CARD_PAD,
-              y: PAD.CONTENT_Y + 0.25,
-              w: 0.8,
-              h: 0.3,
-              fill: { color: isYellow ? "FFDE3C" : "005AAB" },
+              x: x + 0.3,
+              y: PAD.CONTENT_Y + 0.3,
+              w: 0.58,
+              h: 0.34,
+              fill: { color: pillBg },
               rectRadius: 0.04,
             });
 
             pSlide.addText(`0${bIdx + 1}`, {
-              x: x + PAD.CARD_PAD,
-              y: PAD.CONTENT_Y + 0.28,
-              w: 0.8,
-              h: 0.25,
-              fontSize: 9,
+              x: x + 0.3,
+              y: PAD.CONTENT_Y + 0.32,
+              w: 0.58,
+              h: 0.3,
+              fontSize: 12,
               bold: true,
-              color: isYellow ? "111111" : "FFFFFF",
+              color: pillFg,
               align: "center",
+              valign: "middle",
+              fontFace: fontBody,
+            });
+
+            // Title
+            pSlide.addText(bTitle, {
+              x: x + 1.0,
+              y: PAD.CONTENT_Y + 0.24,
+              w: cWidth - 1.3,
+              h: 0.52,
+              fontSize: 18.5,
+              bold: true,
+              color: cTitleColor,
+              fontFace: fontTitle,
+              valign: "middle",
+            });
+
+            // Description
+            pSlide.addText(bDesc, {
+              x: x + 0.3,
+              y: PAD.CONTENT_Y + 0.85,
+              w: cWidth - 0.6,
+              h: availableH - 1.05,
+              fontSize: 15.5,
+              color: cDescColor,
+              fontFace: fontBody,
+              valign: "top",
+              lineSpacingMultiple: 1.25,
+            });
+          });
+        } else if (count === 4) {
+          // 2x2 Grid (matching 4 items in decks/page.tsx)
+          const cWidth = (PAD.CONTENT_W - PAD.GAP_H) / 2;
+          const cHeight = (availableH - PAD.GAP_V) / 2;
+          const startY = PAD.CONTENT_Y + 0.1;
+
+          items.forEach((b, bIdx) => {
+            const col = bIdx % 2;
+            const row = Math.floor(bIdx / 2);
+            const x = PAD.LEFT + col * (cWidth + PAD.GAP_H);
+            const y = startY + row * (cHeight + PAD.GAP_V);
+            const isYellow = bIdx % 2 === 0;
+
+            const parts = b.split(/:\s*|\s*-\s*|\s*—\s*/);
+            const bTitle = parts.length > 1 ? parts[0]?.trim() : `Pillar 0${bIdx + 1}`;
+            const bDesc = parts.length > 1 ? parts.slice(1).join(" — ").trim() : b;
+
+            const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB");
+            const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
+            const pillBg = isYellow ? "FFDD3C" : "005AAB";
+            const pillFg = isYellow ? "272525" : "FFFFFF";
+            const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "272525" : "005AAB");
+            const cDescColor = isDarkTheme ? "E2E8F0" : (isYellow ? "4A4545" : "334155");
+
+            pSlide.addShape(pptx.ShapeType.roundRect, {
+              x,
+              y,
+              w: cWidth,
+              h: cHeight,
+              fill: { color: cardBg },
+              line: { color: cardBorder, width: 1.5 },
+              rectRadius: 0.05,
+            });
+
+            pSlide.addShape(pptx.ShapeType.roundRect, {
+              x: x + 0.25,
+              y: y + 0.2,
+              w: 0.52,
+              h: 0.32,
+              fill: { color: pillBg },
+              rectRadius: 0.04,
+            });
+
+            pSlide.addText(`0${bIdx + 1}`, {
+              x: x + 0.25,
+              y: y + 0.22,
+              w: 0.52,
+              h: 0.28,
+              fontSize: 12,
+              bold: true,
+              color: pillFg,
+              align: "center",
+              valign: "middle",
               fontFace: fontBody,
             });
 
             pSlide.addText(bTitle, {
-              x: x + PAD.CARD_PAD,
-              y: PAD.CONTENT_Y + 0.7,
-              w: cWidth - PAD.CARD_PAD * 2,
-              h: 0.6,
-              fontSize: 13,
+              x: x + 0.9,
+              y: y + 0.16,
+              w: cWidth - 1.15,
+              h: 0.44,
+              fontSize: 17.5,
               bold: true,
-              color: isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : "005AAB",
+              color: cTitleColor,
               fontFace: fontTitle,
+              valign: "middle",
             });
 
             pSlide.addText(bDesc, {
-              x: x + PAD.CARD_PAD,
-              y: PAD.CONTENT_Y + 1.4,
-              w: cWidth - PAD.CARD_PAD * 2,
-              h: 2.2,
-              fontSize: 12,
-              color: isDarkTheme ? "E2E8F0" : "475569",
+              x: x + 0.25,
+              y: y + 0.6,
+              w: cWidth - 0.5,
+              h: cHeight - 0.72,
+              fontSize: 14.5,
+              color: cDescColor,
               fontFace: fontBody,
+              valign: "top",
+              lineSpacingMultiple: 1.2,
             });
           });
         } else {
-          // Horizontal Stack Cards (2 or 4+ items) - Alternating Yellow & Blue
-          const cardH = Math.min((3.8 - (bCount - 1) * 0.15) / Math.max(bCount, 1), 1.25);
-          bullets.forEach((b, bIdx) => {
-            const y = PAD.CONTENT_Y + bIdx * (cardH + 0.15);
-            const parts = b.split(/[:—–-]/);
-            const bTitle = parts.length > 1 ? parts[0]?.trim() : `Point 0${bIdx + 1}`;
+          // 2 Columns Side-by-Side (count === 2) OR 1 Card Centered (count === 1)
+          const cWidth = count === 1 ? 8.0 : (PAD.CONTENT_W - PAD.GAP_H) / 2;
+          const startX = count === 1 ? PAD.LEFT + (PAD.CONTENT_W - 8.0) / 2 : PAD.LEFT;
+
+          items.forEach((b, bIdx) => {
+            const x = startX + bIdx * (cWidth + PAD.GAP_H);
+            const parts = b.split(/:\s*|\s*-\s*|\s*—\s*/);
+            const bTitle = parts.length > 1 ? parts[0]?.trim() : `Pillar 0${bIdx + 1}`;
             const bDesc = parts.length > 1 ? parts.slice(1).join(" — ").trim() : b;
             const isYellow = bIdx % 2 === 0;
 
+            const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB");
+            const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
+            const pillBg = isYellow ? "FFDD3C" : "005AAB";
+            const pillFg = isYellow ? "272525" : "FFFFFF";
+            const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "272525" : "005AAB");
+            const cDescColor = isDarkTheme ? "E2E8F0" : (isYellow ? "4A4545" : "334155");
+
             pSlide.addShape(pptx.ShapeType.roundRect, {
-              x: PAD.LEFT,
-              y,
-              w: PAD.CONTENT_W,
-              h: cardH,
-              fill: { color: isDarkTheme ? "1E293B" : (isYellow ? "FFFDF5" : "F5F9FE") },
-              line: { color: isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB"), width: 1.5 },
-              rectRadius: 0.05,
+              x,
+              y: PAD.CONTENT_Y + 0.1,
+              w: cWidth,
+              h: availableH,
+              fill: { color: cardBg },
+              line: { color: cardBorder, width: 1.5 },
+              rectRadius: 0.06,
             });
 
-            // Left color bar
-            pSlide.addShape(pptx.ShapeType.rect, {
-              x: PAD.LEFT,
-              y,
-              w: 0.15,
-              h: cardH,
-              fill: { color: isYellow ? "FFDD3C" : "005AAB" },
-              line: { color: isYellow ? "FFDD3C" : "005AAB" },
+            // Accent pill
+            pSlide.addShape(pptx.ShapeType.roundRect, {
+              x: x + 0.35,
+              y: PAD.CONTENT_Y + 0.35,
+              w: 0.58,
+              h: 0.36,
+              fill: { color: pillBg },
+              rectRadius: 0.04,
             });
 
-            // Number badge
             pSlide.addText(`0${bIdx + 1}`, {
-              x: PAD.LEFT + 0.35,
-              y: y + cardH * 0.2,
-              w: 0.6,
-              h: cardH * 0.6,
+              x: x + 0.35,
+              y: PAD.CONTENT_Y + 0.37,
+              w: 0.58,
+              h: 0.32,
               fontSize: 12,
               bold: true,
-              color: isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "D97706" : "005AAB"),
-              fontFace: fontTitle,
-            });
-
-            // Text with uniform 12pt size
-            pSlide.addText([
-              { text: bTitle + (bDesc ? ": " : ""), options: { bold: true, fontSize: 12, color: isDarkTheme ? "FFFFFF" : "005AAB" } },
-              { text: bDesc, options: { bold: false, fontSize: 12, color: isDarkTheme ? "CCCCCC" : "475569" } },
-            ], {
-              x: PAD.LEFT + 1.1,
-              y: y + 0.1,
-              w: PAD.CONTENT_W - 1.3,
-              h: cardH - 0.2,
+              color: pillFg,
+              align: "center",
+              valign: "middle",
               fontFace: fontBody,
             });
+
+            // Title
+            pSlide.addText(bTitle, {
+              x: x + 1.1,
+              y: PAD.CONTENT_Y + 0.26,
+              w: cWidth - 1.45,
+              h: 0.58,
+              fontSize: 20.5,
+              bold: true,
+              color: cTitleColor,
+              fontFace: fontTitle,
+              valign: "middle",
+            });
+
+            // Description
+            pSlide.addText(bDesc, {
+              x: x + 0.35,
+              y: PAD.CONTENT_Y + 0.95,
+              w: cWidth - 0.7,
+              h: availableH - 1.15,
+              fontSize: 16.5,
+              color: cDescColor,
+              fontFace: fontBody,
+              valign: "top",
+              lineSpacingMultiple: 1.25,
+            });
+          });
+        }
+
+        // Optional Bottom Insight Bar (matching decks/page.tsx line 2745)
+        if (hasInsight) {
+          const insightContent = slide.insightBarText || slide.description || "";
+          const barY = PAD.CONTENT_Y + availableH + 0.25;
+
+          pSlide.addShape(pptx.ShapeType.roundRect, {
+            x: PAD.LEFT,
+            y: barY,
+            w: PAD.CONTENT_W,
+            h: 0.55,
+            fill: { color: isDarkTheme ? "1E293B" : "EAF2FB" },
+            line: { color: isDarkTheme ? "334155" : "005AAB", width: 1 },
+            rectRadius: 0.04,
+          });
+
+          // Left deep blue accent stripe
+          pSlide.addShape(pptx.ShapeType.rect, {
+            x: PAD.LEFT,
+            y: barY,
+            w: 0.12,
+            h: 0.55,
+            fill: { color: "005AAB" },
+            line: { color: "005AAB" },
+          });
+
+          pSlide.addText([
+            { text: "Insight: ", options: { bold: true, fontSize: 14.5, color: isDarkTheme ? "93C5FD" : "005AAB" } },
+            { text: insightContent, options: { bold: false, fontSize: 14.5, color: isDarkTheme ? "E2E8F0" : "272525" } },
+          ], {
+            x: PAD.LEFT + 0.3,
+            y: barY + 0.08,
+            w: PAD.CONTENT_W - 0.5,
+            h: 0.4,
+            fontFace: fontBody,
+            valign: "middle",
           });
         }
         break;
@@ -1070,7 +1414,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 22,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -1079,10 +1423,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
         if (slide.highlight) {
           pSlide.addText(slide.highlight, {
             x: PAD.LEFT,
-            y: PAD.CONTENT_Y,
+            y: PAD.CONTENT_Y + 0.2,
             w: PAD.CONTENT_W,
             h: 1.8,
-            fontSize: 64,
+            fontSize: 72,
             color: hasTemplateBg ? (isDarkTheme ? "FFDD3C" : "005AAB") : primaryContrastColor,
             bold: true,
             fontFace: fontTitle,
@@ -1092,10 +1436,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
         if (slide.description) {
           pSlide.addText(slide.description, {
             x: PAD.LEFT,
-            y: PAD.CONTENT_Y + 2.0,
+            y: PAD.CONTENT_Y + 2.2,
             w: PAD.CONTENT_W,
             h: 1.4,
-            fontSize: 16,
+            fontSize: 18,
             color: hasTemplateBg ? currentTextColor : primaryContrastColor,
             fontFace: fontBody,
           });
@@ -1110,7 +1454,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 24,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -1122,7 +1466,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -1156,7 +1500,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 24,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -1168,7 +1512,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -1202,7 +1546,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -1214,7 +1558,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 14,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -1245,7 +1589,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y,
             w: cardWidth,
             h: 3.8,
-            fill: { color: isDarkTheme ? "1E293B" : (isEven ? "FFFDF5" : "F5F9FE") },
+            fill: { color: isDarkTheme ? "1E293B" : (isEven ? "FFF9D6" : "EAF2FB") },
             line: { color: isDarkTheme ? "334155" : (isEven ? "FFDD3C" : "005AAB"), width: 1.5 },
             rectRadius: 0.05,
           });
@@ -1254,8 +1598,8 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           pSlide.addShape(pptx.ShapeType.roundRect, {
             x: x + PAD.CARD_PAD,
             y: PAD.CONTENT_Y + 0.25,
-            w: 0.8,
-            h: 0.3,
+            w: 0.85,
+            h: 0.32,
             fill: { color: isEven ? "FFDD3C" : "005AAB" },
             rectRadius: 0.04,
           });
@@ -1263,9 +1607,9 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           pSlide.addText(node.tag || `0${nIdx + 1}`, {
             x: x + PAD.CARD_PAD,
             y: PAD.CONTENT_Y + 0.28,
-            w: 0.8,
-            h: 0.25,
-            fontSize: 9,
+            w: 0.85,
+            h: 0.26,
+            fontSize: 12,
             color: isEven ? "111827" : "FFFFFF",
             bold: true,
             align: "center",
@@ -1275,10 +1619,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           // Title
           pSlide.addText(node.title, {
             x: x + PAD.CARD_PAD,
-            y: PAD.CONTENT_Y + 0.7,
+            y: PAD.CONTENT_Y + 0.72,
             w: cardWidth - PAD.CARD_PAD * 2,
-            h: 0.6,
-            fontSize: 13,
+            h: 0.65,
+            fontSize: 18,
             color: isDarkTheme ? "FFFFFF" : "005AAB",
             bold: true,
             fontFace: fontTitle,
@@ -1288,11 +1632,11 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           if (node.subtitle) {
             pSlide.addText(node.subtitle, {
               x: x + PAD.CARD_PAD,
-              y: PAD.CONTENT_Y + 1.4,
+              y: PAD.CONTENT_Y + 1.45,
               w: cardWidth - PAD.CARD_PAD * 2,
               h: 2.1,
-              fontSize: 10,
-              color: isDarkTheme ? "CCCCCC" : "666666",
+              fontSize: 14,
+              color: isDarkTheme ? "CCCCCC" : "272525",
               fontFace: fontBody,
             });
           }
@@ -1301,10 +1645,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           if (nIdx < nodes.length - 1) {
             pSlide.addText("→", {
               x: x + cardWidth,
-              y: PAD.CONTENT_Y + 1.6,
+              y: PAD.CONTENT_Y + 1.55,
               w: gap,
-              h: 0.5,
-              fontSize: 16,
+              h: 0.55,
+              fontSize: 24,
               color: primaryHex === "FFDE3C" ? "D97706" : primaryHex,
               align: "center",
               bold: true,
@@ -1321,7 +1665,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 24,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -1333,7 +1677,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -1354,7 +1698,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               y: PAD.CONTENT_Y,
               w: cWidth,
               h: 3.8,
-              fill: { color: isDarkTheme ? "181818" : (isEven ? "FFFDF5" : "F5F9FE") },
+              fill: { color: isDarkTheme ? "181818" : (isEven ? "FFF9D6" : "EAF2FB") },
               line: { color: isDarkTheme ? "333333" : (isEven ? "FFDD3C" : "005AAB"), width: 1.5 },
               rectRadius: 0.05,
             });
@@ -1363,7 +1707,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               y: PAD.CONTENT_Y + 0.3,
               w: cWidth - PAD.CARD_PAD * 2,
               h: 3.2,
-              fontSize: 13,
+              fontSize: 16,
               color: isDarkTheme ? "FFFFFF" : "005AAB",
               fontFace: fontBody,
             });
@@ -1382,6 +1726,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             fill: i === headers.length - 1 ? "005AAB" : (i % 2 === 0 ? "FFDD3C" : "F3F4F6"),
             color: i === headers.length - 1 ? "FFFFFF" : (i % 2 === 0 ? "111827" : "333333"),
             align: (i === 0 ? "left" : "center") as "left" | "center",
+            fontSize: 14,
           },
         }));
 
@@ -1398,14 +1743,15 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
                   color: i === 0 ? (isDarkTheme ? "FFFFFF" : "005AAB") : (isDarkTheme ? "CCCCCC" : "333333"),
                   fill: rowBg,
                   align: (i === 0 ? "left" : "center") as "left" | "center",
+                  fontSize: 13,
                 },
               }))
             );
           } else {
             tableData.push([
-              { text: r.feature || "Feature", options: { color: isDarkTheme ? "FFFFFF" : "005AAB", bold: true, align: "left", fill: rowBg } },
-              { text: typeof r.current === "boolean" ? (r.current ? "Yes" : "No") : String(r.current ?? "-"), options: { align: "center", color: isDarkTheme ? "CCCCCC" : "666666", fill: rowBg } },
-              { text: typeof r.proposed === "boolean" ? (r.proposed ? "Yes" : "No") : String(r.proposed ?? "Yes"), options: { align: "center", bold: true, color: isDarkTheme ? "FFDD3C" : "005AAB", fill: rowBg } },
+              { text: r.feature || "Feature", options: { color: isDarkTheme ? "FFFFFF" : "005AAB", bold: true, align: "left", fill: rowBg, fontSize: 13 } },
+              { text: typeof r.current === "boolean" ? (r.current ? "Yes" : "No") : String(r.current ?? "-"), options: { align: "center", color: isDarkTheme ? "CCCCCC" : "666666", fill: rowBg, fontSize: 13 } },
+              { text: typeof r.proposed === "boolean" ? (r.proposed ? "Yes" : "No") : String(r.proposed ?? "Yes"), options: { align: "center", bold: true, color: isDarkTheme ? "FFDD3C" : "005AAB", fill: rowBg, fontSize: 13 } },
             ]);
           }
         });
@@ -1421,7 +1767,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           colW,
           border: { type: "solid", color: "E5E7EB", pt: 1 },
           fontFace: fontBody,
-          fontSize: 10,
+          fontSize: 13,
         });
         break;
       }
@@ -1432,7 +1778,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 24,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -1444,7 +1790,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -1472,7 +1818,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y + 0.1,
             w: mWidth,
             h: 3.8,
-            fill: { color: isDarkTheme ? "181818" : (isEven ? "FFFDF5" : "F5F9FE") },
+            fill: { color: isDarkTheme ? "181818" : (isEven ? "FFF9D6" : "EAF2FB") },
             line: { color: isDarkTheme ? "333333" : (isEven ? "FFDD3C" : "005AAB"), width: 1.5 },
             rectRadius: 0.05,
           });
@@ -1492,8 +1838,9 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y + 0.95,
             w: mWidth - 0.2,
             h: 0.3,
-            fontSize: 10,
+            fontSize: 12,
             color: isDarkTheme ? "999999" : (isEven ? "B45309" : "005AAB"),
+            bold: true,
             align: "center",
             fontFace: fontBody,
           });
@@ -1504,7 +1851,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y + 1.35,
             w: mWidth - 0.2,
             h: 0.6,
-            fontSize: 12,
+            fontSize: 16,
             color: isDarkTheme ? "FFFFFF" : "005AAB",
             bold: true,
             align: "center",
@@ -1517,8 +1864,8 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y + 2.05,
             w: mWidth - 0.2,
             h: 1.6,
-            fontSize: 10,
-            color: isDarkTheme ? "CCCCCC" : "666666",
+            fontSize: 13.5,
+            color: isDarkTheme ? "CCCCCC" : "272525",
             align: "center",
             fontFace: fontBody,
           });
@@ -1532,7 +1879,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: 0.8,
           w: 11.0,
           h: 0.8,
-          fontSize: 24,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -1544,7 +1891,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: 1.6,
             w: 11.0,
             h: 0.5,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -1579,7 +1926,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -1591,7 +1938,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -1599,8 +1946,8 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
         const bulletItems = slide.bullets || [];
         const quads = [
-          { title: "QUICK WINS (High Impact, Low Effort)", items: slide.quadrantData?.q1 || (bulletItems[0] ? [{ title: bulletItems[0] }] : []), col: 0, row: 0, fill: "FFFDF5", border: "FFDD3C" },
-          { title: "STRATEGIC BETS (High Impact, High Effort)", items: slide.quadrantData?.q2 || (bulletItems[1] ? [{ title: bulletItems[1] }] : []), col: 1, row: 0, fill: "F5F9FE", border: "005AAB" },
+          { title: "QUICK WINS (High Impact, Low Effort)", items: slide.quadrantData?.q1 || (bulletItems[0] ? [{ title: bulletItems[0] }] : []), col: 0, row: 0, fill: "FFF9D6", border: "FFDD3C" },
+          { title: "STRATEGIC BETS (High Impact, High Effort)", items: slide.quadrantData?.q2 || (bulletItems[1] ? [{ title: bulletItems[1] }] : []), col: 1, row: 0, fill: "EAF2FB", border: "005AAB" },
           { title: "FILL-IN TASKS (Low Impact, Low Effort)", items: slide.quadrantData?.q3 || (bulletItems[2] ? [{ title: bulletItems[2] }] : []), col: 0, row: 1, fill: "F8FAFC", border: "CBD5E1" },
           { title: "DEPRIORITIZE (Low Impact, High Effort)", items: slide.quadrantData?.q4 || (bulletItems[3] ? [{ title: bulletItems[3] }] : []), col: 1, row: 1, fill: "FEF2F2", border: "FECACA" },
         ];
@@ -1626,7 +1973,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: y + 0.15,
             w: quadW - PAD.INNER * 2,
             h: 0.35,
-            fontSize: 10,
+            fontSize: 13,
             bold: true,
             color: isDarkTheme ? "FFDD3C" : "005AAB",
             fontFace: fontTitle,
@@ -1638,7 +1985,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: y + 0.55,
             w: quadW - PAD.INNER * 2,
             h: quadH - 0.7,
-            fontSize: 11,
+            fontSize: 13.5,
             color: currentTextColor,
             fontFace: fontBody,
           });
@@ -1652,7 +1999,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -1664,7 +2011,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -1702,7 +2049,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: y + 0.18,
             w: w - PAD.INNER * 2,
             h: 0.45,
-            fontSize: 12,
+            fontSize: 14.5,
             bold: true,
             color: isFinal ? primaryContrastColor : currentTextColor,
             align: "center",
@@ -1718,7 +2065,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -1730,7 +2077,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -1758,7 +2105,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y,
             w: cardW,
             h: cardH,
-            fill: { color: isDarkTheme ? "1E293B" : (isYellow ? "FFFDF5" : "F5F9FE") },
+            fill: { color: isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB") },
             line: { color: isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB"), width: 1.5 },
             rectRadius: 0.05,
           });
@@ -1768,7 +2115,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y + 0.25,
             w: cardW - PAD.INNER * 2,
             h: 0.5,
-            fontSize: 13,
+            fontSize: 17,
             bold: true,
             color: isDarkTheme ? "FFDD3C" : "005AAB",
             fontFace: fontTitle,
@@ -1780,8 +2127,8 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               y: PAD.CONTENT_Y + 0.85,
               w: cardW - PAD.INNER * 2,
               h: cardH - 1.05,
-              fontSize: 11,
-              color: isDarkTheme ? "CBD5E1" : "475569",
+              fontSize: 14,
+              color: isDarkTheme ? "CBD5E1" : "272525",
               fontFace: fontBody,
             });
           }
@@ -1795,7 +2142,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -1807,7 +2154,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -1837,7 +2184,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y,
             w: PAD.CONTENT_W,
             h: tierH,
-            fill: { color: isDarkTheme ? "1E293B" : (isYellow ? "FFFDF5" : "F5F9FE") },
+            fill: { color: isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB") },
             line: { color: isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB"), width: 1.5 },
             rectRadius: 0.05,
           });
@@ -1847,7 +2194,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: y + 0.12,
             w: PAD.CONTENT_W - PAD.INNER * 2,
             h: 0.35,
-            fontSize: 13,
+            fontSize: 16.5,
             bold: true,
             color: isDarkTheme ? "FFDD3C" : "005AAB",
             fontFace: fontTitle,
@@ -1858,8 +2205,8 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: y + 0.5,
             w: PAD.CONTENT_W - PAD.INNER * 2,
             h: tierH - 0.55,
-            fontSize: 11,
-            color: isDarkTheme ? "CBD5E1" : "475569",
+            fontSize: 13.5,
+            color: isDarkTheme ? "CBD5E1" : "272525",
             fontFace: fontBody,
           });
         });
@@ -1872,7 +2219,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -1884,7 +2231,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -1913,7 +2260,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               y: PAD.CONTENT_Y,
               w: cWidth,
               h: 0.4,
-              fontSize: 16,
+              fontSize: 18,
               bold: true,
               color: isDarkTheme ? "FFDD3C" : "005AAB",
               align: "center",
@@ -1924,7 +2271,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               y: PAD.CONTENT_Y + 0.4,
               w: cWidth,
               h: 0.45,
-              fontSize: 10,
+              fontSize: 12.5,
               color: currentMutedColor,
               align: "center",
               fontFace: fontBody,
@@ -1946,7 +2293,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y + 1.25,
             w: cWidth,
             h: 0.6,
-            fontSize: 11,
+            fontSize: 14,
             bold: true,
             color: isYellow ? primaryContrastColor : "FFFFFF",
             align: "center",
@@ -1960,7 +2307,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               y: PAD.CONTENT_Y + 2.2,
               w: cWidth,
               h: 0.4,
-              fontSize: 16,
+              fontSize: 18,
               bold: true,
               color: isDarkTheme ? "FFDD3C" : "005AAB",
               align: "center",
@@ -1971,7 +2318,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               y: PAD.CONTENT_Y + 2.65,
               w: cWidth,
               h: 0.45,
-              fontSize: 10,
+              fontSize: 12.5,
               color: currentMutedColor,
               align: "center",
               fontFace: fontBody,
@@ -1987,7 +2334,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -1999,7 +2346,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -2039,7 +2386,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y + 1.15,
             w: 1.8,
             h: 0.6,
-            fontSize: 22,
+            fontSize: 26,
             bold: true,
             color: isDarkTheme ? "FFFFFF" : darkHex,
             align: "center",
@@ -2051,7 +2398,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y + 0.6,
             w: cardW - 2.8,
             h: 0.6,
-            fontSize: 14,
+            fontSize: 17,
             bold: true,
             color: isDarkTheme ? "FFDD3C" : "005AAB",
             fontFace: fontTitle,
@@ -2062,8 +2409,8 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y + 1.25,
             w: cardW - 2.8,
             h: 1.8,
-            fontSize: 11,
-            color: currentMutedColor,
+            fontSize: 13.5,
+            color: currentTextColor,
             fontFace: fontBody,
           });
         });
@@ -2076,7 +2423,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -2088,7 +2435,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -2126,7 +2473,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: y + 0.15,
             w: tWidth - PAD.INNER * 2,
             h: 0.4,
-            fontSize: 20,
+            fontSize: 24,
             bold: true,
             color: primaryContrastColor,
             fontFace: fontTitle,
@@ -2137,7 +2484,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: y + 0.55,
             w: tWidth - PAD.INNER * 2,
             h: 0.35,
-            fontSize: 12,
+            fontSize: 16,
             bold: true,
             color: primaryContrastColor,
             fontFace: fontTitle,
@@ -2149,7 +2496,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               y: y + 0.9,
               w: tWidth - PAD.INNER * 2,
               h: 0.45,
-              fontSize: 10,
+              fontSize: 13,
               color: primaryContrastColor,
               fontFace: fontBody,
             });
@@ -2164,7 +2511,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -2176,7 +2523,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -2206,7 +2553,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: y + 0.15,
             w: 0.6,
             h: 0.4,
-            fontSize: 11,
+            fontSize: 13,
             bold: true,
             color: primaryContrastColor,
             align: "center",
@@ -2219,7 +2566,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y,
             w: PAD.CONTENT_W - 0.8,
             h: 0.4,
-            fontSize: 13,
+            fontSize: 16.5,
             bold: true,
             color: currentTextColor,
             fontFace: fontTitle,
@@ -2255,7 +2602,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -2267,7 +2614,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -2292,7 +2639,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 0.3,
           w: 3.8 - PAD.INNER * 2,
           h: 0.9,
-          fontSize: 38,
+          fontSize: 44,
           bold: true,
           color: primaryContrastColor,
           fontFace: fontTitle,
@@ -2303,7 +2650,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 1.3,
           w: 3.8 - PAD.INNER * 2,
           h: 0.5,
-          fontSize: 12,
+          fontSize: 16,
           bold: true,
           color: primaryContrastColor,
           fontFace: fontBody,
@@ -2314,7 +2661,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 1.9,
           w: 3.8 - PAD.INNER * 2,
           h: 1.5,
-          fontSize: 10,
+          fontSize: 13.5,
           color: primaryContrastColor,
           fontFace: fontBody,
         });
@@ -2353,7 +2700,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: sy + 0.05,
             w: 0.6,
             h: 0.35,
-            fontSize: 10,
+            fontSize: 12,
             bold: true,
             color: primaryContrastColor,
             align: "center",
@@ -2366,7 +2713,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: sy,
             w: 4.8,
             h: 0.35,
-            fontSize: 13,
+            fontSize: 16.5,
             bold: true,
             color: currentTextColor,
             fontFace: fontTitle,
@@ -2379,7 +2726,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               y: sy + 0.35,
               w: 4.8,
               h: 0.3,
-              fontSize: 9,
+              fontSize: 13,
               color: currentMutedColor,
               fontFace: fontBody,
             });
@@ -2391,7 +2738,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: sy,
             w: 1.1,
             h: 0.35,
-            fontSize: 12,
+            fontSize: 15,
             bold: true,
             color: currentTextColor,
             align: "right",
@@ -2429,7 +2776,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: 7.0,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -2442,7 +2789,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.TITLE_Y,
             w: PAD.CONTENT_W - 7.0,
             h: PAD.TITLE_H,
-            fontSize: 12,
+            fontSize: 16,
             color: currentMutedColor,
             align: "right",
             fontFace: fontBody,
@@ -2476,7 +2823,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y + 0.8,
             w: segmentWidth - 0.05,
             h: 0.4,
-            fontSize: 16,
+            fontSize: 18,
             bold: true,
             color: primaryContrastColor,
             align: "center",
@@ -2489,7 +2836,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y + 1.6,
             w: segmentWidth - 0.2,
             h: 0.5,
-            fontSize: 11,
+            fontSize: 15.5,
             bold: true,
             color: currentTextColor,
             fontFace: fontTitle,
@@ -2501,7 +2848,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               y: PAD.CONTENT_Y + 2.15,
               w: segmentWidth - 0.2,
               h: 1.2,
-              fontSize: 9,
+              fontSize: 13,
               color: currentMutedColor,
               fontFace: fontBody,
             });
@@ -2518,7 +2865,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: 1.8,
           w: 11.3,
           h: 2.2,
-          fontSize: 38,
+          fontSize: 42,
           bold: true,
           color: titleColor,
           fontFace: fontTitle,
@@ -2530,7 +2877,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: 4.2,
             w: 10.5,
             h: 0.8,
-            fontSize: 16,
+            fontSize: 18,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -2552,7 +2899,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: 5.34,
           w: btnW,
           h: 0.4,
-          fontSize: 11,
+          fontSize: 14,
           bold: true,
           color: isDarkTheme ? "111827" : "FFFFFF",
           align: "center",
@@ -2569,7 +2916,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: 4.5,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           bold: true,
           color: titleColor,
           fontFace: fontTitle,
@@ -2581,7 +2928,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: 4.5,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -2607,7 +2954,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 0.5,
           w: 1.4,
           h: 0.4,
-          fontSize: 9,
+          fontSize: 12,
           bold: true,
           color: primaryContrastColor,
           align: "center",
@@ -2618,7 +2965,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 0.4,
           w: 4.5,
           h: 0.5,
-          fontSize: 12,
+          fontSize: 14.5,
           bold: true,
           color: currentTextColor,
           fontFace: fontTitle,
@@ -2638,7 +2985,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 1.5,
           w: 1.8,
           h: 0.4,
-          fontSize: 10,
+          fontSize: 13,
           bold: true,
           color: "FFFFFF",
           align: "center",
@@ -2649,7 +2996,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 1.4,
           w: 4.5,
           h: 0.5,
-          fontSize: 12,
+          fontSize: 14.5,
           bold: true,
           color: currentTextColor,
           fontFace: fontTitle,
@@ -2669,7 +3016,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 2.4,
           w: 2.4,
           h: 0.5,
-          fontSize: 12,
+          fontSize: 14,
           bold: true,
           color: primaryContrastColor,
           align: "center",
@@ -2680,7 +3027,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 3.0,
           w: 2.8,
           h: 0.6,
-          fontSize: 12,
+          fontSize: 14.5,
           bold: true,
           color: currentTextColor,
           align: "right",
@@ -2705,7 +3052,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 1.1,
           w: 4.5,
           h: 0.5,
-          fontSize: 12,
+          fontSize: 14,
           color: isDarkTheme ? "94A3B8" : "64748B",
           align: "center",
           fontFace: fontBody,
@@ -2724,7 +3071,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 3.0,
           w: 4.5 - PAD.INNER * 2,
           h: 0.9,
-          fontSize: 10,
+          fontSize: 13.5,
           bold: true,
           color: primaryContrastColor,
           fontFace: fontBody,
@@ -2736,7 +3083,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W - 4.9,
           h: PAD.TITLE_H + 0.4,
-          fontSize: 26,
+          fontSize: 34,
           bold: true,
           color: titleColor,
           fontFace: fontTitle,
@@ -2756,7 +3103,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y + 0.5,
             w: PAD.CONTENT_W - 4.9 - PAD.INNER * 2,
             h: 0.7,
-            fontSize: 10,
+            fontSize: 13.5,
             color: primaryContrastColor,
             fontFace: fontBody,
           });
@@ -2768,7 +3115,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: 4.3,
           w: 2.6,
           h: 1.2,
-          fontSize: 48,
+          fontSize: 52,
           bold: true,
           color: currentTextColor,
           fontFace: fontTitle,
@@ -2778,7 +3125,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: 4.7,
           w: 3.8,
           h: 0.8,
-          fontSize: 10,
+          fontSize: 14,
           color: currentMutedColor,
           fontFace: fontBody,
         });
@@ -2792,7 +3139,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: 7.5,
           h: PAD.TITLE_H,
-          fontSize: 28,
+          fontSize: 34,
           bold: true,
           color: titleColor,
           fontFace: fontTitle,
@@ -2804,7 +3151,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.TITLE_Y,
             w: PAD.CONTENT_W - 7.5,
             h: PAD.TITLE_H,
-            fontSize: 12,
+            fontSize: 16,
             color: currentMutedColor,
             align: "right",
             fontFace: fontBody,
@@ -2818,7 +3165,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y + 0.3,
             w: 5.5,
             h: 0.4,
-            fontSize: 11,
+            fontSize: 14,
             bold: true,
             color: isDarkTheme ? "FFDD3C" : "005AAB",
             fontFace: fontBody,
@@ -2831,7 +3178,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 0.8,
           w: 5.5,
           h: 1.4,
-          fontSize: 52,
+          fontSize: 56,
           bold: true,
           color: hasTemplateBg ? (isDarkTheme ? "FFDD3C" : "005AAB") : primaryContrastColor,
           fontFace: fontTitle,
@@ -2842,7 +3189,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 2.3,
           w: 5.5,
           h: 0.6,
-          fontSize: 11,
+          fontSize: 15,
           color: currentTextColor,
           fontFace: fontBody,
         });
@@ -2872,7 +3219,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 1.4,
           w: 4.3,
           h: 1.2,
-          fontSize: 12,
+          fontSize: 15,
           bold: true,
           color: isDarkTheme ? "FFFFFF" : "272525",
           fontFace: fontBody,
@@ -2895,7 +3242,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: 1.2,
           w: 2.4,
           h: 1.0,
-          fontSize: 36,
+          fontSize: 40,
           bold: true,
           color: currentTextColor,
           fontFace: fontTitle,
@@ -2913,7 +3260,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: 1.35,
           w: 3.0,
           h: 0.8,
-          fontSize: 10,
+          fontSize: 13.5,
           bold: true,
           color: primaryContrastColor,
           fontFace: fontBody,
@@ -2933,7 +3280,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: 2.85,
           w: 3.0,
           h: 0.8,
-          fontSize: 10,
+          fontSize: 13.5,
           bold: true,
           color: primaryContrastColor,
           fontFace: fontBody,
@@ -2943,7 +3290,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: 2.7,
           w: 2.4,
           h: 1.0,
-          fontSize: 36,
+          fontSize: 40,
           bold: true,
           color: currentTextColor,
           fontFace: fontTitle,
@@ -2955,7 +3302,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: 4.2,
           w: 2.4,
           h: 1.0,
-          fontSize: 36,
+          fontSize: 40,
           bold: true,
           color: currentTextColor,
           fontFace: fontTitle,
@@ -2973,7 +3320,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: 4.35,
           w: 3.0,
           h: 0.8,
-          fontSize: 10,
+          fontSize: 13.5,
           bold: true,
           color: primaryContrastColor,
           fontFace: fontBody,
@@ -2997,7 +3344,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: 4.4,
             w: 4.7,
             h: 1.0,
-            fontSize: 12,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -3013,7 +3360,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: 4.8,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           bold: true,
           color: titleColor,
           fontFace: fontTitle,
@@ -3025,7 +3372,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: 4.8,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -3037,7 +3384,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 0.6,
           w: 4.8,
           h: 1.0,
-          fontSize: 42,
+          fontSize: 48,
           bold: true,
           color: isDarkTheme ? "FFDD3C" : "005AAB",
           fontFace: fontTitle,
@@ -3047,7 +3394,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.CONTENT_Y + 1.7,
           w: 4.8,
           h: 0.8,
-          fontSize: 11,
+          fontSize: 14,
           color: currentMutedColor,
           fontFace: fontBody,
         });
@@ -3073,20 +3420,20 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
           // Ring Circle
           pSlide.addShape(pptx.ShapeType.ellipse, {
-            x: 6.2,
+            x: 6.1,
             y: ry,
-            w: 1.2,
-            h: 1.2,
+            w: 1.3,
+            h: 1.3,
             fill: { color: isDarkTheme ? "1E293B" : "FFFFFF" },
             line: { color: primaryHex, width: 3.5 },
           });
 
           pSlide.addText(`${rg.percentage}%`, {
-            x: 6.2,
-            y: ry + 0.35,
-            w: 1.2,
+            x: 6.1,
+            y: ry + 0.38,
+            w: 1.3,
             h: 0.5,
-            fontSize: 11,
+            fontSize: 14,
             bold: true,
             color: isDarkTheme ? "FFFFFF" : darkHex,
             align: "center",
@@ -3096,7 +3443,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           // Horizontal pointer line
           pSlide.addShape(pptx.ShapeType.line, {
             x: 7.5,
-            y: ry + 0.6,
+            y: ry + 0.65,
             w: 0.5,
             h: 0,
             line: { color: primaryHex, width: 2 },
@@ -3108,7 +3455,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: ry + 0.15,
             w: 4.1,
             h: 0.4,
-            fontSize: 13,
+            fontSize: 17,
             bold: true,
             color: currentTextColor,
             fontFace: fontTitle,
@@ -3116,10 +3463,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
           pSlide.addText(rg.description, {
             x: 8.2,
-            y: ry + 0.55,
+            y: ry + 0.58,
             w: 4.1,
             h: 0.55,
-            fontSize: 10,
+            fontSize: 13.5,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -3135,10 +3482,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
         pSlide.addText(slide.title, {
           x: PAD.LEFT,
-          y: 2.0,
+          y: 1.8,
           w: PAD.CONTENT_W,
-          h: 1.2,
-          fontSize: 34,
+          h: 1.3,
+          fontSize: 38,
           color: hasTemplateBg ? titleColor : (isBoldYellow ? primaryContrastColor : "FFFFFF"),
           bold: true,
           align: "center",
@@ -3148,11 +3495,11 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
         if (slide.subtitle) {
           pSlide.addText(slide.subtitle, {
             x: PAD.LEFT,
-            y: 3.3,
+            y: 3.2,
             w: PAD.CONTENT_W,
             h: 0.8,
-            fontSize: 16,
-            color: hasTemplateBg ? currentMutedColor : (isBoldYellow ? currentMutedColor : "AAAAAA"),
+            fontSize: 18,
+            color: hasTemplateBg ? currentMutedColor : (isBoldYellow ? currentMutedColor : "CBD5E1"),
             align: "center",
             fontFace: fontBody,
           });
@@ -3160,23 +3507,23 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
         if (slide.ctaText) {
           const btnText = slide.ctaText;
-          const btnW = Math.min(Math.max(btnText.length * 0.12 + 0.8, 3.5), 7.0);
+          const btnW = Math.min(Math.max(btnText.length * 0.14 + 0.9, 3.8), 7.5);
           const btnX = PAD.LEFT + (PAD.CONTENT_W - btnW) / 2;
           pSlide.addShape(pptx.ShapeType.roundRect, {
             x: btnX,
-            y: 4.5,
+            y: 4.4,
             w: btnW,
-            h: 0.75,
+            h: 0.8,
             fill: { color: isDarkTheme ? "FFDD3C" : "005AAB" },
             rectRadius: 0.05,
           });
 
           pSlide.addText(btnText, {
             x: btnX,
-            y: 4.65,
+            y: 4.55,
             w: btnW,
             h: 0.5,
-            fontSize: 13,
+            fontSize: 15,
             color: isDarkTheme ? "111827" : "FFFFFF",
             bold: true,
             align: "center",
@@ -3193,10 +3540,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
         pSlide.addText(slide.title, {
           x: PAD.LEFT,
-          y: 2.2,
+          y: 2.0,
           w: PAD.CONTENT_W,
-          h: 1.2,
-          fontSize: 38,
+          h: 1.3,
+          fontSize: 42,
           color: hasTemplateBg ? titleColor : primaryContrastColor,
           bold: true,
           align: "center",
@@ -3206,10 +3553,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
         if (slide.subtitle) {
           pSlide.addText(slide.subtitle, {
             x: PAD.LEFT,
-            y: 3.6,
+            y: 3.5,
             w: PAD.CONTENT_W,
             h: 0.8,
-            fontSize: 16,
+            fontSize: 18,
             color: hasTemplateBg ? currentMutedColor : primaryContrastColor,
             align: "center",
             fontFace: fontBody,
@@ -3218,21 +3565,21 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
         const resumeText = slide.ctaText || "We resume at [insert return time]";
         pSlide.addShape(pptx.ShapeType.roundRect, {
-          x: 4.2,
+          x: 3.9,
           y: 4.8,
-          w: 4.9,
-          h: 0.7,
+          w: 5.5,
+          h: 0.75,
           fill: { color: isDarkTheme ? "1E293B" : "FFFFFF" },
           rectRadius: 0.35,
           line: { color: isDarkTheme ? "334155" : "005AAB", width: 1.5 },
         });
 
         pSlide.addText(resumeText, {
-          x: 4.2,
-          y: 4.9,
-          w: 4.9,
+          x: 3.9,
+          y: 4.92,
+          w: 5.5,
           h: 0.5,
-          fontSize: 13,
+          fontSize: 15,
           color: isDarkTheme ? "FFDD3C" : "005AAB",
           bold: true,
           align: "center",
@@ -3247,7 +3594,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -3259,7 +3606,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -3283,7 +3630,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             });
 
         const startY = PAD.CONTENT_Y + 0.1;
-        const itemGap = Math.min(0.95, 4.0 / Math.max(1, items.length));
+        const itemGap = Math.min(0.98, 4.0 / Math.max(1, items.length));
 
         items.forEach((item, aIdx) => {
           const rowY = startY + aIdx * itemGap;
@@ -3291,7 +3638,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             x: PAD.LEFT + 0.35,
             y: rowY,
             w: PAD.CONTENT_W - 0.35,
-            h: 0.75,
+            h: 0.82,
             fill: { color: isDarkTheme ? "1A1A1A" : "F9F9F9" },
             rectRadius: 0.08,
             line: { color: isDarkTheme ? "333333" : "E5E5E5", width: 1 },
@@ -3300,10 +3647,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           const displayText = `${aIdx + 1}. ${item.verb ? item.verb.toUpperCase() + ": " : ""}${item.text}`;
           pSlide.addText(displayText, {
             x: PAD.LEFT + 0.55,
-            y: rowY + 0.12,
+            y: rowY + 0.14,
             w: PAD.CONTENT_W - 0.75,
-            h: 0.5,
-            fontSize: 12,
+            h: 0.54,
+            fontSize: 15,
             color: currentTextColor,
             fontFace: fontBody,
           });
@@ -3317,7 +3664,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 24,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -3329,7 +3676,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -3351,17 +3698,17 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             x: cX,
             y: PAD.CONTENT_Y,
             w: cardW,
-            h: 0.55,
+            h: 0.65,
             fill: { color: isDarkTheme ? (isEven ? "FFDD3C" : "1E293B") : (isEven ? "FFDD3C" : "005AAB") },
             rectRadius: 0.05,
           });
 
           pSlide.addText(card.title, {
             x: cX + PAD.INNER,
-            y: PAD.CONTENT_Y + 0.1,
+            y: PAD.CONTENT_Y + 0.12,
             w: cardW - PAD.INNER * 2,
-            h: 0.35,
-            fontSize: 13,
+            h: 0.42,
+            fontSize: 16,
             bold: true,
             color: isDarkTheme ? (isEven ? "111827" : "FFFFFF") : (isEven ? "111827" : "FFFFFF"),
             fontFace: fontTitle,
@@ -3370,10 +3717,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           // Card body
           pSlide.addShape(pptx.ShapeType.roundRect, {
             x: cX,
-            y: PAD.CONTENT_Y + 0.55,
+            y: PAD.CONTENT_Y + 0.65,
             w: cardW,
-            h: 3.25,
-            fill: { color: isDarkTheme ? "181818" : (isEven ? "FFFDF5" : "F5F9FE") },
+            h: 3.15,
+            fill: { color: isDarkTheme ? "181818" : (isEven ? "FFF9D6" : "EAF2FB") },
             rectRadius: 0.05,
             line: { color: isDarkTheme ? "333333" : (isEven ? "FFDD3C" : "005AAB"), width: 1.5 },
           });
@@ -3381,12 +3728,13 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           const bulletLines = card.bullets && card.bullets.length > 0 ? card.bullets.map(b => `• ${b}`).join("\n\n") : (card.description || "");
           pSlide.addText(bulletLines, {
             x: cX + PAD.INNER,
-            y: PAD.CONTENT_Y + 0.75,
+            y: PAD.CONTENT_Y + 0.85,
             w: cardW - PAD.INNER * 2,
-            h: card.footer ? 2.1 : 2.9,
-            fontSize: 11,
+            h: card.footer ? 2.0 : 2.8,
+            fontSize: 14,
             color: currentTextColor,
             fontFace: fontBody,
+            lineSpacingMultiple: 1.2,
           });
 
           if (card.footer) {
@@ -3394,7 +3742,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               x: cX,
               y: PAD.CONTENT_Y + 2.95,
               w: cardW,
-              h: 0.8,
+              h: 0.85,
               fill: { color: isDarkTheme ? "1E293B" : "FFF5CC" },
               rectRadius: 0.05,
               line: { color: isDarkTheme ? "334155" : "FFE588", width: 1 },
@@ -3403,8 +3751,8 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               x: cX + PAD.INNER,
               y: PAD.CONTENT_Y + 3.05,
               w: cardW - PAD.INNER * 2,
-              h: 0.6,
-              fontSize: 10,
+              h: 0.65,
+              fontSize: 13,
               bold: true,
               color: isDarkTheme ? "FFDD3C" : "854D0E",
               fontFace: fontBody,
@@ -3424,7 +3772,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 24,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -3436,7 +3784,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 13,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -3457,7 +3805,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.CONTENT_Y,
             w: panelW,
             h: panelH,
-            fill: { color: isDarkTheme ? "1A1A1A" : (isEven ? "FFFDF5" : "F5F9FE") },
+            fill: { color: isDarkTheme ? "1A1A1A" : (isEven ? "FFF9D6" : "EAF2FB") },
             rectRadius: 0.05,
             line: { color: isDarkTheme ? "333333" : (isEven ? "FFDD3C" : "005AAB"), width: 1.5 },
           });
@@ -3466,8 +3814,8 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             x: pX + PAD.CARD_PAD,
             y: PAD.CONTENT_Y + 0.2,
             w: panelW - PAD.CARD_PAD * 2,
-            h: 0.4,
-            fontSize: 14,
+            h: 0.45,
+            fontSize: 18,
             bold: true,
             color: isDarkTheme ? (isEven ? "FFDD3C" : "93C5FD") : "005AAB",
             fontFace: fontTitle,
@@ -3476,12 +3824,13 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           const pBullets = cObj.bullets ? cObj.bullets.map(b => `• ${b}`).join("\n\n") : (cObj.description || "");
           pSlide.addText(pBullets, {
             x: pX + PAD.CARD_PAD,
-            y: PAD.CONTENT_Y + 0.7,
+            y: PAD.CONTENT_Y + 0.75,
             w: panelW - PAD.CARD_PAD * 2,
-            h: panelH - 0.9,
-            fontSize: 11,
+            h: panelH - 0.95,
+            fontSize: 14.5,
             color: currentTextColor,
             fontFace: fontBody,
+            lineSpacingMultiple: 1.25,
           });
         });
 
@@ -3501,7 +3850,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.FOOTER_Y + 0.1,
             w: PAD.CONTENT_W - PAD.CARD_PAD * 2,
             h: PAD.FOOTER_H - 0.2,
-            fontSize: 11,
+            fontSize: 13.5,
             color: "FFFFFF",
             bold: true,
             fontFace: fontBody,
@@ -3539,7 +3888,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: 2.35,
           w: 11.0,
           h: 0.4,
-          fontSize: 14,
+          fontSize: 15,
           bold: true,
           color: secondaryHex,
           fontFace: fontBody,
@@ -3551,7 +3900,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: 2.85,
           w: 11.2,
           h: 1.8,
-          fontSize: 42,
+          fontSize: 46,
           bold: true,
           color: "FFFFFF",
           fontFace: fontTitle,
@@ -3564,7 +3913,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: 4.8,
             w: 11.0,
             h: 0.9,
-            fontSize: 18,
+            fontSize: 20,
             color: "E5E7EB",
             fontFace: fontBody,
           });
@@ -3579,7 +3928,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -3591,7 +3940,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 14,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -3613,33 +3962,35 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
         const rowCount = Math.max(paired.length, 1);
         const colW = 5.2;
         const availableH = (slide.insightBarText ? PAD.FOOTER_Y : 6.5) - 2.2;
-        const rowH = Math.min((availableH - (rowCount - 1) * 0.18) / rowCount, 0.95);
+        const rowH = Math.min((availableH - (rowCount - 1) * 0.18) / rowCount, 1.05);
 
-        // Headers
-        pSlide.addText("MASALAH", { x: PAD.LEFT, y: 1.85, w: colW, h: 0.25, fontSize: 10, bold: true, color: isDarkTheme ? "999999" : "666666", fontFace: fontBody });
-        pSlide.addText("PERBAIKAN", { x: 7.1, y: 1.85, w: colW, h: 0.25, fontSize: 10, bold: true, color: isDarkTheme ? "FFDD3C" : "005AAB", fontFace: fontBody });
+        // Headers (prominent, bold, 14pt)
+        pSlide.addText("MASALAH", { x: PAD.LEFT, y: 1.8, w: colW, h: 0.35, fontSize: 14, bold: true, color: isDarkTheme ? "999999" : "475569", fontFace: fontTitle });
+        pSlide.addText("PERBAIKAN", { x: 7.1, y: 1.8, w: colW, h: 0.35, fontSize: 14, bold: true, color: isDarkTheme ? "FFDD3C" : "005AAB", fontFace: fontTitle });
 
         paired.forEach((r, rIdx) => {
-          const y = 2.15 + rIdx * (rowH + 0.18);
+          const y = 2.2 + rIdx * (rowH + 0.18);
 
-          // Left Box (Problem / Soft Yellow)
+          // Left Box (Problem / Neutral Soft Wash)
           pSlide.addShape(pptx.ShapeType.roundRect, {
             x: PAD.LEFT,
             y,
             w: colW,
             h: rowH,
-            fill: { color: isDarkTheme ? "1E293B" : "FFFDF5" },
-            line: { color: isDarkTheme ? "334155" : "FFDD3C", width: 1.5 },
+            fill: { color: isDarkTheme ? "1E293B" : "F1F5F9" },
+            line: { color: isDarkTheme ? "334155" : "E2E8F0", width: 1.5 },
             rectRadius: 0.05,
           });
           pSlide.addText(r.left, {
             x: PAD.LEFT + PAD.INNER,
-            y: y + 0.12,
+            y: y + 0.08,
             w: colW - PAD.INNER * 2,
-            h: rowH - 0.24,
-            fontSize: 11,
+            h: rowH - 0.16,
+            fontSize: 16,
             color: isDarkTheme ? "FFFFFF" : "111827",
             fontFace: fontBody,
+            valign: "middle",
+            lineSpacingMultiple: 1.2,
           });
 
           // Arrow in center
@@ -3648,32 +3999,35 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: y + 0.08,
             w: 0.6,
             h: rowH - 0.16,
-            fontSize: 18,
+            fontSize: 26,
             color: isDarkTheme ? "FFDD3C" : "005AAB",
             align: "center",
             bold: true,
             fontFace: fontBody,
+            valign: "middle",
           });
 
-          // Right Box (Solution / Soft Blue)
+          // Right Box (Solution / Solid Deep Blue Primary)
           pSlide.addShape(pptx.ShapeType.roundRect, {
             x: 7.1,
             y,
             w: colW,
             h: rowH,
-            fill: { color: isDarkTheme ? "0F2744" : "F5F9FE" },
-            line: { color: isDarkTheme ? "1E40AF" : "005AAB", width: 1.5 },
+            fill: { color: "005AAB" },
+            line: { color: "005AAB" },
             rectRadius: 0.05,
           });
           pSlide.addText(r.right, {
             x: 7.1 + PAD.INNER,
-            y: y + 0.12,
+            y: y + 0.08,
             w: colW - PAD.INNER * 2,
-            h: rowH - 0.24,
-            fontSize: 11,
-            color: isDarkTheme ? "FFFFFF" : "005AAB",
+            h: rowH - 0.16,
+            fontSize: 16,
+            color: "FFFFFF",
             bold: true,
             fontFace: fontBody,
+            valign: "middle",
+            lineSpacingMultiple: 1.2,
           });
         });
 
@@ -3700,7 +4054,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.FOOTER_Y + 0.08,
             w: PAD.CONTENT_W - PAD.CARD_PAD * 2,
             h: PAD.FOOTER_H - 0.16,
-            fontSize: 11,
+            fontSize: 13.5,
             color: primaryContrastColor,
             bold: true,
             fontFace: fontBody,
@@ -3716,7 +4070,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -3728,7 +4082,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 14,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -3752,60 +4106,99 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               ]);
 
         const cCount = Math.max(cards.length, 1);
-        const cardH = Math.min((3.9 - (cCount - 1) * 0.18) / cCount, 1.15);
+        const hasNote = Boolean(slide.noteBoxText);
+        const availH = hasNote ? 3.3 : 3.9;
+        const cardH = Math.min((availH - (cCount - 1) * 0.18) / cCount, 1.25);
 
         cards.forEach((c, cIdx) => {
-          const isYellow = cIdx % 2 === 0;
-          const bgCol = isDarkTheme ? "1E293B" : (isYellow ? "FFFDF5" : "F5F9FE");
-          const borderCol = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
-          const textCol = isDarkTheme ? "FFFFFF" : (isYellow ? "111827" : "005AAB");
-          const y = PAD.CONTENT_Y + cIdx * (cardH + 0.18);
+          // Exactly matching HorizontalStackCards in SlideDiagrams.tsx:
+          // Even (0, 2) = Solid Golden Yellow (#FFDD3C) with dark text (#272525) & deep blue tag (#005AAB)
+          // Odd (1) = Solid Deep Blue (#005AAB) with pure white text (#FFFFFF) & yellow tag (#FFDD3C)
+          const isPrimary = cIdx % 2 === 1;
+          const cardBg = isPrimary ? "005AAB" : "FFDD3C";
+          const titleFg = isPrimary ? "FFFFFF" : "272525";
+          const descFg = isPrimary ? "FFFFFF" : "272525";
+          const tagFg = isPrimary ? "FFDD3C" : "005AAB";
+          const y = PAD.CONTENT_Y + 0.1 + cIdx * (cardH + 0.18);
 
+          // Card Solid Background Shape
           pSlide.addShape(pptx.ShapeType.roundRect, {
             x: PAD.LEFT,
             y,
             w: PAD.CONTENT_W,
             h: cardH,
-            fill: { color: bgCol },
-            line: { color: borderCol, width: 1.5 },
+            fill: { color: cardBg },
+            line: { color: cardBg },
             rectRadius: 0.05,
           });
 
-          // Title
+          // Left Title (Extrabold)
           pSlide.addText(c.title, {
-            x: PAD.LEFT + PAD.CARD_PAD,
+            x: PAD.LEFT + 0.4,
             y: y + 0.15,
             w: 3.5,
-            h: 0.35,
-            fontSize: 13,
+            h: 0.42,
+            fontSize: 18.5,
             bold: true,
-            color: textCol,
+            color: titleFg,
             fontFace: fontTitle,
+            valign: "middle",
           });
 
-          // Tag
-          pSlide.addText((c.tag || `0${cIdx + 1}`).toUpperCase(), {
-            x: PAD.LEFT + PAD.CARD_PAD,
-            y: y + 0.52,
-            w: 3.5,
-            h: 0.25,
-            fontSize: 10,
-            bold: true,
-            color: isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "B45309" : "005AAB"),
-            fontFace: fontBody,
-          });
+          // Left Tag (Uppercase tracking-wider)
+          if (c.tag) {
+            pSlide.addText(c.tag.toUpperCase(), {
+              x: PAD.LEFT + 0.4,
+              y: y + 0.58,
+              w: 3.5,
+              h: 0.28,
+              fontSize: 12,
+              bold: true,
+              color: tagFg,
+              fontFace: fontBody,
+              valign: "middle",
+            });
+          }
 
-          // Description on Right (12pt standard)
+          // Right Description (Legible with white or dark text matching the card background!)
           pSlide.addText(c.description, {
-            x: PAD.LEFT + 3.8,
-            y: y + 0.15,
-            w: PAD.CONTENT_W - 4.1,
-            h: cardH - 0.3,
-            fontSize: 12,
-            color: isDarkTheme ? "E2E8F0" : "334155",
+            x: PAD.LEFT + 4.1,
+            y: y + 0.12,
+            w: PAD.CONTENT_W - 4.4,
+            h: cardH - 0.24,
+            fontSize: 15.5,
+            color: descFg,
             fontFace: fontBody,
+            valign: "middle",
+            lineSpacingMultiple: 1.25,
           });
         });
+
+        // NoteBox at bottom if present
+        if (slide.noteBoxText) {
+          const noteY = PAD.CONTENT_Y + availH + 0.25;
+          pSlide.addShape(pptx.ShapeType.roundRect, {
+            x: PAD.LEFT,
+            y: noteY,
+            w: PAD.CONTENT_W,
+            h: 0.6,
+            fill: { color: "FFEC8E" },
+            line: { color: "FFEC8E" },
+            rectRadius: 0.04,
+          });
+
+          pSlide.addText([
+            { text: "Catatan: ", options: { bold: true, fontSize: 13.5, color: "272525" } },
+            { text: slide.noteBoxText, options: { bold: false, fontSize: 13.5, color: "272525" } },
+          ], {
+            x: PAD.LEFT + 0.3,
+            y: noteY + 0.1,
+            w: PAD.CONTENT_W - 0.6,
+            h: 0.42,
+            fontFace: fontBody,
+            valign: "middle",
+          });
+        }
         break;
       }
 
@@ -3816,7 +4209,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -3828,7 +4221,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 14,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -3848,9 +4241,9 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
         const sCount = railSteps.length;
         const totalW = PAD.CONTENT_W;
-        const nodeW = 0.7;
+        const nodeW = 0.85;
         const stepSpanW = totalW / sCount;
-        const railY = PAD.CONTENT_Y + 0.6; // 2.6
+        const railY = PAD.CONTENT_Y + 0.65;
 
         // Continuous horizontal rail track
         pSlide.addShape(pptx.ShapeType.rect, {
@@ -3880,10 +4273,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
           pSlide.addText(String(s.stepNumber || sIdx + 1), {
             x: centerX,
-            y: railY - nodeW / 2 + 0.1,
+            y: railY - nodeW / 2 + 0.12,
             w: nodeW,
-            h: nodeW - 0.2,
-            fontSize: 14,
+            h: nodeW - 0.24,
+            fontSize: 18,
             bold: true,
             color: circleFg,
             align: "center",
@@ -3891,13 +4284,13 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           });
 
           // Title below rail — with 0.3 gap from rail
-          const titleY = railY + 0.5;
+          const titleY = railY + 0.55;
           pSlide.addText(s.title, {
             x: PAD.LEFT + sIdx * stepSpanW + PAD.INNER,
             y: titleY,
             w: stepSpanW - PAD.INNER * 2,
-            h: 0.4,
-            fontSize: 12,
+            h: 0.45,
+            fontSize: 16,
             bold: true,
             color: "005AAB",
             align: "center",
@@ -3906,17 +4299,18 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
           // Description — with 0.15 gap from title, capped before footer
           if (s.description) {
-            const descY = titleY + 0.4 + PAD.GAP_V;
+            const descY = titleY + 0.45 + PAD.GAP_V;
             const maxDescH = PAD.CONTENT_BOTTOM - descY;
             pSlide.addText(s.description, {
               x: PAD.LEFT + sIdx * stepSpanW + PAD.INNER,
               y: descY,
               w: stepSpanW - PAD.INNER * 2,
-              h: Math.min(1.2, maxDescH),
-              fontSize: 10,
-              color: "475569",
+              h: Math.min(1.3, maxDescH),
+              fontSize: 13.5,
+              color: "272525",
               align: "center",
               fontFace: fontBody,
+              lineSpacingMultiple: 1.2,
             });
           }
         });
@@ -3944,7 +4338,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.FOOTER_Y + 0.1,
             w: PAD.CONTENT_W - PAD.CARD_PAD * 2,
             h: PAD.FOOTER_H - 0.2,
-            fontSize: 11,
+            fontSize: 13.5,
             color: "FFFFFF",
             bold: true,
             fontFace: fontBody,
@@ -3960,7 +4354,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -3972,7 +4366,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W,
             h: PAD.SUB_H,
-            fontSize: 14,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -4018,8 +4412,8 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             x: x + PAD.INNER,
             y: y + 0.15,
             w: colW - PAD.INNER * 2,
-            h: 0.3,
-            fontSize: 9,
+            h: 0.32,
+            fontSize: 12,
             bold: true,
             color: tagFg,
             fontFace: fontBody,
@@ -4028,10 +4422,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           // Title
           pSlide.addText(lvl.title, {
             x: x + PAD.INNER,
-            y: y + 0.45,
+            y: y + 0.48,
             w: colW - PAD.INNER * 2,
             h: 0.5,
-            fontSize: 13,
+            fontSize: 18,
             bold: true,
             color: colFg,
             fontFace: fontTitle,
@@ -4041,12 +4435,13 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           if (lvl.description) {
             pSlide.addText(lvl.description, {
               x: x + PAD.INNER,
-              y: y + 0.95,
+              y: y + 1.0,
               w: colW - PAD.INNER * 2,
-              h: Math.max(colH - 1.1, 0.5),
-              fontSize: 10,
+              h: Math.max(colH - 1.15, 0.5),
+              fontSize: 13.5,
               color: isHighest ? "E5E7EB" : (isLowest ? "272525" : "334155"),
               fontFace: fontBody,
+              lineSpacingMultiple: 1.2,
             });
           }
         });
@@ -4073,7 +4468,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: PAD.TITLE_Y,
           w: PAD.CONTENT_W - 2.5,
           h: PAD.TITLE_H,
-          fontSize: 26,
+          fontSize: 34,
           color: titleColor,
           bold: true,
           fontFace: fontTitle,
@@ -4085,7 +4480,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             y: PAD.SUB_Y,
             w: PAD.CONTENT_W - 2.5,
             h: PAD.SUB_H,
-            fontSize: 14,
+            fontSize: 16,
             color: currentMutedColor,
             fontFace: fontBody,
           });
@@ -4102,10 +4497,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
         });
         pSlide.addText(`${checkItems.length} BUTIR`, {
           x: 10.33,
-          y: PAD.TITLE_Y + 0.15,
+          y: PAD.TITLE_Y + 0.12,
           w: 2.0,
           h: 0.35,
-          fontSize: 10,
+          fontSize: 12,
           bold: true,
           color: "272525",
           align: "center",
@@ -4125,8 +4520,8 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             pSlide.addShape(pptx.ShapeType.roundRect, {
               x: colX,
               y: y + 0.05,
-              w: 0.35,
-              h: 0.35,
+              w: 0.4,
+              h: 0.4,
               fill: { color: "FFFFFF" },
               line: { color: primaryHex, width: 2 },
               rectRadius: 0.05,
@@ -4135,10 +4530,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             // Checkmark symbol
             pSlide.addText("✓", {
               x: colX,
-              y: y + 0.07,
-              w: 0.35,
-              h: 0.3,
-              fontSize: 11,
+              y: y + 0.06,
+              w: 0.4,
+              h: 0.35,
+              fontSize: 14,
               bold: true,
               color: primaryHex,
               align: "center",
@@ -4147,13 +4542,14 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
             // Text
             pSlide.addText(item, {
-              x: colX + 0.5,
+              x: colX + 0.55,
               y,
-              w: 4.8,
+              w: 4.75,
               h: 0.85,
-              fontSize: 11,
+              fontSize: 14.5,
               color: isDarkTheme ? "FFFFFF" : "272525",
               fontFace: fontBody,
+              lineSpacingMultiple: 1.2,
             });
 
             // Dividing line under row
@@ -4197,18 +4593,18 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
         // Yellow Pill Tag
         pSlide.addShape(pptx.ShapeType.roundRect, {
           x: 1.0,
-          y: 0.9,
-          w: 2.8,
-          h: 0.45,
+          y: 0.85,
+          w: 3.0,
+          h: 0.48,
           fill: { color: secondaryHex },
-          rectRadius: 0.2,
+          rectRadius: 0.24,
         });
         pSlide.addText(slide.badge || "LANGKAH BERIKUTNYA", {
           x: 1.0,
-          y: 0.95,
-          w: 2.8,
-          h: 0.35,
-          fontSize: 10,
+          y: 0.9,
+          w: 3.0,
+          h: 0.38,
+          fontSize: 12,
           bold: true,
           color: "272525",
           align: "center",
@@ -4218,10 +4614,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
         // Title
         pSlide.addText(slide.title, {
           x: 1.0,
-          y: 1.5,
+          y: 1.45,
           w: 11.0,
           h: 1.0,
-          fontSize: 34,
+          fontSize: 40,
           bold: true,
           color: "FFFFFF",
           fontFace: fontTitle,
@@ -4231,10 +4627,10 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
         if (slide.subtitle) {
           pSlide.addText(slide.subtitle, {
             x: 1.0,
-            y: 2.5,
+            y: 2.45,
             w: 11.0,
-            h: 0.5,
-            fontSize: 14,
+            h: 0.55,
+            fontSize: 18,
             color: "E5E7EB",
             fontFace: fontBody,
           });
@@ -4250,18 +4646,19 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             ];
 
         actions.slice(0, 4).forEach((act, aIdx) => {
-          const y = 3.1 + aIdx * 0.6;
+          const y = 3.1 + aIdx * 0.62;
           pSlide.addText(
             [
-              { text: `${aIdx + 1}.  `, options: { bold: true, fontSize: 13, color: secondaryHex } },
-              { text: act, options: { fontSize: 12, color: "FFFFFF" } },
+              { text: `${aIdx + 1}.  `, options: { bold: true, fontSize: 16, color: secondaryHex } },
+              { text: act, options: { fontSize: 15, color: "FFFFFF" } },
             ],
             {
               x: 1.0,
               y,
               w: 10.5,
-              h: 0.5,
+              h: 0.55,
               fontFace: fontBody,
+              lineSpacingMultiple: 1.2,
             }
           );
         });
@@ -4272,8 +4669,8 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           y: 6.2,
           w: 11.0,
           h: 0.6,
-          fontSize: 11,
-          color: "666666",
+          fontSize: 13.5,
+          color: "272525",
           fontFace: fontBody,
         });
         break;

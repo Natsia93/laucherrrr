@@ -89,6 +89,12 @@ import {
   ExecutiveChecklist,
   SectionDivider,
   ClosingAction,
+  FormulaHeroSplit,
+  TreeComparisonCards,
+  CaseStudyExercise,
+  PyramidHierarchy,
+  TransformationBridge,
+  RadialHubEcosystem,
 } from "@/components/decks/SlideDiagrams";
 import { CloneStyleModal, type ClonedStyleResult } from "@/components/decks/CloneStyleModal";
 
@@ -155,6 +161,26 @@ interface SlideData {
   noteBoxText?: string;
   contactFooterText?: string;
   topRightPill?: string;
+  formulaData?: {
+    formulaLabel?: string;
+    formula: string;
+    formulaSubtext?: string;
+    factors?: Array<{ title: string; description: string }>;
+    statBox?: { value: string; description: string; source?: string };
+  };
+  treeData?: {
+    topCallout?: { stat?: string; label?: string; note?: string };
+    cards: Array<{ title: string; description: string; rootNode: string; childNodes: [string, string] }>;
+    bottomTakeaway?: string;
+  };
+  exerciseData?: {
+    situationTitle?: string;
+    situationText: string;
+    dataMetrics?: Array<{ value: string; label: string }>;
+    twistBox?: string;
+    exerciseTitle?: string;
+    exerciseLines?: string[];
+  };
   ctaText?: string;
   footer?: string;
   slideNumber?: string;
@@ -209,7 +235,13 @@ type SlideLayout =
   | "connectedRailStepper"
   | "ascendingColumns"
   | "checklist"
-  | "closingAction";
+  | "closingAction"
+  | "formulaHero"
+  | "treeComparison"
+  | "caseExercise"
+  | "pyramidHierarchy"
+  | "transformationBridge"
+  | "radialHub";
 
 type ContentMode = "generate" | "summarize" | "preserve";
 type BgStyle = "mixed" | "solid" | "dualtone" | "gradient" | "dark" | "warm";
@@ -603,22 +635,30 @@ export function parsePromptBreakdown(text: string): ParsedSlideBreakdown[] {
 }
 
 export const VISUAL_LAYOUT_OPTIONS = [
-  { id: "Title / Executive Hero", label: "🏷️ Title / Executive Hero" },
-  { id: "Section Divider", label: "🟡 Section Divider" },
-  { id: "Paired Rows", label: "⚖️ Paired Rows (Threat vs Response)" },
-  { id: "Horizontal Stack", label: "🏛️ Horizontal Stack (Core Pillars)" },
-  { id: "Connected Stepper", label: "🔗 Connected Rail Stepper" },
-  { id: "Ascending Columns", label: "📶 Ascending Columns (Maturity)" },
-  { id: "Checklist", label: "☑️ Governance Checklist" },
-  { id: "Closing Action", label: "🎯 Closing Action Mandate" },
-  { id: "Comparison Table", label: "⚖️ Comparison Table" },
-  { id: "Process & Flow Diagram", label: "🔄 Process & Flow" },
-  { id: "Strategic Roadmap Timeline", label: "🗺️ Strategic Roadmap" },
-  { id: "Metrics & KPI Grid", label: "📈 Metrics & KPI Grid" },
-  { id: "Bar Chart Comparison", label: "📊 Bar Chart Comparison" },
-  { id: "Pie / Donut Chart Breakdown", label: "🥧 Pie / Donut Chart" },
-  { id: "Split Metric Hero", label: "⚡ Split Metric Hero" },
-  { id: "Executive Narrative", label: "📄 Executive Narrative" },
+  { id: "Title / Executive Hero", label: "Title / Executive Hero" },
+  { id: "Section Divider", label: "Section Divider" },
+  { id: "Pyramid Hierarchy", label: "Pyramid Hierarchy (3-Tier)" },
+  { id: "Transformation Bridge", label: "Transformation Bridge (As-Is → To-Be)" },
+  { id: "Radial Hub & Ecosystem", label: "Radial Hub & Ecosystem" },
+  { id: "Formula Hero & Split Stat", label: "Formula Hero & Split Stat" },
+  { id: "Tree Comparison & Takeaway", label: "Causation Tree & Takeaway" },
+  { id: "Case Study & 3-Line Exercise", label: "Case Study & 3-Line Exercise" },
+  { id: "Decision Classification Matrix", label: "Decision Matrix (2x2)" },
+  { id: "Alternating Chevron Process", label: "Chevron Process (5-Step)" },
+  { id: "Paired Rows", label: "Paired Rows (Threat vs Response)" },
+  { id: "Horizontal Stack", label: "Horizontal Stack (Core Pillars)" },
+  { id: "Connected Stepper", label: "Connected Rail Stepper" },
+  { id: "Ascending Columns", label: "Ascending Columns (Maturity)" },
+  { id: "Checklist", label: "Governance Checklist" },
+  { id: "Closing Action", label: "Closing Action Mandate" },
+  { id: "Comparison Table", label: "Comparison Table" },
+  { id: "Process & Flow Diagram", label: "Process & Flow" },
+  { id: "Strategic Roadmap Timeline", label: "Strategic Roadmap" },
+  { id: "Metrics & KPI Grid", label: "Metrics & KPI Grid" },
+  { id: "Bar Chart Comparison", label: "Bar Chart Comparison" },
+  { id: "Pie / Donut Chart Breakdown", label: "Pie / Donut Chart" },
+  { id: "Split Metric Hero", label: "Split Metric Hero" },
+  { id: "Executive Narrative", label: "Executive Narrative" },
 ];
 
 export function formatBreakdownToMarkdown(cards: ParsedSlideBreakdown[]): string {
@@ -635,7 +675,7 @@ export function formatBreakdownToMarkdown(cards: ParsedSlideBreakdown[]): string
         lines.push(`Stats: ${c.stats.join(" | ")}`);
       }
       if (c.tableSummary) lines.push(c.tableSummary);
-      if (c.visualLayout) lines.push(`🗒️ Note: ${c.visualLayout}`);
+      if (c.visualLayout) lines.push(`Note: ${c.visualLayout}`);
       if (c.speakerNotes) lines.push(`Speaker Notes: ${c.speakerNotes}`);
       return lines.join("\n");
     })
@@ -683,6 +723,14 @@ export function mapVisualLayoutToLayout(val?: string): SlideLayout {
   if (!val) return "twoColumn";
   const lower = val.toLowerCase();
   if (lower.includes("section") || lower.includes("divider") || lower.includes("pembagi")) return "sectionDivider";
+  if (lower.includes("pyramid") || lower.includes("piramida") || lower.includes("hierarchy") || lower.includes("hierarki")) return "pyramidHierarchy";
+  if (lower.includes("transformation") || lower.includes("transformasi") || lower.includes("as-is") || lower.includes("to-be") || lower.includes("shift")) return "transformationBridge";
+  if (lower.includes("hub") || lower.includes("ecosystem") || lower.includes("ekosistem") || lower.includes("radial") || lower.includes("orbit")) return "radialHub";
+  if (lower.includes("formula")) return "formulaHero";
+  if (lower.includes("tree") || lower.includes("causation") || lower.includes("korelasi")) return "treeComparison";
+  if (lower.includes("exercise") || lower.includes("latihan") || (lower.includes("case") && (lower.includes("study") || lower.includes("line"))) || lower.includes("hands-on")) return "caseExercise";
+  if (lower.includes("quadrant") || lower.includes("kuadran") || lower.includes("classification matrix") || lower.includes("decision matrix") || lower.includes("2x2")) return "quadrantMatrix";
+  if (lower.includes("chevron") || (lower.includes("process") && lower.includes("5-step"))) return "chevronProcess";
   if (lower.includes("paired") || lower.includes("masalah dan") || lower.includes("ancaman") || lower.includes("weak")) return "pairedRows";
   if (lower.includes("horizontal stack") || lower.includes("stack cards") || lower.includes("triad") || lower.includes("tujuan keamanan") || (lower.includes("pillar") && lower.includes("stack"))) return "horizontalStack";
   if (lower.includes("rail") || lower.includes("stepper") || lower.includes("lifecycle") || lower.includes("rantai serangan")) return "connectedRailStepper";
@@ -2020,7 +2068,6 @@ function SlideFrameHeader({
 
 function SlideFrameFooter({
   footer = "company.com",
-  slideNumber,
   isDark = false,
   hasTemplateBg = false,
 }: {
@@ -2031,22 +2078,13 @@ function SlideFrameFooter({
 }) {
   if (hasTemplateBg) {
     // When template background is active (e.g. ITB deck), logos are already baked into the background image.
-    // Never render border-t or company.com over the logo tab. Only render clean slide number at bottom right.
-    return (
-      <div className="w-full flex items-center justify-end text-[10px] sm:text-[11px] shrink-0 mt-auto tracking-normal relative z-10 pointer-events-none select-none">
-        {slideNumber && (
-          <span className="font-bold text-neutral-400 dark:text-neutral-500 tabular-nums pr-2">
-            {slideNumber}
-          </span>
-        )}
-      </div>
-    );
+    // Slide number removed per user request ("hapus angka kecil pojok yang di halamn slide").
+    return null;
   }
 
   return (
     <div className={`w-full flex items-center justify-between pt-1.5 sm:pt-2 border-t ${isDark ? "border-neutral-800 text-neutral-500" : "border-neutral-200/60 dark:border-neutral-800 text-neutral-400"} text-[10px] sm:text-[11px] shrink-0 mt-2 tracking-normal relative z-10`}>
       <span className="font-medium text-neutral-500">{footer}</span>
-      {slideNumber && <span className="font-bold text-neutral-500 tabular-nums">{slideNumber}</span>}
     </div>
   );
 }
@@ -2204,11 +2242,6 @@ function SlideRenderer({
             <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded-sm bg-black/15 dark:bg-white/15">
               {slide.badge || "MODULE"}
             </span>
-            {slide.slideNumber && (
-              <span className="text-base sm:text-lg font-mono font-black opacity-45">
-                {String(slide.slideNumber).padStart(2, "0")}
-              </span>
-            )}
           </div>
 
           <div className="my-auto py-2">
@@ -2241,11 +2274,11 @@ function SlideRenderer({
   const renderSlideHeader = (customTitleClass?: string) => {
     const isHandsOn = (slide.badge || slide.highlight || "").toUpperCase().includes("HANDS-ON");
     return (
-      <div className="shrink-0 mb-2 sm:mb-2.5 max-w-[94%]">
+      <div className={`shrink-0 ${isPresentation ? "mb-3 sm:mb-4" : "mb-2 sm:mb-2.5"} max-w-[94%]`}>
         <div className="flex items-center gap-2.5 flex-wrap">
           <motion.h2
             {...anim(0.06)}
-            className={customTitleClass || `text-xl sm:text-2xl lg:text-[25px] font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight tracking-tight line-clamp-2`}
+            className={customTitleClass || `${isPresentation ? "text-2xl sm:text-3xl lg:text-4xl" : "text-xl sm:text-2xl lg:text-[25px]"} font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight tracking-tight line-clamp-2`}
           >
             {safeString(slide.title)}
           </motion.h2>
@@ -2258,7 +2291,7 @@ function SlideRenderer({
         {slide.subtitle && (
           <motion.p
             {...anim(0.12)}
-            className="text-[11px] sm:text-xs text-[#272525] dark:text-neutral-300 mt-0.5 font-medium leading-snug line-clamp-1 max-w-[88%]"
+            className={`${isPresentation ? "text-sm sm:text-base lg:text-lg mt-1.5" : "text-[11px] sm:text-xs mt-0.5"} text-[#272525] dark:text-neutral-300 font-medium leading-snug line-clamp-2 max-w-[90%]`}
           >
             {safeString(slide.subtitle)}
           </motion.p>
@@ -2304,8 +2337,8 @@ function SlideRenderer({
           </div>
 
           {/* Central AI Rendering Shimmer Box on clean white canvas */}
-          <div className="w-full flex-1 flex flex-col justify-center items-center my-auto p-6 rounded-2xl border-2 border-dashed border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/40 text-center animate-pulse">
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFDD3C] text-neutral-950 font-extrabold text-[10px] sm:text-xs uppercase tracking-wider mb-2.5 shadow-xs">
+          <div className="w-full flex-1 flex flex-col justify-center items-center my-auto p-6 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/40 text-center animate-pulse">
+            <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-[#FFDD3C] text-neutral-950 font-bold text-[10px] sm:text-xs uppercase tracking-wider mb-2.5 shadow-2xs">
               <Sparkles className="w-3.5 h-3.5 animate-spin text-neutral-950" />
               <span>Memproses Slide {(slideIndex || 0) + 1}</span>
             </div>
@@ -2331,18 +2364,18 @@ function SlideRenderer({
     case "hero":
       if (isCoverBg) {
         return (
-          <div className="w-full h-full flex flex-col justify-between pt-[22%] sm:pt-[24%] px-[6.5%] pb-[6%] sm:pb-[7%] relative overflow-hidden bg-transparent select-none">
-            <div className="relative z-10 flex flex-col justify-start max-w-[55%]">
+          <div className="w-full h-full flex flex-col justify-between pt-[16%] sm:pt-[17%] px-[6.5%] pb-[6%] relative overflow-hidden bg-transparent select-none">
+            <div className="relative z-10 flex flex-col justify-start max-w-[70%]">
               <motion.h1
                 {...anim(0.06)}
-                className={`text-2xl sm:text-4xl lg:text-5xl font-black text-[#174A7F] dark:text-[#174A7F] ${headingFontClass} leading-[1.1] tracking-tight`}
+                className={`text-xl sm:text-2xl lg:text-[28px] font-bold text-[#174A7F] dark:text-[#174A7F] ${headingFontClass} leading-[1.18] tracking-tight line-clamp-3`}
               >
                 {safeString(slide.title)}
               </motion.h1>
               {slide.subtitle && (
                 <motion.p
                   {...anim(0.12)}
-                  className="text-sm sm:text-lg lg:text-xl font-semibold text-[#005AAB] dark:text-[#005AAB] mt-3 sm:mt-4 leading-relaxed"
+                  className="text-xs sm:text-sm lg:text-[15px] font-semibold text-[#005AAB] dark:text-[#005AAB] mt-2 sm:mt-2.5 leading-snug line-clamp-2"
                 >
                   {safeString(slide.subtitle)}
                 </motion.p>
@@ -2350,10 +2383,10 @@ function SlideRenderer({
             </div>
 
             {/* 3 meta lines at bottom-left per ITB rules (week · program · facilitator) */}
-            <div className="relative z-10 mt-auto max-w-[55%] text-[10px] sm:text-xs font-light italic text-[#666666] leading-relaxed space-y-0.5">
-              <p>{slide.category || "Data-Driven & AI-Enabled Decision Making for Leaders"}</p>
-              <p>{slide.highlight || "Executive Education Program"}</p>
-              <p>{slide.quote?.author || slide.badge || "Direktorat Pendidikan Non Reguler ITB & RevoU"}</p>
+            <div className="relative z-10 mt-auto max-w-[65%] text-[9.5px] sm:text-[11px] font-normal text-[#555555] dark:text-neutral-400 leading-snug space-y-0.5">
+              <p className="truncate">{slide.category || "Data-Driven & AI-Enabled Decision Making for Leaders"}</p>
+              <p className="truncate">{slide.highlight || "Executive Education Program"}</p>
+              <p className="truncate">{slide.quote?.author || slide.badge || "Direktorat Pendidikan Non Reguler ITB & RevoU"}</p>
             </div>
 
             <div className="absolute bottom-[4%] right-[6%] text-[11px] font-bold text-white/90 tabular-nums">
@@ -2372,10 +2405,10 @@ function SlideRenderer({
               style={{ backgroundColor: palette.primary, color: primaryTextColor }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded-sm bg-black/15 dark:bg-white/15">
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md bg-black/15 dark:bg-white/15">
                   {slide.badge || slide.highlight || "01"}
                 </span>
-                <span className="text-lg sm:text-xl font-mono font-black opacity-45">
+                <span className="text-lg sm:text-xl font-mono font-bold opacity-45">
                   {String(slide.slideNumber || 1).padStart(2, "0")}
                 </span>
               </div>
@@ -2383,7 +2416,7 @@ function SlideRenderer({
               <div className="my-auto py-4">
                 <motion.h1
                   {...anim(0.06)}
-                  className={`text-2xl sm:text-4xl lg:text-5xl font-black ${headingFontClass} leading-[1.08] tracking-tight`}
+                  className={`text-xl sm:text-2xl lg:text-[28px] font-bold ${headingFontClass} leading-[1.15] tracking-tight line-clamp-3`}
                 >
                   {safeString(slide.title)}
                 </motion.h1>
@@ -2399,7 +2432,7 @@ function SlideRenderer({
               <div className="flex items-center justify-end">
                 {slide.highlight && (
                   <span
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider"
                     style={{
                       backgroundColor: palette.primary,
                       color: primaryTextColor,
@@ -2410,11 +2443,11 @@ function SlideRenderer({
                 )}
               </div>
 
-              <div className="my-auto max-w-[95%] space-y-4">
+              <div className="my-auto max-w-[95%] space-y-3">
                 {slide.subtitle && (
                   <motion.p
                     {...anim(0.12)}
-                    className="text-base sm:text-xl font-semibold text-neutral-800 dark:text-neutral-200 leading-relaxed"
+                    className="text-sm sm:text-base font-semibold text-neutral-800 dark:text-neutral-200 leading-snug line-clamp-2"
                   >
                     {safeString(slide.subtitle)}
                   </motion.p>
@@ -2422,7 +2455,7 @@ function SlideRenderer({
                 {slide.description && (
                   <motion.p
                     {...anim(0.18)}
-                    className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed line-clamp-4"
+                    className="text-xs sm:text-[13px] text-neutral-600 dark:text-neutral-400 leading-relaxed line-clamp-3"
                   >
                     {safeString(slide.description)}
                   </motion.p>
@@ -2437,7 +2470,7 @@ function SlideRenderer({
 
       return (
         <div
-          className={`w-full h-full flex flex-col justify-between p-[7%] relative overflow-hidden ${bgClasses}`}
+          className={`w-full h-full flex flex-col justify-between p-[6%] sm:p-[7%] relative overflow-hidden ${bgClasses}`}
           style={dynamicBgStyle}
         >
           {/* Subtle Ambient Shapes */}
@@ -2460,7 +2493,7 @@ function SlideRenderer({
             {slide.highlight && (
               <motion.span
                 {...anim(0)}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider w-fit mb-3"
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wider w-fit mb-2.5"
                 style={{
                   backgroundColor: palette.id === "launcher" ? "#FFE500" : palette.primary,
                   color: "#111111",
@@ -2471,14 +2504,14 @@ function SlideRenderer({
             )}
             <motion.h1
               {...anim(0.06)}
-              className={`text-3xl sm:text-5xl font-black ${isCoverBg ? "text-[#174A7F] dark:text-[#174A7F]" : "text-[#005AAB] dark:text-[#005AAB]"} leading-[1.08] tracking-tight`}
+              className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${isCoverBg ? "text-[#174A7F] dark:text-[#174A7F]" : "text-[#005AAB] dark:text-[#005AAB]"} leading-[1.15] tracking-tight line-clamp-3`}
             >
               {safeString(slide.title)}
             </motion.h1>
             {slide.subtitle && (
               <motion.p
                 {...anim(0.12)}
-                className="text-sm sm:text-lg font-semibold text-[#005AAB] dark:text-[#005AAB] mt-3 leading-relaxed"
+                className="text-xs sm:text-sm lg:text-base font-semibold text-[#005AAB] dark:text-[#005AAB] mt-2.5 leading-snug line-clamp-2"
               >
                 {safeString(slide.subtitle)}
               </motion.p>
@@ -2486,7 +2519,7 @@ function SlideRenderer({
             {slide.description && (
               <motion.p
                 {...anim(0.18)}
-                className={`text-xs sm:text-sm ${isCoverBg ? "text-[#555555] dark:text-[#555555]" : "text-neutral-500 dark:text-neutral-400"} mt-4 leading-relaxed line-clamp-3`}
+                className={`text-xs sm:text-[13px] ${isCoverBg ? "text-[#555555] dark:text-[#555555]" : "text-neutral-500 dark:text-neutral-400"} mt-3 leading-relaxed line-clamp-2`}
               >
                 {safeString(slide.description)}
               </motion.p>
@@ -2823,7 +2856,7 @@ function SlideRenderer({
                         <motion.div
                           key={i}
                           {...anim(0.1 + i * 0.08)}
-                          className={`${cardPadding} rounded-xl border border-neutral-200/90 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex flex-col justify-start gap-1 sm:gap-1.5 overflow-hidden`}
+                          className={`${cardPadding} rounded-lg border border-neutral-200/90 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex flex-col justify-start gap-1 sm:gap-1.5 overflow-hidden`}
                         >
                           <div className="flex items-center gap-2 shrink-0">
                             <span
@@ -3287,7 +3320,7 @@ function SlideRenderer({
         : `text-2xl sm:text-3xl font-bold ${headingFontClass} leading-tight`;
 
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between px-[5%] sm:px-[6%] py-3.5 sm:py-4.5 relative overflow-hidden`} style={dynamicBgStyle}>
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative overflow-hidden`} style={dynamicBgStyle}>
           {renderSlideHeader()}
 
           <div className="flex-1 flex flex-col justify-center my-auto w-full min-h-0 overflow-hidden">
@@ -3563,24 +3596,41 @@ function SlideRenderer({
       );
 
     /* ──── 8. CHEVRON PROCESS ARROW BAR SLIDE ──── */
-    case "chevronProcess":
+    case "chevronProcess": {
+      const chevronSteps = slide.chevronSteps && slide.chevronSteps.length > 0
+        ? slide.chevronSteps
+        : (slide.bullets && slide.bullets.length > 0
+          ? slide.bullets.slice(0, 5).map((b, i) => {
+              const parts = b.split(/:\s*|—\s*|-\s*/);
+              return {
+                title: `${i + 1} · ${parts[0]?.trim() || `Step ${i + 1}`}`,
+                description: parts[1]?.trim() || b,
+              };
+            })
+          : [
+              { title: "1 · Frame", description: "Define the problem, the goal and constraints", pill: "Fails here: wrong question", pillType: "blue" as const },
+              { title: "2 · Gather", description: "Collect facts, evidence and options" },
+              { title: "3 · Evaluate", description: "Weigh options against criteria and risk", pill: "Rarely where it fails", pillType: "neutral" as const },
+              { title: "4 · Decide", description: "Commit to one option and own it" },
+              { title: "5 · Act & Learn", description: "Execute, measure the result, adjust", pill: "Fails here: no learning", pillType: "blue" as const },
+            ]);
+
       return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
-          <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
-          <div className="mb-2">
-            <motion.h2
-              {...anim(0)}
-              className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}>
-              {slide.title}
-            </motion.h2>
-            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+          {renderSlideHeader()}
+          <div className="flex-1 flex items-center justify-center my-auto w-full">
+            <ChevronProcessBar
+              steps={chevronSteps}
+              primaryColor={palette.primary}
+              accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+              keyInsight={slide.insightBarText || slide.highlight || "Key insight: Most bad decisions fail at step 1 (wrong question) or step 5 (no learning), not at step 3."}
+              isPresentation={isPresentation}
+            />
           </div>
-          <div className="flex-1 flex items-center justify-center my-auto">
-            <ChevronProcessBar steps={slide.chevronSteps} primaryColor={palette.primary} isPresentation={isPresentation} />
-          </div>
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+          {renderSlideFooter()}
         </div>
       );
+    }
 
     /* ──── 9. DUAL GAUGE RINGS WITH SPLIT CARDS ──── */
     case "gaugeRings":
@@ -3612,7 +3662,7 @@ function SlideRenderer({
                       className="rounded-md p-2.5 text-[10px] sm:text-xs font-semibold text-neutral-950 leading-snug flex items-start gap-2"
                       style={{ backgroundColor: palette.primary }}
                     >
-                      <span className="font-bold shrink-0">⚡</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-950 mt-1.5 shrink-0" />
                       <span className="line-clamp-2">{c.title}</span>
                     </div>
                   ))}
@@ -3890,7 +3940,7 @@ function SlideRenderer({
           <div className="flex-1 flex items-center gap-6 my-auto">
             {/* Left Card: Visual & Floating Box */}
             <div className="w-[38%] flex flex-col gap-3">
-              <div className="relative w-full h-32 sm:h-40 rounded-xl overflow-hidden bg-neutral-200 dark:bg-neutral-800 border border-neutral-300/40">
+              <div className="relative w-full h-32 sm:h-40 rounded-lg overflow-hidden bg-neutral-200 dark:bg-neutral-800 border border-neutral-300/40">
                 <Image
                   src={slide.imageUrl || "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&auto=format&fit=crop&q=80"}
                   alt="Presentation Visual"
@@ -3960,7 +4010,7 @@ function SlideRenderer({
               </p>
             </div>
             {slide.description && (
-              <div className="w-[45%] rounded-xl p-4 bg-white dark:bg-[#18181c] border border-neutral-200/80 dark:border-neutral-800">
+              <div className="w-[45%] rounded-lg p-4 bg-white dark:bg-[#18181c] border border-neutral-200/80 dark:border-neutral-800">
                 <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 leading-snug">
                   {slide.description}
                 </p>
@@ -4026,12 +4076,12 @@ function SlideRenderer({
 
               {/* Right Secondary/White Card */}
               <div
-                className="w-[42%] rounded-xl p-4 bg-white/90 border border-neutral-200/80"
+                className="w-[42%] rounded-lg p-3.5 sm:p-4 bg-white/90 border border-neutral-200/80"
               >
                 <div
-                  className="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold mb-2 bg-neutral-950 text-white"
+                  className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold mb-2 bg-neutral-950 text-white"
                 >
-                  ⚡
+                  <Sparkles className="w-3 h-3" />
                 </div>
                 <p className="text-xs font-semibold leading-snug text-neutral-800">
                   {slide.description || "Visualize Every Process Clearly With Structured Steps And Engaging"}
@@ -4100,12 +4150,12 @@ function SlideRenderer({
 
             {/* Right Secondary/White Card */}
             <div
-              className="w-[42%] rounded-xl p-4 bg-white/95 text-neutral-950 border border-neutral-200/80"
+              className="w-[42%] rounded-lg p-3.5 sm:p-4 bg-white/95 text-neutral-950 border border-neutral-200/80"
             >
               <div
-                className="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold mb-2 bg-neutral-950 text-white"
+                className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold mb-2 bg-neutral-950 text-white"
               >
-                ⚡
+                <Sparkles className="w-3 h-3" />
               </div>
               <p className="text-xs font-semibold leading-snug text-neutral-800">
                 {slide.description || "Visualize Every Process Clearly With Structured Steps And Engaging"}
@@ -4493,7 +4543,7 @@ function SlideRenderer({
             </motion.div>
           ) : slide.description ? (
             <div className="p-3 rounded-md bg-neutral-950 text-white text-xs font-semibold flex items-center gap-2">
-              <span className="text-[#FFDD3C]">💡 Key Dilemma:</span>
+              <span className="text-[#FFDD3C]">Key Dilemma:</span>
               <span>{slide.description}</span>
             </div>
           ) : null}
@@ -4550,7 +4600,6 @@ function SlideRenderer({
           {pollOpts.length > 0 && (
             <div className="p-3.5 rounded-md bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 space-y-2">
               <div className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                <span>🙋</span>
                 <span>Decision Poll</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -4637,7 +4686,7 @@ function SlideRenderer({
                       : "bg-[#005AAB]/15 text-[#005AAB] dark:text-[#90CDF4] border border-[#005AAB]/30"
                   }`}
                 >
-                  <span className="font-bold mr-1.5">{bn.variant === "yellow" ? "💡" : "🔄"} {bn.title}:</span>
+                  <span className="font-bold mr-1.5">{bn.title}:</span>
                   <span>{bn.text}</span>
                 </div>
               ))}
@@ -4815,8 +4864,6 @@ function SlideRenderer({
           <div className="my-auto w-full flex-1 flex flex-col justify-center min-h-0">
             <PairedRows
               items={pairedItems}
-              leftHeader="MASALAH"
-              rightHeader="PERBAIKAN"
               primaryColor={palette.primary}
               isPresentation={isPresentation}
             />
@@ -5037,6 +5084,329 @@ function SlideRenderer({
           isPresentation={isPresentation}
           transparentBg={hasTemplateBg && isClosingBg}
         />
+      );
+    }
+
+    /* ──── FORMULA HERO WITH SPLIT FACTORS & STAT CARD (SLIDE 2) ──── */
+    case "formulaHero": {
+      const getStatVal = (st: any): string => {
+        if (!st) return "";
+        if (typeof st === "string") return st;
+        return String(st.value || "");
+      };
+      const getStatDesc = (st: any): string => {
+        if (!st) return "";
+        if (typeof st === "string") return "";
+        return String(st.label || st.description || "");
+      };
+
+      const formulaText = slide.formulaData?.formula || slide.title || slide.description || "Decision Impact = Speed × Scale × Confidence";
+      const formulaLabel = slide.formulaData?.formulaLabel || "THE FORMULA";
+      const formulaSub = slide.formulaData?.formulaSubtext || slide.subtitle || "AI raises all three at once, for opportunity and risk alike.";
+      
+      const rawFactors = slide.formulaData?.factors && slide.formulaData.factors.length > 0
+        ? slide.formulaData.factors
+        : (slide.cards && slide.cards.length > 0
+          ? slide.cards.map((c) => ({ title: c.title, description: c.description || c.subtitle || "" }))
+          : (slide.bullets && slide.bullets.length > 0
+            ? slide.bullets.slice(0, 3).map((b, i) => {
+                const parts = b.split(/:\s*|—\s*|-\s*/);
+                return {
+                  title: parts[0]?.trim() || `Factor 0${i + 1}`,
+                  description: parts[1]?.trim() || b,
+                };
+              })
+            : [
+                { title: "Speed", description: "From periodic review to continuous decisions" },
+                { title: "Cost", description: "One more analysis costs almost nothing; one wrong decision costs a lot" },
+                { title: "Risk", description: "Low-stakes move to AI; high-stakes decisions carry more weight than ever" },
+              ]));
+
+      const rawStatBox = slide.formulaData?.statBox || (slide.stats && slide.stats.length > 0 ? {
+        value: getStatVal(slide.stats[0]) || "61%",
+        description: getStatDesc(slide.stats[0]) || getStatVal(slide.stats[1]) || "of managers say at least half their decision-making time is ineffective",
+        source: "McKinsey Quarterly",
+      } : {
+        value: "61%",
+        description: "of leaders say decision-making speed & confidence directly determines ROI",
+        source: "McKinsey Quarterly, 1,200+ managers",
+      });
+
+      return (
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+          {renderSlideHeader()}
+          <FormulaHeroSplit
+            formulaLabel={formulaLabel}
+            formula={formulaText}
+            formulaSubtext={formulaSub}
+            factors={rawFactors}
+            statBox={rawStatBox}
+            primaryColor={palette.primary}
+            accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+            isPresentation={isPresentation}
+          />
+          {renderSlideFooter()}
+        </div>
+      );
+    }
+
+    /* ──── TREE COMPARISON CARDS & TAKEAWAY (SLIDE 4) ──── */
+    case "treeComparison": {
+      const getStatVal = (st: any): string => {
+        if (!st) return "";
+        if (typeof st === "string") return st;
+        return String(st.value || "");
+      };
+      const getStatDesc = (st: any): string => {
+        if (!st) return "";
+        if (typeof st === "string") return "";
+        return String(st.label || st.description || "");
+      };
+
+      const topCallout = slide.treeData?.topCallout || (slide.stats && slide.stats.length > 0 ? {
+        stat: getStatVal(slide.stats[0]) || "3.2×",
+        label: getStatDesc(slide.stats[0]) || "higher metric",
+        note: slide.description || "Push everyone to the app? No: engagement drives both.",
+      } : {
+        stat: "3.2×",
+        label: "higher LTV for app users",
+        note: slide.description || "Push everyone to the app? No: underlying engagement drives both.",
+      });
+
+      const cards = slide.treeData?.cards && slide.treeData.cards.length > 0
+        ? slide.treeData.cards
+        : (slide.cards && slide.cards.length > 0
+          ? slide.cards.slice(0, 3).map((c, i) => ({
+              title: c.title,
+              description: c.description || c.subtitle || "",
+              rootNode: (c.bullets && c.bullets[0]) || "Root Cause",
+              childNodes: [(c.bullets && c.bullets[1]) || "Driver A", (c.bullets && c.bullets[2]) || "Driver B"] as [string, string],
+            }))
+          : [
+              {
+                title: "Selection bias",
+                rootNode: "Motivation",
+                childNodes: ["Joins training", "Better results"] as [string, string],
+                description: "Volunteers for a training program were already more motivated",
+              },
+              {
+                title: "Reverse causation",
+                rootNode: "Revenue growth",
+                childNodes: ["Enables hiring", "Expands footprint"] as [string, string],
+                description: "Revenue growth enables hiring, not the other way round",
+              },
+              {
+                title: "Spurious correlation",
+                rootNode: "Third factor",
+                childNodes: ["Metric A", "Metric B"] as [string, string],
+                description: "Two metrics rise together because of a third factor, e.g. economic expansion",
+              },
+            ]);
+
+      const bottomTakeaway = slide.treeData?.bottomTakeaway || slide.insightBarText || slide.highlight || (
+        "Ask before acting on any correlation: \"Is there a plausible story where something else causes both X and Y?\""
+      );
+
+      return (
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+          {renderSlideHeader()}
+          <TreeComparisonCards
+            topCallout={topCallout}
+            cards={cards}
+            bottomTakeaway={bottomTakeaway}
+            primaryColor={palette.primary}
+            accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+            isPresentation={isPresentation}
+          />
+          {renderSlideFooter()}
+        </div>
+      );
+    }
+
+    /* ──── CASE STUDY & 3-LINE EXERCISE (SLIDE 5) ──── */
+    case "caseExercise": {
+      const getStatVal = (st: any): string => {
+        if (!st) return "";
+        if (typeof st === "string") return st;
+        return String(st.value || "");
+      };
+      const getStatDesc = (st: any): string => {
+        if (!st) return "";
+        if (typeof st === "string") return "";
+        return String(st.label || st.description || "");
+      };
+
+      const situationText = slide.exerciseData?.situationText || slide.description || (
+        "PT Cahaya Energi Nusantara replaces about 200 smart meters a month. Today the queue is set by meter age. A vendor offers an AI model that ranks meters by failure risk using 3 years of outage logs. Dian Pratama, Head of Network Operations, must decide how to use it."
+      );
+
+      const metrics = slide.exerciseData?.dataMetrics && slide.exerciseData.dataMetrics.length > 0
+        ? slide.exerciseData.dataMetrics
+        : (slide.stats && slide.stats.length > 0
+          ? slide.stats.slice(0, 3).map((st: any, i) => ({
+              value: getStatVal(st) || `Metric 0${i + 1}`,
+              label: getStatDesc(st) || `Key Metric 0${i + 1}`,
+            }))
+          : [
+              { value: "18,400", label: "meters in service" },
+              { value: "2023–2025", label: "outage logs coverage" },
+              { value: "6%", label: "unrecorded installation date" },
+            ]);
+
+      const twist = slide.exerciseData?.twistBox || slide.calloutBox?.text || (
+        "two hospitals and a water-treatment plant are on feeders served by the oldest meters."
+      );
+
+      const lines = slide.exerciseData?.exerciseLines && slide.exerciseData.exerciseLines.length > 0
+        ? slide.exerciseData.exerciseLines
+        : (slide.bullets && slide.bullets.length > 0
+          ? slide.bullets.slice(0, 3)
+          : [
+              "Which AIDM mode fits the monthly replacement queue? Why?",
+              "Which part of the decision must stay Override, and why?",
+              "One escalation rule the AI must follow.",
+            ]);
+
+      return (
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+          {renderSlideHeader()}
+          <CaseStudyExercise
+            situationTitle={slide.exerciseData?.situationTitle || "SITUATION"}
+            situationText={situationText}
+            dataMetrics={metrics}
+            twistBox={twist}
+            exerciseTitle={slide.exerciseData?.exerciseTitle || "WHAT TO WRITE · 3 LINES"}
+            exerciseLines={lines}
+            primaryColor={palette.primary}
+            accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+            isPresentation={isPresentation}
+          />
+          {renderSlideFooter()}
+        </div>
+      );
+    }
+
+    /* ──── PYRAMID HIERARCHY (3-TIER APEX STRATEGY) ──── */
+    case "pyramidHierarchy": {
+      const tiers = slide.cards && slide.cards.length >= 3
+        ? slide.cards.slice(0, 3).map((c, i) => ({
+            level: i === 0 ? "Apex · Vision" : i === 1 ? "Pillars · Strategy" : "Foundation · Enablers",
+            title: c.title,
+            description: c.description || c.subtitle,
+            items: c.bullets,
+            tag: c.tag,
+          }))
+        : (slide.bullets && slide.bullets.length >= 3
+          ? [
+              { level: "Apex · Core Objective", title: slide.bullets[0], description: "Unified organizational priority", tag: "APEX" },
+              { level: "Pillars · Strategic Execution", title: slide.bullets[1], description: "Operational core thrusts", tag: "STRATEGY" },
+              { level: "Foundation · Enabling Capabilities", title: slide.bullets[2], description: "Infrastructure and cross-functional support", tag: "FOUNDATION" },
+            ]
+          : undefined);
+
+      return (
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+          {renderSlideHeader()}
+          <PyramidHierarchy
+            tiers={tiers}
+            primaryColor={palette.primary}
+            accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+            isPresentation={isPresentation}
+          />
+          {renderSlideFooter()}
+        </div>
+      );
+    }
+
+    /* ──── TRANSFORMATION DELTA BRIDGE (AS-IS → CATALYST → TO-BE) ──── */
+    case "transformationBridge": {
+      const asIsData = slide.pairedRows && slide.pairedRows.length > 0
+        ? {
+            title: "Kondisi Saat Ini (As-Is)",
+            tag: "CURRENT FRICTION (AS-IS)",
+            points: slide.pairedRows.map((p) => p.left),
+          }
+        : {
+            title: "Legacy Operating Model",
+            tag: "CURRENT FRICTION (AS-IS)",
+            points: slide.bullets?.slice(0, 3) || [
+              "Fragmented data silos across divisions",
+              "Manual approval bottlenecks and latency",
+              "Reactive risk management post-incident",
+            ],
+          };
+
+      const toBeData = slide.pairedRows && slide.pairedRows.length > 0
+        ? {
+            title: "Target Transformasi (To-Be)",
+            tag: "TARGET OUTCOME (TO-BE)",
+            points: slide.pairedRows.map((p) => p.right),
+          }
+        : {
+            title: "Modern Autonomous Enterprise",
+            tag: "TARGET OUTCOME (TO-BE)",
+            points: [
+              "Unified telemetry and real-time visibility",
+              "Automated compliance with human-in-the-loop",
+              "Proactive error prevention and 99.9% reliability",
+            ],
+          };
+
+      const catalystData = {
+        title: slide.highlight || "Transformation Engine",
+        description: slide.description || "Centralized digital capability standardizing execution across squads",
+        metricChange: (slide.stats && (slide.stats[0] as any)?.value) || "3x Velocity",
+      };
+
+      return (
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+          {renderSlideHeader()}
+          <TransformationBridge
+            asIs={asIsData}
+            catalyst={catalystData}
+            toBe={toBeData}
+            primaryColor={palette.primary}
+            accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+            isPresentation={isPresentation}
+          />
+          {renderSlideFooter()}
+        </div>
+      );
+    }
+
+    /* ──── RADIAL HUB & ECOSYSTEM (CORE MANDATE + SATELLITES) ──── */
+    case "radialHub": {
+      const satellites = slide.cards && slide.cards.length >= 4
+        ? slide.cards.slice(0, 4).map((c, i) => ({
+            title: c.title,
+            description: c.description || c.subtitle || "Operational governance sphere",
+            metric: (slide.stats && (slide.stats[i] as any)?.value) || undefined,
+            tag: c.tag || `DOMAIN 0${i + 1}`,
+          }))
+        : (slide.bullets && slide.bullets.length >= 4
+          ? slide.bullets.slice(0, 4).map((b, i) => {
+              const parts = b.split(/:\s*|—\s*|-\s*/);
+              return {
+                title: parts[0]?.trim() || `Domain 0${i + 1}`,
+                description: parts[1]?.trim() || b,
+                tag: `PILLAR 0${i + 1}`,
+              };
+            })
+          : undefined);
+
+      return (
+        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+          {renderSlideHeader()}
+          <RadialHubEcosystem
+            coreHubTitle={slide.highlight || slide.title || "Core Orchestration Hub"}
+            coreHubSub="Single Operational Spine"
+            satellites={satellites}
+            primaryColor={palette.primary}
+            accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+            isPresentation={isPresentation}
+          />
+          {renderSlideFooter()}
+        </div>
       );
     }
 
@@ -5912,11 +6282,11 @@ async function streamBuildSlide(
   for (let i = 1; i <= fullTitle.length; i += (fullTitle.length > 60 ? 3 : 2)) {
     if (isCancelled()) return;
     current = { ...current, title: fullTitle.slice(0, i) };
-    onUpdate(current, `✍️ Menulis judul: "${fullTitle.slice(0, Math.min(i, 30))}..."`);
+    onUpdate(current, `Menulis judul: "${fullTitle.slice(0, Math.min(i, 30))}..."`);
     await delay(18);
   }
   current = { ...current, title: fullTitle };
-  onUpdate(current, `✨ Judul selesai`);
+  onUpdate(current, `Judul selesai`);
   await delay(60);
 
   // 2. Stream Subtitle if present
@@ -5925,11 +6295,11 @@ async function streamBuildSlide(
     for (let i = 1; i <= fullSub.length; i += (fullSub.length > 60 ? 4 : 2)) {
       if (isCancelled()) return;
       current = { ...current, subtitle: fullSub.slice(0, i) };
-      onUpdate(current, `📝 Menulis sub-judul: "${fullSub.slice(0, Math.min(i, 25))}..."`);
+      onUpdate(current, `Menulis sub-judul: "${fullSub.slice(0, Math.min(i, 25))}..."`);
       await delay(15);
     }
     current = { ...current, subtitle: fullSub };
-    onUpdate(current, `✨ Sub-judul selesai`);
+    onUpdate(current, `Sub-judul selesai`);
     await delay(50);
   }
 
@@ -5945,7 +6315,7 @@ async function streamBuildSlide(
         const nextBullets = [...(current.bullets || [])];
         nextBullets[bIdx] = currentBullet;
         current = { ...current, bullets: nextBullets };
-        onUpdate(current, `📌 Menyusun poin ${bIdx + 1}/${finalSlide.bullets.length}...`);
+        onUpdate(current, `Menyusun poin ${bIdx + 1}/${finalSlide.bullets.length}...`);
         await delay(14);
       }
       const nextBullets = [...(current.bullets || [])];
@@ -5962,7 +6332,7 @@ async function streamBuildSlide(
       const step = finalSlide.processSteps[sIdx];
       const nextSteps = [...(current.processSteps || []), { title: step.title, description: step.description }];
       current = { ...current, processSteps: nextSteps };
-      onUpdate(current, `🔢 Membangun langkah proses ${sIdx + 1}/${finalSlide.processSteps.length}: ${step.title}...`);
+      onUpdate(current, `Membangun langkah proses ${sIdx + 1}/${finalSlide.processSteps.length}: ${step.title}...`);
       await delay(140);
     }
   }
@@ -5974,7 +6344,7 @@ async function streamBuildSlide(
       const step = finalSlide.chevronSteps[sIdx];
       const nextSteps = [...(current.chevronSteps || []), step];
       current = { ...current, chevronSteps: nextSteps };
-      onUpdate(current, `⚡ Merangkai chevron ${sIdx + 1}/${finalSlide.chevronSteps.length}: ${step.title}...`);
+      onUpdate(current, `Merangkai chevron ${sIdx + 1}/${finalSlide.chevronSteps.length}: ${step.title}...`);
       await delay(140);
     }
   }
@@ -5986,7 +6356,7 @@ async function streamBuildSlide(
       const row = finalSlide.tableRows[rIdx];
       const nextRows = [...(current.tableRows || []), row];
       current = { ...current, tableRows: nextRows };
-      onUpdate(current, `📊 Mengisi baris tabel perbandingan ${rIdx + 1}/${finalSlide.tableRows.length}: ${row.feature}...`);
+      onUpdate(current, `Mengisi baris tabel perbandingan ${rIdx + 1}/${finalSlide.tableRows.length}: ${row.feature}...`);
       await delay(160);
     }
   }
@@ -5998,7 +6368,7 @@ async function streamBuildSlide(
       const stat = finalSlide.stats[sIdx];
       const nextStats = [...(current.stats || []), stat];
       current = { ...current, stats: nextStats };
-      onUpdate(current, `📈 Menghitung metrik ${sIdx + 1}/${finalSlide.stats.length}: ${stat.value}...`);
+      onUpdate(current, `Menghitung metrik ${sIdx + 1}/${finalSlide.stats.length}: ${stat.value}...`);
       await delay(120);
     }
   }
@@ -6010,7 +6380,7 @@ async function streamBuildSlide(
       const pt = finalSlide.chartData[cIdx];
       const nextData = [...(current.chartData || []), pt];
       current = { ...current, chartData: nextData };
-      onUpdate(current, `📊 Memvisualisasikan data grafik: ${pt.name}...`);
+      onUpdate(current, `Memvisualisasikan data grafik: ${pt.name}...`);
       await delay(110);
     }
   }
@@ -6022,7 +6392,7 @@ async function streamBuildSlide(
       const node = finalSlide.flowNodes[nIdx];
       const nextNodes = [...(current.flowNodes || []), node];
       current = { ...current, flowNodes: nextNodes };
-      onUpdate(current, `🔗 Menggambar node diagram alur ${nIdx + 1}/${finalSlide.flowNodes.length}...`);
+      onUpdate(current, `Menggambar node diagram alur ${nIdx + 1}/${finalSlide.flowNodes.length}...`);
       await delay(120);
     }
   } else if (finalSlide.timelineMilestones && finalSlide.timelineMilestones.length > 0) {
@@ -6031,32 +6401,32 @@ async function streamBuildSlide(
       const ms = finalSlide.timelineMilestones[mIdx];
       const nextMs = [...(current.timelineMilestones || []), ms];
       current = { ...current, timelineMilestones: nextMs };
-      onUpdate(current, `📅 Menyusun milestone ${ms.quarter}...`);
+      onUpdate(current, `Menyusun milestone ${ms.quarter}...`);
       await delay(120);
     }
   } else if (finalSlide.quadrantData) {
     current = { ...current, quadrantData: finalSlide.quadrantData };
-    onUpdate(current, `📐 Menyusun matrix kuadran 2x2...`);
+    onUpdate(current, `Menyusun matrix kuadran 2x2...`);
     await delay(150);
   } else if (finalSlide.funnelStages) {
     current = { ...current, funnelStages: finalSlide.funnelStages };
-    onUpdate(current, `🔻 Membangun funnel konversi...`);
+    onUpdate(current, `Membangun funnel konversi...`);
     await delay(150);
   } else if (finalSlide.cycleNodes) {
     current = { ...current, cycleNodes: finalSlide.cycleNodes };
-    onUpdate(current, `🔄 Membentuk siklus interaktif...`);
+    onUpdate(current, `Membentuk siklus interaktif...`);
     await delay(150);
   } else if (finalSlide.gaugeItems) {
     current = { ...current, gaugeItems: finalSlide.gaugeItems };
-    onUpdate(current, `🎯 Mengkalibrasi indikator radial...`);
+    onUpdate(current, `Mengkalibrasi indikator radial...`);
     await delay(150);
   } else if (finalSlide.trajectoryNodes) {
     current = { ...current, trajectoryNodes: finalSlide.trajectoryNodes };
-    onUpdate(current, `📈 Menggambar kurva trajektori...`);
+    onUpdate(current, `Menggambar kurva trajektori...`);
     await delay(150);
   } else if (finalSlide.verticalProgressItems) {
     current = { ...current, verticalProgressItems: finalSlide.verticalProgressItems };
-    onUpdate(current, `🧱 Menyusun stack progres vertikal...`);
+    onUpdate(current, `Menyusun stack progres vertikal...`);
     await delay(150);
   }
 
@@ -6066,14 +6436,14 @@ async function streamBuildSlide(
     for (let i = 1; i <= fullDesc.length; i += 4) {
       if (isCancelled()) return;
       current = { ...current, description: fullDesc.slice(0, i) };
-      onUpdate(current, `✍️ Menulis narasi materi...`);
+      onUpdate(current, `Menulis narasi materi...`);
       await delay(14);
     }
     current = { ...current, description: fullDesc };
   }
 
   // Final exact sync to ensure 100% fidelity
-  onUpdate(finalSlide, `✅ Slide selesai`);
+  onUpdate(finalSlide, `Slide selesai`);
   await delay(70);
 }
 
@@ -6124,7 +6494,7 @@ async function streamBuildSlide(
 
         try {
           setGeneratingProgress(12);
-          setGeneratingStage("📊 Fase 1/3 — AI merancang alur naratif & memilih layout optimal per slide...");
+          setGeneratingStage("Fase 1/3 — AI merancang alur naratif & memilih layout optimal per slide...");
 
           const planRes = await fetch("/api/decks/plan-outline", {
             method: "POST",
@@ -6157,19 +6527,19 @@ async function streamBuildSlide(
             }));
 
             setGeneratingProgress(25);
-            setGeneratingStage(`✅ Fase 1/3 selesai — Blueprint ${workingBreakdown.length} slide siap. Memulai rendering...`);
+            setGeneratingStage(`Fase 1/3 selesai — Blueprint ${workingBreakdown.length} slide siap. Memulai rendering...`);
           } else {
             setGeneratingProgress(20);
-            setGeneratingStage("⚠️ AI planner tidak tersedia, beralih ke direct generation...");
+            setGeneratingStage("AI planner tidak tersedia, beralih ke direct generation...");
           }
         } catch (planErr) {
           console.warn("AI planning phase error, falling back to direct generation:", planErr);
           setGeneratingProgress(20);
-          setGeneratingStage("⚠️ Planner gagal, menggunakan direct generation...");
+          setGeneratingStage("Planner gagal, menggunakan direct generation...");
         }
       } else {
         setGeneratingProgress(20);
-        setGeneratingStage(`📋 Blueprint ${workingBreakdown.length} slide sudah tersedia. Memulai rendering...`);
+        setGeneratingStage(`Blueprint ${workingBreakdown.length} slide sudah tersedia. Memulai rendering...`);
       }
 
       // ════════════════════════════════════════════════════════════════════
@@ -6197,7 +6567,7 @@ async function streamBuildSlide(
         const builtSlides: SlideData[] = new Array(total);
 
         setGeneratingProgress(28);
-        setGeneratingStage(`🎨 Fase 2/3 — Membangun ${total} slide dengan layout adaptif...`);
+        setGeneratingStage(`Fase 2/3 — Membangun ${total} slide dengan layout adaptif...`);
 
         // Put initial placeholders in slides with isGeneratingSlide flag
         // so user sees outline titles and live skeleton generating status while chunks process
@@ -6225,7 +6595,7 @@ async function streamBuildSlide(
           const progressPct = Math.round(30 + (batchStart / totalChunks) * 60);
 
           setGeneratingProgress(progressPct);
-          setGeneratingStage(`⚡ Fase 2/3 — Rendering batch ${Math.floor(batchStart / CONCURRENCY_LIMIT) + 1}/${Math.ceil(totalChunks / CONCURRENCY_LIMIT)} (Slide ${startSlide}–${endSlide} dari ${total})...`);
+          setGeneratingStage(`Fase 2/3 — Rendering batch ${Math.floor(batchStart / CONCURRENCY_LIMIT) + 1}/${Math.ceil(totalChunks / CONCURRENCY_LIMIT)} (Slide ${startSlide}–${endSlide} dari ${total})...`);
 
           await Promise.all(
             currentBatchIndices.map(async (c) => {
@@ -6315,19 +6685,19 @@ async function streamBuildSlide(
         }));
         setSlides(finalCompleteSlides);
         setGeneratingProgress(95);
-        setGeneratingStage(`🔧 Fase 3/3 — Finalisasi & quality check...`);
+        setGeneratingStage(`Fase 3/3 — Finalisasi & quality check...`);
 
         // Brief pause for QA stage visibility
         await new Promise(r => setTimeout(r, 400));
 
         setGeneratingProgress(100);
-        setGeneratingStage(`✅ Selesai! Seluruh ${total} slide berhasil digenerate dengan layout adaptif.`);
+        setGeneratingStage(`Selesai — Seluruh ${total} slide berhasil digenerate.`);
         setActiveSlideIndex(0);
         return;
       }
 
       // ──── SMALL DECK (≤3 slides or no plan available): Direct AI Generation ────
-      setGeneratingStage("⚡ Fase 2/3 — Men-generate seluruh slide via AI...");
+      setGeneratingStage("Fase 2/3 — Men-generate seluruh slide via AI...");
       setGeneratingProgress(50);
 
       const response = await fetch("/api/decks/generate-stream", {
@@ -6365,12 +6735,12 @@ async function streamBuildSlide(
       const targetSlidesList: SlideData[] = rawList.map((s: any, idx: number) => normalizeSlide(s, idx));
 
       setGeneratingProgress(95);
-      setGeneratingStage("🔧 Fase 3/3 — Finalisasi & quality check...");
+      setGeneratingStage("Fase 3/3 — Finalisasi & quality check...");
       await new Promise(r => setTimeout(r, 300));
 
       setSlides(targetSlidesList);
       setGeneratingProgress(100);
-      setGeneratingStage("✅ Selesai! Seluruh slide siap dipresentasikan.");
+      setGeneratingStage("Selesai — Seluruh slide siap dipresentasikan.");
       setActiveSlideIndex(0);
     } catch (err) {
       console.error("Deck generation error:", err);
@@ -6465,19 +6835,19 @@ async function streamBuildSlide(
             copy[activeSlideIndex] = newSlide;
             return copy;
           });
-          setEditStatusMessage(`✅ Slide ${activeSlideIndex + 1} updated successfully!`);
+          setEditStatusMessage(`Slide ${activeSlideIndex + 1} updated successfully.`);
         } else if (data.scope === "all" && Array.isArray(data.updatedSlides)) {
           const newSlides = data.updatedSlides.map((s: any, idx: number) => normalizeSlide(s, idx));
           setSlides(newSlides);
-          setEditStatusMessage(`✅ All ${newSlides.length} slides updated successfully!`);
+          setEditStatusMessage(`All ${newSlides.length} slides updated successfully.`);
         }
         setEditPrompt("");
       } else {
-        setEditStatusMessage(`⚠️ ${data.error || "Failed to update slide"}`);
+        setEditStatusMessage(data.error || "Failed to update slide.");
       }
     } catch (err) {
       console.error("Apply prompt edit failed:", err);
-      setEditStatusMessage("⚠️ An error occurred while processing the edit.");
+      setEditStatusMessage("An error occurred while processing the edit.");
     } finally {
       setIsEditingSlide(false);
       setTimeout(() => {
@@ -6626,14 +6996,14 @@ async function streamBuildSlide(
           />
 
           <div
-            className="max-w-2xl mx-auto bg-white dark:bg-[#121212] rounded-xl border border-neutral-200/90 dark:border-neutral-800 shadow-sm p-4 sm:p-5 relative transition-all focus-within:ring-2 focus-within:ring-[#FFE54C]/50 focus-within:border-[#E5BC10]"
+            className="max-w-2xl mx-auto bg-white dark:bg-[#121212] rounded-lg border border-neutral-200/90 dark:border-neutral-800 shadow-xs p-4 sm:p-5 relative transition-all focus-within:ring-2 focus-within:ring-[#FFE54C]/50 focus-within:border-[#E5BC10]"
           >
             {/* Attached Skill / File Card (Claude-style Exact Square Card) */}
             {attachedSkill && (
               <div className="mb-3.5 inline-block">
                 <div
                   onClick={() => setShowSkillModal(true)}
-                  className="group relative w-28 h-28 rounded-xl border border-neutral-200 dark:border-neutral-700/80 bg-white dark:bg-[#181818] shadow-xs hover:border-neutral-400 dark:hover:border-neutral-500 transition-all overflow-hidden select-none cursor-pointer"
+                  className="group relative w-28 h-28 rounded-lg border border-neutral-200 dark:border-neutral-700/80 bg-white dark:bg-[#181818] shadow-2xs hover:border-neutral-400 dark:hover:border-neutral-500 transition-all overflow-hidden select-none cursor-pointer"
                   title="Klik untuk membaca instruksi skill / isi dokumen"
                 >
                   {/* Remove Button on hover */}
@@ -6817,45 +7187,45 @@ async function streamBuildSlide(
 
           {/* Reference Slide Style Banner */}
           {clonedStyle ? (
-            <div className="p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-neutral-900 dark:to-[#1a1708] border border-amber-300/80 dark:border-amber-800/60 shadow-xs flex flex-wrap items-center justify-between gap-3">
+            <div className="p-3.5 sm:p-4 rounded-lg bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#FFDE3C]/30 text-amber-900 dark:text-amber-200 flex items-center justify-center shrink-0">
-                  <Sparkles className="w-5 h-5 text-amber-500" />
+                <div className="w-8 h-8 rounded-md bg-neutral-200/80 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center justify-center shrink-0 border border-neutral-300/60 dark:border-neutral-750">
+                  <Sparkles className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-extrabold uppercase px-2 py-0.5 rounded bg-[#FFDE3C] text-neutral-950">
+                    <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-md bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
                       Gaya Referensi Aktif
                     </span>
                     <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
                       Warna, Font & Pola Ditiru Otomatis
                     </span>
                   </div>
-                  <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 line-clamp-1 max-w-xl">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-1 max-w-xl">
                     {clonedStyle.designDNASummary}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
                   <span className="text-[11px] text-neutral-500 font-medium mr-1">Palette:</span>
-                  <span className="w-3.5 h-3.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.primary }} title={`Primary: ${clonedStyle.palette.primary}`} />
-                  <span className="w-3.5 h-3.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.secondary }} title={`Secondary: ${clonedStyle.palette.secondary}`} />
-                  <span className="w-3.5 h-3.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.accent }} title={`Accent: ${clonedStyle.palette.accent}`} />
+                  <span className="w-2.5 h-2.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.primary }} title={`Primary: ${clonedStyle.palette.primary}`} />
+                  <span className="w-2.5 h-2.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.secondary }} title={`Secondary: ${clonedStyle.palette.secondary}`} />
+                  <span className="w-2.5 h-2.5 rounded-full border border-black/20" style={{ backgroundColor: clonedStyle.palette.accent }} title={`Accent: ${clonedStyle.palette.accent}`} />
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setShowCloneStyleModal(true)}
-                  className="px-3 py-1.5 rounded-md text-xs font-semibold bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                  className="px-2.5 py-1 rounded-md text-xs font-medium bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-750 transition-colors"
                 >
                   Ubah
                 </button>
                 <button
                   type="button"
                   onClick={handleClearClonedStyle}
-                  className="p-1.5 rounded-md text-neutral-400 hover:text-red-500 transition-colors"
+                  className="p-1 rounded-md text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
                   title="Hapus gaya referensi"
                 >
                   <X className="w-4 h-4" />
@@ -6863,22 +7233,22 @@ async function streamBuildSlide(
               </div>
             </div>
           ) : attachedSkill ? (
-            <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50/50 dark:from-neutral-900 dark:to-[#081326] border border-blue-200/80 dark:border-blue-900/60 shadow-xs flex flex-wrap items-center justify-between gap-3">
+            <div className="p-3.5 sm:p-4 rounded-lg bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-600/10 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0 border border-blue-200/50 dark:border-blue-800/50">
-                  <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <div className="w-8 h-8 rounded-md bg-neutral-200/80 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center justify-center shrink-0 border border-neutral-300/60 dark:border-neutral-750">
+                  <FileText className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-extrabold uppercase px-2 py-0.5 rounded bg-blue-600 text-white">
+                    <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-md bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
                       Template MD Aktif
                     </span>
                     <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
                       {attachedSkill.name}
                     </span>
                   </div>
-                  <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 line-clamp-1 max-w-xl">
-                    Preset warna, font Red Hat Display, dan tata letak disinkronkan langsung dari file template. Anda dapat melewatinya langsung.
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-1 max-w-xl">
+                    Preset warna, font Red Hat Display, dan tata letak disinkronkan langsung dari file template.
                   </p>
                 </div>
               </div>
@@ -6887,7 +7257,7 @@ async function streamBuildSlide(
                 <Button
                   type="button"
                   onClick={() => setStep("confirm")}
-                  className="h-8.5 px-3.5 rounded-md text-xs font-bold bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  className="h-8 px-3.5 rounded-md text-xs font-semibold bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>Lanjut ke Outline →</span>
                 </Button>
@@ -7375,21 +7745,21 @@ async function streamBuildSlide(
        * STEP 3: CONFIRMATION & SLIDE BREAKDOWN PREVIEW (MINIMALIST 16:9 CARDS ALA GAMMA)
        * ══════════════════════════════════════════════════════════ */}
       {step === "confirm" && (
-        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 font-sans animate-in fade-in duration-200">
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5 font-sans animate-in fade-in duration-200">
           
           {/* Header Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-neutral-200/80 dark:border-neutral-800">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFDE3C]/20 text-[#9E7D00] dark:text-[#FFE54C] border border-[#FFDE3C]/40">
-                  {editableBreakdown.length} Slide Terdeteksi
+                <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-750">
+                  {editableBreakdown.length} Slides
                 </span>
                 <span className="text-xs text-neutral-400">•</span>
                 <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Rasio 16:9 Presisi
+                  16:9 Widescreen
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-normal sm:font-medium tracking-tight text-neutral-900 dark:text-white">
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-neutral-900 dark:text-white">
                 Review Presentation Outline
               </h1>
               <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
@@ -7401,7 +7771,7 @@ async function streamBuildSlide(
               <button
                 type="button"
                 onClick={() => setStep(attachedSkill ? "input" : "styler")}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all cursor-pointer border border-neutral-200/80 dark:border-neutral-800"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer border border-neutral-200/80 dark:border-neutral-750"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>{attachedSkill ? "Back to Input" : "Back to Options"}</span>
@@ -7409,9 +7779,9 @@ async function streamBuildSlide(
               <Button
                 type="button"
                 onClick={handleGenerate}
-                className="h-9.5 px-5 rounded-md font-bold text-xs bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                className="h-8.5 px-4.5 rounded-md font-semibold text-xs bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-98 transition-all"
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className="w-3.5 h-3.5 text-neutral-950" />
                 <span>Generate {editableBreakdown.length} Slides Now</span>
               </Button>
             </div>
@@ -7419,21 +7789,21 @@ async function streamBuildSlide(
 
           {/* Institutional / Active Template Banner in Confirm Step */}
           {attachedSkill && (
-            <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-amber-50/50 dark:from-blue-950/30 dark:via-neutral-900 dark:to-neutral-900 border border-blue-200/80 dark:border-blue-900/60 shadow-xs flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-blue-600/10 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0 border border-blue-200/50 dark:border-blue-800/50">
-                  <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <div className="p-4 sm:p-5 rounded-lg bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-md bg-neutral-200/80 dark:bg-neutral-850 text-neutral-700 dark:text-neutral-300 flex items-center justify-center shrink-0 border border-neutral-300/60 dark:border-neutral-750">
+                  <FileText className="w-5 h-5 text-neutral-700 dark:text-neutral-300" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-blue-600 text-white tracking-wide">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
                       Template Aturan Aktif
                     </span>
-                    <span className="text-xs font-bold text-neutral-900 dark:text-neutral-100">
+                    <span className="text-sm sm:text-[15px] font-semibold text-neutral-900 dark:text-neutral-100">
                       {attachedSkill.name}
                     </span>
                   </div>
-                  <p className="text-[11.5px] text-neutral-600 dark:text-neutral-400 mt-0.5">
+                  <p className="text-xs sm:text-[13px] text-neutral-600 dark:text-neutral-400 mt-1 leading-relaxed">
                     Gaya visual, font Red Hat Display, dan aturan warna dikunci otomatis sesuai standar dokumen template.
                   </p>
                 </div>
@@ -7442,7 +7812,7 @@ async function streamBuildSlide(
               <button
                 type="button"
                 onClick={() => setStep("styler")}
-                className="px-3 py-1.5 rounded-md text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-750 transition-colors ml-auto sm:ml-0"
+                className="px-3.5 py-2 rounded-md text-xs sm:text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white bg-white dark:bg-neutral-800 border border-neutral-200/80 dark:border-neutral-750 hover:bg-neutral-100/80 dark:hover:bg-neutral-750 transition-colors ml-auto sm:ml-0 shadow-2xs"
               >
                 Kustomisasi Gaya (Opsional) →
               </button>
@@ -7450,82 +7820,84 @@ async function streamBuildSlide(
           )}
 
           {/* Minimalist Horizontal Style Summary Strip */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900/60 px-4 py-2.5 rounded-lg border border-neutral-200/70 dark:border-neutral-800 text-xs">
-            <div className="flex flex-wrap items-center gap-4 text-neutral-600 dark:text-neutral-400">
+          <div className="flex flex-wrap items-center justify-between gap-4 bg-neutral-50 dark:bg-neutral-900/60 px-4 sm:px-5 py-3 rounded-lg border border-neutral-200/80 dark:border-neutral-800 text-xs sm:text-[13px]">
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-neutral-600 dark:text-neutral-400">
               <div>
-                <span className="text-neutral-400">Density:</span>{" "}
-                <strong className="text-neutral-800 dark:text-neutral-200 capitalize">{density}</strong>
+                <span className="text-neutral-500 font-normal">Density:</span>{" "}
+                <strong className="text-neutral-900 dark:text-neutral-100 capitalize font-semibold">{density}</strong>
               </div>
               <div>
-                <span className="text-neutral-400">Style:</span>{" "}
-                <strong className="text-neutral-800 dark:text-neutral-200 capitalize">{bgStyle}</strong>
+                <span className="text-neutral-500 font-normal">Style:</span>{" "}
+                <strong className="text-neutral-900 dark:text-neutral-100 capitalize font-semibold">{bgStyle}</strong>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-neutral-400">Palette:</span>
+                <span className="text-neutral-500 font-normal">Palette:</span>
                 <span className="w-3 h-3 rounded-full border border-black/20" style={{ backgroundColor: bgColors.color1 }} />
                 <span className="w-3 h-3 rounded-full border border-black/20" style={{ backgroundColor: bgColors.color2 }} />
                 <span className="w-3 h-3 rounded-full border border-black/20" style={{ backgroundColor: bgColors.color3 }} />
               </div>
               <div>
-                <span className="text-neutral-400">Font:</span>{" "}
-                <strong className="text-neutral-800 dark:text-neutral-200">
+                <span className="text-neutral-500 font-normal">Font:</span>{" "}
+                <strong className="text-neutral-900 dark:text-neutral-100 font-semibold">
                   {TITLE_FONTS.find((f) => f.id === titleFont)?.name || titleFont}
                 </strong>
               </div>
               <div>
-                <span className="text-neutral-400">Audience:</span>{" "}
-                <strong className="text-neutral-800 dark:text-neutral-200">{audience}</strong>
+                <span className="text-neutral-500 font-normal">Audience:</span>{" "}
+                <strong className="text-neutral-900 dark:text-neutral-100 font-semibold">{audience}</strong>
               </div>
             </div>
 
             <button
               type="button"
               onClick={handleAddSlideCard}
-              className="inline-flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer ml-auto"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-neutral-200/80 dark:border-neutral-750 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-750 text-xs sm:text-[13px] font-semibold text-neutral-800 dark:text-neutral-200 transition-colors cursor-pointer ml-auto shadow-2xs"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4" />
               <span>Add Slide</span>
             </button>
           </div>
 
-          {/* AI Blueprint Architect & Slide Target Selector Bar */}
-          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Rencanakan Target Slide AI:</span>
+          {/* Apple-Style Minimalist Segmented Slide Target Selector Bar */}
+          <div className="p-3.5 sm:p-4 rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-xs sm:text-[13px] font-semibold text-neutral-700 dark:text-neutral-300">
+                Target Slide:
               </span>
-              {[5, 10, 20, 35, 50, 75, 100].map((num) => (
-                <button
-                  key={num}
-                  type="button"
-                  disabled={isPlanningOutline}
-                  onClick={() => handlePlanOutline(num)}
-                  className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer border ${
-                    editableBreakdown.length === num
-                      ? "bg-[#FFDE3C] text-neutral-950 border-[#FFDE3C] shadow-2xs"
-                      : "bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400"
-                  }`}
-                >
-                  {num} Slide
-                </button>
-              ))}
+              <div className="inline-flex p-0.5 rounded-md bg-neutral-200/60 dark:bg-neutral-800 border border-neutral-200/60 dark:border-neutral-750 gap-0.5">
+                {[5, 10, 20, 35, 50, 75, 100].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    disabled={isPlanningOutline}
+                    onClick={() => handlePlanOutline(num)}
+                    className={`px-3 py-1.5 rounded-[5px] text-xs sm:text-[13px] transition-all cursor-pointer ${
+                      editableBreakdown.length === num
+                        ? "bg-white dark:bg-neutral-700 text-neutral-950 dark:text-white shadow-2xs font-bold"
+                        : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white font-medium"
+                    }`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
               {isPlanningOutline ? (
-                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                <span className="text-xs sm:text-[13px] font-medium text-neutral-600 dark:text-neutral-400 flex items-center gap-2">
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>AI sedang menyusun blueprint alur cerita...</span>
+                  <span>Menyusun alur cerita...</span>
                 </span>
               ) : (
-                <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                <span className="text-xs sm:text-[13px] text-neutral-600 dark:text-neutral-300">
                   {editableBreakdown.length >= 10 ? (
-                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
-                      ⚡ Pipeline Batching Aktif ({Math.ceil(editableBreakdown.length / 5)} Batch)
+                    <span className="inline-flex items-center gap-2 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                      <span>Pipeline batching aktif ({Math.ceil(editableBreakdown.length / 5)} batch)</span>
                     </span>
                   ) : (
-                    <span>Siap digenerate ({editableBreakdown.length} slide)</span>
+                    <span>{editableBreakdown.length} slide siap</span>
                   )}
                 </span>
               )}
@@ -7533,21 +7905,21 @@ async function streamBuildSlide(
           </div>
 
           {/* ══════════════════════════════════════════════════════════
-           * UNIFORM 16:9 PRESENTATION CARDS GRID (ALL IDENTICAL DIMENSIONS)
+           * UNIFORM 16:9 PRESENTATION CARDS GRID (CLEAN APPLE DESIGN)
            * ══════════════════════════════════════════════════════════ */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {editableBreakdown.map((s, idx) => (
               <div
                 key={idx}
-                className="w-full aspect-[16/9] bg-white dark:bg-[#151515] border border-neutral-200/90 dark:border-neutral-800 hover:border-amber-400 dark:hover:border-amber-400/80 rounded-xl p-3.5 sm:p-4 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden select-none"
+                className="w-full aspect-[16/9] bg-white dark:bg-[#151515] border border-neutral-200/80 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-650 rounded-lg p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between group relative overflow-hidden select-none"
               >
                 {/* Card Top Control Bar */}
                 <div className="flex items-center justify-between gap-2 border-b border-neutral-100 dark:border-neutral-800/80 pb-2">
                   <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-950 text-[11px] font-bold flex items-center justify-center shrink-0">
+                    <span className="w-5 h-5 rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-950 text-[11px] font-semibold flex items-center justify-center shrink-0">
                       {s.slideNumber}
                     </span>
-                    <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400">
+                    <span className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
                       Slide {s.slideNumber}
                     </span>
                   </div>
@@ -7563,7 +7935,7 @@ async function streamBuildSlide(
                       onChange={(e) =>
                         handleUpdateCardField(idx, "visualLayout", e.target.value)
                       }
-                      className="text-[10.5px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200/80 dark:border-neutral-700/80 rounded px-1.5 py-0.5 outline-none cursor-pointer max-w-[130px] truncate"
+                      className="text-[11px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200/80 dark:border-neutral-700 rounded-md px-2 py-0.5 outline-none cursor-pointer min-w-[110px] max-w-[155px] truncate"
                     >
                       {VISUAL_LAYOUT_OPTIONS.map((opt) => (
                         <option key={opt.id} value={opt.id} className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white">
@@ -7577,7 +7949,7 @@ async function streamBuildSlide(
                       type="button"
                       disabled={idx === 0}
                       onClick={() => handleMoveSlideCard(idx, "up")}
-                      className="p-1 rounded text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-20 cursor-pointer"
+                      className="p-1 rounded-md text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-20 cursor-pointer transition-colors"
                       title="Move Up"
                     >
                       <ArrowUp className="w-3 h-3" />
@@ -7588,7 +7960,7 @@ async function streamBuildSlide(
                       type="button"
                       disabled={idx === editableBreakdown.length - 1}
                       onClick={() => handleMoveSlideCard(idx, "down")}
-                      className="p-1 rounded text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-20 cursor-pointer"
+                      className="p-1 rounded-md text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-20 cursor-pointer transition-colors"
                       title="Move Down"
                     >
                       <ArrowDown className="w-3 h-3" />
@@ -7599,7 +7971,7 @@ async function streamBuildSlide(
                       type="button"
                       disabled={editableBreakdown.length <= 1}
                       onClick={() => handleDeleteSlideCard(idx)}
-                      className="p-1 rounded text-neutral-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 disabled:opacity-20 cursor-pointer"
+                      className="p-1 rounded-md text-neutral-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 disabled:opacity-20 cursor-pointer transition-colors"
                       title="Delete Slide"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -7607,108 +7979,109 @@ async function streamBuildSlide(
                   </div>
                 </div>
 
-                {/* Middle Slide Content (Clean 16:9 Presentation Canvas Look) */}
-                <div className="flex-1 flex flex-col justify-center py-1 space-y-1.5 overflow-hidden">
+                {/* Middle Slide Content (Clean Apple Presentation Canvas Look) */}
+                <div className="flex-1 flex flex-col justify-center py-1 space-y-1 overflow-hidden">
                   <input
                     type="text"
                     value={s.headline}
                     onChange={(e) => handleUpdateCardField(idx, "headline", e.target.value)}
-                    placeholder="Slide Headline..."
-                    className="w-full bg-transparent border-b border-transparent hover:border-neutral-200 dark:hover:border-neutral-700 focus:border-amber-400 font-bold text-xs sm:text-[13.5px] text-neutral-900 dark:text-white outline-none transition-colors truncate"
+                    placeholder="Slide headline..."
+                    className="w-full bg-transparent border border-transparent hover:border-neutral-200 dark:hover:border-neutral-700 focus:border-neutral-400 dark:focus:border-neutral-600 focus:bg-neutral-50/50 dark:focus:bg-neutral-900/50 rounded px-1.5 py-0.5 font-semibold text-xs sm:text-[13px] text-neutral-900 dark:text-white outline-none transition-all truncate"
                   />
                   <input
                     type="text"
                     value={s.subheadline || ""}
                     onChange={(e) => handleUpdateCardField(idx, "subheadline", e.target.value)}
                     placeholder="Slide subheadline..."
-                    className="w-full bg-transparent border-b border-transparent hover:border-neutral-200 dark:hover:border-neutral-700 focus:border-amber-400 text-[11px] text-neutral-500 dark:text-neutral-400 outline-none transition-colors truncate"
+                    className="w-full bg-transparent border border-transparent hover:border-neutral-200 dark:hover:border-neutral-700 focus:border-neutral-400 dark:focus:border-neutral-600 focus:bg-neutral-50/50 dark:focus:bg-neutral-900/50 rounded px-1.5 py-0.5 text-[11px] text-neutral-500 dark:text-neutral-400 outline-none transition-all truncate"
                   />
 
-                  {/* Visual Layout Minimalist Snippet */}
+                  {/* Visual Layout Minimalist Wireframe Snippet */}
                   <div className="pt-0.5">
                     {s.visualLayout?.toLowerCase().includes("bar") ? (
                       <div className="flex items-end gap-1.5 h-6 pt-1 px-1">
-                        <div className="w-2 h-2.5 bg-amber-400/60 rounded-t" />
-                        <div className="w-2 h-4.5 bg-amber-400/80 rounded-t" />
-                        <div className="w-2 h-6 bg-amber-500 rounded-t" />
-                        <div className="w-2 h-5 bg-neutral-300 dark:bg-neutral-700 rounded-t" />
+                        <div className="w-2 h-2.5 bg-neutral-400 dark:bg-neutral-600 rounded-xs" />
+                        <div className="w-2 h-4.5 bg-neutral-500 dark:bg-neutral-500 rounded-xs" />
+                        <div className="w-2 h-6 bg-neutral-800 dark:bg-neutral-300 rounded-xs" />
+                        <div className="w-2 h-5 bg-neutral-300 dark:bg-neutral-700 rounded-xs" />
                         <span className="text-[10px] text-neutral-400 font-mono ml-1.5 truncate">
-                          {s.stats ? s.stats[0] : "Quarterly Revenue & EBITDA"}
+                          {s.stats ? s.stats[0] : "Quarterly Comparison"}
                         </span>
                       </div>
                     ) : s.visualLayout?.toLowerCase().includes("pie") || s.visualLayout?.toLowerCase().includes("donut") ? (
                       <div className="flex items-center gap-2 h-6 px-1">
-                        <div className="w-4.5 h-4.5 rounded-full border-[2.5px] border-amber-400 border-t-neutral-800 shrink-0" />
+                        <div className="w-4.5 h-4.5 rounded-full border-[2px] border-neutral-400 dark:border-neutral-600 border-t-neutral-800 dark:border-t-neutral-200 shrink-0" />
                         <span className="text-[10px] text-neutral-400 font-mono truncate">
-                          {s.stats ? s.stats.slice(0, 2).join(" • ") : "Segment Revenue Mix"}
+                          {s.stats ? s.stats.slice(0, 2).join(" • ") : "Segment Breakdown"}
                         </span>
                       </div>
                     ) : s.visualLayout?.toLowerCase().includes("metric") || s.visualLayout?.toLowerCase().includes("kpi") ? (
                       <div className="flex items-center gap-1.5 flex-wrap h-6 overflow-hidden">
-                        {(s.stats || ["Gross Margin: 62%", "EBITDA: 18%"]).slice(0, 2).map((st, i) => (
-                          <span key={i} className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60 truncate">
+                        {(s.stats || ["Growth: +42%", "Efficiency: 94%"]).slice(0, 2).map((st, i) => (
+                          <span key={i} className="text-[9.5px] font-mono px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-750 truncate">
                             {st}
                           </span>
                         ))}
                       </div>
                     ) : s.visualLayout?.toLowerCase().includes("roadmap") || s.visualLayout?.toLowerCase().includes("timeline") ? (
-                      <div className="flex items-center gap-1 h-6 px-1">
-                        <div className="w-2 h-2 rounded-full bg-amber-500" />
-                        <div className="flex-1 h-0.5 bg-neutral-200 dark:bg-neutral-700" />
-                        <div className="w-2 h-2 rounded-full bg-amber-500" />
-                        <div className="flex-1 h-0.5 bg-neutral-200 dark:bg-neutral-700" />
-                        <div className="w-2 h-2 rounded-full bg-amber-500" />
-                        <span className="text-[10px] text-neutral-400 font-mono ml-1 truncate">Roadmap Q4</span>
+                      <div className="flex items-center gap-1.5 h-6 px-1">
+                        <div className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600" />
+                        <div className="flex-1 h-0.5 bg-neutral-200 dark:bg-neutral-800" />
+                        <div className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-600" />
+                        <div className="flex-1 h-0.5 bg-neutral-200 dark:bg-neutral-800" />
+                        <div className="w-2 h-2 rounded-full bg-neutral-800 dark:bg-neutral-200" />
+                        <span className="text-[10px] text-neutral-400 font-mono ml-1 truncate">Roadmap</span>
                       </div>
                     ) : s.visualLayout?.toLowerCase().includes("paired") || s.visualLayout?.toLowerCase().includes("ancaman") ? (
                       <div className="flex items-center gap-1.5 h-6 px-1">
-                        <span className="text-[9px] px-1 py-0.5 rounded bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-mono font-bold">Ancaman</span>
-                        <span className="text-neutral-400 text-[10px]">⇄</span>
-                        <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-mono font-bold">Respons</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium">Problem</span>
+                        <span className="text-neutral-400 text-[10px]">→</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-900 text-white dark:bg-neutral-200 dark:text-neutral-950 font-medium">Solution</span>
                       </div>
                     ) : s.visualLayout?.toLowerCase().includes("stack") || s.visualLayout?.toLowerCase().includes("triad") || s.visualLayout?.toLowerCase().includes("pillar") ? (
                       <div className="flex items-center gap-1 h-6 px-1">
-                        <span className="text-[8.5px] px-1 py-0.5 rounded bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 font-mono font-semibold">P1</span>
-                        <span className="text-[8.5px] px-1 py-0.5 rounded bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 font-mono font-semibold">P2</span>
-                        <span className="text-[8.5px] px-1 py-0.5 rounded bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 font-mono font-semibold">P3</span>
+                        <span className="text-[8.5px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium">Pillar 1</span>
+                        <span className="text-[8.5px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium">Pillar 2</span>
+                        <span className="text-[8.5px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium">Pillar 3</span>
                       </div>
                     ) : s.visualLayout?.toLowerCase().includes("rail") || s.visualLayout?.toLowerCase().includes("stepper") ? (
                       <div className="flex items-center gap-1 h-6 px-1">
-                        <div className="w-2.5 h-2.5 rounded-full bg-blue-600 text-[8px] text-white flex items-center justify-center font-bold">1</div>
-                        <div className="flex-1 h-0.5 bg-blue-400" />
-                        <div className="w-2.5 h-2.5 rounded-full bg-blue-600 text-[8px] text-white flex items-center justify-center font-bold">2</div>
-                        <div className="flex-1 h-0.5 bg-blue-400" />
-                        <div className="w-2.5 h-2.5 rounded-full bg-blue-600 text-[8px] text-white flex items-center justify-center font-bold">3</div>
+                        <div className="w-2.5 h-2.5 rounded-full bg-neutral-800 dark:bg-neutral-200 text-[8px] text-white dark:text-neutral-950 flex items-center justify-center font-bold">1</div>
+                        <div className="flex-1 h-0.5 bg-neutral-200 dark:bg-neutral-700" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-neutral-800 dark:bg-neutral-200 text-[8px] text-white dark:text-neutral-950 flex items-center justify-center font-bold">2</div>
+                        <div className="flex-1 h-0.5 bg-neutral-200 dark:bg-neutral-700" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-neutral-800 dark:bg-neutral-200 text-[8px] text-white dark:text-neutral-950 flex items-center justify-center font-bold">3</div>
                       </div>
                     ) : s.visualLayout?.toLowerCase().includes("ascending") || s.visualLayout?.toLowerCase().includes("maturity") ? (
                       <div className="flex items-end gap-1.5 h-6 px-1">
-                        <div className="w-3.5 h-2 bg-neutral-300 dark:bg-neutral-700 rounded-t text-[7.5px] text-center font-mono font-bold">L1</div>
-                        <div className="w-3.5 h-4 bg-amber-400 rounded-t text-[7.5px] text-center font-mono font-bold">L2</div>
-                        <div className="w-3.5 h-6 bg-blue-600 text-white rounded-t text-[7.5px] text-center font-mono font-bold">L3</div>
+                        <div className="w-3.5 h-2 bg-neutral-200 dark:bg-neutral-700 rounded-t text-[7.5px] text-center font-mono font-medium">L1</div>
+                        <div className="w-3.5 h-4 bg-neutral-400 dark:bg-neutral-500 rounded-t text-[7.5px] text-center font-mono font-medium">L2</div>
+                        <div className="w-3.5 h-6 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-950 rounded-t text-[7.5px] text-center font-mono font-medium">L3</div>
                       </div>
                     ) : s.visualLayout?.toLowerCase().includes("checklist") || s.visualLayout?.toLowerCase().includes("periksa") ? (
-                      <div className="flex items-center gap-2 h-6 px-1 text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">
-                        <span>✓ Audit Lolos</span>
-                        <span>✓ SLA Terpenuhi</span>
+                      <div className="flex items-center gap-2 h-6 px-1 text-[9px] font-medium text-neutral-600 dark:text-neutral-400">
+                        <span>Audit Validated</span>
+                        <span>•</span>
+                        <span>Policy Aligned</span>
                       </div>
                     ) : s.visualLayout?.toLowerCase().includes("closing") || s.visualLayout?.toLowerCase().includes("tindakan") ? (
                       <div className="flex items-center gap-1.5 h-6 px-1">
-                        <span className="text-[9px] px-1 py-0.5 rounded bg-amber-400 text-neutral-950 font-bold font-mono">01 Mandat</span>
-                        <span className="text-[9px] px-1 py-0.5 rounded bg-amber-400 text-neutral-950 font-bold font-mono">02 Aksi</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-medium">01 Action</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-medium">02 Next Steps</span>
                       </div>
                     ) : s.visualLayout?.toLowerCase().includes("section") || s.visualLayout?.toLowerCase().includes("divider") ? (
                       <div className="flex items-center h-6 px-1">
-                        <span className="text-[9px] px-2 py-0.5 rounded bg-amber-400 text-neutral-950 font-bold tracking-wide uppercase">
-                          Pembagi Bagian
+                        <span className="text-[9px] px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-medium uppercase tracking-wide">
+                          Section Divider
                         </span>
                       </div>
                     ) : s.visualLayout?.toLowerCase().includes("process") || s.visualLayout?.toLowerCase().includes("flow") ? (
                       <div className="flex items-center gap-1 h-6 px-1">
-                        <span className="text-[9px] px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 font-mono">1. Input</span>
-                        <span className="text-neutral-300 text-[10px]">→</span>
-                        <span className="text-[9px] px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-mono">2. Flow</span>
-                        <span className="text-neutral-300 text-[10px]">→</span>
-                        <span className="text-[9px] px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 font-mono">3. Output</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 font-mono">1. Input</span>
+                        <span className="text-neutral-300 dark:text-neutral-600 text-[10px]">→</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 font-mono">2. Process</span>
+                        <span className="text-neutral-300 dark:text-neutral-600 text-[10px]">→</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 font-mono">3. Output</span>
                       </div>
                     ) : (
                       <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400 line-clamp-1 leading-tight">
@@ -7726,17 +8099,17 @@ async function streamBuildSlide(
               </div>
             ))}
 
-            {/* Matching 16:9 Dotted Add Slide Card */}
+            {/* Matching 16:9 Dotted Add Slide Card (Clean Apple Style) */}
             <div
               onClick={handleAddSlideCard}
-              className="w-full aspect-[16/9] border-2 border-dashed border-neutral-200 dark:border-neutral-800 hover:border-amber-400 dark:hover:border-amber-400/80 rounded-xl p-4 flex flex-col items-center justify-center gap-2 text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:bg-amber-50/20 dark:hover:bg-amber-950/10 transition-all cursor-pointer select-none group"
+              className="w-full aspect-[16/9] border border-dashed border-neutral-300/80 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 rounded-lg p-4 flex flex-col items-center justify-center gap-2 text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 bg-neutral-50/40 dark:bg-neutral-900/20 hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-all cursor-pointer select-none group"
             >
-              <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 group-hover:bg-[#FFDE3C] group-hover:text-neutral-950 flex items-center justify-center transition-colors">
-                <Plus className="w-4 h-4" />
+              <div className="w-7 h-7 rounded-md bg-neutral-200/70 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 group-hover:bg-neutral-900 group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-neutral-950 flex items-center justify-center transition-colors">
+                <Plus className="w-3.5 h-3.5" />
               </div>
               <div className="text-center">
-                <span className="text-xs font-semibold block">+ Add New Slide</span>
-                <span className="text-[10px] text-neutral-400 font-mono">16:9 Widescreen (&apos;-----&apos;)</span>
+                <span className="text-xs font-medium block">Add New Slide</span>
+                <span className="text-[10px] text-neutral-400 font-mono">16:9 Widescreen</span>
               </div>
             </div>
           </div>
@@ -7997,22 +8370,23 @@ async function streamBuildSlide(
               </div>
 
               {/* ──── AI PROMPT ITERATION / CO-PILOT EDIT PANEL (MODERN MINIMALIST LLM STYLE) ──── */}
-              <div className="w-full max-w-4xl mt-3.5 bg-white dark:bg-[#141414] border border-neutral-200/90 dark:border-neutral-800 rounded-xl p-3 sm:p-4 flex flex-col gap-2.5 transition-all">
+              {/* ──── AI PROMPT ITERATION / CO-PILOT EDIT PANEL (MODERN APPLE MINIMALIST STYLE) ──── */}
+              <div className="w-full max-w-4xl mt-3.5 bg-white dark:bg-[#141414] border border-neutral-200/80 dark:border-neutral-800 rounded-lg p-3 sm:p-4 flex flex-col gap-2.5 transition-all">
                 {/* Header & Scope Switcher */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1 border-b border-neutral-100 dark:border-neutral-800/80">
-                  <span className="text-xs sm:text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 tracking-tight">
+                  <span className="text-xs sm:text-[13px] font-medium text-neutral-900 dark:text-neutral-100 tracking-tight">
                     AI Slide Co-Pilot
                   </span>
 
                   <div className="flex items-center gap-1.5 self-start sm:self-auto">
-                    <div className="flex items-center p-0.5 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200/60 dark:border-neutral-700/60">
+                    <div className="flex items-center p-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-200/60 dark:border-neutral-700/60">
                       <button
                         type="button"
                         onClick={() => setEditScope("single")}
-                        className={`px-3 py-1 rounded-md text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
+                        className={`px-2.5 py-1 rounded-[5px] text-[11px] sm:text-xs transition-all cursor-pointer ${
                           editScope === "single"
-                            ? "bg-[#FFDE3C] text-neutral-950 font-bold"
-                            : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
+                            ? "bg-white dark:bg-neutral-700 text-neutral-950 dark:text-white font-medium shadow-2xs"
+                            : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white font-medium"
                         }`}
                       >
                         Current Slide ({activeSlideIndex + 1})
@@ -8020,10 +8394,10 @@ async function streamBuildSlide(
                       <button
                         type="button"
                         onClick={() => setEditScope("all")}
-                        className={`px-3 py-1 rounded-md text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
+                        className={`px-2.5 py-1 rounded-[5px] text-[11px] sm:text-xs transition-all cursor-pointer ${
                           editScope === "all"
-                            ? "bg-[#FFDE3C] text-neutral-950 font-bold"
-                            : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
+                            ? "bg-white dark:bg-neutral-700 text-neutral-950 dark:text-white font-medium shadow-2xs"
+                            : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white font-medium"
                         }`}
                       >
                         All Slides ({slides.length})
@@ -8050,7 +8424,7 @@ async function streamBuildSlide(
                     e.preventDefault();
                     handleApplyPromptEdit();
                   }}
-                  className="flex items-center gap-2 bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-1.5 focus-within:border-neutral-400 dark:focus-within:border-neutral-600 transition-all"
+                  className="flex items-center gap-2 bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 rounded-md px-3 py-1.5 focus-within:border-neutral-400 dark:focus-within:border-neutral-600 transition-all"
                 >
                   <input
                     type="text"
@@ -8068,7 +8442,7 @@ async function streamBuildSlide(
                     type="submit"
                     size="sm"
                     disabled={isEditingSlide || !editPrompt.trim()}
-                    className="bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 font-bold text-xs h-8 px-3.5 rounded-md cursor-pointer shrink-0 disabled:opacity-40 transition-all"
+                    className="bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 font-semibold text-xs h-7.5 px-3 rounded-md cursor-pointer shrink-0 disabled:opacity-40 transition-all"
                   >
                     {isEditingSlide ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -8531,7 +8905,7 @@ function PromptTemplateModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#141414] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="bg-white dark:bg-[#141414] border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between bg-neutral-50/50 dark:bg-neutral-900/50">
           <div className="flex items-center gap-2.5">
@@ -8672,11 +9046,11 @@ function SkillRulesModal({
       />
 
       {/* Modal Container with MoodCheck signature elevation & rounded styling */}
-      <div className="relative w-full max-w-2xl bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800/90 rounded-2xl shadow-[0_15px_40px_-15px_rgba(0,0,0,0.12)] dark:shadow-[0_15px_40px_-15px_rgba(0,0,0,0.5)] z-10 flex flex-col overflow-hidden max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800/90 rounded-lg shadow-xl z-10 flex flex-col overflow-hidden max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-neutral-100 dark:border-neutral-800/80 flex items-center justify-between bg-white dark:bg-[#121212]">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800/90 border border-neutral-200/60 dark:border-neutral-700/60 flex items-center justify-center text-neutral-700 dark:text-neutral-300 font-bold text-xs">
+            <div className="w-9 h-9 rounded-md bg-neutral-100 dark:bg-neutral-800/90 border border-neutral-200/60 dark:border-neutral-700/60 flex items-center justify-center text-neutral-700 dark:text-neutral-300 font-bold text-xs">
               <FileCode className="w-4.5 h-4.5 text-neutral-700 dark:text-neutral-300" />
             </div>
             <div>
@@ -8684,7 +9058,7 @@ function SkillRulesModal({
                 <h2 className="text-[15px] font-semibold text-neutral-900 dark:text-white tracking-tight">
                   {skill.name}
                 </h2>
-                <span className="text-[10.5px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium border border-emerald-500/20">
+                <span className="text-[10.5px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium border border-emerald-500/20">
                   Active Skill
                 </span>
               </div>
@@ -8697,14 +9071,14 @@ function SkillRulesModal({
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopy}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100/80 dark:bg-neutral-800/80 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/80 transition-colors cursor-pointer border border-neutral-200/60 dark:border-neutral-700/60"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100/80 dark:bg-neutral-800/80 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/80 transition-colors cursor-pointer border border-neutral-200/60 dark:border-neutral-700/60"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copied ? "Tersalin!" : "Copy"}</span>
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              className="p-1.5 rounded-md text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -8713,7 +9087,7 @@ function SkillRulesModal({
 
         {/* Modal Content Document Viewer with Clean Launcher OS Typography */}
         <div className="p-6 overflow-y-auto space-y-4 font-sans text-[13px] leading-relaxed text-neutral-800 dark:text-neutral-200 bg-neutral-50/40 dark:bg-[#0e0e0e]/50">
-          <div className="p-4 rounded-xl bg-white dark:bg-[#141414] border border-neutral-200/80 dark:border-neutral-800 shadow-2xs font-mono text-[12px] leading-relaxed whitespace-pre-wrap select-text text-neutral-800 dark:text-neutral-300">
+          <div className="p-4 rounded-md bg-white dark:bg-[#141414] border border-neutral-200/80 dark:border-neutral-800 shadow-2xs font-mono text-[12px] leading-relaxed whitespace-pre-wrap select-text text-neutral-800 dark:text-neutral-300">
             {skill.content}
           </div>
         </div>

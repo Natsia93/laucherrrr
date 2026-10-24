@@ -28,6 +28,11 @@ Pilih layout yang paling cocok dengan tipe pesan Anda. **Jangan paksakan chart j
 | Rekomendasi `#Visual:` | Kapan Digunakan? | Elemen yang Ditampilkan |
 |---|---|---|
 | `Title / Hero` | Slide pembuka / cover modul / presentasi utama | Judul besar, subjudul, badge kategori, dan rangkuman pengantar. |
+| `Chevron Process (5-Step)` | Siklus keputusan 5 tahap, alur problem solving | Rantai panah alternating kuning-biru, deskripsi langkah, status pill, dan bar key insight. |
+| `Formula Hero & Split Stat` | Rumus dampak, persamaan ROI/produktivitas | Banner formula tebal, 3 kolom faktor bernomor, dan kotak stat kuning besar + sumber rujukan. |
+| `Decision Matrix (2x2)` | Klasifikasi keputusan, evaluasi risiko vs dampak | Matriks 2×2 dengan sumbu berlabel panah arah dan 4 gaya kuadran eksekutif asimetris. |
+| `Causation Tree & Takeaway` | Menguji korelasi vs sebab-akibat, cabang logika | Pill metrik atas, 3 kartu berdiagram pohon visual (root → 2 cabang), dan strip takeaway bawah. |
+| `Case Study & 3-Line Exercise` | Skenario latihan studi kasus interaktif, hands-on | Skenario + 3 tile metrik + twist warning di kiri, lembar kerja 3 baris bergaris putus-putus di kanan. |
 | `Key Insights / Bullets` | Konsep, analisis, pilar strategi, rincian solusi | Kartu rincian dengan icon check, judul pilar, dan teks penjelasan. |
 | `Two Column / Comparison` | Problem vs Solution, Sebelum vs Sesudah, 2 Pilar | 2 kolom seimbang kiri-kanan dengan kartu penjelasan. |
 | `Process / Workflow` | Langkah bertahap (Langkah 1, 2, 3), SOP, framework | Kartu alur horizontal/vertikal bernomor urut dengan deskripsi. |

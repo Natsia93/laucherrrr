@@ -72,11 +72,109 @@ AVAILABLE MASTER LAYOUTS & THEIR DATA SCHEMAS:
      ]
    - contactFooterText: "Kanal pelaporan insiden atau asistensi: security-desk@organisasi.id"
    - bgStyle: "boldYellow"
-8. "twoColumn" / "cardGrid":
-   - title: Action headline
-   - bullets: ["Pilar 1: Analisis mendalam...", "Pilar 2: Dampak eksekutif...", "Pilar 3: Mitigasi risiko..."]
-9. "tableComparison": tableHeaders: ["Dimensi", "Saat Ini", "Target Masa Depan"], tableRows: [{ feature: "MFA", current: "Opsional", proposed: "Wajib 100%" }]
-10. "hero": Opening cover slide with title, subtitle, and badge.
+8. "chevronProcess" (5-Step Alternating Process with Descriptions & Diagnostic Status Pills):
+   - title: e.g. "How Leaders Decide: The Five-Step Cycle"
+   - subtitle: "Every decision, big or small, moves through the same five steps"
+   - chevronSteps: [
+       { "title": "1 · Frame", "description": "Define the problem, goal and constraints", "pill": "Fails here: wrong question", "pillType": "blue" },
+       { "title": "2 · Gather", "description": "Collect facts, evidence and options" },
+       { "title": "3 · Evaluate", "description": "Weigh options against criteria and risk", "pill": "Rarely where it fails", "pillType": "neutral" },
+       { "title": "4 · Decide", "description": "Commit to one option and own it" },
+       { "title": "5 · Act & Learn", "description": "Execute, measure the result, adjust", "pill": "Fails here: no learning", "pillType": "blue" }
+     ]
+   - insightBarText: "Key insight: Most bad decisions fail at step 1 (wrong question) or step 5 (no learning), not at step 3."
+9. "formulaHero" (Hero Equation Banner + 3 Factor Columns + 1 Big Accent Stat Box):
+   - title: e.g. "The Same Cycle, Now in Hours"
+   - subtitle: "What AI compresses: speed, cost and risk."
+   - formulaData: {
+       "formulaLabel": "THE FORMULA",
+       "formula": "Decision Impact = Speed × Scale × Confidence",
+       "formulaSubtext": "AI raises all three at once, for opportunity and risk alike.",
+       "factors": [
+         { "title": "Speed", "description": "From periodic review to continuous decisions" },
+         { "title": "Cost", "description": "One more analysis costs almost nothing; one wrong decision costs a lot" },
+         { "title": "Risk", "description": "Low-stakes move to AI; high-stakes decisions carry more weight than ever" }
+       ],
+       "statBox": {
+         "value": "61%",
+         "description": "of managers say at least half their decision-making time is ineffective",
+         "source": "McKinsey Quarterly, May 2019, 1,200+ managers"
+       }
+     }
+10. "quadrantMatrix" (2x2 Decision Classification Matrix with Labeled Axes):
+    - title: e.g. "The Decision Classification Matrix"
+    - subtitle: "Vertical axis: accountability and ethical weight. Horizontal axis: how rich and reliable your data is."
+    - quadrantData: {
+        "yAxisTop": "High stakes",
+        "yAxisBottom": "Low stakes",
+        "xAxisLeft": "Low data richness",
+        "xAxisRight": "High data richness",
+        "q1": [{ "title": "Human judgment only", "subtitle": "You decide. AI may inform, but does not drive the call." }],
+        "q2": [{ "title": "Augment with AI", "subtitle": "AI proposes. You stress-test it, decide and own the reasoning." }],
+        "q3": [{ "title": "Automate with caution", "subtitle": "Automate the routine, but sample and audit the results." }],
+        "q4": [{ "title": "Delegate to AI", "subtitle": "AI decides within rules you set. You monitor and audit." }]
+      }
+11. "treeComparison" (Correlation vs Causation Tree Cards with Top Metric Pill & Bottom Takeaway):
+    - title: e.g. "Correlation ≠ Causation, in One Slide"
+    - subtitle: "Critical reasoning framework for data-driven decisions"
+    - treeData: {
+        "topCallout": { "stat": "3.2×", "label": "higher LTV for app users", "note": "Push everyone to the app? No: engagement drives both." },
+        "cards": [
+          { "title": "Selection bias", "rootNode": "Motivation", "childNodes": ["Joins training", "Better results"], "description": "Volunteers for a training program were already more motivated" },
+          { "title": "Reverse causation", "rootNode": "Revenue growth", "childNodes": ["Hiring", "Expansion"], "description": "Revenue growth enables hiring, not the other way round" },
+          { "title": "Spurious correlation", "rootNode": "Third factor", "childNodes": ["Metric A", "Metric B"], "description": "Two metrics rise together because of a third factor, e.g. economic expansion" }
+        ],
+        "bottomTakeaway": "Ask before acting on any correlation: \"Is there a plausible story where something else causes both X and Y?\""
+      }
+12. "caseExercise" (Case Study Scenario + Metric Tiles + Twist Warning + 3-Line Exercise Sheet):
+    - title: e.g. "Case: Dian's Meter-Replacement Queue"
+    - subtitle: "10 minutes, individual → pairs"
+    - badge: "MID-LECTURE CASE · HANDS-ON"
+    - exerciseData: {
+        "situationTitle": "SITUATION",
+        "situationText": "PT Cahaya Energi Nusantara replaces about 200 smart meters a month. Today the queue is set by meter age. A vendor offers an AI model that ranks meters by failure risk using 3 years of outage logs. Dian Pratama, Head of Operations, must decide how to use it.",
+        "dataMetrics": [
+          { "value": "18,400", "label": "meters in service" },
+          { "value": "2023–2025", "label": "outage logs cover these years" },
+          { "value": "6%", "label": "unrecorded installation date" }
+        ],
+        "twistBox": "two hospitals and a water-treatment plant are on feeders served by the oldest meters.",
+        "exerciseTitle": "WHAT TO WRITE · 3 LINES",
+        "exerciseLines": [
+          "Which AIDM mode fits the monthly replacement queue? Why?",
+          "Which part of the decision must stay Override, and why?",
+          "One escalation rule the AI must follow."
+        ]
+      }
+13. "pyramidHierarchy" (3-Tier Strategic Apex Pyramid):
+    - title: e.g. "Arsitektur Strategis: Dari Visi ke Eksekusi Enabler"
+    - cards: [
+        { "title": "Pemimpin Pasar & Margin 35%", "subtitle": "Tujuan North Star", "tag": "APEX" },
+        { "title": "Pipeline Keputusan Otonom", "subtitle": "Pilar Strategis", "bullets": ["Skoring Otomatis", "Logistik Real-Time"], "tag": "STRATEGI" },
+        { "title": "Fondasi Data & Zero-Trust", "subtitle": "Kapabilitas Enabler", "bullets": ["Data Lakehouse", "SOP Kepatuhan"], "tag": "FONDASI" }
+      ]
+14. "transformationBridge" (As-Is Friction → Transformation Engine → To-Be Target):
+    - title: e.g. "Pergeseran Paradigma Operasional Menuju AI Otonom"
+    - pairedRows: [
+        { "left": "Silo data terfragmentasi di 5 divisi", "right": "Telemetri terpadu & visibilitas eksekutif real-time" },
+        { "left": "Persetujuan manual 10 hari kerja", "right": "Eksekusi sub-jam dengan pengawasan AI" },
+        { "left": "Respons risiko reaktif pasca-insiden", "right": "Pencegahan proaktif & audit kepatuhan 99.9%" }
+      ]
+    - highlight: "Engine Transformasi: AI Decision Fabric"
+15. "radialHub" (Core Orchestration Hub + 4 Surrounding Operational Satellites):
+    - title: e.g. "Ekosistem Tata Kelola & Pengendalian AI Terintegrasi"
+    - highlight: "Pusat Kendali Otonom"
+    - cards: [
+        { "title": "Kepatuhan & Etika", "description": "Audit berkelanjutan terhadap regulasi data", "tag": "HUKUM" },
+        { "title": "Keamanan & Ketahanan", "description": "Deteksi ancaman dan failover otomatis", "tag": "SEKURITI" },
+        { "title": "Modal & Pendapatan", "description": "Model ROI prediktif untuk setiap alokasi", "tag": "FINANSIAL" },
+        { "title": "Budaya & Talenta", "description": "Pemberdayaan tim dengan pagar batas algoritmik", "tag": "OPERASIONAL" }
+      ]
+16. "twoColumn" / "cardGrid":
+    - title: Action headline
+    - bullets: ["Pilar 1: Analisis mendalam...", "Pilar 2: Dampak eksekutif...", "Pilar 3: Mitigasi risiko..."]
+17. "tableComparison": tableHeaders: ["Dimensi", "Saat Ini", "Target Masa Depan"], tableRows: [{ feature: "MFA", current: "Opsional", proposed: "Wajib 100%" }]
+18. "hero": Opening cover slide with title, subtitle, and badge.
 
 UNIVERSAL HIGHLIGHT & NOTE STRIPS:
 - insightBarText: (Optional) 1 punchy sentence summarizing the executive takeaway.
