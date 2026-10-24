@@ -95,6 +95,8 @@ import {
   PyramidHierarchy,
   TransformationBridge,
   RadialHubEcosystem,
+  SplitCaseComparison,
+  SplitProfileSlide,
 } from "@/components/decks/SlideDiagrams";
 import { CloneStyleModal, type ClonedStyleResult } from "@/components/decks/CloneStyleModal";
 
@@ -181,6 +183,9 @@ interface SlideData {
     exerciseTitle?: string;
     exerciseLines?: string[];
   };
+  beforeCard?: { title?: string; bullets?: string[]; description?: string };
+  afterCard?: { title?: string; bullets?: string[]; description?: string };
+  profileData?: { tag?: string; name?: string; role?: string; bio?: string; photoUrl?: string };
   ctaText?: string;
   footer?: string;
   slideNumber?: string;
@@ -241,7 +246,9 @@ type SlideLayout =
   | "caseExercise"
   | "pyramidHierarchy"
   | "transformationBridge"
-  | "radialHub";
+  | "radialHub"
+  | "splitComparison"
+  | "splitProfile";
 
 type ContentMode = "generate" | "summarize" | "preserve";
 type BgStyle = "mixed" | "solid" | "dualtone" | "gradient" | "dark" | "warm";
@@ -637,6 +644,8 @@ export function parsePromptBreakdown(text: string): ParsedSlideBreakdown[] {
 export const VISUAL_LAYOUT_OPTIONS = [
   { id: "Title / Executive Hero", label: "Title / Executive Hero" },
   { id: "Section Divider", label: "Section Divider" },
+  { id: "Split Case Comparison", label: "Split Case Comparison (Before vs After)" },
+  { id: "Split Speaker Profile", label: "Split Speaker Profile" },
   { id: "Pyramid Hierarchy", label: "Pyramid Hierarchy (3-Tier)" },
   { id: "Transformation Bridge", label: "Transformation Bridge (As-Is → To-Be)" },
   { id: "Radial Hub & Ecosystem", label: "Radial Hub & Ecosystem" },
@@ -722,6 +731,8 @@ export function safeString(val: any, fallback = ""): string {
 export function mapVisualLayoutToLayout(val?: string): SlideLayout {
   if (!val) return "twoColumn";
   const lower = val.toLowerCase();
+  if (lower.includes("profile") || lower.includes("speaker") || lower.includes("pembicara") || lower.includes("fasilitator") || lower.includes("instruktur")) return "splitProfile";
+  if (lower.includes("split case") || lower.includes("split comparison") || lower.includes("before vs after") || lower.includes("before and after") || (lower.includes("split") && (lower.includes("case") || lower.includes("comparison") || lower.includes("worked")))) return "splitComparison";
   if (lower.includes("section") || lower.includes("divider") || lower.includes("pembagi")) return "sectionDivider";
   if (lower.includes("pyramid") || lower.includes("piramida") || lower.includes("hierarchy") || lower.includes("hierarki")) return "pyramidHierarchy";
   if (lower.includes("transformation") || lower.includes("transformasi") || lower.includes("as-is") || lower.includes("to-be") || lower.includes("shift")) return "transformationBridge";
@@ -807,9 +818,12 @@ export function resolveSlideBackground(
 
   // Rule 4: Task / Speaker / Workshop / Exercise / Case Study — can repeat multiple times
   const isTaskSpeaker =
+    layout === "splitComparison" ||
+    layout === "splitProfile" ||
     layout === "interactiveCase" ||
     layout === "splitPoll" ||
     layout === "caseStudy" ||
+    layout === "caseExercise" ||
     combined.includes("hands-on") ||
     combined.includes("latihan") ||
     combined.includes("workshop") ||
@@ -2355,6 +2369,92 @@ function SlideRenderer({
             <span className="font-mono">{String((slideIndex || 0) + 1).padStart(2, "0")} / {totalSlides}</span>
           </div>
         </div>
+      );
+    }
+
+    // ──── INSTITUTIONAL PART / SECTION DIVIDER (part-deck.png) ────
+    // Pure full-bleed section divider: Yellow accent bar (140x12px) + PART label + Large white title + Subtitle. Strictly NO CARDS!
+    if (hasTemplateBg && isPartBg) {
+      return (
+        <SectionDivider
+          partLabel={slide.badge || slide.category || "BAGIAN"}
+          title={safeString(slide.title)}
+          subtitle={safeString(slide.subtitle)}
+          primaryColor={palette.primary}
+          accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+          isPresentation={isPresentation}
+          transparentBg={true}
+        />
+      );
+    }
+
+    // ──── INSTITUTIONAL SPLIT SLIDE (task-speaker-deck.png) ────
+    // Left blue panel (33%): Yellow accent bar + White Action Title + Golden Yellow Subtitle
+    // Right white panel (67%): Before AI Card → Arrow → After AI Card + Bottom Key Insight Strip (or Speaker Profile)
+    if (hasTemplateBg && isTaskBg) {
+      const isProfile =
+        slide.layout === "splitProfile" ||
+        Boolean(slide.profileData) ||
+        /speaker|fasilitator|profile|pembicara|narasumber/i.test(`${slide.title} ${slide.subtitle || ""} ${slide.badge || ""}`);
+
+      if (isProfile) {
+        return (
+          <SplitProfileSlide
+            title={safeString(slide.title)}
+            subtitle={safeString(slide.subtitle || "Facilitator")}
+            badge={slide.badge}
+            tag={slide.profileData?.tag || "SPEAKER PROFILE"}
+            roleOrg={slide.profileData?.role || slide.description}
+            bio={slide.profileData?.bio || slide.bullets?.join(". ")}
+            photoUrl={slide.profileData?.photoUrl || slide.imageUrl}
+            isPresentation={isPresentation}
+            fontTitleClass={headingFontClass}
+          />
+        );
+      }
+
+      const beforeTitle = slide.beforeCard?.title || "BEFORE AI";
+      const beforeItems =
+        slide.beforeCard?.bullets && slide.beforeCard.bullets.length > 0
+          ? slide.beforeCard.bullets
+          : slide.pairedRows && slide.pairedRows.length > 0
+          ? slide.pairedRows.map((r) => r.left)
+          : slide.bullets && slide.bullets.length >= 2
+          ? slide.bullets.slice(0, Math.ceil(slide.bullets.length / 2))
+          : undefined;
+      const beforeText = slide.beforeCard?.description || (slide.pairedRows?.[0]?.left ? undefined : slide.description);
+
+      const afterTitle = slide.afterCard?.title || "AFTER AI";
+      const afterItems =
+        slide.afterCard?.bullets && slide.afterCard.bullets.length > 0
+          ? slide.afterCard.bullets
+          : slide.pairedRows && slide.pairedRows.length > 0
+          ? slide.pairedRows.map((r) => r.right)
+          : slide.bullets && slide.bullets.length >= 2
+          ? slide.bullets.slice(Math.ceil(slide.bullets.length / 2))
+          : undefined;
+      const afterText = slide.afterCard?.description;
+
+      const insightText =
+        slide.insightBarText ||
+        slide.highlight ||
+        "Key insight: AI didn't replace the leader. It changed what the leader decides.";
+
+      return (
+        <SplitCaseComparison
+          title={safeString(slide.title)}
+          subtitle={safeString(slide.subtitle)}
+          badge={slide.badge}
+          beforeTitle={beforeTitle}
+          beforeItems={beforeItems}
+          beforeText={beforeText}
+          afterTitle={afterTitle}
+          afterItems={afterItems}
+          afterText={afterText}
+          insightText={insightText}
+          isPresentation={isPresentation}
+          fontTitleClass={headingFontClass}
+        />
       );
     }
 
@@ -5410,6 +5510,69 @@ function SlideRenderer({
       );
     }
 
+    /* ──── SPLIT CASE COMPARISON (BEFORE VS AFTER ON SPLIT BACKGROUND) ──── */
+    case "splitComparison": {
+      const beforeTitle = slide.beforeCard?.title || "BEFORE AI";
+      const beforeItems =
+        slide.beforeCard?.bullets && slide.beforeCard.bullets.length > 0
+          ? slide.beforeCard.bullets
+          : slide.pairedRows && slide.pairedRows.length > 0
+          ? slide.pairedRows.map((r) => r.left)
+          : slide.bullets && slide.bullets.length >= 2
+          ? slide.bullets.slice(0, Math.ceil(slide.bullets.length / 2))
+          : undefined;
+      const beforeText = slide.beforeCard?.description || (slide.pairedRows?.[0]?.left ? undefined : slide.description);
+
+      const afterTitle = slide.afterCard?.title || "AFTER AI";
+      const afterItems =
+        slide.afterCard?.bullets && slide.afterCard.bullets.length > 0
+          ? slide.afterCard.bullets
+          : slide.pairedRows && slide.pairedRows.length > 0
+          ? slide.pairedRows.map((r) => r.right)
+          : slide.bullets && slide.bullets.length >= 2
+          ? slide.bullets.slice(Math.ceil(slide.bullets.length / 2))
+          : undefined;
+      const afterText = slide.afterCard?.description;
+
+      const insightText =
+        slide.insightBarText ||
+        slide.highlight ||
+        "Key insight: AI didn't replace the leader. It changed what the leader decides.";
+
+      return (
+        <SplitCaseComparison
+          title={safeString(slide.title)}
+          subtitle={safeString(slide.subtitle)}
+          badge={slide.badge}
+          beforeTitle={beforeTitle}
+          beforeItems={beforeItems}
+          beforeText={beforeText}
+          afterTitle={afterTitle}
+          afterItems={afterItems}
+          afterText={afterText}
+          insightText={insightText}
+          isPresentation={isPresentation}
+          fontTitleClass={headingFontClass}
+        />
+      );
+    }
+
+    /* ──── SPLIT SPEAKER PROFILE (FACILITATOR / SPEAKER BIO) ──── */
+    case "splitProfile":
+      return (
+        <SplitProfileSlide
+          title={safeString(slide.title)}
+          subtitle={safeString(slide.subtitle || "Facilitator")}
+          badge={slide.badge}
+          tag={slide.profileData?.tag || "SPEAKER PROFILE"}
+          roleOrg={slide.profileData?.role || slide.description}
+          bio={slide.profileData?.bio || slide.bullets?.join(". ")}
+          photoUrl={slide.profileData?.photoUrl || slide.imageUrl}
+          isPresentation={isPresentation}
+          fontTitleClass={headingFontClass}
+        />
+      );
+
     default:
       // Safe fallback layout: Clean elegant bullets/overview
       return (
@@ -5957,8 +6120,8 @@ export default function DeckGeneratorPage() {
           audience,
           purpose,
           layoutMood,
-          templateRulesMarkdown: attachedSkill?.content || "",
-          templateName: attachedSkill?.name || "",
+          templateRulesMarkdown: attachedSkill?.content || ITB_SKILL_MD,
+          templateName: attachedSkill?.name || "ITB_Gamma_Deck_Rules.md",
           clonedStyleDirectives: combinedDirectives,
           apiKey: storedApiKey,
           provider: activeProvider,
@@ -6505,8 +6668,8 @@ async function streamBuildSlide(
               audience,
               purpose,
               layoutMood,
-              templateRulesMarkdown: attachedSkill?.content || "",
-              templateName: attachedSkill?.name || "",
+              templateRulesMarkdown: attachedSkill?.content || ITB_SKILL_MD,
+              templateName: attachedSkill?.name || "ITB_Gamma_Deck_Rules.md",
               clonedStyleDirectives: effectiveDirectives,
               apiKey: storedApiKey,
               provider: activeProvider,
@@ -6617,8 +6780,8 @@ async function streamBuildSlide(
                       density,
                       bgStylePreference: bgStyle,
                       customBgColors: isCustomBgColors ? bgColors : undefined,
-                      templateRulesMarkdown: attachedSkill?.content || "",
-                      templateName: attachedSkill?.name || "",
+                      templateRulesMarkdown: attachedSkill?.content || ITB_SKILL_MD,
+                      templateName: attachedSkill?.name || "ITB_Gamma_Deck_Rules.md",
                       clonedStyleDirectives: effectiveDirectives,
                       clonedReferenceSummary: clonedStyle?.designDNASummary || "",
                     },
@@ -6717,8 +6880,8 @@ async function streamBuildSlide(
           paletteId: selectedPalette.id,
           specialNotes,
           customBrainInstruction: storedCustomBrain,
-          templateRulesMarkdown: attachedSkill?.content || "",
-          templateName: attachedSkill?.name || "",
+          templateRulesMarkdown: attachedSkill?.content || ITB_SKILL_MD,
+          templateName: attachedSkill?.name || "ITB_Gamma_Deck_Rules.md",
           clonedStyleDirectives: effectiveDirectives,
           clonedReferenceSummary: clonedStyle?.designDNASummary || "",
           apiKey: storedApiKey,

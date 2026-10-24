@@ -54,13 +54,18 @@ export interface SlideData {
     | "caseExercise"
     | "pyramidHierarchy"
     | "transformationBridge"
-    | "radialHub";
+    | "radialHub"
+    | "splitComparison"
+    | "splitProfile";
   bgStyle?: "white" | "yellowGradient" | "boldYellow";
   title: string;
   subtitle?: string;
   description?: string;
   badge?: string;
   category?: string;
+  beforeCard?: { title?: string; bullets?: string[]; description?: string };
+  afterCard?: { title?: string; bullets?: string[]; description?: string };
+  profileData?: { tag?: string; name?: string; role?: string; bio?: string; photoUrl?: string };
   stats?: Array<{ value: string; label: string }>;
   processSteps?: Array<{ title: string; description: string }>;
   bullets?: string[];
@@ -197,6 +202,8 @@ export function resolveSlideBackground(
 
   // Rule 4: Task / Speaker / Workshop / Exercise / Case Study
   const isTaskSpeaker =
+    layout === "splitComparison" ||
+    layout === "splitProfile" ||
     layout === "interactiveCase" ||
     layout === "splitPoll" ||
     layout === "caseStudy" ||
@@ -3758,6 +3765,278 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               fontFace: fontBody,
             });
           }
+        });
+        break;
+      }
+
+      /* ──── SPLIT CASE COMPARISON (BEFORE VS AFTER ON SPLIT BACKGROUND) ──── */
+      case "splitComparison": {
+        // Left Panel on Blue Laptop Graphic (x: 0.6 in, y: 1.4 in)
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 0.6,
+          y: 1.35,
+          w: 1.2,
+          h: 0.08,
+          fill: { color: secondaryHex },
+          rectRadius: 0.04,
+        });
+
+        pSlide.addText(slide.title, {
+          x: 0.6,
+          y: 1.6,
+          w: 3.8,
+          h: 1.8,
+          fontSize: 28,
+          bold: true,
+          color: "FFFFFF",
+          fontFace: fontTitle,
+        });
+
+        if (slide.subtitle) {
+          pSlide.addText(slide.subtitle, {
+            x: 0.6,
+            y: 3.45,
+            w: 3.8,
+            h: 0.9,
+            fontSize: 15,
+            bold: true,
+            color: secondaryHex,
+            fontFace: fontBody,
+          });
+        }
+
+        // Right Panel on White Canvas (x: 5.0 in to 12.6 in)
+        const bTitle = slide.beforeCard?.title || "BEFORE AI";
+        const bText = slide.beforeCard?.bullets && slide.beforeCard.bullets.length > 0
+          ? slide.beforeCard.bullets.join("\n\n")
+          : slide.pairedRows && slide.pairedRows.length > 0
+          ? slide.pairedRows.map((r) => r.left).join("\n\n")
+          : slide.bullets && slide.bullets.length >= 2
+          ? slide.bullets.slice(0, Math.ceil(slide.bullets.length / 2)).join("\n\n")
+          : (slide.beforeCard?.description || "Rule-based dispatch and human coordination across hundreds of concurrent requests. Bottleneck: human bandwidth caps matching quality.");
+
+        const aTitle = slide.afterCard?.title || "AFTER AI";
+        const aText = slide.afterCard?.bullets && slide.afterCard.bullets.length > 0
+          ? slide.afterCard.bullets.join("\n\n")
+          : slide.pairedRows && slide.pairedRows.length > 0
+          ? slide.pairedRows.map((r) => r.right).join("\n\n")
+          : slide.bullets && slide.bullets.length >= 2
+          ? slide.bullets.slice(Math.ceil(slide.bullets.length / 2)).join("\n\n")
+          : (slide.afterCard?.description || "ML allocation optimises several objectives at once. Leaders set pricing logic, fairness guardrails and escalation rules.");
+
+        // Card 1: BEFORE AI (Light Grey #F1F1F1)
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 5.0,
+          y: 1.25,
+          w: 3.4,
+          h: 3.65,
+          fill: { color: "F1F1F1" },
+          rectRadius: 0.08,
+          line: { color: "E5E7EB", width: 1 },
+        });
+
+        pSlide.addText(bTitle, {
+          x: 5.2,
+          y: 1.45,
+          w: 3.0,
+          h: 0.35,
+          fontSize: 13,
+          bold: true,
+          color: "595959",
+          fontFace: fontTitle,
+        });
+
+        pSlide.addText(bText, {
+          x: 5.2,
+          y: 1.9,
+          w: 3.0,
+          h: 2.8,
+          fontSize: 13,
+          color: "272525",
+          fontFace: fontBody,
+          lineSpacingMultiple: 1.25,
+        });
+
+        // Arrow in middle
+        pSlide.addText("→", {
+          x: 8.5,
+          y: 2.7,
+          w: 0.6,
+          h: 0.5,
+          fontSize: 24,
+          bold: true,
+          color: "005AAB",
+          align: "center",
+          fontFace: fontTitle,
+        });
+
+        // Card 2: AFTER AI (Solid Deep Blue #005AAB)
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 9.15,
+          y: 1.25,
+          w: 3.5,
+          h: 3.65,
+          fill: { color: "005AAB" },
+          rectRadius: 0.08,
+        });
+
+        // Top Yellow Accent Line on After Card
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 9.35,
+          y: 1.45,
+          w: 0.8,
+          h: 0.05,
+          fill: { color: secondaryHex },
+          rectRadius: 0.02,
+        });
+
+        pSlide.addText(aTitle, {
+          x: 9.35,
+          y: 1.58,
+          w: 3.1,
+          h: 0.35,
+          fontSize: 13,
+          bold: true,
+          color: secondaryHex,
+          fontFace: fontTitle,
+        });
+
+        pSlide.addText(aText, {
+          x: 9.35,
+          y: 2.0,
+          w: 3.1,
+          h: 2.7,
+          fontSize: 13,
+          color: "FFFFFF",
+          fontFace: fontBody,
+          lineSpacingMultiple: 1.25,
+        });
+
+        // Bottom Insight Bar: Solid Deep Blue with Yellow Left Border
+        const insText = slide.insightBarText || slide.highlight || "Key insight: AI didn't replace the leader. It changed what the leader decides.";
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 5.0,
+          y: 5.1,
+          w: 7.65,
+          h: 0.85,
+          fill: { color: "005AAB" },
+          rectRadius: 0.05,
+        });
+
+        pSlide.addShape(pptx.ShapeType.rect, {
+          x: 5.0,
+          y: 5.1,
+          w: 0.12,
+          h: 0.85,
+          fill: { color: secondaryHex },
+          line: { color: secondaryHex },
+        });
+
+        pSlide.addText(insText, {
+          x: 5.25,
+          y: 5.2,
+          w: 7.25,
+          h: 0.65,
+          fontSize: 12.5,
+          bold: true,
+          color: "FFFFFF",
+          fontFace: fontBody,
+        });
+        break;
+      }
+
+      /* ──── SPLIT PROFILE SLIDE ──── */
+      case "splitProfile": {
+        // Left Panel (x: 0.6 in)
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 0.6,
+          y: 1.35,
+          w: 1.2,
+          h: 0.08,
+          fill: { color: secondaryHex },
+          rectRadius: 0.04,
+        });
+
+        pSlide.addText(slide.title, {
+          x: 0.6,
+          y: 1.6,
+          w: 3.8,
+          h: 1.8,
+          fontSize: 28,
+          bold: true,
+          color: "FFFFFF",
+          fontFace: fontTitle,
+        });
+
+        if (slide.subtitle) {
+          pSlide.addText(slide.subtitle, {
+            x: 0.6,
+            y: 3.45,
+            w: 3.8,
+            h: 0.9,
+            fontSize: 15,
+            bold: true,
+            color: secondaryHex,
+            fontFace: fontBody,
+          });
+        }
+
+        // Right Panel (Photo Circle + Details)
+        pSlide.addShape(pptx.ShapeType.ellipse, {
+          x: 5.2,
+          y: 2.2,
+          w: 2.2,
+          h: 2.2,
+          fill: { color: "EAF2FB" },
+          line: { color: "005AAB", width: 2.5 },
+        });
+
+        pSlide.addText("[Photo]", {
+          x: 5.2,
+          y: 3.1,
+          w: 2.2,
+          h: 0.4,
+          align: "center",
+          fontSize: 13,
+          bold: true,
+          color: "005AAB",
+          fontFace: fontBody,
+        });
+
+        const pTag = slide.profileData?.tag || "SPEAKER PROFILE";
+        pSlide.addText(pTag, {
+          x: 7.8,
+          y: 2.2,
+          w: 4.8,
+          h: 0.35,
+          fontSize: 12,
+          bold: true,
+          color: "005AAB",
+          fontFace: fontTitle,
+        });
+
+        const pRole = slide.profileData?.role || slide.description || "[Role and organization]";
+        pSlide.addText(pRole, {
+          x: 7.8,
+          y: 2.65,
+          w: 4.8,
+          h: 0.6,
+          fontSize: 17,
+          bold: true,
+          color: "272525",
+          fontFace: fontTitle,
+        });
+
+        const pBio = slide.profileData?.bio || slide.bullets?.join(". ") || "[Short bio: expertise, research focus, industry experience]";
+        pSlide.addText(pBio, {
+          x: 7.8,
+          y: 3.35,
+          w: 4.8,
+          h: 2.2,
+          fontSize: 13,
+          color: "595959",
+          fontFace: fontBody,
+          lineSpacingMultiple: 1.25,
         });
         break;
       }

@@ -2987,3 +2987,209 @@ export function RadialHubEcosystem({
     </div>
   );
 }
+
+/* ───────────────────────────────────────────────────
+ * 28. Split Case Comparison (Official ITB Split Template Layout)
+ * Left Blue Panel (33%): Yellow Bar + White Action Title + Yellow Subtitle
+ * Right White Panel (67%): Before AI Card (Grey) → Arrow → After AI Card (Blue) + Bottom Insight Bar
+ * ─────────────────────────────────────────────────── */
+export function SplitCaseComparison({
+  title,
+  subtitle,
+  badge,
+  beforeTitle = "BEFORE AI",
+  beforeItems = [],
+  beforeText,
+  afterTitle = "AFTER AI",
+  afterItems = [],
+  afterText,
+  insightText = "Key insight: AI didn't replace the leader. It changed what the leader decides.",
+  isPresentation = false,
+  fontTitleClass = "",
+}: {
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  beforeTitle?: string;
+  beforeItems?: string[];
+  beforeText?: string;
+  afterTitle?: string;
+  afterItems?: string[];
+  afterText?: string;
+  insightText?: string;
+  isPresentation?: boolean;
+  fontTitleClass?: string;
+}) {
+  return (
+    <div className="w-full h-full flex flex-row relative select-none overflow-hidden bg-transparent">
+      {/* Left Blue Panel (~33% width, sits directly over laptop graphic) */}
+      <div className="w-[33%] sm:w-[32%] h-full pt-[13%] sm:pt-[15%] pl-[5%] sm:pl-[6%] pr-3 sm:pr-4 flex flex-col justify-start relative z-10">
+        {/* Yellow accent bar 140x12px */}
+        <div className="w-16 sm:w-24 h-2 sm:h-2.5 bg-[#FFDD3C] rounded-full mb-3 shrink-0" />
+
+        {/* Title: 700 Bold, White text */}
+        <h1
+          className={`font-bold text-white ${fontTitleClass} leading-[1.18] tracking-tight line-clamp-3 ${
+            isPresentation ? "text-2xl sm:text-3xl lg:text-4xl" : "text-xl sm:text-2xl lg:text-[28px]"
+          }`}
+        >
+          {title}
+        </h1>
+
+        {/* Subtitle: 600 Semibold, Golden Yellow */}
+        {subtitle && (
+          <p
+            className={`font-semibold text-[#FFDD3C] mt-2 sm:mt-2.5 leading-snug line-clamp-2 ${
+              isPresentation ? "text-sm sm:text-base lg:text-lg" : "text-xs sm:text-sm lg:text-[15px]"
+            }`}
+          >
+            {subtitle}
+          </p>
+        )}
+
+        {/* Optional Badge */}
+        {badge && !badge.toUpperCase().includes("0") && (
+          <span className="mt-3 inline-block self-start text-[9.5px] sm:text-[10px] font-bold text-white/90 uppercase tracking-widest px-2.5 py-1 rounded bg-white/10">
+            {badge}
+          </span>
+        )}
+      </div>
+
+      {/* Right White Panel (~67% width, sits on the clean white area) */}
+      <div className="w-[67%] sm:w-[68%] h-full pt-[8%] sm:pt-[9%] pr-[5%] sm:pr-[6%] pl-4 sm:pl-6 pb-[12%] sm:pb-[14%] flex flex-col justify-center gap-3 sm:gap-4 relative z-10">
+        {/* Two Comparison Cards: Before vs After */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-h-0">
+          {/* Card 1: BEFORE AI (Light Grey #F1F1F1) */}
+          <div className="flex-1 h-full rounded-2xl bg-[#F1F1F1] dark:bg-neutral-800/80 p-3.5 sm:p-4.5 flex flex-col justify-start overflow-hidden border border-neutral-200/50 dark:border-neutral-700/50">
+            <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-[#595959] dark:text-neutral-400 mb-2 block">
+              {beforeTitle}
+            </span>
+            <div className="space-y-1.5 text-xs sm:text-[13px] text-[#272525] dark:text-neutral-200 leading-relaxed overflow-y-auto">
+              {beforeItems && beforeItems.length > 0 ? (
+                beforeItems.map((item, idx) => (
+                  <p key={idx} className="leading-snug">{item}</p>
+                ))
+              ) : (
+                <p className="leading-snug">
+                  {beforeText || "Rule-based dispatch and human coordination across hundreds of concurrent requests. Bottleneck: human bandwidth caps matching quality."}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Blue Arrow */}
+          <div className="text-[#005AAB] font-black text-xl sm:text-2xl shrink-0 px-1">
+            →
+          </div>
+
+          {/* Card 2: AFTER AI (Solid Deep Blue #005AAB with Yellow Top Accent) */}
+          <div className="flex-1 h-full rounded-2xl bg-[#005AAB] text-white p-3.5 sm:p-4.5 flex flex-col justify-start overflow-hidden relative shadow-sm">
+            <div className="w-8 sm:w-10 h-1 bg-[#FFDD3C] rounded-full mb-2 shrink-0" />
+            <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-[#FFDD3C] mb-2 block">
+              {afterTitle}
+            </span>
+            <div className="space-y-1.5 text-xs sm:text-[13px] text-white/95 leading-relaxed overflow-y-auto">
+              {afterItems && afterItems.length > 0 ? (
+                afterItems.map((item, idx) => (
+                  <p key={idx} className="leading-snug font-medium">{item}</p>
+                ))
+              ) : (
+                <p className="leading-snug font-medium">
+                  {afterText || "ML allocation optimises several objectives at once with real-time feedback loops. Leaders set pricing logic, fairness guardrails and escalation rules."}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Full-Width Key Insight Bar */}
+        <div className="w-full bg-[#005AAB] border-l-[8px] sm:border-l-[12px] border-[#FFDD3C] rounded-xl px-4 py-2.5 sm:py-3 text-white text-xs sm:text-[13px] font-medium leading-snug shrink-0 shadow-xs">
+          <span className="font-extrabold text-[#FFDD3C] mr-1.5">Key insight:</span>
+          <span>{insightText}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────────────────────────────────
+ * 29. Split Profile Slide (Facilitator / Speaker Bio Layout)
+ * Left Blue Panel (33%): Name + Role on blue
+ * Right White Panel (67%): Circular Photo + Speaker Profile Label + Role + Bio
+ * ─────────────────────────────────────────────────── */
+export function SplitProfileSlide({
+  title,
+  subtitle = "Facilitator",
+  badge,
+  tag = "SPEAKER PROFILE",
+  roleOrg,
+  bio,
+  photoUrl,
+  isPresentation = false,
+  fontTitleClass = "",
+}: {
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  tag?: string;
+  roleOrg?: string;
+  bio?: string;
+  photoUrl?: string;
+  isPresentation?: boolean;
+  fontTitleClass?: string;
+}) {
+  return (
+    <div className="w-full h-full flex flex-row relative select-none overflow-hidden bg-transparent">
+      {/* Left Blue Panel (~33% width) */}
+      <div className="w-[33%] sm:w-[32%] h-full pt-[13%] sm:pt-[15%] pl-[5%] sm:pl-[6%] pr-3 sm:pr-4 flex flex-col justify-start relative z-10">
+        <div className="w-16 sm:w-24 h-2 sm:h-2.5 bg-[#FFDD3C] rounded-full mb-3 shrink-0" />
+        <h1
+          className={`font-bold text-white ${fontTitleClass} leading-[1.18] tracking-tight line-clamp-3 ${
+            isPresentation ? "text-2xl sm:text-3xl lg:text-4xl" : "text-xl sm:text-2xl lg:text-[28px]"
+          }`}
+        >
+          {title}
+        </h1>
+        {subtitle && (
+          <p
+            className={`font-semibold text-[#FFDD3C] mt-2 sm:mt-2.5 leading-snug line-clamp-2 ${
+              isPresentation ? "text-sm sm:text-base lg:text-lg" : "text-xs sm:text-sm lg:text-[15px]"
+            }`}
+          >
+            {subtitle}
+          </p>
+        )}
+        {badge && !badge.toUpperCase().includes("0") && (
+          <span className="mt-3 inline-block self-start text-[9.5px] sm:text-[10px] font-bold text-white/90 uppercase tracking-widest px-2.5 py-1 rounded bg-white/10">
+            {badge}
+          </span>
+        )}
+      </div>
+
+      {/* Right White Panel (~67% width) */}
+      <div className="w-[67%] sm:w-[68%] h-full pt-[8%] sm:pt-[9%] pr-[5%] sm:pr-[6%] pl-4 sm:pl-6 pb-[12%] sm:pb-[14%] flex items-center gap-6 sm:gap-8 relative z-10">
+        {/* Circle Photo */}
+        <div className="w-28 sm:w-36 h-28 sm:h-36 rounded-full border-4 border-[#005AAB] flex items-center justify-center bg-[#EAF2FB] text-[#005AAB] font-bold text-xs sm:text-sm shrink-0 overflow-hidden shadow-xs">
+          {photoUrl ? (
+            <img src={photoUrl} alt={title} className="w-full h-full object-cover" />
+          ) : (
+            <span>[Photo]</span>
+          )}
+        </div>
+
+        {/* Bio Details */}
+        <div className="flex-1 space-y-2">
+          <span className="text-xs sm:text-sm font-bold text-[#005AAB] tracking-widest uppercase block">
+            {tag}
+          </span>
+          <h3 className="text-base sm:text-lg font-bold text-[#272525]">
+            {roleOrg || "[Role and organization]"}
+          </h3>
+          <p className="text-xs sm:text-sm text-[#595959] leading-relaxed line-clamp-5">
+            {bio || "[Short bio: expertise, research focus, industry experience]"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

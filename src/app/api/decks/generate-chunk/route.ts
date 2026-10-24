@@ -175,6 +175,20 @@ AVAILABLE MASTER LAYOUTS & THEIR DATA SCHEMAS:
     - bullets: ["Pilar 1: Analisis mendalam...", "Pilar 2: Dampak eksekutif...", "Pilar 3: Mitigasi risiko..."]
 17. "tableComparison": tableHeaders: ["Dimensi", "Saat Ini", "Target Masa Depan"], tableRows: [{ feature: "MFA", current: "Opsional", proposed: "Wajib 100%" }]
 18. "hero": Opening cover slide with title, subtitle, and badge.
+19. "splitComparison" (MANDATORY FOR WORKED EXAMPLES & CASE COMPARISONS ON SPLIT BACKGROUND):
+    - title: Action title (e.g. "When the Leader Stops Dispatching and Starts Designing")
+    - subtitle: Subtitle context (e.g. "Case · Gojek's real-time driver allocation")
+    - beforeCard: { "title": "BEFORE AI", "bullets": ["Rule-based dispatch and human coordination across hundreds of concurrent requests.", "Bottleneck: human bandwidth caps matching quality.", "Leaders make allocation decisions."] }
+    - afterCard: { "title": "AFTER AI", "bullets": ["ML allocation optimises several objectives at once.", "Gojek reported over 1 million extra completed trips within weeks with gains in driver utilisation.", "Leaders set pricing logic, fairness guardrails and escalation rules."] }
+    - insightBarText: "Key insight: AI didn't replace the leader. It changed what the leader decides."
+20. "splitProfile" (Speaker / Facilitator Profile on Split Background):
+    - title: e.g. "Titah Yudhistira, S.T., M.T., Ph.D."
+    - subtitle: "Facilitator"
+    - profileData: { "tag": "SPEAKER PROFILE", "role": "Head of AI Lab & Assistant Professor, ITB", "bio": "Expertise in algorithmic decision systems, optimization, and human-in-the-loop AI governance with 15+ years of industrial advisory." }
+21. "sectionDivider" (Pure Full-Bleed Chapter Transition on Solid Blue):
+    - badge: "PART 1" or "PART 2"
+    - title: e.g. "Core Strategic Foundations & Economic Models"
+    - subtitle: "Establishing baseline metrics and investment discipline for AI transformation"
 
 UNIVERSAL HIGHLIGHT & NOTE STRIPS:
 - insightBarText: (Optional) 1 punchy sentence summarizing the executive takeaway.
@@ -225,7 +239,19 @@ export async function POST(req: NextRequest) {
       clonedReferenceSummary = "",
     } = deckContext;
 
-    const rulesDoc = (templateRulesMarkdown || clonedStyleDirectives || "").trim();
+    let rulesDoc = (templateRulesMarkdown || clonedStyleDirectives || "").trim();
+    const effectiveTemplateName = templateName || "ITB × RevoU Deck Design System";
+
+    if (!rulesDoc) {
+      try {
+        const fs = await import("fs/promises");
+        const path = await import("path");
+        const skillPath = path.join(process.cwd(), ".agents/skills/itb-deck-design-rules/SKILL.md");
+        rulesDoc = await fs.readFile(skillPath, "utf-8");
+      } catch (err) {
+        console.warn("Could not load default ITB skill file in generate-chunk:", err);
+      }
+    }
 
     // ──── LANGUAGE DETECTION from outline content ────
     const outlineText = JSON.stringify(outlines);
@@ -543,9 +569,11 @@ function resolveSlideBackgroundForChunk(
     return "/bg-deck/itb-deck/part-deck.png";
   }
 
-  // Task / Workshop / Exercise / Speaker / Case study (can repeat multiple times)
+  // Task / Workshop / Exercise / Speaker / Case study / Split layout (can repeat multiple times)
   if (
+    lowerLayout.includes("split") ||
     lowerLayout.includes("case") ||
+    lowerLayout.includes("profile") ||
     lowerLayout.includes("poll") ||
     lowerTitle.includes("hands-on") ||
     lowerTitle.includes("latihan") ||

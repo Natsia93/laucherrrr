@@ -39,6 +39,9 @@ DO NOT USE A STATIC REPEATING PATTERN! The user has explicitly rejected rigid, p
 
 3. FULL CREATIVE PALETTE OF LAYOUTS:
    Freely combine, mix, and adapt from this diverse library according to what best fits the text:
+   - "Split Comparison": (MANDATORY FOR 2-4 SLIDES) Official ITB Two-Panel layout with Left Blue Panel (Yellow accent bar + bold white Action Title + golden yellow Subtitle) and Right White Panel (Before AI Card [grey #F1F1F1] → Arrow → After AI Card [solid blue #005AAB with yellow top bar] + bottom full-width Key Insight strip [blue with yellow left edge]). Used for case studies, worked examples, and paradigm shifts.
+   - "Split Profile": Facilitator / Speaker Profile with Left Blue Panel (Yellow bar + Name + Role) and Right White Panel (Circular photo [Photo] + blue SPEAKER PROFILE tag + organization role + executive bio).
+   - "Section Divider": (MANDATORY FOR 1-2 SLIDES IN 15-20 SLIDE DECKS) Pure chapter/part transition slide on full solid blue background. Contains ONLY a yellow accent bar (140x12px), yellow uppercase "PART N" label, large white title, and white subtitle. Strictly NO CARDS on this slide!
    - "Pyramid Hierarchy": 3-tier McKinsey apex pyramid (Apex Vision at peak -> Core Strategic Pillars in middle -> Foundation Enablers at base).
    - "Transformation Bridge": 3-panel transformational shift comparing current friction (As-Is) to target outcome (To-Be) via a central catalyst engine.
    - "Radial Hub": Central core operational hub (e.g. Data & AI Governance Core) with 4 surrounding domain satellites (e.g. Legal, Security, Capital, Operations).
@@ -46,7 +49,7 @@ DO NOT USE A STATIC REPEATING PATTERN! The user has explicitly rejected rigid, p
    - "Formula Hero": High-impact formula banner at top (THE FORMULA: Impact = Speed × Scale × Confidence) + 3 factor columns below + massive accent stat box (e.g. 61%).
    - "Decision Matrix": 2x2 Quadrant matrix with labeled X/Y dimensional arrows (High stakes vs Low stakes, Low data richness vs High data richness) and 4 asymmetric executive quadrant treatments.
    - "Causation Tree": Top metric callout + 3 cards with internal branching tree diagrams (root node -> 2 child nodes) + bottom takeaway quote strip with vertical yellow accent bar.
-   - "Case Study": Split layout: Left column with Situation background, 3 data metric tiles, and yellow Twist warning box; Right column with 3-line exercise sheet and numbered circles.
+   - "Case Study": Case scenario with Situation background, 3 data metric tiles, and yellow Twist warning box + 3-line exercise sheet.
    - "Two Column": Dual perspectives, contrasting scenarios, or side-by-side core themes.
    - "Card Grid": 3 to 4 distinct categorical pillars, capability cards, or strategic tenets.
    - "Process": Step-by-step workflow, methodology, or procedural phases.
@@ -62,10 +65,15 @@ DO NOT USE A STATIC REPEATING PATTERN! The user has explicitly rejected rigid, p
    - "Bullets": Clean, high-impact executive takeaways with bold lead-ins.
    - "Closing Action": Final executive mandate with concrete next steps, ownership, and contact.
 
-4. DYNAMIC PACING & RHYTHM:
-   - Never use the same layout two slides in a row.
-   - Mix high-density framework slides (like Table Comparison or Architecture) with balanced conceptual slides (like Two Column or Card Grid).
-   - Every slide must feel fresh, bespoke, and tailored to the exact topic at hand.
+4. DYNAMIC PACING & RHYTHM (CRITICAL):
+   - For a 15–20 slide deck:
+     * Slide 1: Always "Hero" (Cover).
+     * Slide 2: High-impact content slide (e.g. "Two Column", "Card Grid", "Split Profile", or "Formula Hero"). NEVER put a Section Divider on Slide 2!
+     * Schedule 2 to 4 slides with "Split Comparison" (or "Split Profile") for case studies, worked examples, and real-world analogies.
+     * Schedule 1 to 2 slides with "Section Divider" (e.g. around Slide 7-8 and Slide 14) to introduce major chapters (e.g. "PART 1: Core Frameworks", "PART 2: Operational Execution").
+     * Mix diverse framework slides: Pyramid Hierarchy, Transformation Bridge, Radial Hub, Chevron Process, Formula Hero, Causation Tree, Paired Rows, Horizontal Stack, Connected Stepper.
+     * Never use the same layout two slides in a row!
+     * Slide N (last slide): Always "Closing Action".
 
 5. ACTION TITLES (MANDATORY):
    - Every headline MUST be an assertive Action Title (5-9 words), stating the primary takeaway or conclusion of the slide.
@@ -82,7 +90,7 @@ Return ONLY a valid, parseable JSON array of objects with schema:
     "slideNumber": 1,
     "headline": "Active Executive Claim Without Period",
     "subheadline": "Strategic subheadline providing context",
-    "visualLayout": "Hero" | "Pyramid Hierarchy" | "Transformation Bridge" | "Radial Hub" | "Chevron Process" | "Formula Hero" | "Decision Matrix" | "Causation Tree" | "Case Study" | "Two Column" | "Card Grid" | "Process" | "Timeline" | "Table Comparison" | "Flow Diagram" | "Horizontal Stack" | "Paired Rows" | "Connected Stepper" | "Ascending Columns" | "Checklist" | "Stats" | "Bullets" | "Closing Action",
+    "visualLayout": "Hero" | "Split Comparison" | "Split Profile" | "Section Divider" | "Pyramid Hierarchy" | "Transformation Bridge" | "Radial Hub" | "Chevron Process" | "Formula Hero" | "Decision Matrix" | "Causation Tree" | "Case Study" | "Two Column" | "Card Grid" | "Process" | "Timeline" | "Table Comparison" | "Flow Diagram" | "Horizontal Stack" | "Paired Rows" | "Connected Stepper" | "Ascending Columns" | "Checklist" | "Stats" | "Bullets" | "Closing Action",
     "description": "Substantive summary of what this slide covers",
     "keyPoints": ["Bullet 1", "Bullet 2"],
     "speakerNotes": "Executive talking points and facilitation timing guidance"
@@ -111,7 +119,19 @@ export async function POST(req: NextRequest) {
     } = body;
 
     const count = Math.min(Math.max(parseInt(String(targetCount), 10) || 10, 3), 100);
-    const rulesDoc = (templateRulesMarkdown || clonedStyleDirectives || "").trim();
+    let rulesDoc = (templateRulesMarkdown || clonedStyleDirectives || "").trim();
+    const effectiveTemplateName = templateName || "ITB × RevoU Deck Design System";
+
+    if (!rulesDoc) {
+      try {
+        const fs = await import("fs/promises");
+        const path = await import("path");
+        const skillPath = path.join(process.cwd(), ".agents/skills/itb-deck-design-rules/SKILL.md");
+        rulesDoc = await fs.readFile(skillPath, "utf-8");
+      } catch (err) {
+        console.warn("Could not load default ITB skill file in plan-outline:", err);
+      }
+    }
 
     // ──── LANGUAGE DETECTION ────
     const contentLower = (content || "").toLowerCase();
@@ -266,12 +286,18 @@ Generate a master blueprint with EXACTLY ${count} sequential slides in strict JS
 
 function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideItem[] {
   const arcLayouts = [
+    "Split Comparison",
+    "Two Column",
+    "Pyramid Hierarchy",
+    "Transformation Bridge",
+    "Formula Hero",
+    "Radial Hub",
+    "Chevron Process",
     "Paired Rows",
     "Horizontal Stack",
     "Connected Stepper",
     "Ascending Columns",
     "Checklist",
-    "Two Column",
     "Process",
     "Timeline",
     "Table Comparison",
@@ -280,10 +306,13 @@ function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideI
   ];
 
   const knownArchetypes = new Set([
-    "hero", "cover", "section divider", "paired rows", "horizontal stack",
-    "connected stepper", "ascending columns", "checklist", "closing action",
-    "two column", "process", "timeline", "table comparison", "flow diagram",
-    "bullets", "stats", "bold impact", "card grid"
+    "hero", "cover", "section divider", "split comparison", "split case", "split profile",
+    "case study", "paired rows", "horizontal stack", "connected stepper",
+    "ascending columns", "checklist", "closing action", "formula hero",
+    "tree comparison", "pyramid hierarchy", "transformation bridge",
+    "radial hub", "chevron process", "decision matrix", "two column",
+    "process", "timeline", "table comparison", "flow diagram", "bullets",
+    "stats", "bold impact", "card grid"
   ]);
 
   return parsed.slice(0, targetCount).map((item: any, idx: number) => {
