@@ -17,30 +17,56 @@ interface OutlineSlideItem {
 
 const OUTLINE_SYSTEM_PROMPT = `
 You are the Master Presentation Architect for Launcher OS (McKinsey, Bain, ITB, and Apple executive standards).
-Your job is to transform raw topics, curriculum, or business notes into a comprehensive, highly structured Master Slide Blueprint.
+Your job is to transform raw topics, curriculum, or business notes into a dynamic, content-tailored, and CREATIVELY DIVERSE Master Slide Blueprint.
 
-=== UNIVERSAL ARCHITECTURAL RULES (FOR CLAUDE, DEEPSEEK, GPT, & GEMINI) ===
-1. TARGET SLIDE COUNT: Output EXACTLY the requested number of slides. Do not cut short! If 50 slides are requested, output exactly 50 slide items.
-2. ACTION TITLES (MANDATORY):
-   - Every headline MUST be a substantive, informative sentence/claim (5-9 words), NEVER boring category labels like "Introduction", "Slide 3", or "Agenda".
-   - ACTION TITLE RULE: Left-aligned, one line where possible. NEVER end a slide title with a period!
-3. STORYTELLING ARC & VISUAL PACING (Anti-Monoton):
-   - Slide 1: "Hero / Cover" (Grand strategic hook, executive subtitle, authoritative headline).
-   - Slide 2: "Two Column" or "Bullets" (Context, friction, current state vs target vision).
-   - Core Middle Slides: Dynamically rotate between layouts:
-     * "Process / Implementation Steps"
-     * "Flow Diagram / Architecture"
-     * "Timeline / Roadmap"
-     * "Table Comparison / Matrix"
-     * "Stats / Key Metrics" (Only when real numbers or metrics are involved; NEVER invent fake numbers!)
-     * "Bullets / Key Pillars"
-     * "Two Column / Problem vs Solution"
-   - Final Slide: "Bold Impact / Call to Action" (High-conviction strategic close).
-   - NEVER repeat the exact same layout more than twice consecutively!
-4. PRESENTER / SPEAKER NOTES:
-   - Provide "speakerNotes" for EVERY slide: 2 to 4 crisp sentences explaining the slide's core intent, key takeaway, timing, or mentor guidance.
-5. NO INVENTED METRICS:
-   - If exact metrics are absent from input material, use qualitative descriptions or visible bracket placeholders like [X]%.
+=== CREATIVE FREEDOM & CONTENT-ADAPTIVE ARCHITECTURE (ANTI-MONOTONY RULE) ===
+DO NOT USE A STATIC REPEATING PATTERN! The user has explicitly rejected rigid, predictable slide templates where Slide 2 is always the same layout, Slide 3 is always the same layout, etc.
+
+1. FREEDOM OF EXPRESSION & CONTENT-FIRST SELECTION:
+   - Analyze the UNIQUE substance and narrative friction of the user's specific content.
+   - Choose the visual layout that BEST expresses each specific idea.
+   - NEVER force a rigid sequential order (e.g. NEVER default to: 1. Hero, 2. Divider, 3. Paired Rows, 4. Horizontal Stack, 5. Stepper...). That is a rigid template and strictly forbidden!
+
+2. SLIDE 2 IS CONTENT, NOT A WASTED DIVIDER:
+   - Unless the user's material explicitly defines multiple numbered modules (e.g. "Module 1", "Week 2"), DO NOT put a "Section Divider" on Slide 2!
+   - Slide 2 must immediately hook the audience with substantive depth:
+     * "Two Column" (Current Reality vs Strategic Opportunity, Problem vs Solution)
+     * "Card Grid" / "Bullets" (3-4 Core Market Drivers or Strategic Shifts)
+     * "Flow Diagram" / "Architecture" (System Context or High-Level Overview)
+     * "Table Comparison" (Competitive Landscape or Paradigm Shift)
+     * "Stats" (Empirical Metrics Grid, only if data exists in input)
+     * "Process" (High-level Strategic Horizon)
+
+3. FULL CREATIVE PALETTE OF LAYOUTS:
+   Freely combine, mix, and adapt from this diverse library according to what best fits the text:
+   - "Two Column": Dual perspectives, contrasting scenarios, or side-by-side core themes.
+   - "Card Grid": 3 to 4 distinct categorical pillars, capability cards, or strategic tenets.
+   - "Process": Step-by-step workflow, methodology, or procedural phases.
+   - "Timeline": Chronological milestones, implementation roadmap, or progressive quarters.
+   - "Table Comparison": Matrix comparing options, legacy vs future, or capability evaluation.
+   - "Flow Diagram": Node-to-node architectural pipeline, data flow, or operating model.
+   - "Horizontal Stack": 3 stacked horizontal bars for foundational triads or parallel definitions.
+   - "Paired Rows": 2 to 3 direct problem-to-solution or threat-to-mitigation paired rows.
+   - "Connected Stepper": Connected track milestones or continuous lifecycle loop.
+   - "Ascending Columns": Progressive intensity, capability maturity levels (L1, L2, L3), or tiered impact.
+   - "Checklist": Executive governance checklist, readiness audit, or verification criteria.
+   - "Case Study": Real-world case study, scenario workout, or applied example.
+   - "Stats": Quantitative metric callouts with authoritative context (when numbers exist).
+   - "Bullets": Clean, high-impact executive takeaways with bold lead-ins.
+   - "Closing Action": Final executive mandate with concrete next steps, ownership, and contact.
+
+4. DYNAMIC PACING & RHYTHM:
+   - Never use the same layout two slides in a row.
+   - Mix high-density framework slides (like Table Comparison or Architecture) with balanced conceptual slides (like Two Column or Card Grid).
+   - Every slide must feel fresh, bespoke, and tailored to the exact topic at hand.
+
+5. ACTION TITLES (MANDATORY):
+   - Every headline MUST be an assertive Action Title (5-9 words), stating the primary takeaway or conclusion of the slide.
+   - NEVER write passive topic labels like "Cybersecurity Pillars", "Module 1", "Overview", or "Agenda".
+   - Left-aligned, one line preferred. NEVER end a slide title with a period!
+
+6. PRESENTER / SPEAKER NOTES:
+   - Provide "speakerNotes" for EVERY slide: 2 to 4 crisp sentences explaining the slide's pedagogical or business intent, the critical takeaway, and timing.
 
 OUTPUT FORMAT:
 Return ONLY a valid, parseable JSON array of objects with schema:
@@ -49,12 +75,15 @@ Return ONLY a valid, parseable JSON array of objects with schema:
     "slideNumber": 1,
     "headline": "Active Executive Claim Without Period",
     "subheadline": "Strategic subheadline providing context",
-    "visualLayout": "Hero" | "Two Column" | "Process" | "Timeline" | "Table Comparison" | "Flow Diagram" | "Bullets" | "Stats" | "Bold Impact",
+    "visualLayout": "Hero" | "Two Column" | "Card Grid" | "Process" | "Timeline" | "Table Comparison" | "Flow Diagram" | "Horizontal Stack" | "Paired Rows" | "Connected Stepper" | "Ascending Columns" | "Checklist" | "Stats" | "Bullets" | "Case Study" | "Closing Action",
     "description": "Substantive summary of what this slide covers",
     "keyPoints": ["Bullet 1", "Bullet 2"],
     "speakerNotes": "Executive talking points and facilitation timing guidance"
   }
 ]
+
+=== LANGUAGE RULE (SUPREME PRIORITY) ===
+If the user's raw content explicitly requests a specific language (e.g. "in English", "bahasa inggris", "dalam bahasa Inggris", "use English"), ALL generated text — headlines, subheadlines, descriptions, keyPoints, and speakerNotes — MUST be written ENTIRELY in that requested language. Do NOT mix languages. Do NOT default to Indonesian if the user asked for English. The user's language instruction ALWAYS overrides any template examples.
 `;
 
 export async function POST(req: NextRequest) {
@@ -66,6 +95,8 @@ export async function POST(req: NextRequest) {
       audience = "Executives & C-Level",
       purpose = "Pitch Idea & Strategy",
       layoutMood = "framework",
+      templateRulesMarkdown = "",
+      templateName = "",
       clonedStyleDirectives = "",
       apiKey,
       provider = "gemini",
@@ -73,6 +104,23 @@ export async function POST(req: NextRequest) {
     } = body;
 
     const count = Math.min(Math.max(parseInt(String(targetCount), 10) || 10, 3), 100);
+    const rulesDoc = (templateRulesMarkdown || clonedStyleDirectives || "").trim();
+
+    // ──── LANGUAGE DETECTION ────
+    const contentLower = (content || "").toLowerCase();
+    let detectedLanguage = "";
+    if (/(?:in\s+english|bahasa\s*inggris|dalam\s*(?:bahasa\s*)?inggris|use\s+english|english\s+(?:language|version|deck|presentation))/i.test(content)) {
+      detectedLanguage = "English";
+    } else if (/(?:bahasa\s*indonesia|dalam\s*(?:bahasa\s*)?indonesia|gunakan\s*(?:bahasa\s*)?indonesia|indonesian)/i.test(content)) {
+      detectedLanguage = "Indonesian (Bahasa Indonesia)";
+    } else if (/(?:bahasa\s*jepang|japanese|日本語)/i.test(content)) {
+      detectedLanguage = "Japanese";
+    } else if (/(?:bahasa\s*mandarin|chinese|中文)/i.test(content)) {
+      detectedLanguage = "Chinese";
+    }
+    const languageDirective = detectedLanguage
+      ? `\n⚠️ MANDATORY LANGUAGE: ALL generated text (headlines, subheadlines, descriptions, keyPoints, speakerNotes) MUST be written ENTIRELY in ${detectedLanguage}. Do NOT use any other language. This overrides all examples in the system prompt.\n`
+      : "";
 
     const userPrompt = `
 RAW TOPIC / MATERIALS / CURRICULUM:
@@ -84,8 +132,22 @@ TARGET SLIDE COUNT: Exactly ${count} slides.
 AUDIENCE: ${audience}
 PURPOSE: ${purpose}
 LAYOUT MOOD: ${layoutMood}
-${clonedStyleDirectives ? `\nREFERENCE STYLE GUIDELINES:\n${clonedStyleDirectives}\n` : ""}
 
+${rulesDoc.length > 0 ? `
+================================================================================
+👑 GOVERNING DESIGN CONTRACT & ARCHITECTURAL RULES (.MD) (UNABRIDGED & MANDATORY):
+Source Document: ${templateName || "Institutional Design Specification"}
+================================================================================
+${rulesDoc}
+================================================================================
+MANDATORY COMPLIANCE INSTRUCTIONS:
+- Faithfully study and execute the governing .md document above in its entirety.
+- Map the presentation arc to the archetype layouts defined in the document (Hero, Section Divider, Paired Rows, Horizontal Stack, Connected Stepper, Ascending Columns, Checklist, Closing Action).
+- Obey the Rule of Rhythm: Never repeat the same layout more than twice in a row.
+- Formulate substantive Action Titles (5-9 words) with NO trailing period.
+` : ""}
+
+${languageDirective}
 Generate a master blueprint with EXACTLY ${count} sequential slides in strict JSON array format.
 `;
 
@@ -109,16 +171,7 @@ Generate a master blueprint with EXACTLY ${count} sequential slides in strict JS
         const parsed = JSON.parse(cleaned);
 
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const sanitized = parsed.map((item: any, idx: number) => ({
-            slideNumber: idx + 1,
-            headline: String(item.headline || `Slide ${idx + 1}`),
-            subheadline: String(item.subheadline || ""),
-            visualLayout: String(item.visualLayout || "Bullets"),
-            description: String(item.description || ""),
-            bullets: Array.isArray(item.keyPoints) ? item.keyPoints.slice(0, 4) : undefined,
-            speakerNotes: item.speakerNotes ? String(item.speakerNotes) : undefined,
-          }));
-
+          const sanitized = sanitizeOutlineItems(parsed, count);
           return NextResponse.json({ success: true, outline: sanitized, source: "gemini" });
         }
       } catch (gemErr: any) {
@@ -151,16 +204,7 @@ Generate a master blueprint with EXACTLY ${count} sequential slides in strict JS
         const parsed = JSON.parse(cleaned);
 
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const sanitized = parsed.map((item: any, idx: number) => ({
-            slideNumber: idx + 1,
-            headline: String(item.headline || `Slide ${idx + 1}`),
-            subheadline: String(item.subheadline || ""),
-            visualLayout: String(item.visualLayout || "Bullets"),
-            description: String(item.description || ""),
-            bullets: Array.isArray(item.keyPoints) ? item.keyPoints.slice(0, 4) : undefined,
-            speakerNotes: item.speakerNotes ? String(item.speakerNotes) : undefined,
-          }));
-
+          const sanitized = sanitizeOutlineItems(parsed, count);
           return NextResponse.json({ success: true, outline: sanitized, source: provider });
         }
       } catch (openAiErr: any) {
@@ -195,16 +239,7 @@ Generate a master blueprint with EXACTLY ${count} sequential slides in strict JS
           const parsed = JSON.parse(cleaned);
 
           if (Array.isArray(parsed) && parsed.length > 0) {
-            const sanitized = parsed.map((item: any, idx: number) => ({
-              slideNumber: idx + 1,
-              headline: String(item.headline || `Slide ${idx + 1}`),
-              subheadline: String(item.subheadline || ""),
-              visualLayout: String(item.visualLayout || "Bullets"),
-              description: String(item.description || ""),
-              bullets: Array.isArray(item.keyPoints) ? item.keyPoints.slice(0, 4) : undefined,
-              speakerNotes: item.speakerNotes ? String(item.speakerNotes) : undefined,
-            }));
-
+            const sanitized = sanitizeOutlineItems(parsed, count);
             return NextResponse.json({ success: true, outline: sanitized, source: "anthropic" });
           }
         }
@@ -220,6 +255,67 @@ Generate a master blueprint with EXACTLY ${count} sequential slides in strict JS
     console.error("Plan Outline API Error:", error);
     return NextResponse.json({ success: false, error: error?.message || "Failed to plan outline" }, { status: 500 });
   }
+}
+
+function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideItem[] {
+  const arcLayouts = [
+    "Paired Rows",
+    "Horizontal Stack",
+    "Connected Stepper",
+    "Ascending Columns",
+    "Checklist",
+    "Two Column",
+    "Process",
+    "Timeline",
+    "Table Comparison",
+    "Flow Diagram",
+    "Bullets",
+  ];
+
+  const knownArchetypes = new Set([
+    "hero", "cover", "section divider", "paired rows", "horizontal stack",
+    "connected stepper", "ascending columns", "checklist", "closing action",
+    "two column", "process", "timeline", "table comparison", "flow diagram",
+    "bullets", "stats", "bold impact", "card grid"
+  ]);
+
+  return parsed.slice(0, targetCount).map((item: any, idx: number) => {
+    let visualLayout = String(item.visualLayout || "").trim();
+    const normalized = visualLayout.toLowerCase();
+
+    // 1. Enforce Opening Slide 1 as Hero
+    if (idx === 0) {
+      visualLayout = "Hero";
+    }
+    // 2. Enforce Last Slide as Closing Action / Bold Impact
+    else if (idx === targetCount - 1 && targetCount >= 3) {
+      visualLayout = visualLayout && (normalized.includes("closing") || normalized.includes("action")) ? "Closing Action" : "Bold Impact";
+    }
+    // 3. If empty or generic fallback, rotate through arcLayouts
+    else if (!visualLayout || (!knownArchetypes.has(normalized) && normalized === "bullets")) {
+      visualLayout = arcLayouts[(idx - 1) % arcLayouts.length];
+    }
+
+    // 4. Ensure bullets are extracted or populated
+    let bullets = Array.isArray(item.keyPoints) && item.keyPoints.length > 0 ? item.keyPoints.slice(0, 6) : undefined;
+    if (!bullets && item.description) {
+      const desc = String(item.description);
+      const matches = [...desc.matchAll(/(?:(?:Decision|Pilar|Pillar|Langkah|Step|Point|Poin)\s*\d+[:\.]?|(?:\d+[\.\)]))\s*([^]+?)(?=(?:(?:Decision|Pilar|Pillar|Langkah|Step|Point|Poin)\s*\d+[:\.]?|(?:\d+[\.\)]))|$)/gi)];
+      if (matches.length >= 2) {
+        bullets = matches.slice(0, 6).map((m) => m[0].trim());
+      }
+    }
+
+    return {
+      slideNumber: idx + 1,
+      headline: String(item.headline || `Slide ${idx + 1}`),
+      subheadline: String(item.subheadline || ""),
+      visualLayout,
+      description: String(item.description || ""),
+      bullets,
+      speakerNotes: item.speakerNotes ? String(item.speakerNotes) : undefined,
+    };
+  });
 }
 
 function generateFallbackBlueprint(content: string, count: number, purpose: string): OutlineSlideItem[] {

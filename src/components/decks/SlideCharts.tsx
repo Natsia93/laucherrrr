@@ -84,12 +84,7 @@ export function SlideChart({
   if (type === "bar") {
     const chartData = data && data.length > 0 ? data : DEFAULT_BAR_DATA;
     return (
-      <motion.div
-        initial={isThumbnail ? {} : { opacity: 0, scale: 0.96 }}
-        animate={isThumbnail ? {} : { opacity: 1, scale: 1 }}
-        transition={{ duration: 0.45, ease: "easeOut" }}
-        className="w-full h-full min-h-[180px] sm:min-h-[220px] flex items-center justify-center"
-      >
+      <div className="w-full h-full min-h-[180px] sm:min-h-[220px] flex items-center justify-center">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
@@ -119,9 +114,7 @@ export function SlideChart({
               dataKey="value"
               fill={chartPrimary}
               radius={[4, 4, 0, 0]}
-              isAnimationActive={!isThumbnail}
-              animationDuration={900}
-              animationEasing="ease-out"
+              isAnimationActive={false}
             />
             {chartData[0]?.secondary !== undefined && (
               <Bar
@@ -129,26 +122,19 @@ export function SlideChart({
                 fill={chartSecondary}
                 radius={[4, 4, 0, 0]}
                 opacity={0.6}
-                isAnimationActive={!isThumbnail}
-                animationDuration={900}
-                animationEasing="ease-out"
+                isAnimationActive={false}
               />
             )}
           </BarChart>
         </ResponsiveContainer>
-      </motion.div>
+      </div>
     );
   }
 
   if (type === "area") {
     const chartData = data && data.length > 0 ? data : DEFAULT_AREA_DATA;
     return (
-      <motion.div
-        initial={isThumbnail ? {} : { opacity: 0, scale: 0.96 }}
-        animate={isThumbnail ? {} : { opacity: 1, scale: 1 }}
-        transition={{ duration: 0.45, ease: "easeOut" }}
-        className="w-full h-full min-h-[180px] sm:min-h-[220px] flex items-center justify-center"
-      >
+      <div className="w-full h-full min-h-[180px] sm:min-h-[220px] flex items-center justify-center">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
@@ -187,25 +173,18 @@ export function SlideChart({
               strokeWidth={2.5}
               fillOpacity={1}
               fill="url(#slideAreaGradient)"
-              isAnimationActive={!isThumbnail}
-              animationDuration={900}
-              animationEasing="ease-out"
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>
-      </motion.div>
+      </div>
     );
   }
 
   if (type === "radar") {
     const radarData = data && data.length > 0 ? data : DEFAULT_RADAR_DATA;
     return (
-      <motion.div
-        initial={isThumbnail ? {} : { opacity: 0, scale: 0.96 }}
-        animate={isThumbnail ? {} : { opacity: 1, scale: 1 }}
-        transition={{ duration: 0.45, ease: "easeOut" }}
-        className="w-full h-full min-h-[180px] sm:min-h-[220px] flex items-center justify-center"
-      >
+      <div className="w-full h-full min-h-[180px] sm:min-h-[220px] flex items-center justify-center">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart cx="50%" cy="50%" outerRadius="72%" data={radarData}>
             <PolarGrid stroke="#888888" strokeOpacity={0.25} />
@@ -222,8 +201,7 @@ export function SlideChart({
               stroke={chartPrimary}
               fill={chartPrimary}
               fillOpacity={0.4}
-              isAnimationActive={!isThumbnail}
-              animationDuration={900}
+              isAnimationActive={false}
             />
             <Tooltip
               contentStyle={{
@@ -236,7 +214,7 @@ export function SlideChart({
             />
           </RadarChart>
         </ResponsiveContainer>
-      </motion.div>
+      </div>
     );
   }
 
@@ -245,12 +223,7 @@ export function SlideChart({
   const DONUT_COLORS = [chartPrimary, chartSecondary, "#059669", "#D97706", "#2563EB", "#EC4899"];
 
   return (
-    <motion.div
-      initial={isThumbnail ? {} : { opacity: 0, scale: 0.96 }}
-      animate={isThumbnail ? {} : { opacity: 1, scale: 1 }}
-      transition={{ duration: 0.45, ease: "easeOut" }}
-      className="w-full h-full flex flex-row items-center justify-center gap-6 sm:gap-10 px-2"
-    >
+    <div className="w-full h-full flex flex-row items-center justify-center gap-6 sm:gap-10 px-2">
       <div className="w-[180px] sm:w-[220px] md:w-[240px] aspect-square shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -262,9 +235,7 @@ export function SlideChart({
               outerRadius="82%"
               paddingAngle={4}
               dataKey="value"
-              isAnimationActive={!isThumbnail}
-              animationDuration={900}
-              animationEasing="ease-out"
+              isAnimationActive={false}
             >
               {donutData.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={DONUT_COLORS[index % DONUT_COLORS.length]} />
@@ -288,15 +259,12 @@ export function SlideChart({
       {/* Donut Legend */}
       <div className="flex flex-col gap-2 min-w-0 max-w-sm justify-center">
         {donutData.map((entry, index) => (
-          <motion.div
+          <div
             key={`legend-${entry.name || 'entry'}-${index}`}
-            initial={isThumbnail ? {} : { opacity: 0, x: -6 }}
-            animate={isThumbnail ? {} : { opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.08 }}
             className="flex items-center gap-2.5"
           >
             <span
-              className="w-3 h-3 rounded-full shrink-0 shadow-xs"
+              className="w-3 h-3 rounded-full shrink-0"
               style={{ backgroundColor: DONUT_COLORS[index % DONUT_COLORS.length] }}
             />
             <span className="text-xs sm:text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate max-w-[180px] sm:max-w-[240px]">
@@ -305,9 +273,9 @@ export function SlideChart({
             <span className="text-xs sm:text-sm font-bold ml-auto pl-3 tabular-nums text-neutral-900 dark:text-white">
               {entry.value}%
             </span>
-          </motion.div>
+          </div>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }

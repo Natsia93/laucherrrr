@@ -3,213 +3,351 @@ name: itb-deck-design-rules
 description: Visual design and content generation rules for ITB × RevoU slide decks. Use this skill whenever generating, rebuilding, restyling, or reviewing any deck, slide, module deck, mentoring deck, or slide outline for any ITB × RevoU program or partnership deck — even if the user only says "make the deck", "continue the next week", "generate slides from this outline" or "make it consistent". Covers single font (Red Hat Display), strict color palette (Deep Blue #005AAB + Golden Yellow #FFDD3C), the five supplied backgrounds, layout selection, components, content handling and speaker notes.
 ---
 
-# ITB × RevoU Deck Design Rules
+# ITB × RevoU Deck Design System
+### A single source of truth for any AI (Claude, ChatGPT, Gemini, Copilot, Gamma, etc.) that creates, restyles, reviews or exports slide decks for the ITB × RevoU "Data-Driven & AI-Enabled Decision Making for Leaders" program.
 
-These rules keep every generated deck visually consistent, whatever the module or week. Follow them for every slide. When a rule and an outline conflict, keep the outline's wording and apply the rule to the visual form.
-
-The guiding idea: **one visual identity, many layouts.** Fonts, colors, backgrounds and components never change. The layout of each slide is chosen from what that slide has to say.
+> **How to use this file:** paste it (or attach it) before your request. Every rule is written as a measurable value. If a rule and the user's outline conflict, keep the outline's wording and apply the rule to the visual form. Never invent facts, numbers, names or dates.
 
 ---
 
-## 1. Canvas
+## 0. Quick tokens (machine-readable)
 
-- 16:9, designed at **1920 × 1080 px**. All sizes below are in px at that canvas (1 pt ≈ 2 px).
-- Minimum readable text size: **24 px**. Never go below it, including table cells, labels and captions.
-- Keep about **170 words per slide at most**. If an outline slide is denser, split it or move detail to speaker notes.
+```json
+{
+  "canvas": { "width_px": 1920, "height_px": 1080, "width_in": 13.333, "height_in": 7.5, "aspect": "16:9" },
+  "units": { "px_to_pt": 0.5, "px_to_in": 0.006944, "px_to_emu": 6350, "pt_to_emu": 12700, "in_to_emu": 914400 },
+  "font": { "family": "Red Hat Display", "fallback": ["Arial", "sans-serif"], "min_size_px": 24 },
+  "type_scale_px": {
+    "cover_title": 104, "cover_subtitle": 46, "cover_meta": 30,
+    "divider_title": 96, "slide_title": 72, "lead": 30, "meta": 26,
+    "card_heading": [28, 36], "body": [24, 30], "label": 24, "big_number": [56, 300]
+  },
+  "weights": { "light": 300, "regular": 400, "semibold": 600, "bold": 700, "extrabold": 800 },
+  "line_height": { "titles": 1.1, "body": [1.25, 1.35] },
+  "colors": {
+    "deep_blue": "#005AAB", "navy": "#174A7F", "golden_yellow": "#FFDD3C",
+    "soft_yellow": "#FFEC8E", "pale_yellow": "#FFF6CC", "light_blue": "#EAF2FB",
+    "light_grey": "#F1F1F1", "border_blue_grey": "#9FB8D6", "border_light": "#D6E4F5",
+    "neutral_grey": "#9A9A9A", "text": "#272525", "text_muted": "#595959",
+    "text_meta": "#666666", "white": "#FFFFFF", "gradient": ["#005AAB", "#007AE8"]
+  },
+  "spacing_scale_px": [4, 8, 12, 16, 20, 24, 32, 40, 48, 64],
+  "radius_px": { "card": [16, 22], "pill": 999, "small": [8, 12] },
+  "stroke_px": { "card_border": 3, "row_rule": [2, 3], "connector": [4, 6], "accent_bar": [12, 14] }
+}
+```
+
+---
+
+## 1. Canvas & Units
+
+| Item | Value |
+|---|---|
+| Slide size | 1920 × 1080 px = **13.333 × 7.5 in** (PowerPoint "Widescreen 16:9"). Never use 10 × 5.625 in. |
+| Unit conversion | 1 px = 0.5 pt = 1/144 in = 6,350 EMU. **Font size in pt = px ÷ 2.** |
+| Content safe area (content slides) | x 108–1812 px, y 84–920 px (0.75–12.58 in, 0.58–6.39 in). Nothing below y 930 px. |
+| Max words per slide | ~170. Denser content → split the slide or move detail to speaker notes. |
+| Min text size | **24 px (12 pt)**, everywhere, including table cells, labels, captions, footnotes. |
 
 ---
 
 ## 2. Typography
 
-One font family only: **Red Hat Display** (fallback: sans-serif). No second font.
+**One family only: Red Hat Display** (Google Fonts, free). Fallback: Arial → sans-serif. Never mix a second font.
 
-| Role | Size | Weight | Color |
-|---|---|---|---|
-| Cover title | 104 px | 700 | Navy #174A7F |
-| Cover subtitle | 46 px | 600 | Deep Blue #005AAB |
-| Cover meta (week, program, facilitator) | 30 px | 300 italic | Grey #666666 |
-| Divider title | 96–100 px | 700 | White |
-| Slide title | 72 px | 700 | Deep Blue #005AAB |
-| Lead / subtitle line under title | 30 px | 400 | #272525 |
-| Meta line (timing, format, "8 minutes, individual") | 26 px | 400 | #595959 |
-| Card / block heading | 28–36 px | 700–800 | #272525 or white on blue |
-| Body text | 24–30 px | 400–600 | #272525 |
-| Small label (UPPERCASE, letter-spacing 2px) | 24 px | 700 | #005AAB, or #595959 for neutral |
-| Big numbers / stats | 56–300 px | 800 | #005AAB (or text color of its card) |
+### 2.1 Type scale
 
-Rules:
-- Titles are **left-aligned, one line where possible**. Shorten the title rather than wrap to three lines.
-- Body line height 1.25–1.35. Never double-spaced.
-- Bold only for lead-ins ("Note:", "Rule:", "Key insight:") and one key phrase per block.
-- Italic for quotes, example answers and "how to spot it" style descriptions.
+| Role | px | pt (PPTX) | Weight | Color | Case / Style |
+|---|---|---|---|---|---|
+| Cover title | 104 | 52 | 700 Bold | Navy #174A7F | Title Case |
+| Cover subtitle | 46 | 23 | 600 Semibold | Deep Blue #005AAB | Title Case |
+| Cover meta (week · program · facilitator) | 30 | 15 | 300 Light, italic | Grey #666666 | Sentence case, 3 lines |
+| Divider title | 96–100 | 48–50 | 700 Bold | White | Title Case |
+| Divider label ("PART 2") | 26 | 13 | 800 | Golden Yellow #FFDD3C | UPPERCASE, letter-spacing 2 px |
+| Slide title | 72 | 36 | 700 Bold | Deep Blue #005AAB | Title Case, left-aligned, 1 line preferred (max 2) |
+| Lead / subtitle under title | 30 | 15 | 400 | Text #272525 | Sentence case |
+| Meta line (timing, format) | 26 | 13 | 400 | Muted #595959 | "10 minutes, pairs" |
+| Card / block heading | 28–36 | 14–18 | 700–800 | #272525, or White on blue | Title Case |
+| Body text | 24–30 | 12–15 | 400–600 | Text #272525 | Sentence case |
+| Small label | 24 | 12 | 700–800 | Deep Blue, or #595959 for neutral | UPPERCASE, letter-spacing 2 px |
+| Big numbers / stats | 56–300 | 28–150 | 800 | Deep Blue, or text color of its card | Numerals only |
+
+### 2.2 Weight mapping (important for PPTX / Google Slides)
+
+PowerPoint and Google Slides only have **Bold on/off**. Map like this:
+
+| Design weight | PPTX / Google Slides setting |
+|---|---|
+| 300 Light | Regular (or font name "Red Hat Display Light" if installed) |
+| 400 Regular | Regular |
+| 600 Semibold | **Bold** |
+| 700 Bold | **Bold** |
+| 800 ExtraBold | **Bold** (or font name "Red Hat Display ExtraBold" if installed) |
+
+### 2.3 Text rules
+
+- **Alignment:** titles and body left-aligned. Center only big numbers inside a card, divider-style statements and timers.
+- **Line height:** titles 1.1; body 1.25–1.35 (PPTX: line spacing multiple 1.25–1.3). Never double-spaced.
+- **Paragraph spacing:** use space-after 6–12 pt between paragraphs, never empty lines.
+- **Letter spacing:** only on UPPERCASE labels: 2 px (PPTX `charSpacing` 1 pt). Never on body text.
+- **Bold:** only for lead-ins ("Note:", "Rule:", "Key insight:") and one key phrase per block.
+- **Italic:** only for quotes, example answers, prompts and "how to spot it" descriptions.
+- **Title length:** shorten the title rather than wrap to 3 lines.
+- **Language:** keep the outline's language. Indonesian terms stay Indonesian.
 
 ---
 
-## 3. Color palette
+## 3. Color
 
-Only these colors. Do not introduce new ones.
+### 3.1 Palette (use only these)
 
-| Name | HEX | Use |
+| Name | HEX | Use for |
 |---|---|---|
-| Deep Blue | #005AAB | Titles, primary cards, table headers, key messages, icons |
-| Golden Yellow | #FFDD3C | Partner cards, accents, tags, HANDS-ON tag, highlights |
-| Blue gradient | #005AAB → #007AE8 | Full-bleed panels only (cover, divider, split panel) |
+| Deep Blue | #005AAB | Slide titles, primary cards, table headers, key messages, icons, connectors |
+| Navy | #174A7F | Cover title, large names on certificates |
+| Golden Yellow | #FFDD3C | Partner cards, accents, HANDS-ON tag, highlights, accent bars |
+| Blue gradient | #005AAB → #007AE8 | Full-bleed panels only (cover, divider, split panel); never on cards |
 | Soft Yellow | #FFEC8E | Note boxes, highlighted cells, part tags |
-| Pale yellow | #FFF6CC | Background band for a highlighted group of rows |
-| Light blue | #EAF2FB | Table stripes, light rows, soft cards |
-| Light grey | #F1F1F1 | Context boxes, "weak/before" panels, chat bubbles |
-| Border blue-grey | #9FB8D6 / #D6E4F5 | Thin rules, dividers, mock-document borders |
-| Neutral grey | #9A9A9A | Dashed "fragile / don't" outlines and icons only |
+| Pale Yellow | #FFF6CC | Background band for a highlighted row/group |
+| Light Blue | #EAF2FB | Table stripes, soft cards, light rows |
+| Light Grey | #F1F1F1 | Context boxes, "weak / before" panels, chat bubbles |
+| Border blue-grey | #9FB8D6 / #D6E4F5 | Thin rules, card borders, dividers, mock-document borders |
+| Neutral grey | #9A9A9A | Dashed "fragile / don't" outlines and their icons only |
 | Text | #272525 | All body text on light backgrounds |
+| Muted text | #595959 | Meta lines, neutral labels, captions |
 | White | #FFFFFF | Text on blue; card fill |
 
-### Color roles
+### 3.2 Color roles
 
-- **Solid blue** = the conclusion, the rule, the "good" option, the key message. White text.
-- **Solid yellow** = equal-weight partner to blue, or the call to action. Near-black text.
-- **White or light blue** = longer text, worksheets, forms.
-- **Light grey / dashed grey** = the "weak", "before", "fragile" or "don't" side of a comparison.
-- **Alternate yellow and blue** for 2–5 parallel items, **starting with yellow**.
-- A mix from yellow to blue (gradient steps) may show **increasing intensity** (risk, autonomy level, confidence).
+- **Solid blue = the conclusion / rule / good option / key message** → white text.
+- **Solid yellow = equal-weight partner or call to action** → near-black text (#272525).
+- **White or light blue = long text, worksheets, forms.**
+- **Light grey or dashed grey = weak / before / fragile / don't side** of a comparison.
+- **Parallel items (2–5): alternate Yellow → Blue → Yellow…, always starting with Yellow.**
+- **Increasing intensity (risk, autonomy, confidence):** step from Yellow toward Blue.
 
-### Contrast (non-negotiable)
+### 3.3 Contrast (non-negotiable)
 
-- White text on blue: yes. Near-black on yellow: yes.
-- **Never** white text on yellow. **Never** yellow text on white (fails contrast). Large numbers on white use blue or near-black, not yellow.
-- No emoji and no status colors (no red/green). Status is written in words: **OK / Risk / Wrong**, **Pass / Partial / Fail**, **Low / Medium / High**.
+| Text on… | Allowed text color |
+|---|---|
+| Deep Blue #005AAB | White, Golden Yellow (labels/numbers only) |
+| Golden Yellow #FFDD3C | #272525 or Deep Blue. **Never white.** |
+| White / Light Blue / Light Grey / Pale Yellow | #272525, Deep Blue, #595959. **Never yellow text.** |
+
+- No emoji. No red/green status colors. Write status as words: **OK / Risk / Wrong**, **Pass / Partial / Fail**, **Low / Medium / High**.
+- Don't use color alone to carry meaning; pair it with a word, label or icon.
 
 ---
 
-## 4. Backgrounds (supplied assets — never recreate)
+## 4. Spacing & Sizing System
 
-Five prepared background images are supplied. Use them as full-bleed backdrops. Never draw a new background, grid, wash, arc or photo; never add decorations on top.
+Base unit **8 px**. Allowed values: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64 px.
 
-| File | Use for | Safe zone for content |
+| Spacing | px | in (PPTX) |
 |---|---|---|
-| bg-cover.png (white arc, photo right, logos top-left) | Slide 1 only | x 125–1360, y 300–1000. Title top, meta at bottom-left |
-| bg-content.png (light grid, blue photo band at bottom, logo tab bottom-left) | Most content slides | x 108–1812, y 84–920. Nothing below y 930 |
-| bg-split.png (blue photo panel on the left 640 px) | Case studies, worked examples, "why" slides, recaps | Left panel x 64–584 (title in white, subtitle in yellow). Right x 720–1812 |
-| bg-divider.png (full blue gradient, logo tab bottom-left, yellow line at bottom) | Section dividers ("Part N"), guest hand-over | x 110–1812, y 88–880, vertically centered |
-| bg-closing.png (blue top to y 790, yellow line, white band with logos bottom-right) | Last slide: next session / next steps | Blue area x 110–1540 for pill, title, description. Optional one line in the white band x 110–1070, y ~830 |
+| Slide padding (content slides) | top 84–96, sides 108, bottom 140 (logo band) | 0.6 / 0.75 / 0.97 |
+| Title → lead | 12–16 | 0.08–0.11 |
+| Title block → main visual | 24–40 | 0.17–0.28 |
+| Gap between cards in a row | 16–24 | 0.11–0.17 |
+| Gap between stacked rows | 10–16 | 0.07–0.11 |
+| Card inner padding | 22–36 | 0.15–0.25 |
+| Pill padding | 6–10 vertical, 14–24 horizontal | — |
+| Table cell padding | 12–22 | 0.08–0.15 |
 
-The logos are part of the backgrounds. Do not add logos separately and never cover the logo tab.
-
-### Fixed slide structures
-
-- **Cover:** title (navy), subtitle (blue), 3 meta lines (week · program · facilitator/mentor). No cards.
-- **Divider:** short yellow accent bar (140 × 12 px), "PART N" label in yellow caps, large white title, white subtitle. No cards.
-- **Split:** yellow accent bar, white title (~62 px), yellow subtitle (~32 px) in the panel; content on the right.
-- **Closing:** yellow pill label ("NEXT SESSION — WEEK X", "BEFORE MILESTONE"), large white title, white description; optional reminder line in the white band.
+**Vertical budget:** a content slide has ~836 px of usable height. Estimate before placing:
+- Text block height ≈ font-size × lines × line-height.
+- Table row ≈ 2.1 × font-size per text line.
+- Card height = content + padding. **Never set a card shorter than its text; let it grow.**
+- If it doesn't fit → split the slide. **Never shrink text below 24 px to make it fit.**
 
 ---
 
-## 5. Layout philosophy
+## 5. Backgrounds (supplied images — never redraw)
 
-1. **Pick the layout from the content.** Ask: what is this slide's idea — a sequence, a comparison, a proportion, a hierarchy, a rise in intensity, a form to fill, a conversation? Draw that.
-2. **No layout more than twice in a row.** Check the sequence after drafting the deck.
-3. **Do not repeat the same card grid or table pattern across a deck.** Tables are for genuinely tabular data (3+ attributes per item) and worksheets.
-4. **Do not copy reference slides literally.** References show the identity; layouts should be fresh.
-5. **Visuals must carry meaning.** A bar's length, a column's height or a donut's slice should reflect a real quantity from the outline (minutes, seconds, levels). Never decorative shapes.
+Five prepared 1920 × 1080 backgrounds. Place each as a **full-bleed picture at the very back** (first layer). Logos are part of the images; never add logos separately or cover the logo tab.
 
-### Layout library (choose by content type)
+| File | Use for | Safe zone (px) |
+|---|---|---|
+| `bg-cover.png` | Slide 1 only | x 125–1360, y 300–1000. Title top, meta bottom-left |
+| `bg-content.png` | Most content slides | x 108–1812, y 84–920. Nothing below y 930 |
+| `bg-split.png` | Case studies, worked examples, "why" slides, recaps, profiles (2–4 per deck) | Left panel x 64–584 (white title, yellow subtitle). Right x 720–1812 |
+| `bg-divider.png` | Section dividers ("Part N"), guest hand-over, Q&A, break | x 110–1812, y 88–880, vertically centered |
+| `bg-closing.png` | Last slide: next session / next steps / thank you | Blue area x 110–1540. Optional one line in white band x 110–1070, y ~830 |
+
+### Fixed structures
+
+- **Cover:** title (navy) → subtitle (blue) → 3 meta lines (week · program · facilitator). No cards.
+- **Divider:** yellow accent bar 140 × 12 px → "PART N" yellow caps label → large white title → white subtitle. No cards.
+- **Split:** yellow accent bar, white title (~62 px), yellow subtitle (~32 px) in the panel; content on the right.
+- **Closing:** yellow pill label ("NEXT SESSION — WEEK X") → large white title → white description.
+
+---
+
+## 6. Elements (exact specs)
+
+| Element | Spec |
+|---|---|
+| **Rounded card** | Radius 16–22 px, padding 22–36 px. No shadows. No gradient fills. |
+| **Header-band card** | White body, 3 px colored border, colored top band (yellow or blue) holding the label/heading. |
+| **Pill / chip** | Fully rounded (radius = height/2), 24 px bold text, height ~40–48 px. For tags, verdicts, durations, module codes. |
+| **HANDS-ON tag** | Golden Yellow pill **beside** the title, 26 px bold, letter-spacing 2 px, text "HANDS-ON". Meta line underneath: "10 minutes, squad". |
+| **Section tag above title** | Optional (Soft Yellow pill, 24 px uppercase). **Default for this team: don't use pills above titles.** Keep titles clean. |
+| **Prompt card** | White card, 3 px Deep Blue border, small blue uppercase label ("PROMPT", "TEMPLATE"), prompt text 24–30 px in quotes, blanks as **[bold bracketed placeholders]** in blue. |
+| **Note box** | Soft Yellow #FFEC8E, radius 16, bold lead-in ("Note:", "Rule:"). Max one per slide. |
+| **Insight bar** | Deep Blue fill, 14 px Golden Yellow left edge, white text, bold yellow lead-in ("Key insight:"). |
+| **Pull-quote line** | Text with a 12 px yellow left bar, no box. |
+| **Stat card** | Solid yellow or blue, big number 64–110 px weight 800 + short caption. Numbers only from the source. |
+| **Number circle / step marker** | Circle 44–72 px, number 24–32 px bold, opposite color of its card (blue circle on yellow, yellow on blue). |
+| **Icon** | Simple line icon 32–48 px inside a 56–76 px circle; icon color contrasts with the circle. |
+| **Verdict pills** | OK = light blue + blue text · Risk = yellow · Wrong = solid blue + white text · Fail = white with dark outline. |
+| **Table** | Deep Blue header row, white semibold text; body rows alternate #EAF2FB / white; no vertical gridlines; first column bold; 24–28 px text; padding 12–22 px. Keep every row. 6+ rows → 24 px. Highlight one row with Pale/Soft Yellow if needed. |
+| **Form / worksheet** | White card, 3 px blue border, blue header strip with uppercase form title + "Participant: ____" on the right, ruled rows (2–3 px #D6E4F5), dashed blank lines for writing, checkbox pills (☐ Ready / ☐ Ready with fixes). |
+| **Chat / message mock** | Grey (#F1F1F1) bubble for "them/before", blue or white-with-blue-border bubble for "us/after"; corner radius 4 px on the speaker side, 22 px elsewhere. Mark mock data as illustrative. |
+| **Connector / arrow** | 4–6 px Deep Blue; solid = flow, dashed (12–16 dash / 8–12 gap) = relationship; small triangular arrowheads. No curved decorative swooshes. |
+| **Row rule** | 2–3 px #D6E4F5 between list rows. |
+| **Image placeholder** | Dashed 3 px #9FB8D6 box, light background, label "IMAGE · FROM ORIGINAL SLIDE N" + description. |
+
+---
+
+## 7. Layout Selection (pick by meaning, not habit)
+
+Ask first: *what is this slide's idea?* Then draw that idea.
 
 | Content type | Layouts that work |
 |---|---|
-| Time split / agenda | Proportional bar, donut, Gantt chart, stacked bar with legend |
-| Sequence / process | Road with milestone markers, stepping stones, chevrons, connected stepper, pill chain with arrows |
-| Cycle / loop | Circular loop diagram, optionally wrapped by an outer ring |
-| Rising intensity / levels | Rising columns, vertical dial with highlighted band, gradient slider with stops |
+| Time split / agenda | Proportional bar (widths = real minutes), Gantt, stacked bar + legend |
+| Sequence / process | Chevrons, connected stepper, road with milestones, stepping stones, pill chain with arrows |
+| Cycle / loop | Circular loop diagram |
+| Rising intensity / levels | Rising columns (height = level), gradient slider with stops |
 | Decision logic | Real Yes/No decision tree with connectors |
-| Comparison (good vs weak) | Center "spine" with good left / weak right; solid blue vs grey panel with VS badge; robust lane vs dashed fragile lane |
+| Comparison (good vs weak) | Blue panel vs grey panel with VS badge; solid lane vs dashed lane; center spine |
 | Before → after / problem → fix | Paired rows: grey "problem" → arrow → blue "fix" |
-| Hierarchy / roles | Org chart with connectors, round-table seating, hub-and-spoke |
+| Hierarchy / roles | Org chart with connectors, hub-and-spoke, stacked layers |
 | People / personas | Persona cards with large initials |
 | Framework with named parts | Stacked blocks forming one whole, pillars, header-band cards |
-| Scenario / case | Mock artifact: email, chat bubble, data file with highlighted gaps, incoming message + sector chips |
-| Worksheet / template | Paper form with blue header strip, ruled rows, checkbox pills |
-| Checklist | Checkbox rows in two columns with a count badge; donut by task time + checkbox list |
-| One big idea | Giant number or pull-quote beside supporting list; insight bar |
-| Takeaways | Ruled numbered list, bookmark cards with footer, icon badge tiles — vary per deck |
-| Reference lists (question banks, criteria) | Columns of quote bubbles under colored headers; numbered tiles with colored top edge |
+| Scenario / case | Mock artifact: email, chat bubble, data table, document, file cards |
+| Worksheet / template | Form with blue header strip, ruled rows, checkbox pills |
+| Checklist | Checkbox rows (1–2 columns) with a count badge |
+| One big idea | Giant number or pull-quote + short support line; insight bar |
+| Takeaways | Ruled numbered list, bookmark cards, icon tiles (vary per deck) |
+| Data | Native chart or bars whose lengths equal the real values; label values directly |
 
-Use split backgrounds for roughly 2–4 slides per deck (openings, case examples, recaps) so the deck has rhythm.
-
----
-
-## 6. Components (exact specs)
-
-Use these consistently; they are what make different layouts feel like one deck.
-
-- **Rounded cards:** radius 16–22 px, padding 22–36 px, no shadows, no gradients on cards.
-- **Header-band card:** white body, 3 px colored border, colored top band with the label.
-- **Part / section tag:** Soft Yellow #FFEC8E pill, 24 px uppercase, above the title (e.g. "AFTER THE GUEST", "REFERENCE").
-- **HANDS-ON tag:** solid Golden Yellow pill beside the title, 26 px bold, letter-spacing 2px, text "HANDS-ON". Every hands-on slide has it; the meta line underneath states time and format ("10 minutes, squad").
-- **Prompt card (AI prompts, sentence templates):** white card, 3 px Deep Blue border, small blue uppercase label ("PROMPT", "TEMPLATE", "PASTE THIS PROMPT"), prompt text 24–30 px in quotes, blanks as **[bold bracketed placeholders]** in blue.
-- **Note box:** Soft Yellow #FFEC8E, radius 16, bold lead-in ("Note:", "Rule:", "Remember:"). Max one per slide.
-- **Insight bar:** Deep Blue background with a 14 px yellow left edge, white text, bold lead-in ("Key insight:", "The leadership shift:").
-- **Pull-quote line:** text with a 12 px yellow left bar, no box.
-- **Stat card:** solid yellow or blue, big number (64–110 px, weight 800) + short caption. Numbers must come from the outline (never invented).
-- **Number circles / step markers:** circle in the opposite color of its card (blue circle on yellow card, yellow circle on blue card).
-- **Icons:** simple line icons inside circles (e.g. Users, Lock, Chart, Wrench, Lightning, Warning, CheckCircle, Clock, Database, Settings). Icon color contrasts with its circle.
-- **Pills / chips:** fully rounded, 24 px bold; used for tags, verdicts, milestone or module codes, durations.
-- **Verdict pills:** OK = light blue with blue text; Risk = yellow; Wrong = solid blue with white text. Pass / Partial / Fail use the same logic (Fail = white with dark outline).
-- **Tables:** Deep Blue header row with white semibold text; body rows alternate #EAF2FB and white; no gridlines; first column bold; cell padding ~12–22 px; 24–28 px text. Keep every row from the outline; for 6+ rows use 24 px, never drop rows.
-- **Forms:** white card with 3 px blue border, blue header strip with an uppercase form title and "Participant: ____" fields on the right, ruled rows inside, checkbox pills for options.
-- **Connectors:** 4–6 px Deep Blue lines, dashed (12–16 / 8–12) for relationships, solid for flow; small triangular arrowheads. No curved decorative swooshes.
-- **Rules between list rows:** 2–3 px #D6E4F5.
+**Rhythm rules**
+1. **No layout more than twice in a row.** Check the sequence after drafting.
+2. Don't make every slide a card grid or a table. Tables only for genuinely tabular data (3+ attributes per item) or worksheets.
+3. **Visuals must carry meaning:** bar length, column height or slice size must reflect a real quantity from the source. Never decorative shapes.
+4. Title always in the same place (top-left of the safe area) on every content slide.
+5. Use split backgrounds 2–4 times per deck for rhythm.
 
 ---
 
-## 7. Content handling (from outlines)
+## 8. How to Create Each Slide (build order)
 
-- **Keep the outline's wording, order and slide count.** Do not add filler text or extra bullets. Small additions (a guest hand-over divider, splitting a to-do list from the closing slide) are allowed only when they serve a template background — say so to the user.
-- **"Visual:" lines** in an outline describe what to draw. Build the visual; never print the line.
-- **Bracket labels** in titles ([HANDS-ON], [SECTION DIVIDER], [AFTER GUEST]) are instructions. Apply them; do not print the brackets.
-- **Facilitator notes** ("Mentor note:", "Note for the facilitator:") go into speaker notes, never on the slide.
-- **Ignore** "End of outline" lines.
-- **Replace emoji** with words (OK, Risk, Wrong, Low, Medium, High).
-- **Never invent facts, numbers, names or dates.** Use visible placeholders: [Name], [X]-minute, [date], [__]%, [channel name]. Mock artifacts (emails, data files) must be marked illustrative and use placeholder values where the outline gives none.
-- **Program facts come from the program, not from this skill.** Take names, case companies, personas, schedules, checkpoint weeks, assessment rules and panel composition only from the outline, program brief or curriculum the user provides for that specific program. If a fact is needed and not provided, use a placeholder and ask the user; never carry facts over from another program or batch.
+1. **Background picture** (full-bleed, back layer).
+2. **Title** (72 px, blue, top-left) → optional **lead line** (30 px) or **meta line** (26 px).
+3. **Main visual** chosen from §7 (one idea per slide).
+4. **Supporting element** (max one): insight bar, note box, or pull-quote.
+5. **Speaker notes** (in the notes pane, never on the slide).
 
----
+**Content handling**
+- Keep the outline's wording, order and slide count.
+- "Visual:" lines describe what to draw; never print them.
+- Bracket labels in titles ([HANDS-ON], [SECTION DIVIDER]) are instructions; apply them, don't print them.
+- Mentor/facilitator notes → speaker notes.
+- Replace emoji with words (✅ OK, ⚠️ Risk, ❌ Wrong).
+- Unknown facts → visible placeholders: [Name], [date], [__]%, [X]-minute. List them for the user.
+- Program facts (names, cases, weeks, rubric) come only from the materials the user provides.
 
-## 8. Speaker notes
-
-Add notes **only** where the instructor needs context. Skip covers, dividers and self-explanatory takeaway slides.
-
-A good note:
-- explains the **intent** of the slide and the one point to land;
-- gives **timing** for exercises and what to watch for while circulating;
-- anticipates **common questions or confusions** and gives the answer;
-- states **expected outcomes / correct answers** when the outline gives them;
-- flags **setup** the facilitator must do beforehand (pick a scenario, prepare a file);
-- uses placeholders for logistics not yet known.
-
-A note must not repeat the slide text. Keep each to 2–6 sentences.
+**Speaker notes:** 2–6 sentences, only where useful: intent, timing, what to watch for, expected answers, setup needed. Never repeat the slide text.
 
 ---
 
-## 9. Quality checklist (run before delivering)
+## 9. Exporting to PPTX (works in PowerPoint, Keynote and Google Slides import)
 
-- [ ] Correct background on every slide; nothing in the footer band or over the logo tab
-- [ ] Only Red Hat Display; titles blue, left-aligned, one line where possible
-- [ ] No text under 24 px; ≤ ~170 words per slide
+### 9.1 File setup
+- Slide size **13.333 × 7.5 in** (pptxgenjs: `LAYOUT_WIDE`; python-pptx: `Inches(13.333) × Inches(7.5)`). Set it **before** adding slides.
+- One slide per source slide, in order. Name each shape meaningfully (e.g., `title`, `card_1`, `insight_bar`).
+- Put speaker notes in the **notes pane** (`slide.addNotes()` / `notes_slide.notes_text_frame`).
+
+### 9.2 Coordinates
+- Convert every px value: **in = px ÷ 144**, **pt = px ÷ 2**, **EMU = px × 6,350**.
+- Example: title at (108, 96) px, 72 px font → x 0.75 in, y 0.667 in, 36 pt.
+
+### 9.3 Backgrounds
+- Insert the background PNG as a full-slide picture (0, 0, 13.333 × 7.5 in) as the **first** object, or set it as the slide background image.
+- Gradients are images only. PPTX gradient shape fills often break across apps.
+
+### 9.4 Text boxes
+- Every text element is a **native, editable text box** (never text baked into an image).
+- Set internal margins to **0** when text must align with shapes (pptxgenjs `margin: 0`; python-pptx `margin_left = 0`, etc.).
+- **Auto-fit off / "Do not autofit"** and word wrap on, so text never silently shrinks below 12 pt.
+- Font: `Red Hat Display` with bold per §2.2. Install the font before opening the file, or PowerPoint substitutes Arial; Google Slides has Red Hat Display built in.
+- Line spacing 1.25–1.3 multiple; paragraph space-after 6–12 pt. Bullets: real bullets (`bullet: true`), never typed "•".
+- Letter spacing for labels: `charSpacing: 1` (pt). (`letterSpacing` is ignored in pptxgenjs.)
+
+### 9.5 Colors
+- Hex without `#` in pptxgenjs (`"005AAB"`). Never 8-digit hex. Transparency via the `transparency` property (0–100).
+- No shadows, glows, bevels or 3D.
+
+### 9.6 Shapes
+- Cards = **Rounded Rectangle**. Corner radius: pptxgenjs `rectRadius` in inches (16–22 px → 0.11–0.15 in); in raw OOXML the `adj` value = radius ÷ min(width, height) × 50,000 (cap 50,000).
+- Pills = Rounded Rectangle with radius = height ÷ 2.
+- Circles = Ellipse with equal width/height.
+- Accent bars (yellow left edge, divider bar) = thin Rectangles, not borders.
+- Borders: 3 px = **1.5 pt**, 2 px = 1 pt; dashed = `dash: "dash"`.
+- Arrows/connectors = native lines or connectors with triangle end-arrowheads, 2–3 pt.
+
+### 9.7 Tables, charts, icons, diagrams
+- **Tables:** native PPTX tables (not images). Header fill 005AAB with white bold text; alternate row fills EAF2FB / FFFFFF; no vertical borders; cell margins 0.08–0.15 in; text ≥ 12 pt.
+- **Charts:** native PPTX charts (`addChart`) with direct data labels, palette colors, light gridlines or none; single series → no legend. Only use an image if PowerPoint has no native form.
+- **Icons:** PNG rendered at ≥ 256 px (or native shapes); never emoji.
+- **Diagrams** (trees, loops, matrices): build from native shapes + connectors when possible so they stay editable. If drawn as SVG, convert to PNG at 2× size and say so.
+- Group related shapes (e.g., a card + its text) so they move together.
+
+### 9.8 Google Slides import notes
+- Import via **File → Import slides → upload .pptx → select all**.
+- Expect: images stay images; native shapes and tables stay editable; spacing may shift a few px; only simple transitions survive (fade, slide/push, dissolve).
+- After import, check: fonts render as Red Hat Display, nothing overlaps the logo tab, tables didn't overflow.
+
+### 9.9 Validate before delivering
+- Open the PPTX in PowerPoint or LibreOffice once, or run a validator (e.g., `validate.py` from the PPTX skill), and render a thumbnail grid to spot overflow.
+- Fix problems in the generator, not by hand-editing the packed XML.
+
+---
+
+## 10. QA Checklist (run on every deck)
+
+- [ ] Correct background on every slide; nothing over the logo tab or below y 930 px
+- [ ] Only Red Hat Display; titles blue, left-aligned, same position on every content slide
+- [ ] No text under 24 px (12 pt); ≤ ~170 words per slide
 - [ ] Only palette colors; no emoji; no white-on-yellow or yellow-on-white text
-- [ ] Parallel items alternate yellow → blue; the conclusion/key message is blue
+- [ ] Parallel items alternate Yellow → Blue; the conclusion/key message is Blue
 - [ ] No layout used more than twice in a row; tables only where data is tabular
-- [ ] Visual proportions match real quantities from the outline
+- [ ] Bars/columns/slices match real quantities from the source
 - [ ] HANDS-ON tag + meta line on every hands-on slide; prompts in prompt cards
-- [ ] Outline wording kept; "Visual:", brackets and facilitator notes handled as instructed
+- [ ] Outline wording kept; "Visual:" lines, bracket labels and mentor notes handled
 - [ ] No invented facts; placeholders visible and listed for the user
-- [ ] Speaker notes on slides that need context, none that just repeat the slide
+- [ ] Speaker notes only where they add context; none that repeat the slide
+- [ ] PPTX: 13.333 × 7.5 in, native editable text and tables, autofit off, notes in notes pane, file opens without repair prompts
 
 ---
 
-## 10. Don'ts (summary)
+## 11. Don'ts (summary)
 
-- Don't recreate or decorate the backgrounds.
+- Don't recreate, redraw or decorate the backgrounds.
 - Don't use a second font, extra colors, emoji, shadows or gradient-filled cards.
+- Don't put pills/tags above slide titles (team preference).
 - Don't make every slide a card grid or a table.
-- Don't copy the reference slides' layouts one-to-one.
+- Don't bake text into images.
 - Don't put facilitator instructions on the slide.
-- Don't invent statistics, dates or names to fill a visual.
+- Don't invent statistics, dates, names or quotes to fill a visual.
+- Don't shrink text to make it fit; split the slide instead.
+
+---
+
+## 12. Adapting to another program (optional)
+
+The structure, spacing, element specs and export rules stay the same. Swap only:
+1. The **palette** (§3): keep the same roles: one primary (conclusions), one partner/accent, one soft tint, one light tint, a grey for "weak" items, and a dark text color.
+2. The **backgrounds** (§5): document each file's purpose and safe zone the same way.
+3. The **program facts**: names, cases, weeks and rubrics always come from that program's own materials.

@@ -16,37 +16,85 @@ interface OutlineItem {
 }
 
 const CHUNK_SYSTEM_PROMPT = `
-You are the elite Slide Worker Engine for Launcher OS (McKinsey, Bain, ITB, and Apple executive standards).
+You are the elite Master Slide Worker Engine for Launcher OS (McKinsey, Bain, ITB, and Apple executive standards).
 Your task is to generate full, richly detailed slide objects for a SPECIFIC BATCH of slides in an executive deck.
 
 === UNIVERSAL SLIDE CONTRACT (FOR CLAUDE, DEEPSEEK, GPT, & GEMINI) ===
-For each slide outline provided in the batch, generate a complete JSON object adhering strictly to the Launcher OS SlideData contract:
-- Layouts available:
-  "hero", "twoColumn", "process", "timeline", "tableComparison", "flowDiagram", "bullets", "stats", "boldStatement", "cardGrid", "keyInsight"
-- Required Universal Fields:
-  - id: unique string (e.g. "slide-1", "slide-2")
-  - layout: one of the valid layouts above
-  - title: ACTION TITLE (5-9 words). A substantive takeaway claim. Left-aligned, one line where possible. NEVER end with a period!
-  - subtitle: crisp strategic context or transition
-  - description: thorough insight (1-2 sentences)
-  - badge: category tag in uppercase (e.g. "STRATEGIC IMPERATIVE", "OPERATIONAL BLUEPRINT", "HANDS-ON", "ITB × REVOU")
-  - speakerNotes: MANDATORY 2-4 sentences of executive speaking guidance (intent of slide, key message to land, timing, and facilitation watch-outs).
-  - bgStyle: "white" | "yellowGradient" | "boldYellow"
-- Layout-specific fields:
-  * If "process": processSteps: [{ "title": "Step 1", "description": "Details" }, ...]
-  * If "timeline": timelineMilestones: [{ "quarter": "Phase 1", "title": "Foundation", "description": "Details" }, ...]
-  * If "tableComparison": tableHeaders: ["Dimension", "Option A", "Option B"], tableRows: [{ "feature": "...", "current": "...", "proposed": "..." }]
-  * If "flowDiagram": flowNodes: [{ "title": "Node 1", "subtitle": "Details", "tag": "01" }, ...]
-  * If "bullets": bullets: ["Key Concept 1: In-depth rationale", "Key Concept 2: In-depth rationale", ...]
-  * If "stats": stats: [{ "value": "95%", "label": "Retention" }, ...] (Use real outline numbers or concrete estimates; NEVER output bracket placeholders like [X] or [TBD])
+For each slide outline provided in the batch, pick the layout that matches the outline's visualLayout and generate a complete JSON object adhering strictly to the Launcher OS SlideData contract:
 
-- STRICT ZERO PLACEHOLDER RULE:
-  * ABSOLUTELY NEVER output placeholder brackets such as "[X]", "[X] months", "[Company]", "[insert date]", "[TBD]".
-  * Always provide realistic, concrete, executive-level values (e.g. "6-12 months", "85%", "Industry Standard").
+AVAILABLE MASTER LAYOUTS & THEIR DATA SCHEMAS:
+1. "sectionDivider" (Section / Module / Part transition):
+   - title: e.g. "Bagian 1: Memahami Risiko", subtitle: "Apa yang dilindungi dan bagaimana serangan berjalan", bgStyle: "boldYellow"
+2. "pairedRows" (Problem vs Solution, Threat vs Response, Weak vs Robust):
+   - title: ACTION CLAIM (e.g. "Ancaman umum dan respons teruji bagi pemimpin")
+   - pairedRows: [
+       { "left": "Phishing: email palsu meminta data atau transfer uang", "right": "Verifikasi lewat kanal kedua sebelum otorisasi", "leftLead": "ANCAMAN", "rightLead": "RESPONS" },
+       { "left": "Kata sandi lemah atau dipakai berulang di berbagai akun", "right": "Wajibkan MFA berbasis aplikasi dan pengelola sandi korporat", "leftLead": "ANCAMAN", "rightLead": "RESPONS" },
+       { "left": "Ransomware mengunci cadangan data operasional", "right": "Pemisahan backup offline (air-gapped) dan simulasi pemulihan berkala", "leftLead": "ANCAMAN", "rightLead": "RESPONS" }
+     ]
+3. "horizontalStack" (Core Tenets, Strategic Pillars, CIA Triad):
+   - title: e.g. "Tiga pilar keamanan informasi sebagai fondasi keputusan data"
+   - stackCards: [
+       { "title": "Kerahasiaan", "tag": "CONFIDENTIALITY", "description": "Hanya pihak berwenang yang dapat mengakses data dan laporan strategis organisasi." },
+       { "title": "Integritas", "tag": "INTEGRITY", "description": "Data tetap akurat, konsisten, dan tidak diubah tanpa otorisasi terverifikasi." },
+       { "title": "Ketersediaan", "tag": "AVAILABILITY", "description": "Sistem dan data dapat diakses seketika saat dibutuhkan untuk pengambilan keputusan." }
+     ]
+4. "connectedRailStepper" (Continuous Rail Process, Attack Chain, Incident Response):
+   - title: e.g. "Rantai serangan siber: deteksi dini membatasi eskalasi"
+   - railSteps: [
+       { "stepNumber": 1, "title": "Pengintaian", "description": "Penyerang memetakan sasaran dan celah keamanan sistem." },
+       { "stepNumber": 2, "title": "Akses Awal", "description": "Penyusupan lewat phishing kredensial atau kerentanan perangkat." },
+       { "stepNumber": 3, "title": "Eskalasi", "description": "Peningkatan hak akses untuk menguasai server utama." },
+       { "stepNumber": 4, "title": "Eksfiltrasi", "description": "Penyalinan atau penguncian data sensitif organisasi." }
+     ]
+5. "ascendingColumns" (Capability Maturity Levels, CMMI, Tiered Escalation):
+   - title: e.g. "Tingkat kematangan postur keamanan siber organisasi"
+   - ascendingLevels: [
+       { "levelNumber": "L1", "title": "Reaktif", "description": "Penanganan insiden ad-hoc tanpa prosedur baku", "tag": "DASAR" },
+       { "levelNumber": "L2", "title": "Terdefinisi", "description": "Kebijakan SOP tertulis dan MFA diterapkan menyeluruh", "tag": "STANDAR" },
+       { "levelNumber": "L3", "title": "Proaktif", "description": "Simulasi red-team dan pemantauan ancaman otomatis 24/7", "tag": "ADVANCED" }
+     ]
+6. "checklist" (Governance & Readiness Checklist, Pre-Launch Verification):
+   - title: e.g. "Daftar periksa kesiapan tata kelola dan kepatuhan data"
+   - checklistItems: [
+       "Audit hak akses akun administratif dilakukan setiap kuartal",
+       "Klasifikasi data rahasia dipatuhi pada seluruh alat kerja AI",
+       "Uji pemulihan cadangan data (disaster recovery) terbukti dalam 4 jam",
+       "Perjanjian keamanan vendor pihak ketiga telah ditandatangani"
+     ]
+7. "closingAction" (Final Action Plan / Executive Mandate):
+   - title: e.g. "Tiga tindakan nyata minggu ini untuk pemimpin"
+   - subtitle: "Langkah konkret yang dapat dimulai hari ini tanpa birokrasi panjang."
+   - actionItems: [
+       { "verb": "01", "text": "Aktifkan MFA pada seluruh akun email dan dokumen pimpinan." },
+       { "verb": "02", "text": "Verifikasi tanggal terakhir pengujian pemulihan backup operasional." },
+       { "verb": "03", "text": "Sepakati aturan tegas klasifikasi data yang dilarang diunggah ke AI publik." }
+     ]
+   - contactFooterText: "Kanal pelaporan insiden atau asistensi: security-desk@organisasi.id"
+   - bgStyle: "boldYellow"
+8. "twoColumn" / "cardGrid":
+   - title: Action headline
+   - bullets: ["Pilar 1: Analisis mendalam...", "Pilar 2: Dampak eksekutif...", "Pilar 3: Mitigasi risiko..."]
+9. "tableComparison": tableHeaders: ["Dimensi", "Saat Ini", "Target Masa Depan"], tableRows: [{ feature: "MFA", current: "Opsional", proposed: "Wajib 100%" }]
+10. "hero": Opening cover slide with title, subtitle, and badge.
+
+UNIVERSAL HIGHLIGHT & NOTE STRIPS:
+- insightBarText: (Optional) 1 punchy sentence summarizing the executive takeaway.
+- noteBoxText: (Optional) 1 facilitator advice or caution note.
+
+REQUIRED UNIVERSAL FIELDS:
+- id: unique string (e.g. "slide-1")
+- layout: one of the valid layouts above
+- title: ACTION TITLE (5-9 words). Never end with a period!
+- subtitle: crisp strategic context or transition
+- speakerNotes: MANDATORY 2-4 sentences of executive speaking guidance.
 
 OUTPUT FORMAT:
 Return ONLY a valid, parseable JSON array containing the detailed slide objects for THIS BATCH.
 No markdown backticks, no explanatory comments.
+
+=== LANGUAGE RULE (SUPREME PRIORITY) ===
+If the user's content or outline explicitly requests a specific language (e.g. "in English", "bahasa inggris"), ALL generated text — titles, subtitles, descriptions, pairedRows content, stackCards content, railSteps content, checklistItems, actionItems, speakerNotes — MUST be written ENTIRELY in that requested language. Do NOT mix languages. The user's language instruction ALWAYS overrides any template examples above.
 `;
 
 export async function POST(req: NextRequest) {
@@ -73,9 +121,29 @@ export async function POST(req: NextRequest) {
       density = "medium",
       bgStylePreference = "mixed",
       customBgColors,
+      templateRulesMarkdown = "",
+      templateName = "",
       clonedStyleDirectives = "",
       clonedReferenceSummary = "",
     } = deckContext;
+
+    const rulesDoc = (templateRulesMarkdown || clonedStyleDirectives || "").trim();
+
+    // ──── LANGUAGE DETECTION from outline content ────
+    const outlineText = JSON.stringify(outlines);
+    const allText = `${outlineText} ${templateRulesMarkdown} ${clonedStyleDirectives}`;
+    let detectedLanguage = "";
+    if (/(?:in\s+english|bahasa\s*inggris|dalam\s*(?:bahasa\s*)?inggris|use\s+english|english\s+(?:language|version|deck|presentation)|LANGUAGE.*English)/i.test(allText)) {
+      detectedLanguage = "English";
+    }
+    // Also detect from headline language: if all headlines are English
+    const headlinesSample = outlines.map((o: OutlineItem) => o.headline || "").join(" ");
+    if (!detectedLanguage && /^[A-Za-z0-9\s\-:,;&'"!?()]+$/.test(headlinesSample) && headlinesSample.length > 20) {
+      detectedLanguage = "English";
+    }
+    const languageDirective = detectedLanguage
+      ? `\n⚠️ MANDATORY LANGUAGE: ALL generated text MUST be in ${detectedLanguage}. Match the language of the outline headlines. Do NOT translate to Indonesian or any other language.\n`
+      : "";
 
     const userPrompt = `
 BATCH DETAILS:
@@ -88,11 +156,31 @@ DECK CONTEXT:
 - Density: ${density}
 - Background Rhythm: ${bgStylePreference}
 ${customBgColors ? `- Custom Palette: Primary ${customBgColors.color1}, Secondary ${customBgColors.color2}, Accent ${customBgColors.color3}` : ""}
-${clonedStyleDirectives ? `\nCLONED STYLE DIRECTIVES FROM USER REFERENCE SLIDE:\nSummary: ${clonedReferenceSummary}\n"""\n${clonedStyleDirectives}\n"""\n` : ""}
+
+${rulesDoc.length > 0 ? `
+================================================================================
+👑 GOVERNING DESIGN CONTRACT & ARCHITECTURAL RULES (.MD) (UNABRIDGED & MANDATORY):
+Source Document: ${templateName || "Institutional Design Specification"}
+================================================================================
+${rulesDoc}
+================================================================================
+MANDATORY COMPLIANCE INSTRUCTIONS:
+- Faithfully study and execute the governing .md document above in its entirety.
+- Every slide in this batch MUST strictly adhere to the visual layout assigned in the OUTLINE BLUEPRINT.
+- Never downgrade or alter layouts to generic bullets. If the outline specifies:
+  * "Paired Rows" -> output "layout": "pairedRows" with "pairedRows": [...]
+  * "Horizontal Stack" -> output "layout": "horizontalStack" with "stackCards": [...]
+  * "Connected Stepper" -> output "layout": "connectedRailStepper" with "railSteps": [...]
+  * "Ascending Columns" -> output "layout": "ascendingColumns" with "ascendingLevels": [...]
+  * "Checklist" -> output "layout": "checklist" with "checklistItems": [...]
+  * "Closing Action" -> output "layout": "closingAction" with "actionItems": [...] and "contactFooterText"
+  * "Section Divider" -> output "layout": "sectionDivider" with "bgStyle": "boldYellow"
+- Strictly adhere to the typography floor: content text must be substantive, informative, and never placeholder brackets.
+` : ""}
 
 OUTLINE BLUEPRINT FOR THIS BATCH:
 ${JSON.stringify(outlines, null, 2)}
-
+${languageDirective}
 Generate exactly ${outlines.length} complete, production-ready slide objects for this batch in strict JSON array format.
 `;
 
@@ -123,6 +211,12 @@ Generate exactly ${outlines.length} complete, production-ready slide objects for
               id: s.id || `chunk-${chunkIndex}-slide-${idx}`,
               slideNumber: outline ? String(outline.slideNumber).padStart(2, "0") : undefined,
               speakerNotes: s.speakerNotes || outline?.speakerNotes || undefined,
+              backgroundImage: s.backgroundImage || resolveSlideBackgroundForChunk(
+                s.layout || outline?.visualLayout || "",
+                s.title || outline?.headline || "",
+                outline?.slideNumber || (chunkIndex * outlines.length + idx + 1),
+                totalChunks * outlines.length
+              ),
             };
           });
 
@@ -170,6 +264,12 @@ Generate exactly ${outlines.length} complete, production-ready slide objects for
               id: s.id || `chunk-${chunkIndex}-slide-${idx}`,
               slideNumber: outline ? String(outline.slideNumber).padStart(2, "0") : undefined,
               speakerNotes: s.speakerNotes || outline?.speakerNotes || undefined,
+              backgroundImage: s.backgroundImage || resolveSlideBackgroundForChunk(
+                s.layout || outline?.visualLayout || "",
+                s.title || outline?.headline || "",
+                outline?.slideNumber || (chunkIndex * outlines.length + idx + 1),
+                totalChunks * outlines.length
+              ),
             };
           });
 
@@ -219,6 +319,12 @@ Generate exactly ${outlines.length} complete, production-ready slide objects for
                 id: s.id || `chunk-${chunkIndex}-slide-${idx}`,
                 slideNumber: outline ? String(outline.slideNumber).padStart(2, "0") : undefined,
                 speakerNotes: s.speakerNotes || outline?.speakerNotes || undefined,
+                backgroundImage: s.backgroundImage || resolveSlideBackgroundForChunk(
+                  s.layout || outline?.visualLayout || "",
+                  s.title || outline?.headline || "",
+                  outline?.slideNumber || (chunkIndex * outlines.length + idx + 1),
+                  totalChunks * outlines.length
+                ),
               };
             });
 
@@ -236,26 +342,31 @@ Generate exactly ${outlines.length} complete, production-ready slide objects for
     }
 
     // Fallback synthesizer per chunk
-    const fallbackSlides = outlines.map((o, idx) => ({
-      id: `fallback-${chunkIndex}-${idx}`,
-      layout: mapLayoutStringToLayout(o.visualLayout),
-      title: o.headline,
-      subtitle: o.subheadline || "Strategic Operational Framework",
-      description: o.description || "Inisiatif menyeluruh untuk memastikan integrasi yang optimal across divisions.",
-      badge: "EXECUTIVE BLUEPRINT",
-      bgStyle: idx === 0 && chunkIndex === 0 ? "boldYellow" : "white",
-      speakerNotes: o.speakerNotes || "Panduan Presenter: Paparkan pesan inti slide ini dengan ringkas dalam 1-2 menit, fokus pada dampak strategis.",
-      bullets: o.bullets || [
-        "Pilar Utama: Standarisasi arsitektur kerja dan efisiensi waktu eksekusi.",
-        "Dampak Terukur: Memaksimalkan transparansi operasional lintas pemangku kepentingan.",
-      ],
-      processSteps: [
-        { title: "Tahap 1: Ingestion", description: "Standardisasi input materi dan verifikasi data." },
-        { title: "Tahap 2: Synthesis", description: "Pemetaan framework dan analisis mendalam." },
-        { title: "Tahap 3: Delivery", description: "Penerapan solusi dan evaluasi dampak strategis." },
-      ],
-      slideNumber: String(o.slideNumber).padStart(2, "0"),
-    }));
+    const fallbackSlides = outlines.map((o, idx) => {
+      const slideLayout = mapLayoutStringToLayout(o.visualLayout);
+      const slideNum = o.slideNumber || (chunkIndex * outlines.length + idx + 1);
+      return {
+        id: `fallback-${chunkIndex}-${idx}`,
+        layout: slideLayout,
+        title: o.headline,
+        subtitle: o.subheadline || "Strategic Operational Framework",
+        description: o.description || "Inisiatif menyeluruh untuk memastikan integrasi yang optimal across divisions.",
+        badge: "EXECUTIVE BLUEPRINT",
+        bgStyle: idx === 0 && chunkIndex === 0 ? "boldYellow" : "white",
+        speakerNotes: o.speakerNotes || "Panduan Presenter: Paparkan pesan inti slide ini dengan ringkas dalam 1-2 menit, fokus pada dampak strategis.",
+        backgroundImage: resolveSlideBackgroundForChunk(slideLayout, o.headline, slideNum, totalChunks * outlines.length),
+        bullets: o.bullets || [
+          "Pilar Utama: Standarisasi arsitektur kerja dan efisiensi waktu eksekusi.",
+          "Dampak Terukur: Memaksimalkan transparansi operasional lintas pemangku kepentingan.",
+        ],
+        processSteps: [
+          { title: "Tahap 1: Ingestion", description: "Standardisasi input materi dan verifikasi data." },
+          { title: "Tahap 2: Synthesis", description: "Pemetaan framework dan analisis mendalam." },
+          { title: "Tahap 3: Delivery", description: "Penerapan solusi dan evaluasi dampak strategis." },
+        ],
+        slideNumber: String(slideNum).padStart(2, "0"),
+      };
+    });
 
     return NextResponse.json({
       success: true,
@@ -270,8 +381,15 @@ Generate exactly ${outlines.length} complete, production-ready slide objects for
 }
 
 function mapLayoutStringToLayout(val?: string): string {
-  if (!val) return "bullets";
+  if (!val) return "twoColumn";
   const lower = val.toLowerCase();
+  if (lower.includes("section") || lower.includes("divider") || lower.includes("pembagi")) return "sectionDivider";
+  if (lower.includes("paired") || lower.includes("masalah dan") || lower.includes("ancaman") || lower.includes("weak")) return "pairedRows";
+  if (lower.includes("horizontal stack") || lower.includes("stack cards") || lower.includes("triad") || lower.includes("tujuan keamanan") || (lower.includes("pillar") && lower.includes("stack"))) return "horizontalStack";
+  if (lower.includes("rail") || lower.includes("stepper") || lower.includes("lifecycle") || lower.includes("rantai serangan")) return "connectedRailStepper";
+  if (lower.includes("ascending") || lower.includes("maturity") || lower.includes("kematangan") || lower.includes("intensity")) return "ascendingColumns";
+  if (lower.includes("checklist") || lower.includes("periksa") || lower.includes("governance")) return "checklist";
+  if (lower.includes("closing") || lower.includes("tindakan") || lower.includes("next step") || lower.includes("langkah")) return "closingAction";
   if (lower.includes("hero") || lower.includes("cover") || lower.includes("title")) return "hero";
   if (lower.includes("two") || lower.includes("column") || lower.includes("split")) return "twoColumn";
   if (lower.includes("process") || lower.includes("step")) return "process";
@@ -280,5 +398,72 @@ function mapLayoutStringToLayout(val?: string): string {
   if (lower.includes("flow") || lower.includes("diagram") || lower.includes("architecture")) return "flowDiagram";
   if (lower.includes("stat") || lower.includes("metric") || lower.includes("number")) return "stats";
   if (lower.includes("bold") || lower.includes("impact") || lower.includes("cta")) return "boldStatement";
-  return "bullets";
+  return "twoColumn";
 }
+
+function resolveSlideBackgroundForChunk(
+  layout: string,
+  title: string,
+  slideNum: number,
+  totalSlides: number = 20
+): string {
+  if (slideNum === 1) {
+    return "/bg-deck/itb-deck/cover-deck.png";
+  }
+
+  const isLast = totalSlides > 0 && slideNum >= totalSlides;
+  const lowerLayout = (layout || "").toLowerCase();
+  const lowerTitle = (title || "").toLowerCase();
+
+  // Closing / Wrap-up
+  if (
+    isLast ||
+    lowerLayout.includes("closing") ||
+    lowerTitle.includes("closing") ||
+    lowerTitle.includes("penutup") ||
+    lowerTitle.includes("kesimpulan") ||
+    lowerTitle.includes("next step") ||
+    lowerTitle.includes("langkah berikutnya") ||
+    lowerTitle.includes("tindakan selanjutnya") ||
+    lowerTitle.includes("action plan") ||
+    lowerTitle.includes("terima kasih") ||
+    lowerTitle.includes("thank you")
+  ) {
+    return "/bg-deck/itb-deck/closing-deck.png";
+  }
+
+  // Section divider / Part transition (can repeat multiple times)
+  if (
+    lowerLayout.includes("section") ||
+    lowerLayout.includes("divider") ||
+    lowerTitle.includes("bagian ") ||
+    lowerTitle.includes("part ") ||
+    lowerTitle.includes("modul ") ||
+    lowerTitle.includes("bab ") ||
+    lowerTitle.includes("agenda utama")
+  ) {
+    return "/bg-deck/itb-deck/part-deck.png";
+  }
+
+  // Task / Workshop / Exercise / Speaker / Case study (can repeat multiple times)
+  if (
+    lowerLayout.includes("case") ||
+    lowerLayout.includes("poll") ||
+    lowerTitle.includes("hands-on") ||
+    lowerTitle.includes("latihan") ||
+    lowerTitle.includes("workshop") ||
+    lowerTitle.includes("tugas") ||
+    lowerTitle.includes("speaker") ||
+    lowerTitle.includes("pembicara") ||
+    lowerTitle.includes("fasilitator") ||
+    lowerTitle.includes("instruktur") ||
+    lowerTitle.includes("studi kasus") ||
+    lowerTitle.includes("simulasi")
+  ) {
+    return "/bg-deck/itb-deck/task-speaker-deck.png";
+  }
+
+  // Default: Content deck (most frequent, vast majority of slides)
+  return "/bg-deck/itb-deck/content-deck.png";
+}
+

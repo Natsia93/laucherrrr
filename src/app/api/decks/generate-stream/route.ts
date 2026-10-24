@@ -49,7 +49,14 @@ export interface SlideData {
     | "splitPoll"
     | "interactiveCase"
     | "breakSlide"
-    | "keyInsight";
+    | "keyInsight"
+    | "sectionDivider"
+    | "pairedRows"
+    | "horizontalStack"
+    | "connectedRailStepper"
+    | "ascendingColumns"
+    | "checklist"
+    | "closingAction";
   bgStyle?: "white" | "yellowGradient" | "boldYellow";
   title: string;
   subtitle?: string;
@@ -98,6 +105,15 @@ export interface SlideData {
   calloutBox?: { title?: string; text: string; variant?: "yellow" | "black" | "accent" | "gray" };
   promptBox?: { label: string; prompt: string };
   quote?: { text: string; author?: string };
+  pairedRows?: Array<{ left: string; right: string; leftLead?: string; rightLead?: string }>;
+  stackCards?: Array<{ title: string; tag?: string; description: string }>;
+  railSteps?: Array<{ stepNumber?: number | string; title: string; description?: string }>;
+  ascendingLevels?: Array<{ levelNumber?: string | number; title: string; description?: string; tag?: string }>;
+  checklistItems?: string[];
+  insightBarText?: string;
+  noteBoxText?: string;
+  contactFooterText?: string;
+  speakerNotes?: string;
   topRightPill?: string;
   ctaText?: string;
   footer?: string;
@@ -116,83 +132,107 @@ Your mission is to strictly follow the user's instructions and prompt while tran
 - PRESERVE 100% OF KEY USER FACTS, domain-specific terminology, technical concepts, and structural logic. Elevate informal phrasing into crisp, authoritative executive language.
 
 === 2. VISUAL LAYOUT CATALOG & STRICT DATA CONTRACTS ===
-Choose the layout that BEST visualizes the specific slide content, or follows the user's explicit layout request. Each layout requires specific JSON fields:
+Choose the layout that BEST visualizes the specific slide content, or follows the active template guidelines. Each layout requires specific JSON fields:
 
 1. "hero" (Title / Cover / Opening / Major Milestone):
    - Fields: title, subtitle, description, badge, category, bgStyle ("white" | "yellowGradient" | "boldYellow")
 
-2. "bullets" (Rich Multi-Card Insights / Core Concepts):
+2. "sectionDivider" (Section / Module / Part Break Slide):
+   - Use for starting a major section, module, or topic transition.
+   - Fields: title (Large bold claim), subtitle, badge ("BAGIAN 1" | "MODUL 2" | "PART A"), bgStyle: "boldYellow"
+
+3. "pairedRows" (Problem → Solution / Weak → Robust / Threat → Mitigation):
+   - Perfect for comparisons where each problem/issue maps directly to a concrete operational fix.
+   - Fields: title, subtitle, badge
+   - pairedRows: [
+       { "left": "Clear statement of the problem or vulnerability", "right": "Concrete operational fix or response" },
+       { "left": "Second issue or weak practice", "right": "Second countermeasure or standard" },
+       { "left": "Third issue or risk", "right": "Third countermeasure or standard" }
+     ]
+   - Optional: insightBarText ("Key leadership shift: explanation of the overarching principle")
+
+4. "horizontalStack" (Parallel Strategic Pillars / CIA Triad / Core Dimensions):
+   - Ideal for 2 to 4 equal-weight core principles, definitions, or foundational pillars.
+   - Fields: title, subtitle, badge
+   - stackCards: [
+       { "title": "Pillar 1 Title", "tag": "UPPERCASE TAG", "description": "Concise executive definition or operational mandate." },
+       { "title": "Pillar 2 Title", "tag": "UPPERCASE TAG", "description": "Concise executive definition or operational mandate." },
+       { "title": "Pillar 3 Title", "tag": "UPPERCASE TAG", "description": "Concise executive definition or operational mandate." }
+     ]
+   - Optional: noteBoxText ("Rule or Note: specific context for applying these pillars")
+
+5. "connectedRailStepper" (Continuous Rail Step Process / Sequential Lifecycle):
+   - Best for 4 to 5 sequential phases (e.g. Detect → Isolate → Investigate → Recover → Evaluate).
+   - Fields: title, subtitle, badge
+   - railSteps: [
+       { "stepNumber": 1, "title": "Phase 1 Name", "description": "Crisp action required in phase 1." },
+       { "stepNumber": 2, "title": "Phase 2 Name", "description": "Crisp action required in phase 2." },
+       { "stepNumber": 3, "title": "Phase 3 Name", "description": "Crisp action required in phase 3." },
+       { "stepNumber": 4, "title": "Phase 4 Name", "description": "Crisp action required in phase 4." },
+       { "stepNumber": 5, "title": "Phase 5 Name", "description": "Crisp action required in phase 5." }
+     ]
+   - Optional: insightBarText ("Wawasan kunci: single most critical lesson across this lifecycle")
+
+6. "ascendingColumns" (Progressive Maturity Levels / Tiered Escalation):
+   - Best for staged growth, capability maturity models, or rising intensity.
+   - Fields: title, subtitle, badge
+   - ascendingLevels: [
+       { "tag": "LEVEL 1", "title": "Initial / Reactive", "description": "Ad-hoc actions taken only after incidents." },
+       { "tag": "LEVEL 2", "title": "Managed / Standard", "description": "Defined policies and basic controls active." },
+       { "tag": "LEVEL 3", "title": "Measured / Quantitative", "description": "Metrics and automated telemetry active." },
+       { "tag": "LEVEL 4", "title": "Adaptive / Optimized", "description": "Continuous learning and proactive refinement." }
+     ]
+
+7. "checklist" (Governance Checklist / Operational Verification Matrix):
+   - Best for audit requirements, leadership sign-offs, and verification steps (4 to 8 items).
+   - Fields: title, subtitle, badge ("CHECKLIST" | "6 BUTIR")
+   - checklistItems: [
+       "Concrete verification item 1",
+       "Concrete verification item 2",
+       "Concrete verification item 3",
+       "Concrete verification item 4",
+       "Concrete verification item 5",
+       "Concrete verification item 6"
+     ]
+
+8. "closingAction" (Next Steps / Action Plan / Immediate Leadership Commitments):
+   - Best for concluding deck with immediate, practical, high-conviction actions.
+   - Fields: title ("Three Actions This Week" / "Langkah Konkret"), subtitle, badge ("LANGKAH BERIKUTNYA")
+   - bullets: ["Concrete action 1 to take immediately", "Concrete question to ask the team", "Concrete policy to establish today"]
+   - contactFooterText: "Helpdesk or contact info: [department contact / security channel]"
+
+9. "bullets" (Rich Multi-Card Insights / Core Concepts):
    - Fields: title, subtitle, description, badge, bullets: ["Concept 1: In-depth rationale & impact", "Concept 2: In-depth rationale & impact", "Concept 3: In-depth rationale & impact"]
 
-3. "twoColumn" (Side-by-Side Comparison / Problem vs Opportunity / Dual Perspectives):
-   - Fields: title, subtitle, badge, bullets: ["Perspective A point 1", "Perspective A point 2"], description: "Perspective B synthesis or contextual explanation"
+10. "twoColumn" (Side-by-Side Comparison / Dual Perspectives):
+    - Fields: title, subtitle, badge, bullets: ["Perspective A point 1", "Perspective A point 2"], description: "Perspective B synthesis or contextual explanation"
 
-4. "tableComparison" (Multi-Dimension Comparison Matrix / Feature Comparison):
-   - Fields: title, subtitle, badge
-   - tableHeaders: ["Dimension / Feature", "Current State / Option A", "Proposed / Option B"]
-   - tableRows: [
-       { "feature": "Dimension 1", "current": "Details", "proposed": "Details" },
-       { "feature": "Dimension 2", "current": "Details", "proposed": "Details" },
-       { "feature": "Dimension 3", "current": "Details", "proposed": "Details" }
-     ]
-   - *CRITICAL*: ONLY use tableComparison when you provide a real, meaningful tableRows array with actual comparative content!
+11. "tableComparison" (Multi-Dimension Comparison Matrix / Feature Comparison):
+    - Fields: title, subtitle, badge, tableHeaders: ["Dimension", "Current", "Proposed"], tableRows: [{ "feature": "Dim 1", "current": "...", "proposed": "..." }]
 
-5. "process" or "chevronProcess" (Sequential Steps / SOP / Implementation Stages):
-   - Fields: title, subtitle, badge
-   - processSteps: [
-       { "title": "Step 1: Ingestion", "description": "Operational detail of step 1" },
-       { "title": "Step 2: Analysis", "description": "Operational detail of step 2" },
-       { "title": "Step 3: Execution", "description": "Operational detail of step 3" }
-     ]
+12. "flowDiagram" (System Architecture / Connected Workflow):
+    - Fields: title, subtitle, badge, flowNodes: [{ "title": "Stage 1", "subtitle": "Details", "tag": "01" }, { "title": "Stage 2", "subtitle": "Details", "tag": "02" }]
 
-6. "timeline" (Milestones / Quarters / Phased Roadmap):
-   - Fields: title, subtitle, badge
-   - timelineMilestones: [
-       { "quarter": "Phase 1", "title": "Foundation", "description": "Milestone description", "status": "done" },
-       { "quarter": "Phase 2", "title": "Deployment", "description": "Milestone description", "status": "active" },
-       { "quarter": "Phase 3", "title": "Scaling", "description": "Milestone description", "status": "planned" }
-     ]
+13. "stats" (Key Quantitative Metrics):
+    - ONLY use when real numerical data exists in user content!
+    - Fields: title, subtitle, badge, stats: [{ "value": "94%", "label": "Retention Rate" }]
 
-7. "flowDiagram" (End-to-End System Architecture / Connected Workflow):
-   - Fields: title, subtitle, badge
-   - flowNodes: [
-       { "title": "Input", "subtitle": "Source data ingestion", "tag": "01" },
-       { "title": "Processing", "subtitle": "Automated reasoning", "tag": "02" },
-       { "title": "Delivery", "subtitle": "Stakeholder deployment", "tag": "03" }
-     ]
+14. "keyInsight" (Executive Pull-Quote / Highlight Synthesis):
+    - Fields: title, subtitle, description, badge, quote: { "text": "Core quote or guiding thesis", "author": "Source or Executive Takeaway" }
 
-8. "cardGrid" (Multi-Card Pillars / 3-Column Topic Cards):
-   - Fields: title, subtitle, badge
-   - cards: [
-       { "title": "Pillar 1", "bullets": ["Action item 1", "Action item 2"], "footer": "Key takeaway" },
-       { "title": "Pillar 2", "bullets": ["Action item 1", "Action item 2"], "footer": "Key takeaway" },
-       { "title": "Pillar 3", "bullets": ["Action item 1", "Action item 2"], "footer": "Key takeaway" }
-     ]
-
-9. "stats" (Key Quantitative Metrics):
-   - ONLY use when real numbers exist in user content!
-   - Fields: title, subtitle, badge, stats: [{ "value": "94%", "label": "Retention Rate" }, { "value": "3.5x", "label": "Throughput" }]
-
-10. "chartBar" or "chartDonut" (Quantitative Visual Chart):
-   - ONLY use when numerical breakdown series exist!
-   - Fields: title, subtitle, badge, chartData: [{ "name": "Segment A", "value": 45 }, { "name": "Segment B", "value": 30 }]
-
-11. "keyInsight" (Executive Pull-Quote / Highlight Synthesis):
-   - Fields: title, subtitle, description, badge, quote: { "text": "Core quote or guiding thesis", "author": "Source or Executive Takeaway" }
-
-12. "boldStatement" or "cta" (Action Plan / Closing Commitment / Call to Action):
-   - Fields: title, subtitle, description, badge, bgStyle: "boldYellow", ctaText: "Strategic Action Headline →"
-
-13. "breakSlide" (Session Break / Pause):
-   - Fields: title, subtitle, badge: "SESSION PAUSE", bgStyle: "boldYellow", ctaText: "Resuming shortly"
-
-=== 3. STRICT ZERO PLACEHOLDER RULE (NEVER LEAVE BRACKETED PLACEHOLDERS) ===
-- ABSOLUTELY NEVER output placeholder brackets such as "[X]", "[X] months", "[Company]", "[insert date]", "[TBD]", "[number]".
-- If exact values are not in the prompt, intelligently infer realistic, professional, concrete values (e.g., instead of "[X] months", write "6-12 months" or "18 months"; instead of "[Company]", use the actual entity name or industry leader).
-- Every title, subtitle, bullet, and description must be complete, polished, and ready for an executive boardroom.
+=== 3. TEMPLATE-AGNOSTIC & DYNAMIC DESIGN RULES ===
+- If a custom design guideline, institutional template (e.g. ITB, UI, Binus, ITS), or reference style is provided in the prompt, STRICTLY ADAPT to that template's rules:
+  * Emulate its tone of voice, terminology, and component preferences.
+  * Do not invent arbitrary decorations not supported by the template.
+- ACTION TITLES: Every slide title MUST state the core conclusion/claim in an active sentence (5-9 words), NEVER end with a period.
+- SPEAKER NOTES: Provide "speakerNotes" for EVERY slide (2-4 sentences explaining pedagogical intent, key takeaway, and timing).
+- NO INVENTED NUMBERS: Never invent fake metrics. If numbers are not in the prompt, use qualitative logic or visible bracket placeholders like [X]%.
 
 === 4. OUTPUT FORMAT ===
 Return ONLY a valid, parseable JSON array of slide objects matching the schema. No markdown codeblock wrapper, no preamble, no commentary.
+
+=== 5. LANGUAGE RULE (SUPREME PRIORITY) ===
+If the user's content explicitly requests a specific language (e.g. "in English", "bahasa inggris", "dalam bahasa Inggris"), ALL generated text — titles, subtitles, descriptions, bullets, processSteps, speakerNotes, and every text field — MUST be written ENTIRELY in that requested language. Do NOT mix languages. Do NOT default to Indonesian when English is requested. The user's language instruction ALWAYS overrides template examples.
 `;
 
 function extractDashSlideBlocks(text: string): string[] {
@@ -233,9 +273,28 @@ export async function POST(req: NextRequest) {
       layoutMood = "framework",
       specialNotes = "",
       customBrainInstruction = "",
+      templateRulesMarkdown = "",
+      templateName = "",
       clonedStyleDirectives = "",
       clonedReferenceSummary = "",
     } = body;
+
+    const rulesDoc = (templateRulesMarkdown || clonedStyleDirectives || "").trim();
+
+    // ──── LANGUAGE DETECTION ────
+    let detectedLanguage = "";
+    if (/(?:in\s+english|bahasa\s*inggris|dalam\s*(?:bahasa\s*)?inggris|use\s+english|english\s+(?:language|version|deck|presentation))/i.test(content)) {
+      detectedLanguage = "English";
+    } else if (/(?:bahasa\s*indonesia|dalam\s*(?:bahasa\s*)?indonesia|gunakan\s*(?:bahasa\s*)?indonesia|indonesian)/i.test(content)) {
+      detectedLanguage = "Indonesian (Bahasa Indonesia)";
+    } else if (/(?:bahasa\s*jepang|japanese|日本語)/i.test(content)) {
+      detectedLanguage = "Japanese";
+    } else if (/(?:bahasa\s*mandarin|chinese|中文)/i.test(content)) {
+      detectedLanguage = "Chinese";
+    }
+    const languageDirective = detectedLanguage
+      ? `\n⚠️ MANDATORY LANGUAGE OVERRIDE: ALL generated slide text (titles, subtitles, descriptions, bullets, processSteps, stats labels, speakerNotes, and every text field) MUST be written ENTIRELY in ${detectedLanguage}. Do NOT use any other language. This is the highest priority rule.\n`
+      : "";
 
     // 1. Detect explicit #Slide format (#Slide 1 .. #Slide N or Slide 1:)
     const explicitSlideMatches = [...content.matchAll(/(?:^|\n)\s*#?\s*Slide\s*\d+[^\n]*/gi)];
@@ -295,14 +354,36 @@ PRESENTATION PARAMETERS:
 - Deck Purpose: ${purpose}
 - Special Notes/Instructions: ${specialNotes || "None"}
 ${customBrainInstruction && customBrainInstruction.trim().length > 0 ? `\nUSER CUSTOM AI BRAIN & GUIDELINES (ACTIVE):\n"""\n${customBrainInstruction.trim()}\n"""\n` : ""}
-${clonedStyleDirectives && clonedStyleDirectives.trim().length > 0 ? `\nVISUAL STYLE CLONED FROM USER REFERENCE SLIDE:\nSummary: ${clonedReferenceSummary || "Reference Slide Style"}\nDirectives:\n"""\n${clonedStyleDirectives.trim()}\n"""\nStrictly emulate this layout rhythm, card hierarchy, and styling aesthetics.\n` : ""}
+
+${rulesDoc.length > 0 ? `
+================================================================================
+👑 GOVERNING DESIGN CONTRACT & ARCHITECTURAL RULES (.MD) (UNABRIDGED & MANDATORY):
+Source Document: ${templateName || "Institutional Design Specification"}
+================================================================================
+${rulesDoc}
+================================================================================
+MANDATORY COMPLIANCE INSTRUCTIONS:
+- Faithfully study and execute the governing .md document above in its entirety.
+- Use the visual archetypes specified in the document:
+  * "pairedRows": Problems vs Solutions / Threats vs Responses / Weak vs Robust
+  * "horizontalStack": Strategic core pillars / CIA Triad (3-4 full-width stack cards)
+  * "connectedRailStepper": Continuous lifecycle / attack chain stepper
+  * "ascendingColumns": Tiered maturity levels / intensity scale
+  * "checklist": 2-column governance verification checklist
+  * "closingAction": Final executive action plan + contact footer
+  * "sectionDivider": High-contrast section / module transition
+  * "tableComparison": Structured matrix table
+  * "twoColumn": Full-width multi-card layout
+- Obey the Rule of Rhythm: Never repeat the same layout more than twice in a row.
+- Formulate substantive Action Titles (5-9 words) with NO trailing period.
+` : ""}
 
 INSTRUCTIONS:
-- Adapt layouts naturally to the content: use "bullets", "twoColumn", "process", "timeline", "tableComparison", "hero", "stats" (only if numbers exist), and "boldStatement".
+- Adapt layouts naturally to the content by selecting the best Master Archetypes ("pairedRows", "horizontalStack", "connectedRailStepper", "ascendingColumns", "checklist", "closingAction", "sectionDivider", "tableComparison", "twoColumn", "stats", "hero").
 - DO NOT generate Bar Charts or Pie/Donut Charts unless the content explicitly includes numerical breakdown data!
 - Ensure all text from the user's outline is preserved in rich, clear format.
 - Adhere to the user's custom brain and persona guidelines above.
-
+${languageDirective}
 Generate exactly ${targetSlides} structured slides in strict JSON array format.
 `;
 
@@ -639,52 +720,87 @@ function mapVisualTextToLayout(visualText: string, rawCopy: string, title: strin
   const t = (title || "").toLowerCase();
   const c = (rawCopy || "").toLowerCase();
 
-  // 1. Break / Section Divider
-  if (v.includes("break") || v.includes("section divider") || t.includes("break:") || t.includes("istirahat")) {
+  // 1. Section Divider / Module Transition
+  if (v.includes("section divider") || v.includes("pembagi bab") || (t.startsWith("bagian ") || t.startsWith("part ") || t.startsWith("modul "))) {
+    return { layout: "sectionDivider", bgStyle: "boldYellow" };
+  }
+
+  // 2. Break Slide (Session Pause)
+  if (v.includes("break") || t.includes("break:") || t.includes("istirahat")) {
     return { layout: "breakSlide", bgStyle: "boldYellow", ctaText: "We resume shortly" };
   }
 
-  // 2. Table / Matrix / Comparison
-  if (hasMarkdownTable || v.includes("table") || v.includes("matrix") || v.includes("matriks") || v.includes("tabel") || v.includes("convergence map") || v.includes("decision matrix") || v.includes("comparison table")) {
+  // 3. Paired Rows (Problem → Solution / Threat → Mitigation / Weak → Robust)
+  if (v.includes("paired") || v.includes("masalah") || v.includes("ancaman dan respons") || t.includes("ancaman") || t.includes("kelemahan dan perbaikan") || (c.includes("→") && c.split("→").length >= 3)) {
+    return { layout: "pairedRows", bgStyle: "white" };
+  }
+
+  // 4. Horizontal Stack Cards (CIA Triad / Strategic Core Pillars)
+  if (v.includes("horizontal stack") || v.includes("stack cards") || v.includes("triad") || t.includes("tiga tujuan") || (v.includes("pillar") && v.includes("horizontal"))) {
+    return { layout: "horizontalStack", bgStyle: "white" };
+  }
+
+  // 5. Connected Rail Stepper (Continuous Rail Stepper / Sequential Lifecycle)
+  if (v.includes("connected stepper") || v.includes("rail") || t.includes("rantai serangan") || t.includes("respons insiden") || (v.includes("stepper") && v.includes("rail"))) {
+    return { layout: "connectedRailStepper", bgStyle: "white" };
+  }
+
+  // 6. Ascending Columns (Progressive Maturity Levels / Tiered Escalation)
+  if (v.includes("ascending") || v.includes("intensity") || v.includes("level kematangan") || t.includes("level kematangan") || v.includes("maturity")) {
+    return { layout: "ascendingColumns", bgStyle: "white" };
+  }
+
+  // 7. Executive Checklist (2-Column Governance Checklist)
+  if (v.includes("checklist") || v.includes("daftar periksa") || t.includes("checklist")) {
+    return { layout: "checklist", bgStyle: "white" };
+  }
+
+  // 8. Closing Action Plan / Next Steps (Final Slide)
+  if (index === totalSlides - 1 || v.includes("closing") || v.includes("what's next") || t.includes("tiga tindakan") || t.includes("langkah berikutnya") || v.includes("tindakan minggu ini")) {
+    return { layout: "closingAction", bgStyle: "boldYellow", ctaText: "Execute Next Steps →" };
+  }
+
+  // 9. Table / Matrix / Comparison
+  if (hasMarkdownTable || v.includes("table") || v.includes("matrix") || v.includes("matriks") || v.includes("tabel") || v.includes("decision matrix") || v.includes("comparison table")) {
     return { layout: "tableComparison", bgStyle: "white" };
   }
 
-  // 3. Hero / Title / Cover
-  if (v.includes("title layout") || v.includes("hero") || v.includes("cover") || v.includes("opening")) {
+  // 10. Hero / Title / Cover
+  if (v.includes("title layout") || v.includes("hero") || v.includes("cover") || v.includes("opening") || index === 0) {
     return { layout: "hero", bgStyle: index === 0 ? "white" : "yellowGradient" };
   }
 
-  // 4. Timeline / Roadmap / Milestones
-  if (v.includes("timeline") || v.includes("roadmap") || v.includes("milestone") || v.includes("linimasa") || t.includes("roadmap") || t.includes("timeline") || t.includes("linimasa")) {
+  // 11. Timeline / Roadmap / Milestones
+  if (v.includes("timeline") || v.includes("roadmap") || v.includes("milestone") || v.includes("linimasa") || t.includes("roadmap") || t.includes("timeline")) {
     return { layout: "timeline", bgStyle: "white" };
   }
 
-  // 5. Process / Step / SOP / Framework
+  // 12. Process / Step / SOP / Framework
   if (v.includes("step") || v.includes("process") || v.includes("how-to") || v.includes("framework") || v.includes("stages") || v.includes("alur") || t.includes("framework") || t.includes("langkah") || t.includes("tahapan")) {
     return { layout: "process", bgStyle: "white" };
   }
 
-  // 6. Flow Diagram / Architecture / Wiring
-  if (v.includes("flow diagram") || v.includes("architecture") || v.includes("wiring") || v.includes("bridge") || (v.includes("flow") && !v.includes("working capital"))) {
+  // 13. Flow Diagram / Architecture / Wiring
+  if (v.includes("flow diagram") || v.includes("architecture") || v.includes("wiring") || (v.includes("flow") && !v.includes("working capital"))) {
     return { layout: "flowDiagram", bgStyle: "white" };
   }
 
-  // 7. Card Grid / 3-Column / Pillars
-  if (v.includes("three-column") || v.includes("card grid") || v.includes("three-card") || v.includes("pillar") || v.includes("3-column") || v.includes("cards")) {
+  // 14. Card Grid / 3-Column / Pillars
+  if (v.includes("three-column") || v.includes("card grid") || v.includes("three-card") || v.includes("pillar") || v.includes("cards")) {
     return { layout: "cardGrid", bgStyle: "white" };
   }
 
-  // 8. Two Column / Split-Screen / Side-by-Side / Contrast
+  // 15. Two Column / Split-Screen / Side-by-Side / Contrast
   if (v.includes("two-column") || v.includes("two column") || v.includes("split") || v.includes("contrast") || v.includes("side-by-side") || t.includes("vs") || t.includes("versus")) {
     return { layout: "twoColumn", bgStyle: "white" };
   }
 
-  // 9. Stats / Metrics
+  // 16. Stats / Metrics
   if (v.includes("stat") || v.includes("metric") || v.includes("kpi") || v.includes("angka")) {
     return { layout: "stats", bgStyle: "white" };
   }
 
-  // 10. Charts
+  // 17. Charts
   if (v.includes("bar chart") || v.includes("grafik batang")) {
     return { layout: "chartBar", bgStyle: "white" };
   }
@@ -692,37 +808,31 @@ function mapVisualTextToLayout(visualText: string, rawCopy: string, title: strin
     return { layout: "chartDonut", bgStyle: "white" };
   }
 
-  // 11. Key Insight / Pull-Quote / Highlight / Synthesis
+  // 18. Key Insight / Pull-Quote / Highlight / Synthesis
   if (v.includes("key insight") || v.includes("pull-quote") || v.includes("quote") || v.includes("synthesis") || v.includes("takeaway") || c.includes("> *\"") || c.includes("> \"") || t.includes("💡")) {
     return { layout: "keyInsight", bgStyle: "yellowGradient" };
   }
 
-  // 12. Case Study / Case Card / Scenario
+  // 19. Case Study / Case Card / Scenario
   if (v.includes("case study") || v.includes("case card") || v.includes("kasus") || v.includes("scenario")) {
     return { layout: "caseStudy", bgStyle: "white" };
   }
 
-  // 13. Poll / Quiz / Reflection / Debrief
-  if (v.includes("quiz") || v.includes("poll") || v.includes("reflection") || v.includes("debrief") || v.includes("quick check") || t.includes("quick check") || t.includes("poll:") || t.includes("debrief:") || c.includes("❓")) {
-    return { layout: "boldImpact", bgStyle: "white" };
-  }
-
-  // 14. Action List / Objectives
-  if (v.includes("action list") || v.includes("objectives") || v.includes("action verb") || /^\s*1\.\s*\*\*/m.test(rawCopy)) {
-    return { layout: "actionList", bgStyle: "white" };
-  }
-
-  // 15. Closing / Next Steps / CTA
-  if (v.includes("closing") || v.includes("what's next") || v.includes("cta") || t.includes("what's next") || t.includes("action plan") || t.includes("kesimpulan")) {
-    return { layout: "cta", bgStyle: "boldYellow", ctaText: "Execute Next Steps →" };
-  }
-
-  // 16. Fallback: index 0 is hero only if totalSlides > 1 and no other layout specified
+  // 16. Fallback Storytelling Arc:
+  // Slide 1: Hero / Cover
   if (index === 0 && totalSlides > 1) {
     return { layout: "hero", bgStyle: "white" };
   }
 
-  return { layout: "bullets", bgStyle: "white" };
+  // Final Slide: Bold Statement / Call to Action close
+  if (index === totalSlides - 1 && totalSlides >= 3) {
+    return { layout: "boldStatement", bgStyle: "boldYellow", ctaText: "Execute Next Steps →" };
+  }
+
+  // Middle Slides: Dynamic Visual Rotation (Anti-Monoton Arc)
+  const middleLayouts: SlideData["layout"][] = ["twoColumn", "process", "timeline", "tableComparison", "cardGrid", "bullets"];
+  const dynamicLayout = middleLayouts[(index - 1) % middleLayouts.length];
+  return { layout: dynamicLayout, bgStyle: "white" };
 }
 
 // ──── 1. PARSER: 5-Dash Separated Markdown Format (----- or ---) ────
@@ -818,16 +928,58 @@ function parseDashSeparatedDeckFormat(rawContent: string, bgStylePreference: str
       });
     }
 
-    if (layout === "timeline" && bullets && bullets.length > 0) {
-      timelineMilestones = bullets.map((b, idx) => {
-        const parts = b.split(/:\s*|\s*-\s*/);
+    let pairedRows: SlideData["pairedRows"] = undefined;
+    let stackCards: SlideData["stackCards"] = undefined;
+    let railSteps: SlideData["railSteps"] = undefined;
+    let ascendingLevels: SlideData["ascendingLevels"] = undefined;
+    let checklistItems: SlideData["checklistItems"] = undefined;
+
+    if (layout === "pairedRows" && bullets && bullets.length > 0) {
+      pairedRows = bullets.map((b) => {
+        const parts = b.split(/\s*→\s*|\s*->\s*|\s*:\s*|\s*vs\.?\s*/i);
         return {
-          quarter: `Phase 0${idx + 1}`,
-          title: cleanInlineMarkdown(parts[0] || `Phase 0${idx + 1}`),
-          description: cleanInlineMarkdown(parts.length > 1 ? parts.slice(1).join(": ") : parts[0]),
-          status: (idx === 0 ? "done" : idx === 1 ? "active" : "planned") as "done" | "active" | "planned",
+          left: cleanInlineMarkdown(parts[0] || b),
+          right: cleanInlineMarkdown(parts[1] || "Solusi dan langkah perbaikan terstruktur"),
         };
       });
+    }
+
+    if (layout === "horizontalStack" && bullets && bullets.length > 0) {
+      stackCards = bullets.map((b, idx) => {
+        const colon = b.indexOf(":");
+        return {
+          title: cleanInlineMarkdown(colon > 0 ? b.slice(0, colon).trim() : `Pilar 0${idx + 1}`),
+          tag: `Pillar 0${idx + 1}`,
+          description: cleanInlineMarkdown(colon > 0 ? b.slice(colon + 1).trim() : b),
+        };
+      });
+    }
+
+    if (layout === "connectedRailStepper" && bullets && bullets.length > 0) {
+      railSteps = bullets.map((b, idx) => {
+        const colon = b.indexOf(":");
+        return {
+          stepNumber: idx + 1,
+          title: cleanInlineMarkdown(colon > 0 ? b.slice(0, colon).trim() : `Langkah ${idx + 1}`),
+          description: cleanInlineMarkdown(colon > 0 ? b.slice(colon + 1).trim() : b),
+        };
+      });
+    }
+
+    if (layout === "ascendingColumns" && bullets && bullets.length > 0) {
+      ascendingLevels = bullets.map((b, idx) => {
+        const colon = b.indexOf(":");
+        return {
+          levelNumber: idx + 1,
+          tag: `LEVEL ${idx + 1}`,
+          title: cleanInlineMarkdown(colon > 0 ? b.slice(0, colon).trim() : `Tahap ${idx + 1}`),
+          description: cleanInlineMarkdown(colon > 0 ? b.slice(colon + 1).trim() : b),
+        };
+      });
+    }
+
+    if (layout === "checklist" && bullets && bullets.length > 0) {
+      checklistItems = bullets;
     }
 
     const actionItems = extractActionItems(block);
@@ -847,12 +999,17 @@ function parseDashSeparatedDeckFormat(rawContent: string, bgStylePreference: str
       badge: `SLIDE 0${i + 1}`,
       category: "STRATEGIC OVERVIEW",
       description,
-      bullets: layout === "bullets" ? bullets : undefined,
+      bullets: (layout === "bullets" || layout === "closingAction") ? bullets : undefined,
       processSteps,
       timelineMilestones,
       tableHeaders,
       tableRows,
       flowNodes,
+      pairedRows,
+      stackCards,
+      railSteps,
+      ascendingLevels,
+      checklistItems,
       cards,
       actionItems,
       pollOptions,
@@ -1065,7 +1222,13 @@ function parseExplicitDeckFormat(rawContent: string, bgStylePreference: string =
       .filter((l) => /^[•\-\*\+]\s+/.test(l) || /^\d+[\.\)]\s+/.test(l))
       .map((l) => l.replace(/^[•\-\*\+\d\.\)\s]+/, "").trim())
       .filter((l) => l.length > 0 && !/(?:🗒️|Note:|Visual:|Headline:|Subtitle:|Deskripsi:)/i.test(l));
-    const bullets = rawBullets.length > 0 ? rawBullets.map(cleanInlineMarkdown) : undefined;
+    let bullets = rawBullets.length > 0 ? rawBullets.map(cleanInlineMarkdown) : undefined;
+    if (!bullets) {
+      const decisionMatches = [...blockText.matchAll(/(?:(?:Decision|Pilar|Pillar|Langkah|Step|Point|Poin)\s*\d+[:\.]?|(?:\d+[\.\)]))\s*([^]+?)(?=(?:(?:Decision|Pilar|Pillar|Langkah|Step|Point|Poin)\s*\d+[:\.]?|(?:\d+[\.\)]))|$)/gi)];
+      if (decisionMatches.length >= 2) {
+        bullets = decisionMatches.slice(0, 4).map((m) => cleanInlineMarkdown(m[0].trim()));
+      }
+    }
 
     // 6. Extract Narrative Description
     const nonBulletLines = blockText
@@ -1471,7 +1634,8 @@ function normalizeApiSlide(raw: any, index: number = 0): SlideData {
     "chevronProcess", "gaugeRings", "ascendingTrajectory", "verticalProgress",
     "splitMetric", "horizontalMilestones", "bubbleCluster", "connectedRings",
     "asymmetricMatrix", "boldStatement", "imageSplitMetric", "boldImpact", "cta",
-    "actionList", "cardGrid", "caseStudy", "splitPoll", "interactiveCase", "breakSlide", "keyInsight"
+    "actionList", "cardGrid", "caseStudy", "splitPoll", "interactiveCase", "breakSlide", "keyInsight",
+    "sectionDivider", "pairedRows", "horizontalStack", "connectedRailStepper", "ascendingColumns", "checklist", "closingAction"
   ];
   let layout = raw.layout || "bullets";
   if (!validLayouts.includes(layout)) {
@@ -1668,6 +1832,49 @@ function normalizeApiSlide(raw: any, index: number = 0): SlideData {
     };
   }
 
+  let pairedRows: SlideData["pairedRows"] = undefined;
+  if (Array.isArray(raw.pairedRows)) {
+    pairedRows = raw.pairedRows.map((pr: any) => ({
+      left: safeString(pr?.left || pr?.problem || pr?.weak || ""),
+      right: safeString(pr?.right || pr?.solution || pr?.robust || ""),
+      leftLead: pr?.leftLead ? safeString(pr.leftLead) : undefined,
+      rightLead: pr?.rightLead ? safeString(pr.rightLead) : undefined,
+    }));
+  }
+
+  let stackCards: SlideData["stackCards"] = undefined;
+  if (Array.isArray(raw.stackCards)) {
+    stackCards = raw.stackCards.map((sc: any) => ({
+      title: safeString(sc?.title || ""),
+      tag: sc?.tag ? safeString(sc.tag) : undefined,
+      description: safeString(sc?.description || sc?.desc || sc?.content || ""),
+    }));
+  }
+
+  let railSteps: SlideData["railSteps"] = undefined;
+  if (Array.isArray(raw.railSteps)) {
+    railSteps = raw.railSteps.map((rs: any, i: number) => ({
+      stepNumber: rs?.stepNumber ?? (i + 1),
+      title: safeString(rs?.title || `Phase ${i + 1}`),
+      description: rs?.description ? safeString(rs.description) : undefined,
+    }));
+  }
+
+  let ascendingLevels: SlideData["ascendingLevels"] = undefined;
+  if (Array.isArray(raw.ascendingLevels)) {
+    ascendingLevels = raw.ascendingLevels.map((al: any, i: number) => ({
+      levelNumber: al?.levelNumber ?? `L${i + 1}`,
+      title: safeString(al?.title || `Level ${i + 1}`),
+      description: al?.description ? safeString(al.description) : undefined,
+      tag: al?.tag ? safeString(al.tag) : undefined,
+    }));
+  }
+
+  let checklistItems: string[] | undefined = undefined;
+  if (Array.isArray(raw.checklistItems)) {
+    checklistItems = raw.checklistItems.map((ci: any) => safeString(ci)).filter((s: string) => s.length > 0);
+  }
+
   // Sanitize & downgrade layouts if visual data is absent
   if (layout === "tableComparison") {
     const hasValidRows = tableRows && tableRows.length > 0 && tableRows.some((r) => (r.feature && r.feature.trim().length > 0) || (r.cells && r.cells.length > 0));
@@ -1732,6 +1939,26 @@ function normalizeApiSlide(raw: any, index: number = 0): SlideData {
     if (!cards || cards.length < 2) {
       layout = bullets && bullets.length >= 2 ? "twoColumn" : "bullets";
     }
+  } else if (layout === "pairedRows") {
+    if (!pairedRows || pairedRows.length === 0) {
+      layout = bullets && bullets.length >= 2 ? "twoColumn" : "bullets";
+    }
+  } else if (layout === "horizontalStack") {
+    if (!stackCards || stackCards.length === 0) {
+      layout = cards && cards.length >= 2 ? "cardGrid" : "bullets";
+    }
+  } else if (layout === "connectedRailStepper") {
+    if (!railSteps || railSteps.length === 0) {
+      layout = processSteps && processSteps.length >= 2 ? "process" : "bullets";
+    }
+  } else if (layout === "ascendingColumns") {
+    if (!ascendingLevels || ascendingLevels.length === 0) {
+      layout = cards && cards.length >= 2 ? "cardGrid" : "bullets";
+    }
+  } else if (layout === "checklist") {
+    if (!checklistItems || checklistItems.length === 0) {
+      layout = bullets && bullets.length >= 2 ? "twoColumn" : "bullets";
+    }
   }
 
   if (layout === "bullets" && (!bullets || bullets.length === 0) && processSteps && processSteps.length > 0) {
@@ -1778,6 +2005,15 @@ function normalizeApiSlide(raw: any, index: number = 0): SlideData {
     calloutBox: raw.calloutBox,
     promptBox: raw.promptBox,
     quote: raw.quote,
+    pairedRows,
+    stackCards,
+    railSteps,
+    ascendingLevels,
+    checklistItems,
+    insightBarText: raw.insightBarText ? safeString(raw.insightBarText) : undefined,
+    noteBoxText: raw.noteBoxText ? safeString(raw.noteBoxText) : undefined,
+    contactFooterText: raw.contactFooterText ? safeString(raw.contactFooterText) : undefined,
+    speakerNotes: raw.speakerNotes ? safeString(raw.speakerNotes) : undefined,
     topRightPill: raw.topRightPill ? safeString(raw.topRightPill) : undefined,
     ctaText: raw.ctaText ? safeString(raw.ctaText) : undefined,
     footer: raw.footer ? safeString(raw.footer) : undefined,
