@@ -35,6 +35,7 @@ import {
   AnimatedSettingsIcon,
   AnimatedLogoutIcon,
 } from "@/components/ui/animated-icons/SidebarAnimatedIcons";
+import { SidebarChatHistory } from "./SidebarChatHistory";
 
 export interface NavItem {
   title: string;
@@ -240,6 +241,13 @@ export function AppSidebar() {
               </Link>
             );
           })}
+
+          {/* Collapsible and scrollable chat history dropdown ala Kimi.ai */}
+          <SidebarChatHistory
+            collapsed={collapsed}
+            mobileOpen={mobileOpen}
+            onCloseMobile={() => setMobileOpen(false)}
+          />
         </div>
 
         {/* Sidebar Footer / Logout Button */}

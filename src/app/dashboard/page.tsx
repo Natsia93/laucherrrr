@@ -24,6 +24,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { useSidebar } from "@/components/layout/SidebarContext";
 import { Button } from "@/components/ui/button";
@@ -540,6 +541,7 @@ export default function DashboardOverviewPage() {
   const nameParts = userFullName.trim().split(/\s+/);
   const userLastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : nameParts[0];
 
+  const searchParams = useSearchParams();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [conversationsList, setConversationsList] = useState<ConversationSummary[]>([]);
@@ -549,6 +551,11 @@ export default function DashboardOverviewPage() {
 
   useEffect(() => {
     activeConvIdRef.current = activeConversationId;
+    window.dispatchEvent(
+      new CustomEvent("active_conversation_changed", {
+        detail: { id: activeConversationId },
+      })
+    );
   }, [activeConversationId]);
 
   const fetchConversations = async () => {
@@ -559,6 +566,7 @@ export default function DashboardOverviewPage() {
       if (res.ok) {
         const data = await res.json();
         setConversationsList(data.conversations || []);
+        window.dispatchEvent(new CustomEvent("conversations_updated"));
       }
     } catch (err) {
       console.error("Error fetching conversations:", err);
@@ -572,6 +580,30 @@ export default function DashboardOverviewPage() {
       fetchConversations();
     }
   }, [session?.user?.id]);
+
+  useEffect(() => {
+    const handleSelect = (e: any) => {
+      if (e.detail?.id) {
+        handleSelectConversation(e.detail.id);
+      }
+    };
+    const handleNew = () => {
+      handleNewChat();
+    };
+
+    window.addEventListener("select_conversation", handleSelect);
+    window.addEventListener("new_chat", handleNew);
+
+    const initialId = searchParams?.get("id");
+    if (initialId) {
+      handleSelectConversation(initialId);
+    }
+
+    return () => {
+      window.removeEventListener("select_conversation", handleSelect);
+      window.removeEventListener("new_chat", handleNew);
+    };
+  }, [searchParams]);
 
   const persistConversation = async (msgs: ChatMessage[]) => {
     if (!session?.user?.id || msgs.length === 0) return;
@@ -941,22 +973,6 @@ export default function DashboardOverviewPage() {
     <AppShell
       headerActions={
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setHistoryOpen(true)}
-            className="h-8.5 border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white font-medium text-xs px-2.5 sm:px-3 flex items-center gap-1.5 cursor-pointer rounded-[5px] hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all shadow-2xs shrink-0"
-          >
-            <History className="w-3.5 h-3.5 text-neutral-500" />
-            <span className="hidden sm:inline">Chat History</span>
-            <span className="sm:hidden">History</span>
-            {conversationsList.length > 0 && (
-              <span className="ml-0.5 px-1.5 py-0.2 bg-[#FFDE3C]/30 text-neutral-900 dark:text-[#FFDE3C] text-[10px] font-bold rounded-[3px]">
-                {conversationsList.length}
-              </span>
-            )}
-          </Button>
-
           {messages.length > 0 && (
             <Button
               size="sm"
@@ -970,16 +986,6 @@ export default function DashboardOverviewPage() {
         </div>
       }
     >
-      <ChatHistoryDrawer
-        isOpen={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        conversations={conversationsList}
-        activeId={activeConversationId}
-        onSelectConversation={handleSelectConversation}
-        onNewChat={handleNewChat}
-        onDeleteConversation={handleDeleteConversation}
-        isLoadingList={isLoadingHistory}
-      />
 
       {messages.length === 0 ? (
         /* Empty State / Centered Hero Launcher */
