@@ -1172,7 +1172,7 @@ export default function DashboardOverviewPage() {
                       />
                     </div>
                     {msg.text || (msg.connectorActions && msg.connectorActions.length > 0) ? (
-                      <div className="flex-1 min-w-0 font-lora text-sm sm:text-base leading-relaxed text-neutral-900 dark:text-neutral-100 pt-0.5">
+                      <div className="flex-1 min-w-0 font-lora text-[15.5px] sm:text-[17px] leading-relaxed text-neutral-900 dark:text-neutral-100 pt-0.5">
                         {/* Connector Action Badges (Claude-style Tool Action Execution) */}
                         {msg.connectorActions && msg.connectorActions.length > 0 && (
                           <div className="flex flex-col gap-1.5 mb-2.5">
@@ -1325,7 +1325,7 @@ export default function DashboardOverviewPage() {
                     )}
 
                     {msg.text && (
-                      <div className="bg-[#FFDE3C] text-neutral-950 dark:bg-[#141414] dark:text-neutral-100 dark:border dark:border-white/10 font-lora font-medium px-4 py-2.5 rounded-lg rounded-tr-xs shadow-xs text-sm sm:text-base leading-relaxed">
+                      <div className="bg-[#FFDE3C] text-neutral-950 dark:bg-[#141414] dark:text-neutral-100 dark:border dark:border-white/10 font-lora font-medium px-4 py-2.5 rounded-lg rounded-tr-xs shadow-xs text-[15.5px] sm:text-[17px] leading-relaxed">
                         <p className="whitespace-pre-wrap">{msg.text}</p>
                       </div>
                     )}

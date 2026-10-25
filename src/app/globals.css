@@ -463,8 +463,8 @@ html {
 .markdown-chat,
 .prose {
   color: var(--foreground);
-  font-size: 0.95rem;
-  line-height: 1.7;
+  font-size: 1.02rem;
+  line-height: 1.75;
   word-break: break-word;
   overflow-wrap: break-word;
 }
@@ -473,7 +473,7 @@ html {
   .markdown-body,
   .markdown-chat,
   .prose {
-    font-size: 1rem;
+    font-size: 1.075rem;
   }
 }
 
