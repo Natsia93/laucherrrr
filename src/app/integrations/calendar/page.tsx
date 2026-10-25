@@ -294,12 +294,12 @@ export default function GoogleCalendarPage() {
               >
                 <div className="flex justify-between items-start mb-1">
                   <span
-                    className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${
+                    className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold ${
                       isCurrentToday
-                        ? "bg-[#FFE500] text-neutral-950 font-black"
+                        ? "bg-[#FFE500] text-neutral-950"
                         : isCurrentMonth
                         ? "text-neutral-800 dark:text-neutral-200"
-                        : "text-neutral-400 dark:text-neutral-600"
+                        : "text-neutral-400 dark:text-neutral-600 font-normal"
                     }`}
                   >
                     {format(day, "d")}
@@ -367,11 +367,11 @@ export default function GoogleCalendarPage() {
                       {format(day, "EEE")}
                     </span>
                     {isCurrentToday ? (
-                      <div className="w-10 h-10 sm:w-11 sm:h-11 mx-auto rounded-full bg-[#FFE500] text-neutral-950 flex items-center justify-center text-xl sm:text-2xl font-black">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 mx-auto rounded-full bg-[#FFE500] text-neutral-950 flex items-center justify-center text-base sm:text-lg font-semibold">
                         {format(day, "d")}
                       </div>
                     ) : (
-                      <span className="text-2xl sm:text-3xl font-normal text-neutral-800 dark:text-neutral-200 block">
+                      <span className="text-xl sm:text-2xl font-normal text-neutral-800 dark:text-neutral-200 block py-0.5">
                         {format(day, "d")}
                       </span>
                     )}
@@ -509,11 +509,11 @@ export default function GoogleCalendarPage() {
                 {format(currentDate, "EEEE")}
               </span>
               {isCurrentToday ? (
-                <div className="w-11 h-11 mx-auto rounded-full bg-[#FFE500] text-neutral-950 flex items-center justify-center text-2xl font-black">
+                <div className="w-10 h-10 mx-auto rounded-full bg-[#FFE500] text-neutral-950 flex items-center justify-center text-lg sm:text-xl font-semibold">
                   {format(currentDate, "d")}
                 </div>
               ) : (
-                <span className="text-3xl font-normal text-neutral-800 dark:text-neutral-200 block">
+                <span className="text-2xl font-normal text-neutral-800 dark:text-neutral-200 block py-0.5">
                   {format(currentDate, "d")}
                 </span>
               )}
