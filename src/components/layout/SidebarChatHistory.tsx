@@ -164,15 +164,15 @@ export function SidebarChatHistory({
   return (
     <div className="pt-2.5 mt-2.5 border-t border-black/10 dark:border-neutral-800/80">
       {/* Header Dropdown Trigger ala Kimi */}
-      <div className="flex items-center justify-between px-2 py-1 mb-1 select-none">
+      <div className="flex items-center justify-between px-2.5 py-1 mb-1 select-none">
         <button
           type="button"
           onClick={toggleOpen}
-          className="flex items-center gap-1.5 text-[12px] font-medium tracking-wide text-neutral-800/80 hover:text-neutral-950 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors cursor-pointer group"
+          className="flex items-center gap-2 text-[14px] font-medium text-neutral-900/90 hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-white transition-colors cursor-pointer group"
         >
           <span>Chats</span>
           <ChevronDown
-            className={`w-3.5 h-3.5 text-neutral-500 transition-transform duration-200 ${
+            className={`w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-600 dark:text-neutral-500 dark:group-hover:text-neutral-300 transition-transform duration-200 ${
               isOpen ? "rotate-0" : "-rotate-90"
             }`}
           />
