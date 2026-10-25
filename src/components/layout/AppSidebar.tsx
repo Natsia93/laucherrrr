@@ -33,6 +33,7 @@ import {
   AnimatedSlackIcon,
   AnimatedWorkflowIcon,
   AnimatedSettingsIcon,
+  AnimatedLogoutIcon,
 } from "@/components/ui/animated-icons/SidebarAnimatedIcons";
 
 export interface NavItem {
@@ -247,10 +248,10 @@ export function AppSidebar() {
             <button
               type="button"
               onClick={() => setShowLogoutModal(true)}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-neutral-950/85 hover:text-red-700 hover:bg-black/10 dark:text-neutral-300 dark:hover:text-red-400 dark:hover:bg-white/5 transition-all cursor-pointer active:scale-98"
+              className="group w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-neutral-950/85 hover:text-red-700 hover:bg-black/10 dark:text-neutral-300 dark:hover:text-red-400 dark:hover:bg-white/5 transition-all cursor-pointer active:scale-98"
               title="Sign Out"
             >
-              <LogOut className="w-4 h-4 stroke-[2]" />
+              <AnimatedLogoutIcon size={16} className="text-neutral-900 group-hover:text-red-700 dark:text-neutral-300 dark:group-hover:text-red-400 transition-colors" />
               <span>Logout</span>
             </button>
           ) : (
@@ -258,10 +259,10 @@ export function AppSidebar() {
               <button
                 type="button"
                 onClick={() => setShowLogoutModal(true)}
-                className="flex items-center justify-center w-10 h-10 rounded-lg text-neutral-950/85 hover:text-red-700 hover:bg-black/10 dark:text-neutral-300 dark:hover:text-red-400 dark:hover:bg-white/5 transition-all cursor-pointer active:scale-95"
+                className="group flex items-center justify-center w-10 h-10 rounded-lg text-neutral-950/85 hover:text-red-700 hover:bg-black/10 dark:text-neutral-300 dark:hover:text-red-400 dark:hover:bg-white/5 transition-all cursor-pointer active:scale-95"
                 title="Logout"
               >
-                <LogOut className="w-4.5 h-4.5 stroke-[2]" />
+                <AnimatedLogoutIcon size={18} className="text-neutral-900 group-hover:text-red-700 dark:text-neutral-300 dark:group-hover:text-red-400 transition-colors" />
               </button>
             </div>
           )}

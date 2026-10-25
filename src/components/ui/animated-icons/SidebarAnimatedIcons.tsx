@@ -312,3 +312,60 @@ export function AnimatedSettingsIcon({ className = "", size = 18, ...props }: An
     </span>
   );
 }
+
+/**
+ * 8. 🚪 Animated Logout Icon (LogOut)
+ * Exit arrow slides out to the right with spring return on hover
+ */
+export function AnimatedLogoutIcon({ className = "", size = 18, ...props }: AnimatedIconProps) {
+  return (
+    <span className={`inline-flex items-center justify-center select-none ${className}`} style={{ width: size, height: size }}>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-full h-full overflow-visible"
+        {...props}
+      >
+        <style dangerouslySetInnerHTML={{ __html: `
+          .group:hover .logout-arrow,
+          button:hover .logout-arrow {
+            animation: logoutArrowSlide 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          }
+          .group:hover .logout-door,
+          button:hover .logout-door {
+            animation: logoutDoorNudge 0.4s ease-in-out forwards;
+          }
+          @keyframes logoutArrowSlide {
+            0% { transform: translateX(0); }
+            35% { transform: translateX(3.5px); }
+            65% { transform: translateX(-1px); }
+            100% { transform: translateX(0); }
+          }
+          @keyframes logoutDoorNudge {
+            0% { transform: translateX(0); }
+            40% { transform: translateX(-1.5px); }
+            100% { transform: translateX(0); }
+          }
+        ` }} />
+        {/* Door frame */}
+        <path
+          d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+          className="logout-door"
+        />
+        {/* Exit arrow */}
+        <g className="logout-arrow">
+          <path d="M21 12H9" />
+          <path d="m16 17 5-5-5-5" />
+        </g>
+      </svg>
+    </span>
+  );
+}
+
