@@ -1069,7 +1069,7 @@ export default function DashboardOverviewPage() {
                     ? "Present a complex strategic decision, conflicting trade-off, or hypothesis to stress-test from first principles..."
                     : "Ask anything, explore ideas, or attach documents (PDF, Word, Excel, Images)..."
                 }
-                className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-base sm:text-[17px] leading-relaxed outline-none resize-none min-h-[95px] font-lora"
+                className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-[15px] sm:text-base leading-relaxed outline-none resize-none min-h-[95px] font-lora"
               />
 
               <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800">
@@ -1413,7 +1413,7 @@ export default function DashboardOverviewPage() {
                         }
                       }}
                       placeholder="Type your message, analyze files, or discuss ideas..."
-                      className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-base sm:text-[17px] leading-relaxed outline-none resize-none min-h-[48px] max-h-[160px] font-lora py-2.5 clean-scrollbar"
+                      className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-[15px] sm:text-base leading-relaxed outline-none resize-none min-h-[44px] max-h-[150px] font-lora py-2.5 clean-scrollbar"
                       rows={1}
                     />
 
