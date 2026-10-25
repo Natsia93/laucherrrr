@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import dynamic from "next/dynamic";
 
 // Modular Overview Components
+import { OverviewFeatureCards } from "@/components/overview/OverviewFeatureCards";
 import { GreetingHeader } from "@/components/overview/GreetingHeader";
 import { CreditsUsageCard } from "@/components/overview/CreditsUsageCard";
 import { OverviewToDoList } from "@/components/overview/OverviewToDoList";
@@ -94,11 +95,8 @@ export default function OverviewPage() {
 
         {/* 2. MASTER CARDS WRAPPER (TANPA ROUNDED - POLOS) */}
         <div className="border border-neutral-200/80 dark:border-neutral-800/80 rounded-none bg-neutral-50/40 dark:bg-[#0d0d0d]/60 p-4 sm:p-6 lg:p-7 space-y-6 shadow-none">
-          {/* TOP ROW: CREDITS USAGE + 7-DAY USAGE CHART */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-            <CreditsUsageCard />
-            <OverviewAnalyticsCharts />
-          </div>
+          {/* TOP ROW: 4 ANIMATED SVG FEATURE CARDS (ALA NGODINGPAKEAI) */}
+          <OverviewFeatureCards />
 
           {/* SECTION DIVIDER LINE */}
           <div className="h-[1px] w-full bg-neutral-200/80 dark:bg-neutral-800/80" />
