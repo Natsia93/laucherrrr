@@ -164,7 +164,7 @@ export function ChatHistoryDrawer({
                     onNewChat();
                     onClose();
                   }}
-                  className="h-7.5 bg-[#FFDE3C] hover:bg-[#FCD526] text-neutral-950 font-sf font-semibold text-xs px-2.5 rounded-[5px] border border-[#E5BC10]/70 flex items-center gap-1 shadow-2xs cursor-pointer active:scale-95 transition-all"
+                  className="h-7.5 bg-[#FFDE3C] hover:bg-[#FCD526] text-neutral-950 dark:bg-[#141414] dark:hover:bg-[#1e1e1e] dark:text-neutral-100 dark:border-white/10 font-sf font-semibold text-xs px-2.5 rounded-[5px] border border-[#E5BC10]/70 flex items-center gap-1 shadow-2xs cursor-pointer active:scale-95 transition-all"
                 >
                   <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>New</span>
@@ -232,7 +232,7 @@ export function ChatHistoryDrawer({
                         onNewChat();
                         onClose();
                       }}
-                      className="mt-4 h-7.5 bg-[#FFDE3C] hover:bg-[#FCD526] text-neutral-950 font-sf text-xs font-semibold px-3 rounded-[5px] border border-[#E5BC10]/70 flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+                      className="mt-4 h-7.5 bg-[#FFDE3C] hover:bg-[#FCD526] text-neutral-950 dark:bg-[#141414] dark:hover:bg-[#1e1e1e] dark:text-neutral-100 dark:border-white/10 font-sf text-xs font-semibold px-3 rounded-[5px] border border-[#E5BC10]/70 flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Start New Chat

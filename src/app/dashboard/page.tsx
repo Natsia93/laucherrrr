@@ -961,7 +961,7 @@ export default function DashboardOverviewPage() {
             <Button
               size="sm"
               onClick={handleNewChat}
-              className="h-8.5 bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 font-bold text-xs px-3.5 shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all rounded-[5px]"
+              className="h-8.5 bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 dark:bg-[#141414] dark:hover:bg-[#1e1e1e] dark:text-neutral-100 dark:border dark:border-white/10 font-bold text-xs px-3.5 shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all rounded-[5px]"
             >
               <RotateCcw className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>New Chat</span>
@@ -1319,7 +1319,7 @@ export default function DashboardOverviewPage() {
                     )}
 
                     {msg.text && (
-                      <div className="bg-[#FFDE3C] text-neutral-950 font-lora font-medium px-4 py-2.5 rounded-lg rounded-tr-xs shadow-xs text-sm sm:text-base leading-relaxed">
+                      <div className="bg-[#FFDE3C] text-neutral-950 dark:bg-[#141414] dark:text-neutral-100 dark:border dark:border-white/10 font-lora font-medium px-4 py-2.5 rounded-lg rounded-tr-xs shadow-xs text-sm sm:text-base leading-relaxed">
                         <p className="whitespace-pre-wrap">{msg.text}</p>
                       </div>
                     )}
