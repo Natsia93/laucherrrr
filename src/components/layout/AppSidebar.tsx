@@ -149,7 +149,7 @@ export function AppSidebar() {
 
       {/* Sidebar Container: Vibrant Bright Yellow in Light Mode, Sleek Dark in Dark Mode */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col bg-gradient-to-b from-[#FFE54C] via-[#FFDE3C] to-[#FCD526] dark:bg-none dark:from-transparent dark:to-transparent dark:bg-[#0d0d0d] border-r-0 dark:border-r dark:border-neutral-800/90 transition-[width] duration-300 ease-in-out select-none
+        className={`group/sidebar fixed top-0 bottom-0 left-0 z-50 flex flex-col bg-gradient-to-b from-[#FFE54C] via-[#FFDE3C] to-[#FCD526] dark:bg-none dark:from-transparent dark:to-transparent dark:bg-[#0d0d0d] border-r-0 dark:border-r dark:border-neutral-800/90 transition-[width] duration-300 ease-in-out select-none
           ${collapsed ? "w-[70px]" : "w-[238px]"}
           ${mobileOpen ? "translate-x-0 w-[255px]" : "-translate-x-full lg:translate-x-0"}
           ${isMoodPending ? "pointer-events-none select-none" : ""}
@@ -209,8 +209,8 @@ export function AppSidebar() {
           )}
         </div>
 
-        {/* Navigation List */}
-        <div className="flex-1 overflow-y-auto px-3 pt-6 pb-2 space-y-1.5 scrollbar-hide">
+        {/* Navigation List & Chats with hover-only scrollbar */}
+        <div className="flex-1 overflow-y-auto px-3 pt-5 pb-2 space-y-1.5 [scrollbar-width:none] group-hover/sidebar:[scrollbar-width:thin] [scrollbar-color:transparent_transparent] group-hover/sidebar:[scrollbar-color:rgba(150,150,150,0.3)_transparent] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-transparent group-hover/sidebar:[&::-webkit-scrollbar-thumb]:bg-black/20 dark:group-hover/sidebar:[&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full">
           {MAIN_NAV_ITEMS.map((item, itemIdx) => {
             const Icon = item.icon;
             const isActive = pathname.startsWith(item.href) || (item.href === "/slack" && pathname.startsWith("/integrations/slack"));

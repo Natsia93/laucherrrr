@@ -162,13 +162,13 @@ export function SidebarChatHistory({
   }
 
   return (
-    <div className="pt-3 mt-3 border-t border-black/10 dark:border-neutral-800/80">
+    <div className="pt-2.5 mt-2.5 border-t border-black/10 dark:border-neutral-800/80">
       {/* Header Dropdown Trigger ala Kimi */}
-      <div className="flex items-center justify-between px-3 py-1 mb-1">
+      <div className="flex items-center justify-between px-2 py-1 mb-1 select-none">
         <button
           type="button"
           onClick={toggleOpen}
-          className="flex items-center gap-1.5 text-[12px] font-medium tracking-wide text-neutral-800/80 hover:text-neutral-950 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors cursor-pointer select-none group"
+          className="flex items-center gap-1.5 text-[12px] font-medium tracking-wide text-neutral-800/80 hover:text-neutral-950 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors cursor-pointer group"
         >
           <span>Chats</span>
           <ChevronDown
@@ -188,65 +188,63 @@ export function SidebarChatHistory({
         </button>
       </div>
 
-      {/* Collapsible and Scrollable Chat History List */}
+      {/* Seamless list without nested scrollbar or heavy wrapper */}
       <AnimatePresence initial={false}>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-            className="overflow-hidden"
+            transition={{ duration: 0.18, ease: "easeInOut" }}
+            className="space-y-0.5"
           >
-            <div className="max-h-[220px] overflow-y-auto px-1 space-y-1 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-800 pr-1">
-              {loading && conversations.length === 0 ? (
-                <div className="flex items-center gap-2 px-3 py-2 text-[12px] text-neutral-500">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Loading chats...</span>
-                </div>
-              ) : conversations.length === 0 ? (
-                <div className="px-3 py-2 text-[12px] text-neutral-500 dark:text-neutral-500 italic">
-                  No recent chats yet
-                </div>
-              ) : (
-                conversations.map((conv) => {
-                  const isCurrentActive = activeId === conv.id;
-                  const isDeleting = deletingId === conv.id;
+            {loading && conversations.length === 0 ? (
+              <div className="flex items-center gap-2 px-2.5 py-1 text-[13px] text-neutral-500">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Loading chats...</span>
+              </div>
+            ) : conversations.length === 0 ? (
+              <div className="px-2.5 py-1 text-[13px] text-neutral-500 dark:text-neutral-500 italic">
+                No recent chats yet
+              </div>
+            ) : (
+              conversations.map((conv) => {
+                const isCurrentActive = activeId === conv.id;
+                const isDeleting = deletingId === conv.id;
 
-                  return (
-                    <div
-                      key={conv.id}
-                      onClick={() => handleSelectChat(conv.id)}
-                      className={`group relative flex items-center justify-between px-3 py-1.5 rounded-lg text-[13px] leading-snug transition-all cursor-pointer select-none ${
-                        isCurrentActive
-                          ? "bg-[#FFE853] dark:bg-[#212121] border border-[#E5BC10] dark:border-white/[0.07] text-neutral-950 dark:text-neutral-100 font-medium shadow-xs dark:shadow-none"
-                          : "text-neutral-950/85 hover:text-neutral-950 hover:bg-[#FFE853]/50 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-[#1a1a1a] font-normal border border-transparent"
-                      }`}
-                      title={conv.title}
+                return (
+                  <div
+                    key={conv.id}
+                    onClick={() => handleSelectChat(conv.id)}
+                    className={`group relative flex items-center justify-between px-2.5 py-1 rounded-lg text-[14px] leading-snug transition-all cursor-pointer select-none ${
+                      isCurrentActive
+                        ? "bg-[#FFE853] dark:bg-[#212121] border border-[#E5BC10] dark:border-white/[0.07] text-neutral-950 dark:text-neutral-100 font-medium shadow-xs dark:shadow-none"
+                        : "text-neutral-950/80 hover:text-neutral-950 hover:bg-[#FFE853]/50 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-[#1a1a1a] font-normal border border-transparent"
+                    }`}
+                    title={conv.title}
+                  >
+                    <span className="truncate flex-1 pr-2">
+                      {conv.title || "Untitled Chat"}
+                    </span>
+
+                    {/* Delete action button on hover */}
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteChat(e, conv.id)}
+                      disabled={isDeleting}
+                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:text-red-600 dark:hover:text-red-400 hover:bg-black/10 dark:hover:bg-neutral-800 text-neutral-400 transition-all shrink-0 cursor-pointer"
+                      title="Delete chat"
                     >
-                      <span className="truncate flex-1 pr-2">
-                        {conv.title || "Untitled Chat"}
-                      </span>
-
-                      {/* Delete action button on hover */}
-                      <button
-                        type="button"
-                        onClick={(e) => handleDeleteChat(e, conv.id)}
-                        disabled={isDeleting}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:text-red-600 dark:hover:text-red-400 hover:bg-black/10 dark:hover:bg-neutral-800 text-neutral-400 transition-all shrink-0 cursor-pointer"
-                        title="Delete chat"
-                      >
-                        {isDeleting ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-3 h-3" />
-                        )}
-                      </button>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+                      {isDeleting ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                );
+              })
+            )}
           </motion.div>
         )}
       </AnimatePresence>
