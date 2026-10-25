@@ -209,7 +209,7 @@ export function AppSidebar() {
         </div>
 
         {/* Navigation List */}
-        <div className="flex-1 overflow-y-auto px-3 pt-6 pb-2 space-y-0.5 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto px-3 pt-6 pb-2 space-y-1.5 scrollbar-hide">
           {MAIN_NAV_ITEMS.map((item, itemIdx) => {
             const Icon = item.icon;
             const isActive = pathname.startsWith(item.href) || (item.href === "/slack" && pathname.startsWith("/integrations/slack"));
@@ -219,18 +219,18 @@ export function AppSidebar() {
                 key={itemIdx}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={`group relative flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[14.5px] leading-snug transition-all duration-150 ${
+                className={`group relative flex items-center gap-3 px-3 py-2 rounded-xl text-[14px] leading-snug transition-all duration-150 ${
                   isActive
-                    ? "bg-[#FFE853] dark:bg-white/15 border border-[#E5BC10] dark:border-white/20 text-neutral-950 dark:text-white font-medium shadow-xs"
-                    : "text-neutral-950/85 hover:text-neutral-950 hover:bg-[#FFE853]/50 dark:text-neutral-300 dark:hover:text-white dark:hover:bg-white/5 font-normal border border-transparent"
-                } ${collapsed && !mobileOpen ? "justify-center px-0 py-1.5" : ""}`}
+                    ? "bg-[#FFE853] dark:bg-[#212121] border border-[#E5BC10] dark:border-white/[0.07] text-neutral-950 dark:text-neutral-100 font-medium shadow-xs dark:shadow-none"
+                    : "text-neutral-950/85 hover:text-neutral-950 hover:bg-[#FFE853]/50 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-[#1a1a1a] font-normal border border-transparent"
+                } ${collapsed && !mobileOpen ? "justify-center px-0 py-2" : ""}`}
                 title={collapsed && !mobileOpen ? item.title : undefined}
               >
                 <Icon
                   className={`w-4.5 h-4.5 shrink-0 transition-colors ${
                     isActive
-                      ? "text-neutral-950 dark:text-white stroke-[2]"
-                      : "text-neutral-900/70 group-hover:text-neutral-950 dark:text-neutral-400 dark:group-hover:text-white stroke-[1.8]"
+                      ? "text-neutral-950 dark:text-neutral-100 stroke-[2]"
+                      : "text-neutral-900/70 group-hover:text-neutral-950 dark:text-neutral-400 dark:group-hover:text-neutral-200 stroke-[1.8]"
                   }`}
                 />
 
