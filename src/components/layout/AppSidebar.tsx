@@ -219,7 +219,7 @@ export function AppSidebar() {
                 key={itemIdx}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={`group relative flex items-center gap-3 px-3 py-2 rounded-xl text-[14px] leading-snug transition-all duration-150 ${
+                className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] leading-snug transition-all duration-150 ${
                   isActive
                     ? "bg-[#FFE853] dark:bg-[#212121] border border-[#E5BC10] dark:border-white/[0.07] text-neutral-950 dark:text-neutral-100 font-medium shadow-xs dark:shadow-none"
                     : "text-neutral-950/85 hover:text-neutral-950 hover:bg-[#FFE853]/50 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-[#1a1a1a] font-normal border border-transparent"
