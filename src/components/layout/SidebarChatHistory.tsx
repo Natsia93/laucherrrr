@@ -30,25 +30,10 @@ export function SidebarChatHistory({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Instant hydration from memory cache or localStorage to eliminate any loading flash
-  const [conversations, setConversations] = useState<SidebarConversation[]>(() => {
-    if (memoryConversationsCache !== null) {
-      return memoryConversationsCache;
-    }
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("launcher_sidebar_chats_cache");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            memoryConversationsCache = parsed;
-            return parsed;
-          }
-        }
-      } catch (_) {}
-    }
-    return [];
-  });
+  // Initial state uses memory cache if available (for instant client navigation), otherwise empty array
+  const [conversations, setConversations] = useState<SidebarConversation[]>(
+    () => memoryConversationsCache || []
+  );
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(true);
@@ -100,8 +85,21 @@ export function SidebarChatHistory({
     }
   }, []);
 
-  // Fetch only on initial mount or when custom event indicates updates
+  // Hydrate from localStorage immediately upon client mount if memory cache is not yet set
   useEffect(() => {
+    if (!memoryConversationsCache && typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("launcher_sidebar_chats_cache");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            memoryConversationsCache = parsed;
+            setConversations(parsed);
+          }
+        }
+      } catch (_) {}
+    }
+
     fetchConversations(Boolean(memoryConversationsCache && memoryConversationsCache.length > 0));
 
     const handleUpdated = () => {

@@ -134,20 +134,13 @@ const TaskCard = ({
 };
 
 let hasCalendarMountedOnce = false;
+let memoryCalendarTasksCache: Task[] | null = null;
 
 export default function GoogleCalendarPage() {
   const { data: session } = authClient.useSession();
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [view, setView] = useState<ViewMode>("week");
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = localStorage.getItem("launcher_calendar_tasks_cache");
-        if (cached) return JSON.parse(cached);
-      } catch (_) {}
-    }
-    return [];
-  });
+  const [tasks, setTasks] = useState<Task[]>(() => memoryCalendarTasksCache || []);
   const [mounted, setMounted] = useState(() => hasCalendarMountedOnce);
   const [isSyncing, setIsSyncing] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
@@ -188,6 +181,7 @@ export default function GoogleCalendarPage() {
             meetLink: e.meetLink || "",
           };
         });
+        memoryCalendarTasksCache = mapped;
         setTasks(mapped);
         try {
           localStorage.setItem("launcher_calendar_tasks_cache", JSON.stringify(mapped));
@@ -201,6 +195,16 @@ export default function GoogleCalendarPage() {
   useEffect(() => {
     hasCalendarMountedOnce = true;
     setMounted(true);
+    if (!memoryCalendarTasksCache && typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("launcher_calendar_tasks_cache");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          memoryCalendarTasksCache = parsed;
+          setTasks(parsed);
+        }
+      } catch (_) {}
+    }
     loadTasks();
   }, [session]);
 

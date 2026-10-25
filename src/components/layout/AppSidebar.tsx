@@ -25,6 +25,7 @@ import { useSidebar } from "./SidebarContext";
 import { authClient } from "@/lib/auth-client";
 import { LogoutConfirmModal } from "./LogoutConfirmModal";
 
+import dynamic from "next/dynamic";
 import {
   AnimatedOverviewIcon,
   AnimatedCompassIcon,
@@ -35,7 +36,11 @@ import {
   AnimatedSettingsIcon,
   AnimatedLogoutIcon,
 } from "@/components/ui/animated-icons/SidebarAnimatedIcons";
-import { SidebarChatHistory } from "./SidebarChatHistory";
+
+const SidebarChatHistory = dynamic(
+  () => import("./SidebarChatHistory").then((mod) => mod.SidebarChatHistory),
+  { ssr: false }
+);
 
 export interface NavItem {
   title: string;
