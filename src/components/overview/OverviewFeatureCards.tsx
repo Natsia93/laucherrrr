@@ -233,32 +233,41 @@ export function OverviewFeatureCards() {
                 <circle cx="167" cy="11" r="1.8" className="fill-neutral-400 dark:fill-neutral-500" />
                 <rect x="173" y="10" width="46" height="2" rx="1" className="fill-neutral-400 dark:fill-neutral-500" />
 
-                {/* ── CHAT THREAD (Taller area, shifts upward when message sends) ── */}
-                <g style={{ animation: "c1ChatThreadShift 7s cubic-bezier(0.16, 1, 0.3, 1) infinite" }}>
-                  {/* User Query Bubble */}
-                  <g style={{ animation: "c1UserQuery 7s cubic-bezier(0.16, 1, 0.3, 1) infinite" }}>
-                    <rect x="115" y="32" width="112" height="20" rx="10" className="fill-neutral-100 dark:fill-[#242424] stroke-neutral-300 dark:stroke-neutral-700" strokeWidth="1" />
-                    <rect x="127" y="40.5" width="76" height="3" rx="1.5" className="fill-neutral-600 dark:fill-neutral-400" />
-                    <circle cx="215" cy="42" r="2.5" className="fill-neutral-400 dark:fill-neutral-500" />
-                  </g>
+                {/* Defs with Screen ClipPath to prevent any overflow past the top toolbar */}
+                <defs>
+                  <clipPath id="c1ChatViewClip">
+                    <rect x="3" y="21.5" width="234" height="84" />
+                  </clipPath>
+                </defs>
 
-                  {/* AI Response Card (Taller, 48px height) */}
-                  <g style={{ animation: "c1AiBubble 7s cubic-bezier(0.16, 1, 0.3, 1) infinite" }}>
-                    <circle cx="18" cy="66" r="6.5" className="fill-neutral-200 dark:fill-neutral-800 stroke-neutral-300 dark:stroke-neutral-700" strokeWidth="1" />
-                    <path d="M18 63.5 L18.8 65.2 L20.5 66 L18.8 66.8 L18 68.5 L17.2 66.8 L15.5 66 L17.2 65.2 Z" className="fill-neutral-600 dark:fill-neutral-400" />
+                {/* ── CHAT THREAD (Clipped to screen area, perfectly positioned) ── */}
+                <g clipPath="url(#c1ChatViewClip)">
+                  <g style={{ animation: "c1ChatThreadShift 7s cubic-bezier(0.16, 1, 0.3, 1) infinite" }}>
+                    {/* User Query Bubble (Starts at y=44, shifts to y=28 safely below y=21 bar) */}
+                    <g style={{ animation: "c1UserQuery 7s cubic-bezier(0.16, 1, 0.3, 1) infinite" }}>
+                      <rect x="115" y="44" width="112" height="19" rx="9.5" className="fill-neutral-100 dark:fill-[#242424] stroke-neutral-300 dark:stroke-neutral-700" strokeWidth="1" />
+                      <rect x="127" y="52" width="76" height="3" rx="1.5" className="fill-neutral-600 dark:fill-neutral-400" />
+                      <circle cx="215" cy="53.5" r="2.5" className="fill-neutral-400 dark:fill-neutral-500" />
+                    </g>
 
-                    <rect x="29" y="58" width="199" height="44" rx="7" className="fill-neutral-50 dark:fill-[#1e1e1e] stroke-neutral-200 dark:stroke-neutral-800" strokeWidth="1" />
-                    
-                    {/* Streaming Text Lines (More comfortable vertical spacing) */}
-                    <rect x="38" y="67" height="3.5" rx="1.7" className="fill-neutral-600 dark:fill-neutral-300" style={{ animation: "c1StreamLine1 7s ease-out infinite" }} />
-                    <rect x="38" y="76" height="3" rx="1.5" className="fill-neutral-400 dark:fill-neutral-500" style={{ animation: "c1StreamLine2 7s ease-out infinite" }} />
+                    {/* AI Response Card (Fits cleanly in viewport) */}
+                    <g style={{ animation: "c1AiBubble 7s cubic-bezier(0.16, 1, 0.3, 1) infinite" }}>
+                      <circle cx="18" cy="78" r="6.5" className="fill-neutral-200 dark:fill-neutral-800 stroke-neutral-300 dark:stroke-neutral-700" strokeWidth="1" />
+                      <path d="M18 75.5 L18.8 77.2 L20.5 78 L18.8 78.8 L18 80.5 L17.2 78.8 L15.5 78 L17.2 77.2 Z" className="fill-neutral-600 dark:fill-neutral-400" />
 
-                    {/* Result Code / Summary Box */}
-                    <g style={{ animation: "c1ResultCard 7s ease-out infinite" }}>
-                      <rect x="38" y="86" width="96" height="9" rx="3.5" className="fill-neutral-200/80 dark:fill-neutral-800/80" />
-                      <rect x="44" y="89.5" width="60" height="2" rx="1" className="fill-neutral-500 dark:fill-neutral-400" />
-                      <circle cx="216" cy="67" r="4.5" className="fill-neutral-200 dark:fill-neutral-800 stroke-neutral-300 dark:stroke-neutral-700" strokeWidth="0.8" />
-                      <path d="M214.5 67 L215.5 68 L217.5 66" stroke="currentColor" className="text-neutral-600 dark:text-neutral-400" strokeWidth="0.9" strokeLinecap="round" />
+                      <rect x="29" y="70" width="199" height="33" rx="6" className="fill-neutral-50 dark:fill-[#1e1e1e] stroke-neutral-200 dark:stroke-neutral-800" strokeWidth="1" />
+                      
+                      {/* Streaming Text Lines */}
+                      <rect x="38" y="77" height="3.5" rx="1.7" className="fill-neutral-600 dark:fill-neutral-300" style={{ animation: "c1StreamLine1 7s ease-out infinite" }} />
+                      <rect x="38" y="85" height="3" rx="1.5" className="fill-neutral-400 dark:fill-neutral-500" style={{ animation: "c1StreamLine2 7s ease-out infinite" }} />
+
+                      {/* Result Code / Summary Box */}
+                      <g style={{ animation: "c1ResultCard 7s ease-out infinite" }}>
+                        <rect x="38" y="92" width="96" height="7.5" rx="3" className="fill-neutral-200/80 dark:fill-neutral-800/80" />
+                        <rect x="44" y="95" width="60" height="2" rx="1" className="fill-neutral-500 dark:fill-neutral-400" />
+                        <circle cx="216" cy="78" r="4.5" className="fill-neutral-200 dark:fill-neutral-800 stroke-neutral-300 dark:stroke-neutral-700" strokeWidth="0.8" />
+                        <path d="M214.5 78 L215.5 79 L217.5 77" stroke="currentColor" className="text-neutral-600 dark:text-neutral-400" strokeWidth="0.9" strokeLinecap="round" />
+                      </g>
                     </g>
                   </g>
                 </g>
