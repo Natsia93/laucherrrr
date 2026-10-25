@@ -94,12 +94,12 @@ export default function OverviewPage() {
         <GreetingHeader />
 
         {/* 2. MASTER CARDS WRAPPER (TANPA ROUNDED - POLOS) */}
-        <div className="border border-neutral-200/80 dark:border-neutral-800/80 rounded-none bg-neutral-50/40 dark:bg-[#0d0d0d]/60 p-4 sm:p-6 lg:p-7 space-y-6 shadow-none">
+        <div className="border border-neutral-200/50 dark:border-neutral-800/80 rounded-none bg-neutral-50/30 dark:bg-[#0d0d0d]/60 p-4 sm:p-6 lg:p-7 space-y-6 shadow-none">
           {/* TOP ROW: 4 ANIMATED SVG FEATURE CARDS (ALA NGODINGPAKEAI) */}
           <OverviewFeatureCards />
 
           {/* SECTION DIVIDER LINE */}
-          <div className="h-[1px] w-full bg-neutral-200/80 dark:bg-neutral-800/80" />
+          <div className="h-[1px] w-full bg-neutral-200/50 dark:bg-neutral-800/80" />
 
           {/* BOTTOM ROW: 3 EQUAL COLUMNS (Jadwal -> To-Do List -> Catatan) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">

@@ -202,7 +202,7 @@ export function OverviewFeatureCards() {
          * CARD 1: LLM MODE (Clean Flat Container, Zero Hover Lift)
          * ══════════════════════════════════════════════════════════ */}
         <Link href="/dashboard" className="block h-full" title="LLM Mode">
-          <div className="relative w-full h-56 sm:h-60 rounded-xl overflow-hidden bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800 flex items-center justify-center p-2 sm:p-2.5 select-none">
+          <div className="relative w-full h-56 sm:h-60 rounded-xl overflow-hidden bg-white dark:bg-[#121212] border border-neutral-200/50 dark:border-neutral-800 flex items-center justify-center p-2 sm:p-2.5 select-none">
             {/* Apple Brand Style Clean Title */}
             <div className="absolute top-3 left-4 z-10 flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500" />
@@ -215,7 +215,7 @@ export function OverviewFeatureCards() {
             <div className="relative z-10 w-full max-w-[340px] sm:max-w-[370px] pt-4">
               <svg viewBox="0 0 240 140" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto">
                 {/* Outer Window */}
-                <rect x="2" y="2" width="236" height="136" rx="6" className="fill-white dark:fill-[#171717] stroke-neutral-200/90 dark:stroke-neutral-800" strokeWidth="1.2" />
+                <rect x="2" y="2" width="236" height="136" rx="6" className="fill-white dark:fill-[#171717] stroke-neutral-200/60 dark:stroke-neutral-800" strokeWidth="1.2" />
                 
                 {/* Window Bar with 3 Dots */}
                 <line x1="2" y1="21" x2="238" y2="21" className="stroke-neutral-100 dark:stroke-neutral-800" strokeWidth="1" />
@@ -296,7 +296,7 @@ export function OverviewFeatureCards() {
          * CARD 2: DECK GENERATOR (Clean Flat Container, Zero Hover Lift)
          * ══════════════════════════════════════════════════════════ */}
         <Link href="/decks" className="block h-full" title="Deck Generator">
-          <div className="relative w-full h-56 sm:h-60 rounded-xl overflow-hidden bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800 flex items-center justify-center p-2 sm:p-2.5 select-none">
+          <div className="relative w-full h-56 sm:h-60 rounded-xl overflow-hidden bg-white dark:bg-[#121212] border border-neutral-200/50 dark:border-neutral-800 flex items-center justify-center p-2 sm:p-2.5 select-none">
             {/* Apple Brand Style Clean Title */}
             <div className="absolute top-3 left-4 z-10 flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500" />
@@ -309,7 +309,7 @@ export function OverviewFeatureCards() {
             <div className="relative z-10 w-full max-w-[340px] sm:max-w-[370px] pt-4">
               <svg viewBox="0 0 240 140" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto">
                 {/* Slide Studio Frame */}
-                <rect x="2" y="2" width="236" height="136" rx="6" className="fill-white dark:fill-[#171717] stroke-neutral-200/90 dark:stroke-neutral-800" strokeWidth="1.2" />
+                <rect x="2" y="2" width="236" height="136" rx="6" className="fill-white dark:fill-[#171717] stroke-neutral-200/60 dark:stroke-neutral-800" strokeWidth="1.2" />
                 
                 {/* Top Workspace Toolbar */}
                 <line x1="2" y1="21" x2="238" y2="21" className="stroke-neutral-100 dark:stroke-neutral-800" strokeWidth="1" />
@@ -423,7 +423,7 @@ export function OverviewFeatureCards() {
          * CARD 3: AUTOMATION (Clean Flat Container, Zero Hover Lift)
          * ══════════════════════════════════════════════════════════ */}
         <Link href="/automation" className="block h-full" title="Launcher Automation">
-          <div className="relative w-full h-56 sm:h-60 rounded-xl overflow-hidden bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800 flex items-center justify-center p-2 sm:p-2.5 select-none">
+          <div className="relative w-full h-56 sm:h-60 rounded-xl overflow-hidden bg-white dark:bg-[#121212] border border-neutral-200/50 dark:border-neutral-800 flex items-center justify-center p-2 sm:p-2.5 select-none">
             {/* Apple Brand Style Clean Title */}
             <div className="absolute top-3 left-4 z-10 flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500" />
@@ -436,7 +436,7 @@ export function OverviewFeatureCards() {
             <div className="relative z-10 w-full max-w-[340px] sm:max-w-[370px] pt-4">
               <svg viewBox="0 0 240 140" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto">
                 {/* Canvas Outer Frame */}
-                <rect x="2" y="2" width="236" height="136" rx="6" className="fill-white dark:fill-[#171717] stroke-neutral-200/90 dark:stroke-neutral-800" strokeWidth="1.2" />
+                <rect x="2" y="2" width="236" height="136" rx="6" className="fill-white dark:fill-[#171717] stroke-neutral-200/60 dark:stroke-neutral-800" strokeWidth="1.2" />
                 
                 {/* Window Bar */}
                 <line x1="2" y1="21" x2="238" y2="21" className="stroke-neutral-100 dark:stroke-neutral-800" strokeWidth="1" />
