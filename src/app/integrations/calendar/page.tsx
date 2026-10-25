@@ -133,12 +133,22 @@ const TaskCard = ({
   );
 };
 
+let hasCalendarMountedOnce = false;
+
 export default function GoogleCalendarPage() {
   const { data: session } = authClient.useSession();
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [view, setView] = useState<ViewMode>("week");
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [mounted, setMounted] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("launcher_calendar_tasks_cache");
+        if (cached) return JSON.parse(cached);
+      } catch (_) {}
+    }
+    return [];
+  });
+  const [mounted, setMounted] = useState(() => hasCalendarMountedOnce);
   const [isSyncing, setIsSyncing] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [calendarScopeGranted, setCalendarScopeGranted] = useState(false);
@@ -189,14 +199,8 @@ export default function GoogleCalendarPage() {
   };
 
   useEffect(() => {
+    hasCalendarMountedOnce = true;
     setMounted(true);
-    // Instant hydration from cache
-    try {
-      const cached = localStorage.getItem("launcher_calendar_tasks_cache");
-      if (cached) {
-        setTasks(JSON.parse(cached));
-      }
-    } catch {}
     loadTasks();
   }, [session]);
 
@@ -222,8 +226,6 @@ export default function GoogleCalendarPage() {
       setIsAuthModalOpen(true);
     }
   };
-
-  if (!mounted) return null;
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -613,7 +615,15 @@ export default function GoogleCalendarPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4 pb-12 sm:pb-4">
+      {!mounted ? (
+        <div className="h-[70vh] flex items-center justify-center">
+          <div className="flex items-center gap-2 text-sm text-neutral-500">
+            <RefreshCw className="w-4 h-4 animate-spin text-neutral-400" />
+            <span>Loading calendar...</span>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4 pb-12 sm:pb-4">
         {/* Top Control Bar (Google Calendar Authentic: [Today] [<] [>] [Title] - No Card Wrapper) */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-1 py-1">
           {/* Left: [Today] [ < ] [ > ] [ Date Title ] [ Sync Status / Authorize ] */}
@@ -714,6 +724,7 @@ export default function GoogleCalendarPage() {
           {view === "day" && renderDayView()}
         </div>
       </div>
+      )}
 
       {/* ─── READ-ONLY EVENT DETAILS MODAL (GOOGLE CALENDAR STYLE) ─── */}
       {selectedTask && (

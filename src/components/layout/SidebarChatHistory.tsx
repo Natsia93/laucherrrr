@@ -17,6 +17,10 @@ interface SidebarChatHistoryProps {
   onCloseMobile?: () => void;
 }
 
+// Module-level cache so conversations stay instant across all page navigations
+let memoryConversationsCache: SidebarConversation[] | null = null;
+let hasInitialLoaded = false;
+
 export function SidebarChatHistory({
   collapsed,
   mobileOpen,
@@ -26,7 +30,26 @@ export function SidebarChatHistory({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [conversations, setConversations] = useState<SidebarConversation[]>([]);
+  // Instant hydration from memory cache or localStorage to eliminate any loading flash
+  const [conversations, setConversations] = useState<SidebarConversation[]>(() => {
+    if (memoryConversationsCache !== null) {
+      return memoryConversationsCache;
+    }
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("launcher_sidebar_chats_cache");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            memoryConversationsCache = parsed;
+            return parsed;
+          }
+        }
+      } catch (_) {}
+    }
+    return [];
+  });
+
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -52,14 +75,23 @@ export function SidebarChatHistory({
     });
   };
 
-  // Fetch conversations
-  const fetchConversations = useCallback(async () => {
+  // Fetch conversations with silent stale-while-revalidate pattern
+  const fetchConversations = useCallback(async (isSilent = false) => {
     try {
-      setLoading(true);
+      // Only show spinner on very first load if we don't have any cached conversations yet
+      if (!isSilent && !hasInitialLoaded && (!memoryConversationsCache || memoryConversationsCache.length === 0)) {
+        setLoading(true);
+      }
       const res = await fetch("/api/chat/conversations");
       if (res.ok) {
         const data = await res.json();
-        setConversations(data.conversations || []);
+        const list: SidebarConversation[] = data.conversations || [];
+        memoryConversationsCache = list;
+        hasInitialLoaded = true;
+        setConversations(list);
+        try {
+          localStorage.setItem("launcher_sidebar_chats_cache", JSON.stringify(list));
+        } catch (_) {}
       }
     } catch (err) {
       console.error("Failed to fetch sidebar conversations:", err);
@@ -68,11 +100,21 @@ export function SidebarChatHistory({
     }
   }, []);
 
+  // Fetch only on initial mount or when custom event indicates updates
   useEffect(() => {
-    fetchConversations();
+    fetchConversations(Boolean(memoryConversationsCache && memoryConversationsCache.length > 0));
+
+    const handleUpdated = () => {
+      fetchConversations(true);
+    };
+
+    window.addEventListener("conversations_updated", handleUpdated);
+    return () => {
+      window.removeEventListener("conversations_updated", handleUpdated);
+    };
   }, [fetchConversations]);
 
-  // Sync with active conversation from URL or custom events
+  // Sync with active conversation from URL or custom events without re-fetching
   useEffect(() => {
     const urlId = searchParams?.get("id");
     if (urlId) {
@@ -85,18 +127,11 @@ export function SidebarChatHistory({
       }
     };
 
-    const handleUpdated = () => {
-      fetchConversations();
-    };
-
     window.addEventListener("active_conversation_changed", handleActiveChanged);
-    window.addEventListener("conversations_updated", handleUpdated);
-
     return () => {
       window.removeEventListener("active_conversation_changed", handleActiveChanged);
-      window.removeEventListener("conversations_updated", handleUpdated);
     };
-  }, [searchParams, fetchConversations]);
+  }, [searchParams]);
 
   const handleSelectChat = (id: string) => {
     setActiveId(id);
