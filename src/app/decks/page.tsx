@@ -7234,7 +7234,7 @@ async function streamBuildSlide(
           
           {/* Header Section */}
           <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <h1 className="text-3xl sm:text-[40px] font-normal sm:font-medium font-lora tracking-tight text-neutral-900 dark:text-white leading-[1.2]">
+            <h1 className="text-3xl sm:text-[40px] font-normal font-lora tracking-tight text-neutral-900 dark:text-white leading-[1.2]">
               Transform your ideas into stunning decks
             </h1>
             <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-400 font-normal">
