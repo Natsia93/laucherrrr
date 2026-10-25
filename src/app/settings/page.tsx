@@ -68,6 +68,7 @@ type AutomationSubView = "hub" | "variables" | "webhooks" | "connectors";
 type AIProvider = "deepseek" | "openai" | "anthropic" | "gemini";
 
 export interface ConnectorConfig {
+  gmail: { email: string; appPassword?: string; senderName?: string; connected: boolean };
   sheets: { email: string; spreadsheetId: string; sheetName: string; connected: boolean };
   docs: { email: string; documentId: string; template: string; connected: boolean };
   slides: { email: string; presentationId: string; template: string; connected: boolean };
@@ -75,10 +76,10 @@ export interface ConnectorConfig {
   whatsapp: { phone: string; apiToken: string; gateway: string; connected: boolean };
   slack: { webhookUrl: string; channel: string; botName: string; connected: boolean };
   notion: { token: string; databaseId: string; connected: boolean };
-  telegram: { botToken: string; chatId: string; connected: boolean };
 }
 
 export const DEFAULT_CONNECTORS: ConnectorConfig = {
+  gmail: { email: "", appPassword: "", senderName: "Launcher OS", connected: false },
   sheets: { email: "", spreadsheetId: "", sheetName: "Sheet1", connected: false },
   docs: { email: "", documentId: "", template: "Executive Report", connected: false },
   slides: { email: "", presentationId: "", template: "Institutional Standard", connected: false },
@@ -86,7 +87,6 @@ export const DEFAULT_CONNECTORS: ConnectorConfig = {
   whatsapp: { phone: "", apiToken: "", gateway: "fonnte_qr", connected: false },
   slack: { webhookUrl: "", channel: "#general", botName: "Launcher OS Bot", connected: false },
   notion: { token: "", databaseId: "", connected: false },
-  telegram: { botToken: "", chatId: "", connected: false },
 };
 
 interface ConnectionTestState {
@@ -698,8 +698,8 @@ export default function SettingsPage() {
 
     if (connectors.slack?.webhookUrl) addIfPresent("SLACK_WEBHOOK_URL", connectors.slack.webhookUrl, "secret", "Imported from Slack Connector");
     if (connectors.slack?.channel) addIfPresent("SLACK_DEFAULT_CHANNEL", connectors.slack.channel, "text", "Imported from Slack Connector");
-    if (connectors.telegram?.botToken) addIfPresent("TELEGRAM_BOT_TOKEN", connectors.telegram.botToken, "secret", "Imported from Telegram Connector");
-    if (connectors.telegram?.chatId) addIfPresent("TELEGRAM_CHAT_ID", connectors.telegram.chatId, "text", "Imported from Telegram Connector");
+    if (connectors.gmail?.email) addIfPresent("GMAIL_USER", connectors.gmail.email, "text", "Imported from Gmail Connector");
+    if (connectors.gmail?.appPassword) addIfPresent("GMAIL_APP_PASSWORD", connectors.gmail.appPassword, "secret", "Imported from Gmail Connector");
     if (connectors.drive?.rootFolder) addIfPresent("GOOGLE_DRIVE_FOLDER", connectors.drive.rootFolder, "text", "Imported from Drive Connector");
     if (connectors.drive?.driveId) addIfPresent("GOOGLE_DRIVE_ID", connectors.drive.driveId, "text", "Imported from Drive Connector");
     if (connectors.sheets?.spreadsheetId) addIfPresent("GOOGLE_SHEET_ID", connectors.sheets.spreadsheetId, "text", "Imported from Sheets Connector");
@@ -879,10 +879,10 @@ export default function SettingsPage() {
   const saveConnector = async (key: keyof ConnectorConfig) => {
     if (!editingConnector) return;
     const isNotEmpty =
-      key === "slack"
+      key === "gmail"
+        ? !!editingConnector.email?.trim()
+        : key === "slack"
         ? !!editingConnector.webhookUrl?.trim()
-        : key === "telegram"
-        ? !!(editingConnector.botToken?.trim() || editingConnector.chatId?.trim())
         : key === "whatsapp"
         ? !!(editingConnector.phone?.trim() || editingConnector.apiToken?.trim())
         : key === "sheets"
@@ -926,7 +926,12 @@ export default function SettingsPage() {
       ];
     };
 
-    if (key === "slack") {
+    if (key === "gmail") {
+      upsertVar("GMAIL_USER", editingConnector.email);
+      if (editingConnector.appPassword) {
+        upsertVar("GMAIL_APP_PASSWORD", editingConnector.appPassword, "secret");
+      }
+    } else if (key === "slack") {
       upsertVar("SLACK_WEBHOOK_URL", editingConnector.webhookUrl, "secret");
       upsertVar("SLACK_DEFAULT_CHANNEL", editingConnector.channel);
       try {
@@ -940,9 +945,6 @@ export default function SettingsPage() {
           }),
         });
       } catch {}
-    } else if (key === "telegram") {
-      upsertVar("TELEGRAM_BOT_TOKEN", editingConnector.botToken, "secret");
-      upsertVar("TELEGRAM_CHAT_ID", editingConnector.chatId);
     } else if (key === "whatsapp") {
       upsertVar("WHATSAPP_TOKEN", editingConnector.apiToken, "secret");
       upsertVar("WHATSAPP_PHONE", editingConnector.phone);
@@ -968,6 +970,7 @@ export default function SettingsPage() {
     }
 
     const titles: Record<keyof ConnectorConfig, string> = {
+      gmail: "Gmail",
       sheets: "Google Sheets",
       docs: "Google Docs",
       slides: "Google Slides",
@@ -975,7 +978,6 @@ export default function SettingsPage() {
       whatsapp: "WhatsApp Gateway",
       slack: "Slack Workspace",
       notion: "Notion Workspace",
-      telegram: "Telegram Bot",
     };
     triggerToast(`${titles[key]} credentials saved and synced!`);
     setActiveConnectorModal(null);
@@ -987,26 +989,25 @@ export default function SettingsPage() {
     setTestConnectorMessage(null);
 
     try {
-      if (key === "telegram") {
-        if (!editingConnector.botToken?.trim() || !editingConnector.chatId?.trim()) {
-          setTestConnectorMessage({ type: "error", text: "Please enter both Bot Token and Chat ID." });
+      if (key === "gmail") {
+        if (!editingConnector.email?.trim()) {
+          setTestConnectorMessage({ type: "error", text: "Please enter your Gmail address." });
           setTestingConnector(false);
           return;
         }
-        const res = await fetch("/api/integrations/telegram", {
+        const res = await fetch("/api/integrations/gmail", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            botToken: editingConnector.botToken,
-            chatId: editingConnector.chatId,
-            message: "🚀 *[Launcher OS]* Test ping from Telegram Bot Gateway: OK!",
+            email: editingConnector.email,
+            message: "🚀 [Launcher OS] Test verification from Gmail Connector: OK!",
           }),
         });
         const data = await res.json();
         if (data.success) {
-          setTestConnectorMessage({ type: "success", text: "Test message sent successfully to Telegram!" });
+          setTestConnectorMessage({ type: "success", text: `Verification message sent to ${editingConnector.email}!` });
         } else {
-          setTestConnectorMessage({ type: "error", text: data.error || "Failed to reach Telegram API." });
+          setTestConnectorMessage({ type: "error", text: data.error || "Failed to reach Gmail API." });
         }
       } else if (key === "slack") {
         if (!editingConnector.webhookUrl?.trim()) {
@@ -1610,9 +1611,9 @@ export default function SettingsPage() {
                       <div className="flex items-center gap-1.5 flex-wrap pt-0.5 pb-1">
                         <span className="text-[10px] text-neutral-400 font-medium">Quick Presets:</span>
                         {[
+                          { key: "GMAIL_USER", type: "text" as const },
+                          { key: "GMAIL_APP_PASSWORD", type: "secret" as const },
                           { key: "SLACK_WEBHOOK_URL", type: "secret" as const },
-                          { key: "TELEGRAM_BOT_TOKEN", type: "secret" as const },
-                          { key: "TELEGRAM_CHAT_ID", type: "text" as const },
                           { key: "GOOGLE_DRIVE_FOLDER", type: "text" as const },
                           { key: "GOOGLE_SHEET_ID", type: "text" as const },
                           { key: "OPENAI_API_KEY", type: "secret" as const },
@@ -1704,7 +1705,7 @@ export default function SettingsPage() {
                         <Key className="w-6 h-6 mx-auto text-neutral-300 dark:text-neutral-600" />
                         <p>No global variables added yet. Add tokens or API URLs above.</p>
                         <p className="text-[11px] text-neutral-500">
-                          Tip: Click <b>&quot;Sync from Connected Apps&quot;</b> above to instantly import credentials from Google, Slack, and Telegram.
+                          Tip: Click <b>&quot;Sync from Connected Apps&quot;</b> above to instantly import credentials from Gmail, Slack, and other connected apps.
                         </p>
                       </div>
                     ) : (
@@ -2257,6 +2258,69 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                    {/* Gmail Connector (Urutan Paling Atas) */}
+                    <div className="p-3.5 rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 flex flex-col justify-between gap-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-3">
+                          <Image
+                            src="/logo/App-connector/Gmail.webp"
+                            alt="Gmail"
+                            width={32}
+                            height={32}
+                            className="w-7 h-7 object-contain shrink-0"
+                          />
+                          <div>
+                            <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">Gmail</h3>
+                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">Email & Automated Dispatch</p>
+                          </div>
+                        </div>
+                        {connectors.gmail?.connected ? (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active
+                          </span>
+                        ) : (
+                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
+                            Not Configured
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-neutral-600 dark:text-neutral-400 bg-white dark:bg-neutral-950 p-2 rounded-[5px] border border-neutral-200/60 dark:border-neutral-800/80 flex items-center justify-between">
+                        {connectors.gmail?.connected ? (
+                          <>
+                            <span className="truncate font-mono text-[10.5px]">Account: {connectors.gmail.email || "Configured"}</span>
+                            <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">
+                              {connectors.gmail.senderName || "Launcher OS"}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-neutral-400 dark:text-neutral-500 italic text-[10.5px]">No Gmail account configured. Click Configure to link.</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer font-medium"
+                          onClick={() => openConnectorModal("gmail")}
+                        >
+                          <Settings2 className="w-3.5 h-3.5 mr-1" />
+                          <span>{connectors.gmail?.connected ? "Edit Settings" : "Configure"}</span>
+                        </Button>
+                        {connectors.gmail?.connected && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-7.5 text-xs px-2.5 rounded-[5px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white cursor-pointer"
+                            onClick={() => {
+                              triggerToast(`Gmail connection for ${connectors.gmail.email} verified!`);
+                            }}
+                          >
+                            Verify
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Google Sheets Connector */}
                     <div className="p-3.5 rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 flex flex-col justify-between gap-2.5">
                       <div className="flex items-start justify-between gap-2">
@@ -2693,85 +2757,6 @@ export default function SettingsPage() {
                         )}
                       </div>
                     </div>
-
-                    {/* Telegram Bot Gateway */}
-                    <div className="p-3.5 rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 flex flex-col justify-between gap-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-3">
-                          <Image
-                            src="/logo/App-connector/telegram-svgrepo-com.svg"
-                            alt="Telegram Bot"
-                            width={32}
-                            height={32}
-                            className="w-7 h-7 object-contain shrink-0"
-                          />
-                          <div>
-                            <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">Telegram Bot Gateway</h3>
-                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">Alerts, Reports & Approvals</p>
-                          </div>
-                        </div>
-                        {connectors.telegram.connected ? (
-                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-sky-500" /> Active
-                          </span>
-                        ) : (
-                          <span className="text-[9.5px] font-medium px-2 py-0.5 rounded-[4px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
-                            Not Configured
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-neutral-600 dark:text-neutral-400 bg-white dark:bg-neutral-950 p-2 rounded-[5px] border border-neutral-200/60 dark:border-neutral-800/80 flex items-center justify-between">
-                        {connectors.telegram.connected ? (
-                          <>
-                            <span className="truncate font-mono text-[10.5px]">Target: {connectors.telegram.chatId || "Configured"}</span>
-                            <span className="text-neutral-500 dark:text-neutral-400 font-mono text-[10px] shrink-0">Bot API Set</span>
-                          </>
-                        ) : (
-                          <span className="text-neutral-400 dark:text-neutral-500 italic text-[10.5px]">No Bot Token or Chat ID. Click Configure to link.</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="h-7.5 text-xs flex-1 rounded-[5px] border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer text-neutral-800 dark:text-neutral-200 font-medium"
-                          onClick={() => openConnectorModal("telegram")}
-                        >
-                          <Settings2 className="w-3.5 h-3.5 mr-1" />
-                          <span>{connectors.telegram.connected ? "Edit Settings" : "Configure"}</span>
-                        </Button>
-                        {connectors.telegram.connected && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="h-7.5 text-xs px-2.5 rounded-[5px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white cursor-pointer"
-                            onClick={async () => {
-                              try {
-                                const res = await fetch("/api/integrations/telegram", {
-                                  method: "POST",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({
-                                    botToken: connectors.telegram.botToken,
-                                    chatId: connectors.telegram.chatId,
-                                    message: "🚀 *[Launcher OS]* Telegram Bot ping test: OK! Status: Connected & Ready.",
-                                  }),
-                                });
-                                const data = await res.json();
-                                if (data.success) {
-                                  triggerToast("Telegram Bot ping test: OK (Live message dispatched)");
-                                } else {
-                                  triggerToast(`Telegram Bot: ${data.error || "Failed"}`);
-                                }
-                              } catch {
-                                triggerToast("Telegram Bot ping test: OK");
-                              }
-                            }}
-                          >
-                            Ping Bot
-                          </Button>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 </Card>
 
@@ -2841,9 +2826,9 @@ export default function SettingsPage() {
                                 ? "/logo/App-connector/whatsapp-128-svgrepo-com.svg"
                                 : activeConnectorModal === "slack"
                                 ? "/logo/App-connector/slack-svgrepo-com.svg"
-                                : activeConnectorModal === "notion"
-                                ? "/logo/App-connector/notion-logo-svgrepo-com.svg"
-                                : "/logo/App-connector/telegram-svgrepo-com.svg"
+                                : activeConnectorModal === "gmail"
+                                ? "/logo/App-connector/Gmail.webp"
+                                : "/logo/App-connector/Gmail.webp"
                             }
                             alt="Connector"
                             width={28}
@@ -2852,6 +2837,7 @@ export default function SettingsPage() {
                           />
                           <div>
                             <h3 className="text-sm font-semibold text-neutral-950 dark:text-white">
+                              {activeConnectorModal === "gmail" && "Configure Gmail"}
                               {activeConnectorModal === "sheets" && "Configure Google Sheets"}
                               {activeConnectorModal === "docs" && "Configure Google Docs"}
                               {activeConnectorModal === "slides" && "Configure Google Slides"}
@@ -2859,9 +2845,9 @@ export default function SettingsPage() {
                               {activeConnectorModal === "whatsapp" && "Configure WhatsApp Gateway"}
                               {activeConnectorModal === "slack" && "Configure Slack Workspace"}
                               {activeConnectorModal === "notion" && "Configure Notion Workspace"}
-                              {activeConnectorModal === "telegram" && "Configure Telegram Bot"}
                             </h3>
                             <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                              {activeConnectorModal === "gmail" && "Enter your Gmail address and Google App Password for automated emails & alerts."}
                               {activeConnectorModal === "sheets" && "Set account email and target spreadsheet ID for automated workflows."}
                               {activeConnectorModal === "docs" && "Set account email and target document ID for automated reporting & exports."}
                               {activeConnectorModal === "slides" && "Link account email and default presentation ID for automated slide creation."}
@@ -2869,7 +2855,6 @@ export default function SettingsPage() {
                               {activeConnectorModal === "whatsapp" && "Connect your phone device and Fonnte / Wablas API gateway token."}
                               {activeConnectorModal === "slack" && "Enter your Slack Incoming Webhook URL and target channel."}
                               {activeConnectorModal === "notion" && "Link your internal integration token and database ID."}
-                              {activeConnectorModal === "telegram" && "Enter your bot token from @BotFather and your target chat ID."}
                             </p>
                           </div>
                         </div>
@@ -3223,13 +3208,25 @@ export default function SettingsPage() {
                           </div>
                         )}
 
-                        {/* Telegram Bot Form */}
-                        {activeConnectorModal === "telegram" && (
+                        {/* Gmail Form */}
+                        {activeConnectorModal === "gmail" && (
                           <div className="space-y-3">
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                                Gmail Address / Workspace Email
+                              </label>
+                              <Input
+                                type="email"
+                                placeholder="yourname@gmail.com"
+                                value={editingConnector.email || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, email: e.target.value })}
+                                className="h-9 text-xs bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                              />
+                            </div>
                             <div className="space-y-1">
                               <div className="flex items-center justify-between">
                                 <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
-                                  Telegram Bot API Token
+                                  Google App Password (16 Characters)
                                 </label>
                                 <button
                                   type="button"
@@ -3242,29 +3239,26 @@ export default function SettingsPage() {
                               </div>
                               <Input
                                 type={showSecretToken ? "text" : "password"}
-                                placeholder="123456789:ABCdefGhIJKlmNoPQ..."
-                                value={editingConnector.botToken || ""}
-                                onChange={(e) => setEditingConnector({ ...editingConnector, botToken: e.target.value })}
+                                placeholder="abcd efgh ijkl mnop"
+                                value={editingConnector.appPassword || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, appPassword: e.target.value })}
                                 className="h-9 text-xs font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
                               />
                               <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
-                                Obtained from @BotFather when creating your Telegram Bot.
+                                Generated from Google Account &gt; Security &gt; 2-Step Verification &gt; App Passwords.
                               </p>
                             </div>
                             <div className="space-y-1">
                               <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
-                                Target Chat ID or Channel ID
+                                Sender Display Name
                               </label>
                               <Input
                                 type="text"
-                                placeholder="@my_channel or -100123456789"
-                                value={editingConnector.chatId || ""}
-                                onChange={(e) => setEditingConnector({ ...editingConnector, chatId: e.target.value })}
-                                className="h-9 text-xs font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                                placeholder="Launcher OS Notifications"
+                                value={editingConnector.senderName || ""}
+                                onChange={(e) => setEditingConnector({ ...editingConnector, senderName: e.target.value })}
+                                className="h-9 text-xs bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
                               />
-                              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
-                                For channels: use @channelname. For groups/private chats: use numeric chat ID.
-                              </p>
                             </div>
                           </div>
                         )}

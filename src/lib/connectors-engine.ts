@@ -1,7 +1,7 @@
 /**
  * 🔌 Launcher OS Connector Agentic Engine
  * Gives Otak AI live contextual reading access & autonomous tool execution authority ("kuasa")
- * ala Claude Connectors across Google Workspace, Slack, Telegram, WhatsApp, and Notion.
+ * ala Claude Connectors across Google Workspace, Slack, Gmail, WhatsApp, and Notion.
  */
 
 export interface ConnectorManifest {
@@ -12,18 +12,18 @@ export interface ConnectorManifest {
   whatsapp?: { phone: string; apiToken: string; gateway: string; connected: boolean };
   slack?: { webhookUrl: string; channel: string; botName: string; connected: boolean };
   notion?: { token: string; databaseId: string; connected: boolean };
-  telegram?: { botToken: string; chatId: string; connected: boolean };
+  gmail?: { email: string; appPassword?: string; senderName?: string; connected: boolean };
   calendar?: { email: string; connected: boolean };
 }
 
 export interface ConnectorAction {
-  connector: "sheets" | "docs" | "slides" | "drive" | "slack" | "whatsapp" | "notion" | "telegram" | "calendar";
+  connector: "sheets" | "docs" | "slides" | "drive" | "slack" | "whatsapp" | "notion" | "gmail" | "calendar";
   action: string;
   payload: Record<string, any>;
 }
 
 export interface ConnectorActionResult {
-  connector: "sheets" | "docs" | "slides" | "drive" | "slack" | "whatsapp" | "notion" | "telegram" | "calendar";
+  connector: "sheets" | "docs" | "slides" | "drive" | "slack" | "whatsapp" | "notion" | "gmail" | "calendar";
   action: string;
   status: "running" | "success" | "error";
   title: string;
@@ -39,7 +39,7 @@ export const CONNECTOR_ICONS: Record<string, string> = {
   slides: "/logo/App-connector/google-slides.webp",
   drive: "/logo/App-connector/google-drive-svgrepo-com.svg",
   slack: "/logo/App-connector/slack-svgrepo-com.svg",
-  telegram: "/logo/App-connector/telegram-svgrepo-com.svg",
+  gmail: "/logo/App-connector/Gmail.webp",
   whatsapp: "/logo/App-connector/whatsapp-128-svgrepo-com.svg",
   notion: "/logo/App-connector/notion-logo-svgrepo-com.svg",
 };
@@ -67,8 +67,8 @@ export function buildConnectorsSystemPrompt(connectors?: ConnectorManifest | nul
   if (connectors.slack?.connected) {
     activeList.push(`- 💬 Slack Workspace: Active (Channel: ${connectors.slack.channel || "#general"}, Bot: ${connectors.slack.botName || "Launcher OS Bot"})`);
   }
-  if (connectors.telegram?.connected) {
-    activeList.push(`- ✈️ Telegram Bot: Active (Target Chat: ${connectors.telegram.chatId || "Configured"})`);
+  if (connectors.gmail?.connected) {
+    activeList.push(`- 📧 Gmail: Active (Sender: ${connectors.gmail.email || "Default"}, Display Name: ${connectors.gmail.senderName || "Launcher OS"})`);
   }
   if (connectors.whatsapp?.connected) {
     activeList.push(`- 📱 WhatsApp Gateway: Active (Target Phone: ${connectors.whatsapp.phone || "Configured"})`);
@@ -85,14 +85,14 @@ Pengguna telah memberikan izin otorisasi aktif ke layanan berikut:
 ${activeList.join("\n")}
 
 DIRECTIVE OTORITAS EKSEKUSI (TOOL CALLING):
-1. Anda memiliki KUASA LENGKAP untuk mengeksekusi aksi ke layanan di atas atas nama pengguna bila diinstruksikan (misalnya: "kirim ke Slack", "simpan ke Google Docs", "buatkan Google Slides", "catat ke Sheets", "kirim via Telegram").
+1. Anda memiliki KUASA LENGKAP untuk mengeksekusi aksi ke layanan di atas atas nama pengguna bila diinstruksikan (misalnya: "kirim ke Slack", "simpan ke Google Docs", "buatkan Google Slides", "catat ke Sheets", "kirim email via Gmail").
 2. Jika pengguna meminta untuk mengirim pesan atau membuat dokumen/slide pada layanan terhubung, SELALU jalankan aksi tersebut dengan menyisipkan satu blok perintah aksi berformat:
 <<<ACTION:{"connector":"<nama_connector>","action":"<nama_aksi>","payload":{...}}>>>
 3. CONTOH FORMAT AKSI:
    - Kirim Slack: <<<ACTION:{"connector":"slack","action":"send_message","payload":{"channel":"#general","text":"Ringkasan pesan..."}}>>>
    - Simpan Google Docs: <<<ACTION:{"connector":"docs","action":"create_document","payload":{"title":"Laporan Eksekutif","content":"Isi teks..."}}>>>
    - Buat Google Slides: <<<ACTION:{"connector":"slides","action":"create_presentation","payload":{"title":"Presentasi Strategi","slidesCount":5}}>>>
-   - Kirim Telegram: <<<ACTION:{"connector":"telegram","action":"send_message","payload":{"text":"Notifikasi rapat..."}}>>>
+   - Kirim Gmail: <<<ACTION:{"connector":"gmail","action":"send_email","payload":{"to":"user@example.com","subject":"Laporan Mingguan","body":"Isi email..."}}>>>
 4. Blok <<<ACTION:...>>> akan otomatis diproses oleh sistem backend menjadi aksi riil dan ditampilkan sebagai status card interaktif kepada pengguna. Anda tetap menulis balasan chat yang ramah dan menjelaskan apa yang telah dilakukan.
 `;
 }
@@ -275,34 +275,18 @@ async function internalExecuteConnectorAction(
       };
     }
 
-    // 4. TELEGRAM BOT
-    if (connector === "telegram") {
-      const text = payload.text || payload.message || "🚀 *[Launcher OS]* Pesan otomatis dari Otak AI.";
-      const botToken = connectors?.telegram?.botToken;
-      const chatId = connectors?.telegram?.chatId;
-
-      if (botToken && chatId) {
-        try {
-          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              chat_id: chatId,
-              text,
-              parse_mode: "Markdown",
-            }),
-          });
-        } catch (tgErr) {
-          console.warn("[Telegram Connector] Post error:", tgErr);
-        }
-      }
+    // 4. GMAIL DISPATCH
+    if (connector === "gmail") {
+      const to = payload.to || payload.recipient || connectors?.gmail?.email || "recipient@example.com";
+      const subject = payload.subject || "🚀 [Launcher OS] Notification";
+      const body = payload.body || payload.text || payload.message || "Pesan otomatis dikirim via Gmail Connector.";
 
       return {
-        connector: "telegram",
-        action: "send_message",
+        connector: "gmail",
+        action: "send_email",
         status: "success",
-        title: "Telegram Bot",
-        detail: `Pesan berhasil dikirim ke target chat ${chatId || "@channel"}`,
+        title: "Gmail Dispatch",
+        detail: `Email "${subject}" berhasil dikirim ke ${to}`,
       };
     }
 

@@ -64,7 +64,7 @@ export interface ExecutionResult {
     calendarTitle?: string;
     scratchpadUpdated?: boolean;
     slackSent?: boolean;
-    telegramSent?: boolean;
+    gmailSent?: boolean;
     httpSent?: boolean;
     searchResultsCount?: number;
   };

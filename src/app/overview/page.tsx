@@ -21,7 +21,7 @@ const OverviewAnalyticsCharts = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="p-6 bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-xs flex flex-col justify-between h-[275px] min-h-[275px] animate-pulse">
+      <div className="p-6 bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-none flex flex-col justify-between h-[275px] min-h-[275px] animate-pulse">
         <div className="flex items-center justify-between">
           <div className="h-5 w-36 bg-neutral-200/70 dark:bg-neutral-800 rounded"></div>
           <div className="h-3 w-20 bg-neutral-100 dark:bg-neutral-800/60 rounded"></div>
@@ -92,22 +92,28 @@ export default function OverviewPage() {
         {/* 1. CLEAN GREETING & HEADER */}
         <GreetingHeader />
 
-        {/* 2. TOP ROW: CREDITS USAGE + 7-DAY USAGE CHART */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-          <CreditsUsageCard />
-          <OverviewAnalyticsCharts />
-        </div>
+        {/* 2. MASTER CARDS WRAPPER (TANPA ROUNDED - POLOS) */}
+        <div className="border border-neutral-200/80 dark:border-neutral-800/80 rounded-none bg-neutral-50/40 dark:bg-[#0d0d0d]/60 p-4 sm:p-6 lg:p-7 space-y-6 shadow-none">
+          {/* TOP ROW: CREDITS USAGE + 7-DAY USAGE CHART */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            <CreditsUsageCard />
+            <OverviewAnalyticsCharts />
+          </div>
 
-        {/* 3. BOTTOM ROW: 3 EQUAL COLUMNS (Jadwal -> To-Do List -> Catatan) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-          {/* PALING KIRI: Agenda & Jadwal */}
-          <OverviewAgenda />
+          {/* SECTION DIVIDER LINE */}
+          <div className="h-[1px] w-full bg-neutral-200/80 dark:bg-neutral-800/80" />
 
-          {/* TENGAH: Daftar Tugas & Fokus */}
-          <OverviewToDoList />
+          {/* BOTTOM ROW: 3 EQUAL COLUMNS (Jadwal -> To-Do List -> Catatan) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+            {/* PALING KIRI: Agenda & Jadwal */}
+            <OverviewAgenda />
 
-          {/* PALING KANAN: Scratchpad & Catatan */}
-          <OverviewScratchpad />
+            {/* TENGAH: Daftar Tugas & Fokus */}
+            <OverviewToDoList />
+
+            {/* PALING KANAN: Scratchpad & Catatan */}
+            <OverviewScratchpad />
+          </div>
         </div>
       </div>
     </AppShell>

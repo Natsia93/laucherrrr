@@ -85,13 +85,13 @@ export function OverviewAnalyticsCharts() {
   }, []);
 
   return (
-    <Card className="p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-xs flex flex-col justify-between h-[275px] min-h-[275px]">
+    <Card className="p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-none flex flex-col justify-between h-[275px] min-h-[275px]">
       <div className="flex items-center justify-between">
         <h3 className="text-base sm:text-lg font-semibold text-neutral-950 dark:text-white tracking-tight">
           Daily Activity (7 Days)
         </h3>
         <span className="text-[11px] text-neutral-400 font-normal">
-          Senin – Minggu
+          Mon – Sun
         </span>
       </div>
 
@@ -99,8 +99,8 @@ export function OverviewAnalyticsCharts() {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={weekChartData}
-            margin={{ top: 10, right: 10, left: -24, bottom: 0 }}
-            barCategoryGap="8%"
+            margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
+            barCategoryGap="12%"
           >
             <XAxis
               dataKey="name"
@@ -109,13 +109,7 @@ export function OverviewAnalyticsCharts() {
               tickLine={false}
               axisLine={false}
             />
-            <YAxis
-              stroke="#888888"
-              fontSize={11}
-              tickLine={false}
-              axisLine={false}
-              allowDecimals={false}
-            />
+            <YAxis hide allowDecimals={false} />
             <Tooltip
               cursor={{ fill: "rgba(0, 0, 0, 0.04)" }}
               content={({ active, payload }) => {

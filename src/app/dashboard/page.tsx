@@ -71,7 +71,7 @@ export interface ChatAttachment {
 }
 
 export interface ConnectorActionResult {
-  connector: "sheets" | "docs" | "slides" | "drive" | "slack" | "whatsapp" | "notion" | "telegram" | "calendar";
+  connector: "sheets" | "docs" | "slides" | "drive" | "slack" | "whatsapp" | "notion" | "gmail" | "calendar";
   action: string;
   status: "running" | "success" | "error";
   title: string;
@@ -326,6 +326,9 @@ export default function DashboardOverviewPage() {
   const connectedList = React.useMemo(() => {
     if (!activeConnectors) return [];
     const list: { id: string; name: string; icon: string }[] = [];
+    if (activeConnectors.gmail?.connected) {
+      list.push({ id: "gmail", name: "Gmail", icon: "/logo/App-connector/Gmail.webp" });
+    }
     if (activeConnectors.sheets?.connected) {
       list.push({ id: "sheets", name: "Sheets", icon: "/logo/App-connector/google-sheets-svgrepo-com.svg" });
     }
@@ -340,9 +343,6 @@ export default function DashboardOverviewPage() {
     }
     if (activeConnectors.slack?.connected) {
       list.push({ id: "slack", name: "Slack", icon: "/logo/App-connector/slack-svgrepo-com.svg" });
-    }
-    if (activeConnectors.telegram?.connected) {
-      list.push({ id: "telegram", name: "Telegram", icon: "/logo/App-connector/telegram-svgrepo-com.svg" });
     }
     if (activeConnectors.whatsapp?.connected) {
       list.push({ id: "whatsapp", name: "WhatsApp", icon: "/logo/App-connector/whatsapp-128-svgrepo-com.svg" });

@@ -25,6 +25,16 @@ import { useSidebar } from "./SidebarContext";
 import { authClient } from "@/lib/auth-client";
 import { LogoutConfirmModal } from "./LogoutConfirmModal";
 
+import {
+  AnimatedOverviewIcon,
+  AnimatedCompassIcon,
+  AnimatedDeckIcon,
+  AnimatedCalendarIcon,
+  AnimatedSlackIcon,
+  AnimatedWorkflowIcon,
+  AnimatedSettingsIcon,
+} from "@/components/ui/animated-icons/SidebarAnimatedIcons";
+
 export interface NavItem {
   title: string;
   href: string;
@@ -35,37 +45,37 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   {
     title: "Overview",
     href: "/overview",
-    icon: LayoutDashboard,
+    icon: AnimatedOverviewIcon,
   },
   {
     title: "LLM Mode",
     href: "/dashboard",
-    icon: Compass,
+    icon: AnimatedCompassIcon,
   },
   {
     title: "Deck Generator",
     href: "/decks",
-    icon: Presentation,
+    icon: AnimatedDeckIcon,
   },
   {
     title: "Google Calendar",
     href: "/integrations/calendar",
-    icon: Calendar,
+    icon: AnimatedCalendarIcon,
   },
   {
     title: "Slack Workspace",
     href: "/slack",
-    icon: MessageSquare,
+    icon: AnimatedSlackIcon,
   },
   {
     title: "Launcher Automation",
     href: "/automation",
-    icon: Workflow,
+    icon: AnimatedWorkflowIcon,
   },
   {
     title: "Settings",
     href: "/settings",
-    icon: Settings,
+    icon: AnimatedSettingsIcon,
   },
 ];
 

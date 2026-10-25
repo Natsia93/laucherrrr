@@ -31,7 +31,7 @@ export const IntegrationNode = React.memo(function IntegrationNode({ id, data, s
   };
 
   const isSlack = nodeData.nodeType === "slack_webhook";
-  const isTelegram = nodeData.nodeType === "telegram_bot";
+  const isGmail = nodeData.nodeType === "gmail_dispatch";
   const isSearch = nodeData.nodeType === "web_search";
   const isHttp = nodeData.nodeType === "http_request";
   const isEmail = nodeData.nodeType === "send_email";
@@ -48,12 +48,6 @@ export const IntegrationNode = React.memo(function IntegrationNode({ id, data, s
     { value: "PUT", label: "PUT" },
   ];
 
-  const parseModeOptions = [
-    { value: "Markdown", label: "Markdown" },
-    { value: "HTML", label: "HTML" },
-    { value: "None", label: "Plain Text" },
-  ];
-
   return (
     <CustomNodeWrapper
       id={id}
@@ -62,53 +56,43 @@ export const IntegrationNode = React.memo(function IntegrationNode({ id, data, s
       categoryName="Integration"
     >
       <div className="space-y-2.5">
-        {/* Telegram Bot Config */}
-        {isTelegram && (
+        {/* Gmail Dispatcher Config */}
+        {isGmail && (
           <div className="space-y-2">
             <div className="space-y-1">
               <label className="text-[10px] font-medium text-neutral-500 uppercase tracking-wider">
-                Chat ID / Channel ID
+                Recipient Email
               </label>
               <input
-                type="text"
-                value={nodeData.config?.chatId || ""}
-                placeholder="@my_channel or -100123456789"
-                onChange={(e) => updateConfig("chatId", e.target.value)}
-                className="w-full h-8 px-2.5 text-xs rounded-[6px] border border-neutral-300/80 dark:border-white/[0.1] bg-white/80 dark:bg-[#141414]/90 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-500 font-mono text-[11px]"
+                type="email"
+                value={nodeData.config?.toEmail || ""}
+                placeholder="colleague@example.com or {{user_email}}"
+                onChange={(e) => updateConfig("toEmail", e.target.value)}
+                className="w-full h-8 px-2.5 text-xs rounded-[6px] border border-neutral-300/80 dark:border-white/[0.1] bg-white/80 dark:bg-[#141414]/90 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-500"
               />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-0.5">
-                <span className="text-[9.5px] font-medium text-neutral-500 uppercase tracking-wider">Format</span>
-                <LauncherSelect
-                  value={nodeData.config?.parseMode || "Markdown"}
-                  onChange={(val) => updateConfig("parseMode", val)}
-                  options={parseModeOptions}
-                />
-              </div>
-              <div className="space-y-0.5">
-                <span className="text-[9.5px] font-medium text-neutral-500 uppercase tracking-wider">Mode</span>
-                <label className="flex items-center gap-1.5 h-7 px-2 text-xs rounded-[5px] border border-neutral-300/80 dark:border-white/[0.1] bg-white/80 dark:bg-[#141414]/90 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={!!nodeData.config?.silent}
-                    onChange={(e) => updateConfig("silent", e.target.checked)}
-                    className="w-3.5 h-3.5 rounded border-neutral-300"
-                  />
-                  <span className="text-[10.5px] text-neutral-600 dark:text-neutral-400">Silent</span>
-                </label>
-              </div>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-medium text-neutral-500 uppercase tracking-wider">
-                Bot Token (Optional if set in Env)
+                Email Subject
               </label>
               <input
-                type="password"
-                value={nodeData.config?.botToken || ""}
-                placeholder="123456789:ABCdefGhIJKlmNoPQ..."
-                onChange={(e) => updateConfig("botToken", e.target.value)}
-                className="w-full h-7 px-2 text-[10.5px] font-mono rounded-[5px] border border-neutral-300/80 dark:border-white/[0.1] bg-white/80 dark:bg-[#141414]/90"
+                type="text"
+                value={nodeData.config?.subject || ""}
+                placeholder="🚀 [Launcher OS Alert]"
+                onChange={(e) => updateConfig("subject", e.target.value)}
+                className="w-full h-7 px-2 text-xs rounded-[5px] border border-neutral-300/80 dark:border-white/[0.1] bg-white/80 dark:bg-[#141414]/90"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium text-neutral-500 uppercase tracking-wider">
+                Body Template (Optional)
+              </label>
+              <textarea
+                value={nodeData.config?.bodyTemplate || ""}
+                placeholder="Hello,&#10;&#10;{{summary}}&#10;&#10;Best regards,&#10;Launcher OS"
+                rows={2}
+                onChange={(e) => updateConfig("bodyTemplate", e.target.value)}
+                className="w-full p-2 text-xs rounded-[5px] border border-neutral-300/80 dark:border-white/[0.1] bg-white/80 dark:bg-[#141414]/90 resize-none font-sans"
               />
             </div>
           </div>

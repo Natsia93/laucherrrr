@@ -170,7 +170,7 @@ export function OverviewToDoList() {
   const completedCount = todos.filter((t) => t.isCompleted).length;
 
   return (
-    <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-xs flex flex-col justify-between min-h-[420px] h-full transition-all">
+    <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-none flex flex-col justify-between min-h-[420px] h-full transition-all">
       <div>
         {/* Header */}
         <div className="flex items-center justify-between pb-3.5 mb-3 border-b border-neutral-100 dark:border-neutral-800">

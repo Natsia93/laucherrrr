@@ -130,7 +130,7 @@ export function OverviewAgenda() {
   };
 
   return (
-    <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-xs flex flex-col justify-between min-h-[420px] h-full transition-all">
+    <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-none flex flex-col justify-between min-h-[420px] h-full transition-all">
       <div className="flex-1 flex flex-col">
         {/* Header with Title and Sync Action */}
         <div className="flex items-center justify-between pb-3.5 mb-2 border-b border-neutral-100 dark:border-neutral-800">

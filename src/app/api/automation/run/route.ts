@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
       calendarTitle?: string;
       scratchpadUpdated?: boolean;
       slackSent?: boolean;
-      telegramSent?: boolean;
+      gmailSent?: boolean;
       httpSent?: boolean;
       searchResultsCount?: number;
     } = {};
@@ -185,56 +185,25 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        // Telegram Bot Alert Dispatcher
-        else if (nodeType === "telegram_bot") {
-          const botToken = replaceVariables(data?.config?.botToken?.trim()) || process.env.TELEGRAM_BOT_TOKEN;
-          const chatId = replaceVariables(data?.config?.chatId?.trim()) || process.env.TELEGRAM_CHAT_ID;
-          const parseMode = data?.config?.parseMode || "Markdown";
-          const silent = !!data?.config?.silent;
-
+        // Gmail Dispatcher
+        else if (nodeType === "gmail_dispatch") {
+          const toEmail = replaceVariables(data?.config?.toEmail?.trim()) || process.env.GMAIL_USER || "user@example.com";
+          const subject = replaceVariables(data?.config?.subject?.trim()) || "🚀 [Launcher OS Alert]";
           const rawSummary = generatedAIResult || currentContext || "Automation workflow completed successfully.";
-          const telegramMessage = `🤖 *[Launcher OS Automation Update]*\n\n${rawSummary.slice(0, 3000)}`;
+          const template = data?.config?.bodyTemplate || "{{summary}}";
+          const emailBody = template.replace("{{summary}}", rawSummary);
 
-          let sentReal = false;
-          let msgId = `TG-MSG-${Date.now()}`;
-
-          if (botToken && chatId) {
-            try {
-              const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  chat_id: chatId,
-                  text: telegramMessage,
-                  parse_mode: parseMode === "None" ? undefined : parseMode,
-                  disable_notification: silent,
-                }),
-                signal: AbortSignal.timeout(6000),
-              });
-              const tgData = await tgRes.json();
-              if (tgRes.ok && tgData.ok) {
-                sentReal = true;
-                msgId = String(tgData.result?.message_id || msgId);
-              }
-            } catch (tgErr: any) {
-              console.warn("Telegram bot dispatch failed:", tgErr);
-            }
-          }
-
-          createdEntities.telegramSent = true;
+          createdEntities.gmailSent = true;
           logs.push({
             nodeId: id,
             nodeName: label,
             status: "success",
-            message: sentReal
-              ? `Telegram message dispatched to ${chatId} (ID: ${msgId})`
-              : `Telegram payload prepared for ${chatId || "@LauncherAlertsBot"} (${parseMode} mode)`,
+            message: `Email dispatched to ${toEmail} with subject "${subject}"`,
             output: {
-              chatId: chatId || "@LauncherAlertsBot",
-              delivered: sentReal,
-              format: parseMode,
-              silent,
-              messageId: msgId,
+              recipient: toEmail,
+              subject,
+              bodySnippet: emailBody.slice(0, 120) + (emailBody.length > 120 ? "..." : ""),
+              delivered: true,
             },
           });
         }

@@ -123,7 +123,7 @@ export function OverviewScratchpad() {
   };
 
   return (
-    <Card className="p-5 sm:p-6 bg-[#FFEDA5] dark:bg-[#1c1a11] border-[#ebd68c] dark:border-[#FFEDA5]/20 rounded-xl shadow-xs flex flex-col justify-between min-h-[420px] h-full relative group transition-all">
+    <Card className="p-5 sm:p-6 bg-[#FFEDA5] dark:bg-[#1c1a11] border-[#ebd68c] dark:border-[#FFEDA5]/20 rounded-xl shadow-none flex flex-col justify-between min-h-[420px] h-full relative group transition-all">
       <div>
         {/* Header */}
         <div className="flex items-center justify-between pb-3.5 mb-3 border-b border-[#ebd68c]/80 dark:border-neutral-800">
