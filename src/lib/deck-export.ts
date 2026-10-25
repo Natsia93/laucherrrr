@@ -216,8 +216,9 @@ export function resolveSlideBackground(
 
 export async function fetchImageAsBase64(url: string): Promise<string | null> {
   try {
+    const targetUrl = url.endsWith(".webp") ? url.replace(/\.webp$/, ".png") : url;
     if (typeof window !== "undefined") {
-      const res = await fetch(url);
+      const res = await fetch(targetUrl);
       if (!res.ok) return null;
       const blob = await res.blob();
       return new Promise((resolve) => {
@@ -229,10 +230,10 @@ export async function fetchImageAsBase64(url: string): Promise<string | null> {
     } else {
       const fs = await import("fs/promises");
       const path = await import("path");
-      const cleanPath = url.startsWith("/") ? url.slice(1) : url;
+      const cleanPath = targetUrl.startsWith("/") ? targetUrl.slice(1) : targetUrl;
       const fullPath = path.join(process.cwd(), "public", cleanPath);
       const buffer = await fs.readFile(fullPath);
-      const ext = path.extname(url).slice(1) || "png";
+      const ext = path.extname(targetUrl).slice(1) || "png";
       return `data:image/${ext};base64,${buffer.toString("base64")}`;
     }
   } catch (e) {

@@ -774,7 +774,7 @@ export function resolveSlideBackground(
 
   // Rule 1: Cover slide — strictly once at the beginning (slide 1 / index 0)
   if (index === 0) {
-    return "/bg-deck/itb-deck/cover-deck.png";
+    return "/bg-deck/itb-deck/cover-deck.webp";
   }
 
   const isLast = totalSlides > 0 && index === totalSlides - 1;
@@ -786,7 +786,7 @@ export function resolveSlideBackground(
   const combined = `${titleLower} ${subtitleLower} ${badgeLower} ${categoryLower}`;
 
   // Rule 2: Closing slide — strictly for the final slide of the deck (Rule §5: Last slide only)
-  // Intermediate slides must NEVER use closing-deck.png even if they discuss next steps or conclusions.
+  // Intermediate slides must NEVER use closing-deck.webp even if they discuss next steps or conclusions.
   const isClosing =
     isLast &&
     (layout === "closingAction" ||
@@ -803,7 +803,7 @@ export function resolveSlideBackground(
       index === totalSlides - 1);
 
   if (isClosing) {
-    return "/bg-deck/itb-deck/closing-deck.png";
+    return "/bg-deck/itb-deck/closing-deck.webp";
   }
 
   // Rule 3: Section Divider / Part header (Rule §5: Section dividers "Part N", break, guest hand-over)
@@ -813,7 +813,7 @@ export function resolveSlideBackground(
     /^(part|bagian|agenda utama|modul|bab)\s+\d+/i.test(titleLower.trim());
 
   if (isPart) {
-    return "/bg-deck/itb-deck/part-deck.png";
+    return "/bg-deck/itb-deck/part-deck.webp";
   }
 
   // Rule 4: Split / Task / Workshop / Exercise / Case Study (Rule §5: 2-4 per deck for split case comparisons & profiles)
@@ -827,11 +827,11 @@ export function resolveSlideBackground(
     (layout === "twoColumn" && (badgeLower.includes("case") || badgeLower.includes("hands-on") || titleLower.includes("studi kasus")));
 
   if (isTaskSpeaker) {
-    return "/bg-deck/itb-deck/task-speaker-deck.png";
+    return "/bg-deck/itb-deck/task-speaker-deck.webp";
   }
 
   // Rule 5: Default content deck — all other standard content slides (process, rail, timeline, bullets, etc.)
-  return "/bg-deck/itb-deck/content-deck.png";
+  return "/bg-deck/itb-deck/content-deck.webp";
 }
 
 export function normalizeSlide(raw: any, index: number = 0, totalSlides: number = 1): SlideData {
@@ -1267,11 +1267,11 @@ export function normalizeSlide(raw: any, index: number = 0, totalSlides: number 
     slideNumber: raw.slideNumber ? safeString(raw.slideNumber) : undefined,
     backgroundImage: (() => {
       let bg = raw.backgroundImage ? safeString(raw.backgroundImage) : resolveSlideBackground(raw, index, totalSlides);
-      if (bg && bg.includes("closing-deck.png") && index < totalSlides - 1) {
-        bg = "/bg-deck/itb-deck/content-deck.png";
+      if (bg && bg.includes("closing-deck") && index < totalSlides - 1) {
+        bg = "/bg-deck/itb-deck/content-deck.webp";
       }
-      if (bg && bg.includes("cover-deck.png") && index > 0) {
-        bg = "/bg-deck/itb-deck/content-deck.png";
+      if (bg && bg.includes("cover-deck") && index > 0) {
+        bg = "/bg-deck/itb-deck/content-deck.webp";
       }
       return bg;
     })(),
@@ -2171,22 +2171,22 @@ function SlideRenderer({
   const isGeneratingSlide = Boolean(slide.isGeneratingSlide);
 
   let bgImage = resolveSlideBackground(slide, slideIndex, totalSlides);
-  // ITB Rule §5: closing-deck.png is ONLY for the last slide
-  if (bgImage && bgImage.includes("closing-deck.png") && slideIndex < totalSlides - 1) {
-    bgImage = "/bg-deck/itb-deck/content-deck.png";
+  // ITB Rule §5: closing-deck is ONLY for the last slide
+  if (bgImage && bgImage.includes("closing-deck") && slideIndex < totalSlides - 1) {
+    bgImage = "/bg-deck/itb-deck/content-deck.webp";
   }
-  // ITB Rule §5: cover-deck.png is ONLY for slide 1
-  if (bgImage && bgImage.includes("cover-deck.png") && slideIndex > 0) {
-    bgImage = "/bg-deck/itb-deck/content-deck.png";
+  // ITB Rule §5: cover-deck is ONLY for slide 1
+  if (bgImage && bgImage.includes("cover-deck") && slideIndex > 0) {
+    bgImage = "/bg-deck/itb-deck/content-deck.webp";
   }
   // User Rule: Sembunyikan background gambar saat proses generate! Kanvas harus warna putih polos.
   // Baru setelah selesai generate, tampilkan hasil generate beserta background gambarnya.
   const hasTemplateBg = !isGeneratingSlide && Boolean(bgImage);
-  const isCoverBg = hasTemplateBg && bgImage.includes("cover-deck.png");
-  const isPartBg = hasTemplateBg && bgImage.includes("part-deck.png");
-  const isClosingBg = hasTemplateBg && bgImage.includes("closing-deck.png");
-  const isTaskBg = hasTemplateBg && bgImage.includes("task-speaker-deck.png");
-  const isContentBg = hasTemplateBg && bgImage.includes("content-deck.png");
+  const isCoverBg = hasTemplateBg && bgImage.includes("cover-deck");
+  const isPartBg = hasTemplateBg && bgImage.includes("part-deck");
+  const isClosingBg = hasTemplateBg && bgImage.includes("closing-deck");
+  const isTaskBg = hasTemplateBg && bgImage.includes("task-speaker-deck");
+  const isContentBg = hasTemplateBg && bgImage.includes("content-deck");
 
   const baseFont = "text-xs sm:text-sm";
   const titleSize = "text-2xl sm:text-3xl";

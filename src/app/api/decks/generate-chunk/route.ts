@@ -915,7 +915,7 @@ function resolveSlideBackgroundForChunk(
   totalSlides: number = 20
 ): string {
   if (slideNum === 1) {
-    return "/bg-deck/itb-deck/cover-deck.png";
+    return "/bg-deck/itb-deck/cover-deck.webp";
   }
 
   const isLast = totalSlides > 0 && slideNum >= totalSlides;
@@ -937,7 +937,7 @@ function resolveSlideBackgroundForChunk(
       lowerTitle.includes("thank you") ||
       slideNum >= totalSlides)
   ) {
-    return "/bg-deck/itb-deck/closing-deck.png";
+    return "/bg-deck/itb-deck/closing-deck.webp";
   }
 
   // Section divider / Part transition (Rule §5: Section dividers "Part N", break, guest hand-over)
@@ -946,7 +946,7 @@ function resolveSlideBackgroundForChunk(
     lowerLayout.includes("divider") ||
     /^(part|bagian|agenda utama|modul|bab)\s+\d+/i.test(lowerTitle.trim())
   ) {
-    return "/bg-deck/itb-deck/part-deck.png";
+    return "/bg-deck/itb-deck/part-deck.webp";
   }
 
   // Task / Split comparison / Case study (Rule §5: 2-4 per deck for split case comparisons & profiles)
@@ -956,10 +956,10 @@ function resolveSlideBackgroundForChunk(
     lowerLayout.includes("profile") ||
     lowerLayout.includes("poll")
   ) {
-    return "/bg-deck/itb-deck/task-speaker-deck.png";
+    return "/bg-deck/itb-deck/task-speaker-deck.webp";
   }
 
   // Default: Content deck (Rule §5: all standard content slides)
-  return "/bg-deck/itb-deck/content-deck.png";
+  return "/bg-deck/itb-deck/content-deck.webp";
 }
 
