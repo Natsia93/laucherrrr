@@ -1325,7 +1325,7 @@ export default function DashboardOverviewPage() {
                     )}
 
                     {msg.text && (
-                      <div className="bg-[#FFDE3C] text-neutral-950 dark:bg-[#141414] dark:text-neutral-100 dark:border dark:border-white/10 font-lora font-medium px-4 py-2.5 rounded-lg rounded-tr-xs shadow-xs text-[15.5px] sm:text-[17px] leading-relaxed">
+                      <div className="bg-[#FFE853] text-neutral-950 border border-[#E5BC10]/70 dark:bg-[#212121] dark:text-neutral-100 dark:border dark:border-white/[0.07] font-lora font-medium px-4 py-2.5 rounded-2xl shadow-xs text-[15.5px] sm:text-[17px] leading-relaxed">
                         <p className="whitespace-pre-wrap">{msg.text}</p>
                       </div>
                     )}
