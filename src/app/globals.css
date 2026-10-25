@@ -455,6 +455,11 @@ html {
    Markdown Body & Chat Formatting (ChatGPT / Claude / Gemini Standard)
    ========================================================================== */
 .markdown-body,
+.markdown-chat {
+  font-family: var(--font-lora), "Lora", Georgia, serif;
+}
+
+.markdown-body,
 .markdown-chat,
 .prose {
   color: var(--foreground);

@@ -1069,7 +1069,7 @@ export default function DashboardOverviewPage() {
                     ? "Present a complex strategic decision, conflicting trade-off, or hypothesis to stress-test from first principles..."
                     : "Ask anything, explore ideas, or attach documents (PDF, Word, Excel, Images)..."
                 }
-                className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm sm:text-base outline-none resize-none min-h-[95px] font-sf"
+                className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm sm:text-base outline-none resize-none min-h-[95px] font-lora"
               />
 
               <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800">
@@ -1143,7 +1143,7 @@ export default function DashboardOverviewPage() {
         </div>
       ) : (
         /* Active Conversational Chat View (Like ChatGPT / Gemini / Claude) */
-        <div className="flex flex-col max-w-3xl mx-auto min-h-[calc(100vh-140px)] pb-48 sm:pb-56 pt-2 px-3 sm:px-4 font-sf">
+        <div className="flex flex-col max-w-3xl mx-auto min-h-[calc(100vh-140px)] pb-48 sm:pb-56 pt-2 px-3 sm:px-4 font-lora">
           {/* Messages Stream */}
           <div className="space-y-6 flex-1">
             {messages.map((msg) => (
@@ -1166,7 +1166,7 @@ export default function DashboardOverviewPage() {
                       />
                     </div>
                     {msg.text || (msg.connectorActions && msg.connectorActions.length > 0) ? (
-                      <div className="flex-1 min-w-0 text-sm sm:text-base leading-relaxed text-neutral-900 dark:text-neutral-100 pt-0.5">
+                      <div className="flex-1 min-w-0 font-lora text-sm sm:text-base leading-relaxed text-neutral-900 dark:text-neutral-100 pt-0.5">
                         {/* Connector Action Badges (Claude-style Tool Action Execution) */}
                         {msg.connectorActions && msg.connectorActions.length > 0 && (
                           <div className="flex flex-col gap-1.5 mb-2.5">
@@ -1319,7 +1319,7 @@ export default function DashboardOverviewPage() {
                     )}
 
                     {msg.text && (
-                      <div className="bg-[#FFDE3C] text-neutral-950 font-medium px-4 py-2.5 rounded-lg rounded-tr-xs shadow-xs text-sm sm:text-base leading-relaxed">
+                      <div className="bg-[#FFDE3C] text-neutral-950 font-lora font-medium px-4 py-2.5 rounded-lg rounded-tr-xs shadow-xs text-sm sm:text-base leading-relaxed">
                         <p className="whitespace-pre-wrap">{msg.text}</p>
                       </div>
                     )}
@@ -1413,7 +1413,7 @@ export default function DashboardOverviewPage() {
                         }
                       }}
                       placeholder="Type your message, analyze files, or discuss ideas..."
-                      className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm leading-relaxed outline-none resize-none min-h-[44px] max-h-[140px] font-sf py-2.5 clean-scrollbar"
+                      className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm leading-relaxed outline-none resize-none min-h-[44px] max-h-[140px] font-lora py-2.5 clean-scrollbar"
                       rows={1}
                     />
 

@@ -1199,7 +1199,7 @@ function WorkspaceContent() {
             {messages.map((m, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col gap-2 ${m.role === 'user' ? 'items-end text-right' : 'items-start text-left'}`}>
                 {m.role === 'user' ? (
-                  <div className="bg-[#4d7537]/80 backdrop-blur-md text-white px-4 py-2 rounded-lg rounded-tr-sm text-[14px] max-w-[85%] shadow-sm border border-white/5 leading-relaxed font-medium">
+                  <div className="bg-[#4d7537]/80 backdrop-blur-md text-white font-lora px-4 py-2 rounded-lg rounded-tr-sm text-[14px] max-w-[85%] shadow-sm border border-white/5 leading-relaxed font-medium">
                     {m.text}
                   </div>
                 ) : (
@@ -1294,7 +1294,7 @@ function WorkspaceContent() {
                     }
                   }} 
                   placeholder={assistantMode === 'edit' ? "Write document revision instructions..." : "Ask AI anything..."} 
-                  className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground min-h-[40px] px-3 py-2 resize-none shadow-none" 
+                  className="border-none focus-visible:ring-0 text-sm bg-transparent text-foreground min-h-[40px] px-3 py-2 resize-none shadow-none font-lora" 
                 />
                 
                 <div className="flex items-center justify-between px-2 pt-1 pb-1">
