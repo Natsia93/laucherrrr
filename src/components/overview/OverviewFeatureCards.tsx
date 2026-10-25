@@ -196,20 +196,20 @@ export function OverviewFeatureCards() {
         }
       `}} />
 
-      {/* 3-Column Responsive Grid (Clean Apple-Style Viewports in Soft Gray Palette) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 items-stretch">
+      {/* 3-Column Responsive Grid with Reduced Gap for Larger Animations */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3 items-stretch">
         
         {/* ══════════════════════════════════════════════════════════
          * CARD 1: LLM MODE (Apple Minimalist Soft Gray Palette)
          * ══════════════════════════════════════════════════════════ */}
         <Link href="/dashboard" className="group block h-full" title="LLM Mode">
           <motion.div
-            whileHover={{ y: -4, scale: 1.01 }}
+            whileHover={{ y: -3, scale: 1.01 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full h-52 sm:h-56 rounded-2xl overflow-hidden bg-neutral-50/70 dark:bg-[#121212] border border-neutral-200/90 dark:border-neutral-800 hover:border-neutral-400/80 dark:hover:border-neutral-700 shadow-xs hover:shadow-xl transition-all duration-300 flex items-center justify-center p-3 select-none"
+            className="relative w-full h-56 sm:h-60 rounded-xl overflow-hidden bg-neutral-50/70 dark:bg-[#121212] border border-neutral-200/90 dark:border-neutral-800 hover:border-neutral-400/80 dark:hover:border-neutral-700 shadow-xs hover:shadow-xl transition-all duration-300 flex items-center justify-center p-2 sm:p-2.5 select-none"
           >
             {/* Apple Brand Style Clean Title (Soft Gray, Inter Font) */}
-            <div className="absolute top-3.5 left-4.5 z-10 flex items-center gap-2">
+            <div className="absolute top-3 left-4 z-10 flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500" />
               <span className="text-[13px] font-medium font-inter tracking-tight text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-800 dark:group-hover:text-neutral-200 transition-colors duration-200">
                 LLM Mode
@@ -217,10 +217,10 @@ export function OverviewFeatureCards() {
             </div>
 
             {/* SVG Narrative Micro-Video Animation in Soft Gray */}
-            <div className="relative z-10 w-full max-w-[275px] sm:max-w-[290px] pt-4 transition-transform duration-300 group-hover:scale-[1.03]">
+            <div className="relative z-10 w-full max-w-[340px] sm:max-w-[370px] pt-5 transition-transform duration-300 group-hover:scale-[1.02]">
               <svg viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto drop-shadow-xs">
-                {/* Outer Window (Soft Gray Border & Fill) */}
-                <rect x="2" y="2" width="236" height="116" rx="9" className="fill-white/80 dark:fill-[#171717] stroke-neutral-200 dark:stroke-neutral-800" strokeWidth="1.2" />
+                {/* Outer Window (Soft Gray Border & Fill with Clean rx=6) */}
+                <rect x="2" y="2" width="236" height="116" rx="6" className="fill-white/80 dark:fill-[#171717] stroke-neutral-200 dark:stroke-neutral-800" strokeWidth="1.2" />
                 
                 {/* Window Bar with 3 Dots */}
                 <line x1="2" y1="21" x2="238" y2="21" className="stroke-neutral-200 dark:stroke-neutral-800" strokeWidth="1" />
@@ -293,12 +293,12 @@ export function OverviewFeatureCards() {
          * ══════════════════════════════════════════════════════════ */}
         <Link href="/decks" className="group block h-full" title="Deck Generator">
           <motion.div
-            whileHover={{ y: -4, scale: 1.01 }}
+            whileHover={{ y: -3, scale: 1.01 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full h-52 sm:h-56 rounded-2xl overflow-hidden bg-neutral-50/70 dark:bg-[#121212] border border-neutral-200/90 dark:border-neutral-800 hover:border-neutral-400/80 dark:hover:border-neutral-700 shadow-xs hover:shadow-xl transition-all duration-300 flex items-center justify-center p-3 select-none"
+            className="relative w-full h-56 sm:h-60 rounded-xl overflow-hidden bg-neutral-50/70 dark:bg-[#121212] border border-neutral-200/90 dark:border-neutral-800 hover:border-neutral-400/80 dark:hover:border-neutral-700 shadow-xs hover:shadow-xl transition-all duration-300 flex items-center justify-center p-2 sm:p-2.5 select-none"
           >
             {/* Apple Brand Style Clean Title (Soft Gray, Inter Font) */}
-            <div className="absolute top-3.5 left-4.5 z-10 flex items-center gap-2">
+            <div className="absolute top-3 left-4 z-10 flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500" />
               <span className="text-[13px] font-medium font-inter tracking-tight text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-800 dark:group-hover:text-neutral-200 transition-colors duration-200">
                 Deck Generator
@@ -306,10 +306,10 @@ export function OverviewFeatureCards() {
             </div>
 
             {/* SVG Narrative Micro-Video Animation: Keynote / Pitch Workspace in Soft Gray */}
-            <div className="relative z-10 w-full max-w-[275px] sm:max-w-[290px] pt-4 transition-transform duration-300 group-hover:scale-[1.03]">
+            <div className="relative z-10 w-full max-w-[340px] sm:max-w-[370px] pt-5 transition-transform duration-300 group-hover:scale-[1.02]">
               <svg viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto drop-shadow-xs">
-                {/* Slide Studio Frame (Soft Gray Tone) */}
-                <rect x="2" y="2" width="236" height="116" rx="9" className="fill-white/80 dark:fill-[#171717] stroke-neutral-200 dark:stroke-neutral-800" strokeWidth="1.2" />
+                {/* Slide Studio Frame (Soft Gray Tone with Clean rx=6) */}
+                <rect x="2" y="2" width="236" height="116" rx="6" className="fill-white/80 dark:fill-[#171717] stroke-neutral-200 dark:stroke-neutral-800" strokeWidth="1.2" />
                 
                 {/* Top Workspace Toolbar */}
                 <line x1="2" y1="21" x2="238" y2="21" className="stroke-neutral-200 dark:stroke-neutral-800" strokeWidth="1" />
@@ -421,12 +421,12 @@ export function OverviewFeatureCards() {
          * ══════════════════════════════════════════════════════════ */}
         <Link href="/automation" className="group block h-full" title="Launcher Automation">
           <motion.div
-            whileHover={{ y: -4, scale: 1.01 }}
+            whileHover={{ y: -3, scale: 1.01 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full h-52 sm:h-56 rounded-2xl overflow-hidden bg-neutral-50/70 dark:bg-[#121212] border border-neutral-200/90 dark:border-neutral-800 hover:border-neutral-400/80 dark:hover:border-neutral-700 shadow-xs hover:shadow-xl transition-all duration-300 flex items-center justify-center p-3 select-none"
+            className="relative w-full h-56 sm:h-60 rounded-xl overflow-hidden bg-neutral-50/70 dark:bg-[#121212] border border-neutral-200/90 dark:border-neutral-800 hover:border-neutral-400/80 dark:hover:border-neutral-700 shadow-xs hover:shadow-xl transition-all duration-300 flex items-center justify-center p-2 sm:p-2.5 select-none"
           >
             {/* Apple Brand Style Clean Title (Soft Gray, Inter Font) */}
-            <div className="absolute top-3.5 left-4.5 z-10 flex items-center gap-2">
+            <div className="absolute top-3 left-4 z-10 flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500" />
               <span className="text-[13px] font-medium font-inter tracking-tight text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-800 dark:group-hover:text-neutral-200 transition-colors duration-200">
                 Launcher Automation
@@ -434,10 +434,10 @@ export function OverviewFeatureCards() {
             </div>
 
             {/* SVG Narrative Micro-Video Animation: Panning Multi-Branch Workflow */}
-            <div className="relative z-10 w-full max-w-[275px] sm:max-w-[290px] pt-4 transition-transform duration-300 group-hover:scale-[1.03]">
+            <div className="relative z-10 w-full max-w-[340px] sm:max-w-[370px] pt-5 transition-transform duration-300 group-hover:scale-[1.02]">
               <svg viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto drop-shadow-xs">
-                {/* Canvas Outer Frame (Soft Gray Tone) */}
-                <rect x="2" y="2" width="236" height="116" rx="9" className="fill-white/80 dark:fill-[#171717] stroke-neutral-200 dark:stroke-neutral-800" strokeWidth="1.2" />
+                {/* Canvas Outer Frame (Soft Gray Tone with Clean rx=6) */}
+                <rect x="2" y="2" width="236" height="116" rx="6" className="fill-white/80 dark:fill-[#171717] stroke-neutral-200 dark:stroke-neutral-800" strokeWidth="1.2" />
                 
                 {/* Window Bar */}
                 <line x1="2" y1="21" x2="238" y2="21" className="stroke-neutral-200 dark:stroke-neutral-800" strokeWidth="1" />
