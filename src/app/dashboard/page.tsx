@@ -988,7 +988,7 @@ export default function DashboardOverviewPage() {
           <div className="w-full text-center space-y-2.5 mb-8">
             <h1
               suppressHydrationWarning
-              className="text-[32px] sm:text-[44px] font-normal sm:font-medium font-sf tracking-tight leading-tight animate-text-shimmer"
+              className="text-[32px] sm:text-[44px] font-normal sm:font-medium font-lora tracking-tight leading-tight animate-text-shimmer"
             >
               Nice to meet you, {userLastName}
             </h1>
