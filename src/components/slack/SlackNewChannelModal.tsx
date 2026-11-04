@@ -84,7 +84,7 @@ export function SlackNewChannelModal({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="project-alpha"
-                className="w-full pl-7 pr-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500]"
+                className="w-full pl-7 pr-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
                 required
               />
             </div>
@@ -99,7 +99,7 @@ export function SlackNewChannelModal({
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="Diskusi sprint mingguan & integrasi API"
-              className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500]"
+              className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
             />
           </div>
 
@@ -112,7 +112,7 @@ export function SlackNewChannelModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Penjelasan tujuan channel ini..."
-              className="w-full p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500] resize-none"
+              className="w-full p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 resize-none"
             />
           </div>
 
@@ -130,7 +130,7 @@ export function SlackNewChannelModal({
               type="checkbox"
               checked={isPrivate}
               onChange={(e) => setIsPrivate(e.target.checked)}
-              className="w-4 h-4 text-[#FFE500] rounded focus:ring-[#FFE500] cursor-pointer"
+              className="w-4 h-4 text-neutral-900 dark:text-white rounded focus:ring-neutral-400 cursor-pointer"
             />
           </div>
 

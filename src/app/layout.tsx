@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import NextTopLoader from 'nextjs-toploader';
 
 import {
   Bricolage_Grotesque,
@@ -71,7 +70,6 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <NextTopLoader color="#FFD100" showSpinner={false} shadow="0 0 10px #FFD100,0 0 5px #FFD100" />
           <NuqsAdapter>
             <SidebarProvider>
               {children}

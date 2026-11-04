@@ -24,11 +24,11 @@ import { Button } from "@/components/ui/button";
 import { useSidebar } from "./SidebarContext";
 import { authClient } from "@/lib/auth-client";
 import { LogoutConfirmModal } from "./LogoutConfirmModal";
+import { SidebarChatHistory } from "./SidebarChatHistory";
 
-import dynamic from "next/dynamic";
 import {
   AnimatedOverviewIcon,
-  AnimatedCompassIcon,
+  AnimatedLLMIcon,
   AnimatedDeckIcon,
   AnimatedCalendarIcon,
   AnimatedSlackIcon,
@@ -36,11 +36,6 @@ import {
   AnimatedSettingsIcon,
   AnimatedLogoutIcon,
 } from "@/components/ui/animated-icons/SidebarAnimatedIcons";
-
-const SidebarChatHistory = dynamic(
-  () => import("./SidebarChatHistory").then((mod) => mod.SidebarChatHistory),
-  { ssr: false }
-);
 
 export interface NavItem {
   title: string;
@@ -57,7 +52,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   {
     title: "LLM Mode",
     href: "/dashboard",
-    icon: AnimatedCompassIcon,
+    icon: AnimatedLLMIcon,
   },
   {
     title: "Deck Generator",
@@ -70,7 +65,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
     icon: AnimatedCalendarIcon,
   },
   {
-    title: "Slack Workspace",
+    title: "Slack Dispatcher",
     href: "/slack",
     icon: AnimatedSlackIcon,
   },
@@ -214,8 +209,8 @@ export function AppSidebar() {
           )}
         </div>
 
-        {/* Navigation List & Chats with hover-only scrollbar */}
-        <div className="flex-1 overflow-y-auto px-3 pt-5 pb-2 space-y-1.5 [scrollbar-width:none] group-hover/sidebar:[scrollbar-width:thin] [scrollbar-color:transparent_transparent] group-hover/sidebar:[scrollbar-color:rgba(150,150,150,0.3)_transparent] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-transparent group-hover/sidebar:[&::-webkit-scrollbar-thumb]:bg-black/20 dark:group-hover/sidebar:[&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full">
+        {/* Navigation List & Chats with stable zero-shift scrollbar */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 pt-5 pb-2 space-y-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent group-hover/sidebar:[&::-webkit-scrollbar-thumb]:bg-black/20 dark:group-hover/sidebar:[&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full">
           {MAIN_NAV_ITEMS.map((item, itemIdx) => {
             const Icon = item.icon;
             const isActive = pathname.startsWith(item.href) || (item.href === "/slack" && pathname.startsWith("/integrations/slack"));
@@ -248,11 +243,13 @@ export function AppSidebar() {
           })}
 
           {/* Collapsible and scrollable chat history dropdown ala Kimi.ai */}
-          <SidebarChatHistory
-            collapsed={collapsed}
-            mobileOpen={mobileOpen}
-            onCloseMobile={() => setMobileOpen(false)}
-          />
+          <React.Suspense fallback={null}>
+            <SidebarChatHistory
+              collapsed={collapsed}
+              mobileOpen={mobileOpen}
+              onCloseMobile={() => setMobileOpen(false)}
+            />
+          </React.Suspense>
         </div>
 
         {/* Sidebar Footer / Logout Button */}

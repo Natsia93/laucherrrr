@@ -151,10 +151,56 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // 3. Try OpenRouter Vision (google/gemini-2.5-flash or openai/gpt-4o-mini)
+    const openrouterKey = (userApiKey && provider === "openrouter" ? userApiKey : null) || process.env.OPENROUTER_API_KEY;
+    if (openrouterKey) {
+      try {
+        const openrouter = new OpenAI({
+          baseURL: "https://openrouter.ai/api/v1",
+          apiKey: openrouterKey,
+          defaultHeaders: {
+            "HTTP-Referer": "https://launcher-os.local",
+            "X-Title": "Launcher OS",
+          },
+        });
+        const completion = await openrouter.chat.completions.create({
+          model: "google/gemini-2.5-flash",
+          temperature: 0.2,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: SYSTEM_ANALYSIS_PROMPT },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: "Analyze this presentation slide and extract its visual DNA into the required JSON schema." },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: `data:${mimeType};base64,${base64Data}`,
+                  },
+                },
+              ],
+            },
+          ],
+        });
+
+        const raw = completion.choices[0]?.message?.content || "{}";
+        const parsed: ExtractedStyleResult = JSON.parse(raw);
+
+        return NextResponse.json({
+          success: true,
+          style: sanitizeExtractedStyle(parsed),
+          source: "openrouter-vision",
+        });
+      } catch (openRouterErr: any) {
+        console.error("OpenRouter vision analysis failed:", openRouterErr?.message);
+      }
+    }
+
     return NextResponse.json(
       {
         success: false,
-        error: "Tidak ada API Key Vision yang aktif (Gemini atau OpenAI dibutuhkan untuk analisis visual).",
+        error: "Tidak ada API Key Vision yang aktif (OpenRouter, Gemini, atau OpenAI dibutuhkan untuk analisis visual).",
       },
       { status: 500 }
     );

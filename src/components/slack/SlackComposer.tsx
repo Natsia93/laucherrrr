@@ -237,7 +237,7 @@ export function SlackComposer({
       )}
 
       {/* Main Composer Box */}
-      <div className="relative rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-[#161616]/70 focus-within:border-[#FFE500] focus-within:bg-white dark:focus-within:bg-[#161616] transition-all shadow-2xs">
+      <div className="relative rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-[#161616]/70 focus-within:border-neutral-400 dark:focus-within:border-neutral-600 focus-within:bg-white dark:focus-within:bg-[#161616] transition-all shadow-2xs">
         {/* Formatting Toolbar */}
         <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-neutral-200/60 dark:border-neutral-800/80 text-neutral-600 dark:text-neutral-400 text-xs">
           <div className="flex items-center gap-1">

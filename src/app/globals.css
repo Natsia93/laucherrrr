@@ -3,10 +3,11 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark *):not(:is(.slide-canvas, .slide-canvas *)));
 
 html {
-  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
 }
 
 @theme inline {
@@ -463,8 +464,8 @@ html {
 .markdown-chat,
 .prose {
   color: var(--foreground);
-  font-size: 1.02rem;
-  line-height: 1.75;
+  font-size: 0.94rem;
+  line-height: 1.68;
   word-break: break-word;
   overflow-wrap: break-word;
 }
@@ -473,16 +474,16 @@ html {
   .markdown-body,
   .markdown-chat,
   .prose {
-    font-size: 1.075rem;
+    font-size: 0.985rem;
   }
 }
 
 .markdown-body p,
 .markdown-chat p,
 .prose p {
-  margin-top: 0.65em;
-  margin-bottom: 0.65em;
-  line-height: 1.7;
+  margin-top: 0.55em;
+  margin-bottom: 0.55em;
+  line-height: 1.68;
 }
 
 .markdown-body p:first-child,
@@ -499,37 +500,37 @@ html {
 
 /* Headings */
 .markdown-body h1, .markdown-chat h1, .prose h1 {
-  font-size: 1.45rem;
-  font-weight: 700;
-  margin-top: 1.3em;
-  margin-bottom: 0.45em;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-top: 1.15em;
+  margin-bottom: 0.4em;
   line-height: 1.3;
   color: var(--foreground);
 }
 
 .markdown-body h2, .markdown-chat h2, .prose h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-top: 1.15em;
-  margin-bottom: 0.4em;
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.35em;
   line-height: 1.35;
   color: var(--foreground);
 }
 
 .markdown-body h3, .markdown-chat h3, .prose h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-top: 0.95em;
-  margin-bottom: 0.35em;
+  font-size: 1.05rem;
+  font-weight: 550;
+  margin-top: 0.85em;
+  margin-bottom: 0.3em;
   line-height: 1.4;
   color: var(--foreground);
 }
 
 .markdown-body h4, .markdown-chat h4, .prose h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-top: 0.8em;
-  margin-bottom: 0.3em;
+  font-size: 0.96rem;
+  font-weight: 550;
+  margin-top: 0.75em;
+  margin-bottom: 0.25em;
   color: var(--foreground);
 }
 
@@ -602,7 +603,7 @@ html {
 .markdown-body b,
 .markdown-chat b,
 .prose b {
-  font-weight: 650;
+  font-weight: 550;
   color: var(--foreground);
 }
 
@@ -811,6 +812,7 @@ html.theme-transitioning::view-transition-new(root) {
 [data-slide-canvas] * {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
+  color-scheme: light !important;
 }
 
 .slide-canvas *::-webkit-scrollbar,
@@ -851,14 +853,35 @@ html.theme-transitioning::view-transition-new(root) {
 }
 
 .dark .slide-filmstrip-scroll {
-  scrollbar-color: rgba(130, 130, 130, 0.45) transparent !important;
+  scrollbar-color: rgba(160, 160, 160, 0.55) transparent !important;
 }
 
 .dark .slide-filmstrip-scroll::-webkit-scrollbar-thumb {
-  background: rgba(130, 130, 130, 0.4) !important;
+  background: rgba(160, 160, 160, 0.5) !important;
 }
 
 .dark .slide-filmstrip-scroll:hover::-webkit-scrollbar-thumb,
 .dark .slide-filmstrip-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(180, 180, 180, 0.65) !important;
+  background: rgba(220, 220, 220, 0.8) !important;
+}
+
+/* ==========================================================================
+   Linear-Style Typography Utilities (Inter Variable + OpenType Features)
+   ========================================================================== */
+.font-linear-heading {
+  font-family: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "cv01", "ss03";
+  font-weight: 590;
+  letter-spacing: -0.022em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-linear-body {
+  font-family: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "cv01", "ss03";
+  font-weight: 420;
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

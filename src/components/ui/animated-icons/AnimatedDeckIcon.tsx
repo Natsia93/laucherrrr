@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React from "react";
 
 interface AnimatedDeckIconProps extends React.SVGProps<SVGSVGElement> {
   className?: string;
@@ -10,20 +9,15 @@ interface AnimatedDeckIconProps extends React.SVGProps<SVGSVGElement> {
 
 /**
  * 📽️ Custom Animated Deck Icon (Presentation / Slides)
- * Built with Framer Motion for Launcher OS.
  * Features:
  * - Spring-loaded projector screen pull down
  * - Animated presentation chart line drawing
- * - Responsive to direct hover AND parent .group:hover
+ * - Responsive to direct hover AND parent .group:hover via CSS keyframes
  */
 export function AnimatedDeckIcon({ className = "", size = 18, ...props }: AnimatedDeckIconProps) {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <span
       className={`inline-flex items-center justify-center select-none ${className}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       style={{ width: size, height: size }}
     >
       <svg

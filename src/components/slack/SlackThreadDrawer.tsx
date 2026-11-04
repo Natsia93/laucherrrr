@@ -174,7 +174,7 @@ export function SlackThreadDrawer({
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
             placeholder="Balas di thread ini..."
-            className="flex-1 px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#161616] border border-neutral-200 dark:border-neutral-800 text-sm text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-[#FFE500]"
+            className="flex-1 px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#161616] border border-neutral-200 dark:border-neutral-800 text-sm text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
           />
           <button
             type="submit"

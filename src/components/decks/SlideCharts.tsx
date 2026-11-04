@@ -79,7 +79,7 @@ export function SlideChart({
   isThumbnail = false,
 }: SlideChartProps) {
   const chartPrimary = primaryColor === "#FFDE3C" ? "#E5BC10" : primaryColor;
-  const chartSecondary = accentColor || "#7C3AED";
+  const chartSecondary = accentColor || (primaryColor === "#005AAB" ? "#FFDD3C" : "#D97706");
 
   if (type === "bar") {
     const chartData = data && data.length > 0 ? data : DEFAULT_BAR_DATA;
@@ -267,10 +267,10 @@ export function SlideChart({
               className="w-3 h-3 rounded-full shrink-0"
               style={{ backgroundColor: DONUT_COLORS[index % DONUT_COLORS.length] }}
             />
-            <span className="text-xs sm:text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate max-w-[180px] sm:max-w-[240px]">
+            <span className="text-xs sm:text-sm font-medium text-neutral-700 truncate max-w-[180px] sm:max-w-[240px]">
               {entry.name}
             </span>
-            <span className="text-xs sm:text-sm font-bold ml-auto pl-3 tabular-nums text-neutral-900 dark:text-white">
+            <span className="text-xs sm:text-sm font-bold ml-auto pl-3 tabular-nums text-neutral-900">
               {entry.value}%
             </span>
           </div>

@@ -126,7 +126,7 @@ You are the world-class Presentation Engine for Launcher OS, engineered to creat
 Your mission is to strictly follow the user's instructions and prompt while transforming raw content into an ultra-polished, visually tailored 16:9 executive presentation deck.
 
 === 1. USER INSTRUCTION FIDELITY (RULE #1: NEVER "MENENTUKAN SENDIRI") ===
-- STRICTLY RESPECT THE USER'S INTENT: If the user provides a specific number of slides, specific slide titles, requested layouts (e.g. Table, Process, Timeline, Two Column, Hero, Chart), or a structured outline (Gamma format, numbered format, markdown), YOU MUST FOLLOW THE USER'S STRUCTURE 1-TO-1.
+- STRICTLY RESPECT THE USER'S INTENT: If the user provides a specific number of slides, specific slide titles, requested layouts (e.g. Table, Process, Timeline, Two Column, Hero, Chart), or a structured outline (numbered format, slide outline, markdown), YOU MUST FOLLOW THE USER'S STRUCTURE 1-TO-1.
 - DO NOT invent arbitrary storytelling arcs that contradict the user's instructions. If the user asks for 4 slides, output exactly 4 slides. If the user provides an outline with 10 slides, output exactly 10 slides.
 - DO NOT dumb down or truncate the user's substantive thoughts into superficial 2-word bullet points.
 - PRESERVE 100% OF KEY USER FACTS, domain-specific terminology, technical concepts, and structural logic. Elevate informal phrasing into crisp, authoritative executive language.
@@ -281,14 +281,63 @@ export async function POST(req: NextRequest) {
     } = body;
 
     let rulesDoc = (templateRulesMarkdown || clonedStyleDirectives || "").trim();
+    const tNameLower = (templateName || "").toLowerCase();
+    const rulesLower = rulesDoc.toLowerCase();
+    const lowerContent = `${content || ""}`.toLowerCase();
+
+    // 1. Detect institution strictly from template rules markdown or template name first
+    const isExplicitITB =
+      tNameLower.includes("itb") ||
+      rulesLower.includes("itb-deck-design-rules") ||
+      rulesLower.includes("itb × revou") ||
+      rulesLower.includes("itb-deck") ||
+      rulesLower.includes("deep blue #005aab");
+
+    const isExplicitUI =
+      !isExplicitITB &&
+      (tNameLower.includes("ui") ||
+        rulesLower.includes("ui-deck-design-rules") ||
+        rulesLower.includes("universitas indonesia") ||
+        rulesLower.includes("ui-deck") ||
+        rulesLower.includes("#fede3b"));
+
+    const isExplicitBinus =
+      !isExplicitITB &&
+      !isExplicitUI &&
+      (tNameLower.includes("binus") ||
+        rulesLower.includes("binus-deck-design-rules") ||
+        rulesLower.includes("bina nusantara") ||
+        rulesLower.includes("binus-deck") ||
+        rulesLower.includes("#174a7f") ||
+        rulesLower.includes("#23a3e7"));
+
+    let isITB = isExplicitITB;
+    let isUI = isExplicitUI;
+    let isBinus = isExplicitBinus;
+
+    // 2. If no explicit template rules found, check explicit institution mentions in prompt/content (never topic keywords!)
+    if (!isITB && !isUI && !isBinus) {
+      if (/binus|bina\s*nusantara/i.test(lowerContent)) {
+        isBinus = true;
+      } else if (/universitas\s*indonesia|ui\s*×\s*revou|\bui\b|makara/i.test(lowerContent)) {
+        isUI = true;
+      } else {
+        isITB = true; // Default standard institution is ITB
+      }
+    }
+
     if (!rulesDoc) {
       try {
         const fs = await import("fs/promises");
         const path = await import("path");
-        const skillPath = path.join(process.cwd(), ".agents/skills/itb-deck-design-rules/SKILL.md");
+        const skillPath = isBinus
+          ? path.join(process.cwd(), ".agents/skills/binus-deck-design-rules/SKILL.md")
+          : isUI
+          ? path.join(process.cwd(), ".agents/skills/ui-deck-design-rules/SKILL.md")
+          : path.join(process.cwd(), ".agents/skills/itb-deck-design-rules/SKILL.md");
         rulesDoc = await fs.readFile(skillPath, "utf-8");
       } catch (err) {
-        console.warn("Could not load default ITB skill file in generate-stream:", err);
+        console.warn("Could not load default skill file in generate-stream:", err);
       }
     }
 
@@ -398,15 +447,33 @@ ${languageDirective}
 Generate exactly ${targetSlides} structured slides in strict JSON array format.
 `;
 
-    // Support multi-provider BYOK or Server Env Key
-    const userApiKey = body.apiKey || req.headers.get("x-deepseek-api-key") || process.env.DEEPSEEK_API_KEY;
-    const modelToUse = body.model || "deepseek-chat";
     const provider = body.provider || "deepseek";
+    let modelToUse = body.model;
+    if (!modelToUse) {
+      modelToUse = provider === "openrouter" ? "google/gemini-2.5-flash" : provider === "gemini" ? "gemini-2.5-flash" : "deepseek-chat";
+    } else if (provider === "openrouter" && !modelToUse.includes("/")) {
+      if (modelToUse.includes("gemini")) modelToUse = `google/${modelToUse}`;
+      else if (modelToUse.includes("deepseek")) modelToUse = "deepseek/deepseek-chat";
+      else modelToUse = "google/gemini-2.5-flash";
+    }
+
+    const serverApiKey =
+      provider === "openai"
+        ? process.env.OPENAI_API_KEY
+        : provider === "gemini"
+        ? process.env.GEMINI_API_KEY
+        : provider === "openrouter"
+        ? process.env.OPENROUTER_API_KEY
+        : process.env.DEEPSEEK_API_KEY;
+
+    // Support multi-provider BYOK or Server Env Key
+    const userApiKey = body.apiKey || req.headers.get("x-deepseek-api-key") || serverApiKey;
 
     const providerBaseUrls: Record<string, string> = {
       deepseek: "https://api.deepseek.com",
       openai: "https://api.openai.com/v1",
       gemini: "https://generativelanguage.googleapis.com/v1beta/openai",
+      openrouter: "https://openrouter.ai/api/v1",
     };
 
     if (userApiKey && userApiKey !== "dummy_key" && userApiKey.trim().length > 0) {
@@ -415,6 +482,10 @@ Generate exactly ${targetSlides} structured slides in strict JSON array format.
           baseURL: providerBaseUrls[provider] || providerBaseUrls.deepseek,
           apiKey: userApiKey.trim(),
           timeout: 45000,
+          defaultHeaders: provider === "openrouter" ? {
+            "HTTP-Referer": "https://launcher-os.local",
+            "X-Title": "Launcher OS",
+          } : undefined,
         });
 
         const isReasoner = modelToUse === "deepseek-reasoner" || modelToUse.includes("reasoner");
@@ -1612,25 +1683,51 @@ function generateLauncherArchetypeSlides(
   return slides;
 }
 
+function cleanString(str: string): string {
+  if (!str) return "";
+  return str
+    .replace(/```(?:json|markdown|html|ts|js)?\s*([\s\S]*?)\s*```/gi, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function safeString(val: any, fallback = ""): string {
   if (val === null || val === undefined) return fallback;
-  if (typeof val === "string") return val;
+  if (typeof val === "string") return cleanString(val);
   if (typeof val === "number" || typeof val === "boolean") return String(val);
   if (typeof val === "object") {
-    if (val.title && val.description) return `${val.title}: ${val.description}`;
-    if (val.title) return String(val.title);
-    if (val.text) return String(val.text);
-    if (val.description) return String(val.description);
-    if (val.label) return String(val.label);
-    if (val.value !== undefined) return String(val.value);
-    if (val.name) return String(val.name);
-    try {
-      return JSON.stringify(val);
-    } catch {
-      return fallback;
+    if (val.title && val.description) return cleanString(`${val.title}: ${val.description}`);
+    if (val.verb && val.text) return cleanString(`${val.verb} ${val.text}`);
+    if (val.left && val.right) return cleanString(`${val.left} → ${val.right}`);
+    if (val.title) return cleanString(String(val.title));
+    if (val.text) return cleanString(String(val.text));
+    if (val.content) return cleanString(String(val.content));
+    if (val.description) return cleanString(String(val.description));
+    if (val.item) return cleanString(String(val.item));
+    if (val.point) return cleanString(String(val.point));
+    if (val.action) return cleanString(String(val.action));
+    if (val.step) return cleanString(String(val.step));
+    if (val.label) return cleanString(String(val.label));
+    if (val.value !== undefined) return cleanString(String(val.value));
+    if (val.name) return cleanString(String(val.name));
+    if (val.headline) return cleanString(String(val.headline));
+    if (val.subheadline) return cleanString(String(val.subheadline));
+    if (val.detail) return cleanString(String(val.detail));
+
+    const stringValues = Object.values(val)
+      .filter((v) => typeof v === "string" && (v as string).trim().length > 0)
+      .map((v) => cleanString(v as string));
+    if (stringValues.length > 0) {
+      return stringValues.join(" - ");
     }
+    return fallback;
   }
-  return String(val);
+  return cleanString(String(val));
 }
 
 function normalizeApiSlide(raw: any, index: number = 0): SlideData {

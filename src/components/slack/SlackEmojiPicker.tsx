@@ -267,7 +267,7 @@ export function SlackEmojiPicker({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             autoFocus
-            className="w-full pl-8 pr-6 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-[#FFE500]"
+            className="w-full pl-8 pr-6 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
           />
           {search && (
             <button

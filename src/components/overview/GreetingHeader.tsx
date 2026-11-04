@@ -51,11 +51,14 @@ export function GreetingHeader({ userName }: GreetingHeaderProps) {
       <div className="space-y-1">
         <h1
           suppressHydrationWarning
-          className="text-3xl sm:text-4xl lg:text-[38px] font-normal sm:font-medium font-lora tracking-tight text-neutral-950 dark:text-white leading-tight"
+          className="text-3xl sm:text-4xl lg:text-[38px] font-lora font-medium tracking-tight text-neutral-950 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-b dark:from-white dark:via-neutral-200 dark:to-neutral-400/90 leading-tight inline-block"
         >
           {greeting}, {displayName}
         </h1>
-        <p suppressHydrationWarning className="text-sm sm:text-base text-neutral-500 dark:text-neutral-400 font-normal">
+        <p 
+          suppressHydrationWarning 
+          className="text-sm sm:text-base text-neutral-500 dark:text-neutral-400 font-normal"
+        >
           {dateString}
         </p>
       </div>

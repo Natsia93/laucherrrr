@@ -52,12 +52,21 @@ For EACH slide in this batch, before generating its JSON:
 
 5. **No Invented Data**: NEVER fabricate statistics, names, dates, case studies, or quotes not present in the source. Use visible placeholders: [INSTRUCTOR TO CONFIRM], [X]-minute, [__]%.
 
+6. **Anti-AI Slop & Natural Human Writing (MANDATORY)**:
+   - NO EM DASHES: Do not use "—" in prose. Use commas, parentheses, or a separate sentence.
+   - NO "NOT X BUT Y" CLICHES: Never write "not X but Y", "it's not X, it's Y", or "You don't need X. You need Y." State positive facts directly.
+   - NO COLON-REVEAL PROSE: Do not use theatrical mid-sentence colon reveals like "Three things matter: speed..."
+   - NO AI BUZZWORDS: Strictly ban "delve", "leverage", "foster", "robust", "seamless", "landscape", "ecosystem", "tapestry", "journey", "pivotal", "crucial", "holistic", "game-changer", "cutting-edge".
+   - NO DRAMATIC VERBLESS FRAGMENTS: Avoid theatrical one-line slogans ("Same tools, different outcomes.").
+   - NO STOCK CLOSERS: Never use "In conclusion", "Ultimately", or "At the end of the day".
+   - Varied sentence rhythm: write with natural human cadence, not robotic symmetry.
+
 === AVAILABLE MASTER LAYOUTS & EXPERT WRITING INSTRUCTIONS ===
 
 1. "sectionDivider" — Chapter/Module Transition
    CONTENT: title (bold claim about what this chapter achieves), subtitle (1-sentence preview), badge ("PART N")
    WRITING: The title should create anticipation. Think movie chapter cards. The subtitle previews the transformation this section delivers.
-   DATA: { title, subtitle, badge, bgStyle: "boldYellow" }
+   DATA: { title, subtitle, badge }
 
 2. "pairedRows" — Problem↔Solution / Threat↔Response
    CONTENT: 2-4 paired rows, each with a tension (left) and its resolution (right)
@@ -87,7 +96,7 @@ For EACH slide in this batch, before generating its JSON:
 7. "closingAction" — Final Executive Mandate
    CONTENT: 3 concrete action items with ownership implications
    WRITING: Each action starts with a numbered prefix and a specific, time-bound instruction. Not "improve security" but "Activate MFA on all executive email accounts by Friday".
-   DATA: { title, subtitle, actionItems: [{ verb, text }], contactFooterText, bgStyle: "boldYellow" }
+   DATA: { title, subtitle, actionItems: [{ verb, text }], contactFooterText }
 
 8. "chevronProcess" — Alternating Process with Diagnostic Pills
    CONTENT: 3-5 chevron steps with optional diagnostic status pills
@@ -198,6 +207,22 @@ No markdown backticks, no explanatory comments, no preamble.
 If the user's content or outline explicitly requests a specific language (e.g. "in English", "bahasa inggris"), ALL generated text — titles, subtitles, descriptions, pairedRows content, stackCards content, railSteps content, checklistItems, actionItems, speakerNotes — MUST be written ENTIRELY in that requested language. Do NOT mix languages. The user's language instruction ALWAYS overrides any template examples above.
 `;
 
+function getEnvKey(keyName: string): string {
+  if (process.env[keyName]) return process.env[keyName]!;
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    const envLocal = fs.readFileSync(path.join(process.cwd(), ".env.local"), "utf8");
+    for (const line of envLocal.split("\n")) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith(`${keyName}=`)) {
+        return trimmed.slice(keyName.length + 1).replace(/^["']|["']$/g, "").trim();
+      }
+    }
+  } catch {}
+  return "";
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -231,33 +256,88 @@ export async function POST(req: NextRequest) {
     } = deckContext;
 
     let rulesDoc = (templateRulesMarkdown || clonedStyleDirectives || "").trim();
-    const effectiveTemplateName = templateName || "ITB × RevoU Deck Design System";
+    const tNameLower = (templateName || "").toLowerCase();
+    const rulesLower = rulesDoc.toLowerCase();
+
+    // 1. Detect institution strictly from template rules markdown or template name first
+    const isExplicitITB =
+      tNameLower.includes("itb") ||
+      rulesLower.includes("itb-deck-design-rules") ||
+      rulesLower.includes("itb × revou") ||
+      rulesLower.includes("itb-deck") ||
+      rulesLower.includes("deep blue #005aab");
+
+    const isExplicitUI =
+      !isExplicitITB &&
+      (tNameLower.includes("ui") ||
+        rulesLower.includes("ui-deck-design-rules") ||
+        rulesLower.includes("universitas indonesia") ||
+        rulesLower.includes("ui-deck") ||
+        rulesLower.includes("#fede3b"));
+
+    const isExplicitBinus =
+      !isExplicitITB &&
+      !isExplicitUI &&
+      (tNameLower.includes("binus") ||
+        rulesLower.includes("binus-deck-design-rules") ||
+        rulesLower.includes("bina nusantara") ||
+        rulesLower.includes("binus-deck") ||
+        rulesLower.includes("#174a7f") ||
+        rulesLower.includes("#23a3e7"));
+
+    let isITBDeck = isExplicitITB;
+    let isUIDeck = isExplicitUI;
+    let isBinusDeck = isExplicitBinus;
+
+    // 2. If no explicit template found, check explicit institution mentions in outline text (strictly institution name, never topic keywords!)
+    if (!isITBDeck && !isUIDeck && !isBinusDeck) {
+      const outlineText = JSON.stringify(outlines).toLowerCase();
+      if (/binus|bina\s*nusantara/i.test(outlineText)) {
+        isBinusDeck = true;
+      } else if (/universitas\s*indonesia|ui\s*×\s*revou|\bui\b|makara/i.test(outlineText)) {
+        isUIDeck = true;
+      } else {
+        isITBDeck = true; // Default standard institution is ITB
+      }
+    }
 
     if (!rulesDoc) {
       try {
         const fs = await import("fs/promises");
         const path = await import("path");
-        const skillPath = path.join(process.cwd(), ".agents/skills/itb-deck-design-rules/SKILL.md");
+        const skillPath = isBinusDeck
+          ? path.join(process.cwd(), ".agents/skills/binus-deck-design-rules/SKILL.md")
+          : isUIDeck
+          ? path.join(process.cwd(), ".agents/skills/ui-deck-design-rules/SKILL.md")
+          : path.join(process.cwd(), ".agents/skills/itb-deck-design-rules/SKILL.md");
         rulesDoc = await fs.readFile(skillPath, "utf-8");
       } catch (err) {
-        console.warn("Could not load default ITB skill file in generate-chunk:", err);
+        console.warn("Could not load default skill file in generate-chunk:", err);
       }
     }
 
-    // ──── LANGUAGE DETECTION from outline content ────
+    const effectiveTemplateName = isBinusDeck
+      ? "BINUS Applied Cybersecurity"
+      : isUIDeck
+      ? "UI × RevoU Deck Design System"
+      : "ITB × RevoU Deck Design System";
+
+    // ──── COMPREHENSIVE LANGUAGE DETECTION ────
     const outlineText = JSON.stringify(outlines);
     const allText = `${outlineText} ${templateRulesMarkdown} ${clonedStyleDirectives}`;
-    let detectedLanguage = "";
-    if (/(?:in\s+english|bahasa\s*inggris|dalam\s*(?:bahasa\s*)?inggris|use\s+english|english\s+(?:language|version|deck|presentation)|LANGUAGE.*English)/i.test(allText)) {
-      detectedLanguage = "English";
-    }
-    // Also detect from headline language: if all headlines are English
+    let isEnglish = /(?:in\s+english|bahasa\s*inggris|dalam\s*(?:bahasa\s*)?inggris|use\s+english|write\s+in\s+english|deck\s+in\s+english|\benglish\b|\binggris\b|\bbhs\s*inggris\b|LANGUAGE.*English)/i.test(allText);
+
+    // Also detect from headline language: if headlines are English without Indonesian stopwords
     const headlinesSample = outlines.map((o: OutlineItem) => o.headline || "").join(" ");
-    if (!detectedLanguage && /^[A-Za-z0-9\s\-:,;&'"!?()]+$/.test(headlinesSample) && headlinesSample.length > 20) {
-      detectedLanguage = "English";
+    if (!isEnglish && /^[A-Za-z0-9\s\-:,;&'"!?()]+$/.test(headlinesSample) && headlinesSample.length > 20) {
+      const indonesianStopwords = /\b(?:dan|yang|untuk|dengan|pada|ke|di|dari|ini|itu|adalah|sebagai|oleh|dalam|atau|bisa|dapat|akan|sudah|telah|arsitektur|ketahanan|keamanan|siber|tata\s*kelola|inisiatif|pilar)\b/i;
+      if (!indonesianStopwords.test(headlinesSample)) {
+        isEnglish = true;
+      }
     }
-    const languageDirective = detectedLanguage
-      ? `\n⚠️ MANDATORY LANGUAGE: ALL generated text MUST be in ${detectedLanguage}. Match the language of the outline headlines. Do NOT translate to Indonesian or any other language.\n`
+
+    const languageDirective = isEnglish
+      ? `\n⚠️ MANDATORY LANGUAGE REQUIREMENT: ALL generated text (titles, subtitles, descriptions, pairedRows content, stackCards content, railSteps content, checklistItems, actionItems, speakerNotes) MUST be written 100% in English. Match the English headlines. Do NOT translate to Indonesian or mix languages under any circumstances.\n`
       : "";
 
     const userPrompt = `
@@ -336,172 +416,230 @@ ${languageDirective}
 Generate exactly ${outlines.length} complete, production-ready slide objects for this batch in strict JSON array format.
 `;
 
-    // ──── STRICT BYOK PROVIDER EXECUTION ────
-    const effectiveProvider = (provider || (apiKey?.startsWith("sk-") ? "deepseek" : "deepseek")).toLowerCase();
+    // ──── MULTI-PROVIDER CASCADE EXECUTION ────
+    const initialProvider = (provider || (apiKey?.startsWith("sk-or-") ? "openrouter" : apiKey?.startsWith("sk-") ? "deepseek" : "gemini")).toLowerCase();
+    const providersToTry = Array.from(new Set([initialProvider, "openrouter", "gemini", "deepseek", "openai", "anthropic"]));
 
-    // 1. DeepSeek (BYOK First)
-    if (effectiveProvider === "deepseek") {
-      const deepseekKey = apiKey || process.env.DEEPSEEK_API_KEY;
-      if (deepseekKey) {
-        try {
-          const client = new OpenAI({
-            baseURL: "https://api.deepseek.com",
-            apiKey: deepseekKey,
-          });
-
-          const selectedModel = requestedModel || "deepseek-chat";
-          const isReasoner = selectedModel === "deepseek-reasoner" || selectedModel.includes("reasoner");
-
-          const res = await client.chat.completions.create({
-            model: selectedModel,
-            ...(isReasoner ? {} : { temperature: 0.3 }),
-            messages: isReasoner
-              ? [{ role: "user", content: `${CHUNK_SYSTEM_PROMPT}\n\n${userPrompt}` }]
-              : [
-                  { role: "system", content: CHUNK_SYSTEM_PROMPT },
-                  { role: "user", content: userPrompt },
-                ],
-          });
-
-          const raw = res.choices[0]?.message?.content || "";
-          const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
-          const parsed = JSON.parse(cleaned);
-
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const sanitized = sanitizeChunkSlides(parsed, outlines, chunkIndex, totalChunks);
-            return NextResponse.json({
-              success: true,
-              chunkIndex,
-              slides: sanitized,
-              source: "deepseek",
-            });
-          }
-        } catch (dsErr: any) {
-          console.error(`Chunk ${chunkIndex} DeepSeek error:`, dsErr?.message);
-        }
-      }
-    }
-
-    // 2. OpenAI
-    if (effectiveProvider === "openai") {
-      const openAiKey = apiKey || process.env.OPENAI_API_KEY;
-      if (openAiKey) {
-        try {
-          const client = new OpenAI({
-            baseURL: "https://api.openai.com/v1",
-            apiKey: openAiKey,
-          });
-
-          const res = await client.chat.completions.create({
-            model: requestedModel || "gpt-4o",
-            temperature: 0.3,
-            messages: [
-              { role: "system", content: CHUNK_SYSTEM_PROMPT },
-              { role: "user", content: userPrompt },
-            ],
-          });
-
-          const raw = res.choices[0]?.message?.content || "";
-          const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
-          const parsed = JSON.parse(cleaned);
-
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const sanitized = sanitizeChunkSlides(parsed, outlines, chunkIndex, totalChunks);
-            return NextResponse.json({
-              success: true,
-              chunkIndex,
-              slides: sanitized,
-              source: "openai",
-            });
-          }
-        } catch (openAiErr: any) {
-          console.error(`Chunk ${chunkIndex} OpenAI error:`, openAiErr?.message);
-        }
-      }
-    }
-
-    // 3. Anthropic (Claude)
-    if (effectiveProvider === "anthropic") {
-      const anthropicKey = apiKey || process.env.ANTHROPIC_API_KEY;
-      if (anthropicKey) {
-        const modelsToTry = [requestedModel, "claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20241022"].filter(Boolean) as string[];
-        for (const mName of modelsToTry) {
+    for (const p of providersToTry) {
+      // 1. Google Gemini
+      if (p === "gemini") {
+        const geminiKey = (provider === "gemini" && apiKey ? apiKey : null) || getEnvKey("GEMINI_API_KEY") || getEnvKey("GOOGLE_API_KEY");
+        if (geminiKey) {
           try {
-            const response = await fetch("https://api.anthropic.com/v1/messages", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-api-key": anthropicKey,
-                "anthropic-version": "2023-06-01",
-              },
-              body: JSON.stringify({
-                model: mName,
-                max_tokens: 8192,
-                temperature: 0.3,
-                system: CHUNK_SYSTEM_PROMPT,
-                messages: [{ role: "user", content: userPrompt }],
-              }),
-            });
+            const genAI = new GoogleGenerativeAI(geminiKey);
+            let mName = (provider === "gemini" && requestedModel ? requestedModel : "") || "gemini-2.5-flash";
+            if (mName === "gemini-3.8-flash") mName = "gemini-2.5-flash";
 
-            if (response.ok) {
-              const data = await response.json();
-              const raw = data.content?.[0]?.text || "";
-              const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
-              const parsed = JSON.parse(cleaned);
-
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                const sanitized = sanitizeChunkSlides(parsed, outlines, chunkIndex, totalChunks);
-                return NextResponse.json({
-                  success: true,
-                  chunkIndex,
-                  slides: sanitized,
-                  source: "anthropic",
+            const candidateModels = [mName, "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+            for (const modelCandidate of Array.from(new Set(candidateModels))) {
+              try {
+                const model = genAI.getGenerativeModel({
+                  model: modelCandidate,
+                  generationConfig: {
+                    responseMimeType: "application/json",
+                    temperature: 0.3,
+                  },
                 });
+
+                const result = await model.generateContent([CHUNK_SYSTEM_PROMPT, userPrompt]);
+                const text = result.response.text().trim();
+                const parsed = parseJsonFromLlm(text);
+
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  const sanitized = sanitizeChunkSlides(parsed, outlines, chunkIndex, totalChunks, isUIDeck, isBinusDeck);
+                  return NextResponse.json({
+                    success: true,
+                    chunkIndex,
+                    slides: sanitized,
+                    source: "gemini",
+                    modelUsed: modelCandidate,
+                  });
+                }
+              } catch (candidateErr: any) {
+                console.warn(`Chunk ${chunkIndex} Gemini candidate ${modelCandidate} error:`, candidateErr?.message);
               }
             }
-          } catch (anthropicErr: any) {
-            console.error(`Chunk ${chunkIndex} Anthropic Claude error:`, anthropicErr?.message);
+          } catch (gemErr: any) {
+            console.warn(`Chunk ${chunkIndex} Gemini execution error:`, gemErr?.message);
           }
         }
       }
-    }
 
-    // 4. Google Gemini
-    if (effectiveProvider === "gemini") {
-      const geminiKey = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-      if (geminiKey) {
-        try {
-          const genAI = new GoogleGenerativeAI(geminiKey);
-          const mName = requestedModel || "gemini-3.8-flash";
-          const model = genAI.getGenerativeModel({
-            model: mName,
-            generationConfig: {
-              responseMimeType: "application/json",
-              temperature: 0.3,
-            },
-          });
-
-          const result = await model.generateContent([CHUNK_SYSTEM_PROMPT, userPrompt]);
-          const text = result.response.text().trim();
-          const cleaned = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
-          const parsed = JSON.parse(cleaned);
-
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const sanitized = sanitizeChunkSlides(parsed, outlines, chunkIndex, totalChunks);
-            return NextResponse.json({
-              success: true,
-              chunkIndex,
-              slides: sanitized,
-              source: "gemini",
+      // 2. DeepSeek
+      if (p === "deepseek") {
+        const deepseekKey = (provider === "deepseek" && apiKey ? apiKey : null) || getEnvKey("DEEPSEEK_API_KEY");
+        if (deepseekKey) {
+          try {
+            const client = new OpenAI({
+              baseURL: "https://api.deepseek.com",
+              apiKey: deepseekKey,
             });
+
+            const selectedModel = (provider === "deepseek" && requestedModel ? requestedModel : "") || "deepseek-chat";
+            const isReasoner = selectedModel === "deepseek-reasoner" || selectedModel.includes("reasoner");
+
+            const res = await client.chat.completions.create({
+              model: selectedModel,
+              ...(isReasoner ? {} : { temperature: 0.3 }),
+              messages: isReasoner
+                ? [{ role: "user", content: `${CHUNK_SYSTEM_PROMPT}\n\n${userPrompt}` }]
+                : [
+                    { role: "system", content: CHUNK_SYSTEM_PROMPT },
+                    { role: "user", content: userPrompt },
+                  ],
+            });
+
+            const raw = res.choices[0]?.message?.content || "";
+            const parsed = parseJsonFromLlm(raw);
+
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const sanitized = sanitizeChunkSlides(parsed, outlines, chunkIndex, totalChunks, isUIDeck, isBinusDeck);
+              return NextResponse.json({
+                success: true,
+                chunkIndex,
+                slides: sanitized,
+                source: "deepseek",
+              });
+            }
+          } catch (dsErr: any) {
+            console.warn(`Chunk ${chunkIndex} DeepSeek error:`, dsErr?.message);
           }
-        } catch (gemErr: any) {
-          console.warn(`Chunk ${chunkIndex} Gemini error:`, gemErr?.message);
+        }
+      }
+
+      // 3. OpenAI
+      if (p === "openai") {
+        const openAiKey = (provider === "openai" && apiKey ? apiKey : null) || getEnvKey("OPENAI_API_KEY");
+        if (openAiKey) {
+          try {
+            const client = new OpenAI({
+              baseURL: "https://api.openai.com/v1",
+              apiKey: openAiKey,
+            });
+
+            const res = await client.chat.completions.create({
+              model: (provider === "openai" && requestedModel ? requestedModel : "") || "gpt-4o",
+              temperature: 0.3,
+              messages: [
+                { role: "system", content: CHUNK_SYSTEM_PROMPT },
+                { role: "user", content: userPrompt },
+              ],
+            });
+
+            const raw = res.choices[0]?.message?.content || "";
+            const parsed = parseJsonFromLlm(raw);
+
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const sanitized = sanitizeChunkSlides(parsed, outlines, chunkIndex, totalChunks, isUIDeck, isBinusDeck);
+              return NextResponse.json({
+                success: true,
+                chunkIndex,
+                slides: sanitized,
+                source: "openai",
+              });
+            }
+          } catch (openAiErr: any) {
+            console.warn(`Chunk ${chunkIndex} OpenAI error:`, openAiErr?.message);
+          }
+        }
+      }
+
+      // 4. Anthropic (Claude)
+      if (p === "anthropic") {
+        const anthropicKey = (provider === "anthropic" && apiKey ? apiKey : null) || getEnvKey("ANTHROPIC_API_KEY");
+        if (anthropicKey) {
+          const modelsToTry = [(provider === "anthropic" && requestedModel ? requestedModel : null), "claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20241022"].filter(Boolean) as string[];
+          for (const mName of modelsToTry) {
+            try {
+              const response = await fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-api-key": anthropicKey,
+                  "anthropic-version": "2023-06-01",
+                },
+                body: JSON.stringify({
+                  model: mName,
+                  max_tokens: 8192,
+                  temperature: 0.3,
+                  system: CHUNK_SYSTEM_PROMPT,
+                  messages: [{ role: "user", content: userPrompt }],
+                }),
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                const raw = data.content?.[0]?.text || "";
+                const parsed = parseJsonFromLlm(raw);
+
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  const sanitized = sanitizeChunkSlides(parsed, outlines, chunkIndex, totalChunks, isUIDeck, isBinusDeck);
+                  return NextResponse.json({
+                    success: true,
+                    chunkIndex,
+                    slides: sanitized,
+                    source: "anthropic",
+                  });
+                }
+              }
+            } catch (anthropicErr: any) {
+              console.warn(`Chunk ${chunkIndex} Anthropic Claude error:`, anthropicErr?.message);
+            }
+          }
+        }
+      }
+
+      // 5. OpenRouter
+      if (p === "openrouter") {
+        const openrouterKey = (provider === "openrouter" && apiKey ? apiKey : null) || (p === initialProvider && apiKey ? apiKey : null) || getEnvKey("OPENROUTER_API_KEY");
+        if (openrouterKey) {
+          try {
+            const client = new OpenAI({
+              baseURL: "https://openrouter.ai/api/v1",
+              apiKey: openrouterKey,
+              defaultHeaders: {
+                "HTTP-Referer": "https://launcher-os.local",
+                "X-Title": "Launcher OS",
+              },
+            });
+
+            let orModel = (provider === "openrouter" && requestedModel ? requestedModel : "") || (p === initialProvider && requestedModel ? requestedModel : "") || "google/gemini-2.5-flash";
+            if (!orModel.includes("/")) {
+              if (orModel.includes("gemini")) orModel = `google/${orModel}`;
+              else if (orModel.includes("deepseek")) orModel = "deepseek/deepseek-chat";
+              else orModel = "google/gemini-2.5-flash";
+            }
+
+            const res = await client.chat.completions.create({
+              model: orModel,
+              temperature: 0.3,
+              messages: [
+                { role: "system", content: CHUNK_SYSTEM_PROMPT },
+                { role: "user", content: userPrompt },
+              ],
+            });
+
+            const raw = res.choices[0]?.message?.content || "";
+            const parsed = parseJsonFromLlm(raw);
+
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const sanitized = sanitizeChunkSlides(parsed, outlines, chunkIndex, totalChunks, isUIDeck, isBinusDeck);
+              return NextResponse.json({
+                success: true,
+                chunkIndex,
+                slides: sanitized,
+                source: "openrouter",
+                modelUsed: orModel,
+              });
+            }
+          } catch (openRouterErr: any) {
+            console.warn(`Chunk ${chunkIndex} OpenRouter error:`, openRouterErr?.message);
+          }
         }
       }
     }
 
-    // Fallback synthesizer per chunk
+    // Fallback synthesizer per chunk (Bilingual: strict English if isEnglish)
     const fallbackRaw = outlines.map((o, idx) => {
       const slideLayout = mapLayoutStringToLayout(o.visualLayout);
       const slideNum = o.slideNumber || (chunkIndex * outlines.length + idx + 1);
@@ -509,16 +647,23 @@ Generate exactly ${outlines.length} complete, production-ready slide objects for
         id: `fallback-${chunkIndex}-${idx}`,
         layout: slideLayout,
         title: o.headline,
-        subtitle: o.subheadline || "Strategic Operational Framework",
-        description: o.description || "Inisiatif menyeluruh untuk memastikan integrasi yang optimal across divisions.",
+        subtitle: o.subheadline || (isEnglish ? "Strategic Operational Framework" : "Kerangka Operasional Strategis"),
+        description: o.description || (isEnglish ? "Comprehensive initiative ensuring seamless alignment across enterprise domains." : "Inisiatif menyeluruh untuk memastikan integrasi yang optimal across divisions."),
         badge: "EXECUTIVE BLUEPRINT",
         bgStyle: idx === 0 && chunkIndex === 0 ? "boldYellow" : "white",
-        speakerNotes: o.speakerNotes || "Panduan Presenter: Paparkan pesan inti slide ini dengan ringkas dalam 1-2 menit, fokus pada dampak strategis.",
-        bullets: o.bullets || [
+        speakerNotes: o.speakerNotes || (isEnglish ? "Presenter Guide: Deliver the core strategic takeaway of this slide concisely in 1-2 minutes, highlighting measurable business impact." : "Panduan Presenter: Paparkan pesan inti slide ini dengan ringkas dalam 1-2 menit, fokus pada dampak strategis."),
+        bullets: o.bullets || (isEnglish ? [
+          "Core Pillar: Standardized operating architecture and execution efficiency.",
+          "Measurable Impact: Maximizing cross-functional visibility and governance.",
+        ] : [
           "Pilar Utama: Standarisasi arsitektur kerja dan efisiensi waktu eksekusi.",
           "Dampak Terukur: Memaksimalkan transparansi operasional lintas pemangku kepentingan.",
-        ],
-        processSteps: [
+        ]),
+        processSteps: isEnglish ? [
+          { title: "Phase 1: Ingestion", description: "Standardizing inputs and verifying foundational data." },
+          { title: "Phase 2: Synthesis", description: "Architectural mapping and deep-dive domain analysis." },
+          { title: "Phase 3: Delivery", description: "Target deployment and quantifiable impact measurement." },
+        ] : [
           { title: "Tahap 1: Ingestion", description: "Standardisasi input materi dan verifikasi data." },
           { title: "Tahap 2: Synthesis", description: "Pemetaan framework dan analisis mendalam." },
           { title: "Tahap 3: Delivery", description: "Penerapan solusi dan evaluasi dampak strategis." },
@@ -527,7 +672,7 @@ Generate exactly ${outlines.length} complete, production-ready slide objects for
       };
     });
 
-    const fallbackSlides = sanitizeChunkSlides(fallbackRaw, outlines, chunkIndex, totalChunks);
+    const fallbackSlides = sanitizeChunkSlides(fallbackRaw, outlines, chunkIndex, totalChunks, isUIDeck, isBinusDeck);
 
     return NextResponse.json({
       success: true,
@@ -541,11 +686,54 @@ Generate exactly ${outlines.length} complete, production-ready slide objects for
   }
 }
 
+function parseJsonFromLlm(raw: string): any {
+  if (!raw) throw new Error("Empty response from AI");
+  let text = raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+
+  // Try direct parse after removing codeblock markers
+  const simpleClean = text
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
+  try {
+    return JSON.parse(simpleClean);
+  } catch (_) {}
+
+  // Match markdown block ```json [...] ```
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (codeBlockMatch && codeBlockMatch[1]) {
+    try {
+      return JSON.parse(codeBlockMatch[1].trim());
+    } catch (_) {}
+  }
+
+  // Match outermost [...]
+  const arrayMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+  if (arrayMatch) {
+    try {
+      return JSON.parse(arrayMatch[0]);
+    } catch (_) {}
+  }
+
+  // Match outermost {...}
+  const objMatch = text.match(/\{[\s\S]*\}/);
+  if (objMatch) {
+    try {
+      return JSON.parse(objMatch[0]);
+    } catch (_) {}
+  }
+
+  throw new Error(`Failed to extract valid JSON from LLM: ${raw.slice(0, 150)}...`);
+}
+
 function sanitizeChunkSlides(
   parsed: any[],
   outlines: OutlineItem[],
   chunkIndex: number,
-  totalChunks: number
+  totalChunks: number,
+  isUIDeck: boolean = false,
+  isBinusDeck: boolean = false
 ): any[] {
   return parsed.map((s: any, idx: number) => {
     const outline = outlines[idx];
@@ -807,13 +995,22 @@ function sanitizeChunkSlides(
       ];
     }
 
-    // Ensure backgroundImage is determined correctly
-    const backgroundImage = s.backgroundImage || resolveSlideBackgroundForChunk(
+    // Ensure backgroundImage is determined correctly and sanitized
+    let rawBg = s.backgroundImage || resolveSlideBackgroundForChunk(
       layout,
       title,
       slideNum,
-      totalChunks * outlines.length
+      totalChunks * outlines.length,
+      isUIDeck,
+      isBinusDeck
     );
+
+    if (isUIDeck && (rawBg.includes("/itb-deck/") || rawBg.includes("/binus-deck/"))) {
+      rawBg = rawBg.replace(/\/(itb|binus)-deck\//, "/ui-deck/");
+    } else if (isBinusDeck && (rawBg.includes("/itb-deck/") || rawBg.includes("/ui-deck/"))) {
+      rawBg = rawBg.replace(/\/(itb|ui)-deck\//, "/binus-deck/");
+    }
+    const backgroundImage = rawBg;
 
     return {
       ...s,
@@ -853,25 +1050,51 @@ function sanitizeChunkSlides(
   });
 }
 
+function cleanString(str: string): string {
+  if (!str) return "";
+  return str
+    .replace(/```(?:json|markdown|html|ts|js)?\s*([\s\S]*?)\s*```/gi, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function safeString(val: any, fallback = ""): string {
   if (val === null || val === undefined) return fallback;
-  if (typeof val === "string") return val;
+  if (typeof val === "string") return cleanString(val);
   if (typeof val === "number" || typeof val === "boolean") return String(val);
   if (typeof val === "object") {
-    if (val.title && val.description) return `${val.title}: ${val.description}`;
-    if (val.title) return String(val.title);
-    if (val.text) return String(val.text);
-    if (val.description) return String(val.description);
-    if (val.label) return String(val.label);
-    if (val.value !== undefined) return String(val.value);
-    if (val.name) return String(val.name);
-    try {
-      return JSON.stringify(val);
-    } catch {
-      return fallback;
+    if (val.title && val.description) return cleanString(`${val.title}: ${val.description}`);
+    if (val.verb && val.text) return cleanString(`${val.verb} ${val.text}`);
+    if (val.left && val.right) return cleanString(`${val.left} → ${val.right}`);
+    if (val.title) return cleanString(String(val.title));
+    if (val.text) return cleanString(String(val.text));
+    if (val.content) return cleanString(String(val.content));
+    if (val.description) return cleanString(String(val.description));
+    if (val.item) return cleanString(String(val.item));
+    if (val.point) return cleanString(String(val.point));
+    if (val.action) return cleanString(String(val.action));
+    if (val.step) return cleanString(String(val.step));
+    if (val.label) return cleanString(String(val.label));
+    if (val.value !== undefined) return cleanString(String(val.value));
+    if (val.name) return cleanString(String(val.name));
+    if (val.headline) return cleanString(String(val.headline));
+    if (val.subheadline) return cleanString(String(val.subheadline));
+    if (val.detail) return cleanString(String(val.detail));
+
+    const stringValues = Object.values(val)
+      .filter((v) => typeof v === "string" && (v as string).trim().length > 0)
+      .map((v) => cleanString(v as string));
+    if (stringValues.length > 0) {
+      return stringValues.join(" - ");
     }
+    return fallback;
   }
-  return String(val);
+  return cleanString(String(val));
 }
 
 function mapLayoutStringToLayout(val?: string): string {
@@ -912,10 +1135,14 @@ function resolveSlideBackgroundForChunk(
   layout: string,
   title: string,
   slideNum: number,
-  totalSlides: number = 20
+  totalSlides: number = 20,
+  isUI: boolean = false,
+  isBinus: boolean = false
 ): string {
+  const bgPrefix = isBinus ? "/bg-deck/binus-deck" : isUI ? "/bg-deck/ui-deck" : "/bg-deck/itb-deck";
+
   if (slideNum === 1) {
-    return "/bg-deck/itb-deck/cover-deck.webp";
+    return `${bgPrefix}/cover-deck.webp`;
   }
 
   const isLast = totalSlides > 0 && slideNum >= totalSlides;
@@ -937,7 +1164,7 @@ function resolveSlideBackgroundForChunk(
       lowerTitle.includes("thank you") ||
       slideNum >= totalSlides)
   ) {
-    return "/bg-deck/itb-deck/closing-deck.webp";
+    return `${bgPrefix}/closing-deck.webp`;
   }
 
   // Section divider / Part transition (Rule §5: Section dividers "Part N", break, guest hand-over)
@@ -946,7 +1173,23 @@ function resolveSlideBackgroundForChunk(
     lowerLayout.includes("divider") ||
     /^(part|bagian|agenda utama|modul|bab)\s+\d+/i.test(lowerTitle.trim())
   ) {
-    return "/bg-deck/itb-deck/part-deck.webp";
+    return `${bgPrefix}/part-deck.webp`;
+  }
+
+  // BINUS Specialized Backgrounds
+  if (isBinus) {
+    if ((/agenda|table of contents|daftar isi|roadmap|silabus/i.test(lowerTitle) || lowerLayout.includes("agenda")) && slideNum <= 2) {
+      return `${bgPrefix}/tablecontent-deck.webp`;
+    }
+    if ((/learning outcome|capaian pembelajaran|tujuan pembelajaran|competency|objective/i.test(lowerTitle) || lowerLayout.includes("objective")) && slideNum <= 3) {
+      return `${bgPrefix}/learningoutcome-deck.webp`;
+    }
+    if (lowerLayout.includes("profile") || /speaker|fasilitator|profile|pembicara|narasumber|mentor/i.test(lowerTitle)) {
+      return `${bgPrefix}/speaker-deck.webp`;
+    }
+    if (lowerLayout.includes("checklist") || /recap|rangkuman|takeaway|ringkasan/i.test(lowerTitle)) {
+      return `${bgPrefix}/recap-deck.webp`;
+    }
   }
 
   // Task / Split comparison / Case study (Rule §5: 2-4 per deck for split case comparisons & profiles)
@@ -956,10 +1199,23 @@ function resolveSlideBackgroundForChunk(
     lowerLayout.includes("profile") ||
     lowerLayout.includes("poll")
   ) {
-    return "/bg-deck/itb-deck/task-speaker-deck.webp";
+    if (isBinus) {
+      if (lowerLayout.includes("profile") || /speaker|fasilitator|profile|pembicara|narasumber|mentor/i.test(lowerTitle)) {
+        return `${bgPrefix}/speaker-deck.webp`;
+      }
+      return `${bgPrefix}/content-deck.webp`;
+    }
+    return `${bgPrefix}/task-speaker-deck.webp`;
+  }
+
+  // In UI: Recap background detection
+  if (isUI) {
+    if (lowerLayout.includes("checklist") || /recap|rangkuman|takeaway|ringkasan/i.test(lowerTitle)) {
+      return `${bgPrefix}/recap-deck.webp`;
+    }
   }
 
   // Default: Content deck (Rule §5: all standard content slides)
-  return "/bg-deck/itb-deck/content-deck.webp";
+  return `${bgPrefix}/content-deck.webp`;
 }
 

@@ -130,7 +130,7 @@ export function SlackWebhookConfigModal({
                 value={webhookUrl}
                 onChange={(e) => setWebhookUrl(e.target.value)}
                 placeholder="https://hooks.slack.com/services/..."
-                className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500]"
+                className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
               />
             </div>
 
@@ -144,7 +144,7 @@ export function SlackWebhookConfigModal({
                   value={defaultChannel}
                   onChange={(e) => setDefaultChannel(e.target.value)}
                   placeholder="#general"
-                  className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500]"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
                 />
               </div>
 
@@ -157,7 +157,7 @@ export function SlackWebhookConfigModal({
                   value={botName}
                   onChange={(e) => setBotName(e.target.value)}
                   placeholder="Launcher OS Bot"
-                  className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500]"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
                 />
               </div>
             </div>
@@ -195,7 +195,7 @@ export function SlackWebhookConfigModal({
               rows={3}
               value={testMessage}
               onChange={(e) => setTestMessage(e.target.value)}
-              className="w-full p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500] resize-none"
+              className="w-full p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 resize-none"
             />
 
             {sendResult && (

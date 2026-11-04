@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -64,47 +64,44 @@ const itemVariants = {
   },
 };
 
+const emptySubscribe = () => () => {};
+function getMountedSnapshot(): boolean {
+  return true;
+}
+function getMountedServerSnapshot(): boolean {
+  return false;
+}
+function getSessionCheckedSnapshot(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    return sessionStorage.getItem("user_mood_checked_session") === "true";
+  } catch {
+    return true;
+  }
+}
+function getSessionCheckedServerSnapshot(): boolean {
+  return true;
+}
+
 interface MoodCheckInModalProps {
   onSelectMood?: (mood: MoodOption) => void;
 }
 
 export function MoodCheckInModal({ onSelectMood }: MoodCheckInModalProps) {
-  const [mounted, setMounted] = useState(false);
-  const [isOpen, setIsOpen] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return sessionStorage.getItem("user_mood_checked_session") !== "true";
-      } catch {
-        return false;
-      }
-    }
-    return false;
-  });
-  const [isInitialWelcome, setIsInitialWelcome] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return sessionStorage.getItem("user_mood_checked_session") !== "true";
-      } catch {
-        return false;
-      }
-    }
-    return false;
-  });
+  const isMounted = useSyncExternalStore(emptySubscribe, getMountedSnapshot, getMountedServerSnapshot);
+  const sessionChecked = useSyncExternalStore(emptySubscribe, getSessionCheckedSnapshot, getSessionCheckedServerSnapshot);
+
+  const [dismissed, setDismissed] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    setMounted(true);
-    const sessionChecked = sessionStorage.getItem("user_mood_checked_session") === "true";
-    if (!sessionChecked) {
-      setIsInitialWelcome(true);
-      setIsOpen(true);
-    }
-  }, []);
+  const isOpen = manualOpen || (!sessionChecked && !dismissed);
+  const isInitialWelcome = !sessionChecked && !manualOpen;
 
   useEffect(() => {
     const handleOpen = () => {
-      setIsInitialWelcome(false);
-      setIsOpen(true);
+      setDismissed(false);
+      setManualOpen(true);
     };
     window.addEventListener("open_mood_modal", handleOpen);
     return () => window.removeEventListener("open_mood_modal", handleOpen);
@@ -112,8 +109,10 @@ export function MoodCheckInModal({ onSelectMood }: MoodCheckInModalProps) {
 
   const handleSelect = (mood: MoodOption) => {
     setSelectedId(mood.id);
-    localStorage.setItem("user_daily_mood", JSON.stringify(mood));
-    sessionStorage.setItem("user_mood_checked_session", "true");
+    try {
+      localStorage.setItem("user_daily_mood", JSON.stringify(mood));
+      sessionStorage.setItem("user_mood_checked_session", "true");
+    } catch {}
 
     if (onSelectMood) {
       onSelectMood(mood);
@@ -128,11 +127,12 @@ export function MoodCheckInModal({ onSelectMood }: MoodCheckInModalProps) {
     window.dispatchEvent(new CustomEvent("user_mood_changed", { detail: mood }));
 
     setTimeout(() => {
-      setIsOpen(false);
+      setDismissed(true);
+      setManualOpen(false);
     }, 450);
   };
 
-  if (!mounted) return null;
+  if (!isMounted) return null;
 
   return createPortal(
     <AnimatePresence>

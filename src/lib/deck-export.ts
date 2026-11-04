@@ -56,7 +56,11 @@ export interface SlideData {
     | "transformationBridge"
     | "radialHub"
     | "splitComparison"
-    | "splitProfile";
+    | "splitProfile"
+    | "workedExample"
+    | "mlPipeline"
+    | "llmGeneration"
+    | "caseWorksheet";
   bgStyle?: "white" | "yellowGradient" | "boldYellow";
   title: string;
   subtitle?: string;
@@ -82,6 +86,14 @@ export interface SlideData {
   checklistItems?: string[];
   insightBarText?: string;
   noteBoxText?: string;
+  exerciseData?: {
+    situationTitle?: string;
+    situationText?: string;
+    dataMetrics?: Array<{ label: string; value: string }>;
+    twistBox?: string;
+    exerciseTitle?: string;
+    exerciseLines?: string[];
+  };
   contactFooterText?: string;
   speakerNotes?: string;
   quadrantData?: {
@@ -144,6 +156,7 @@ export interface ExportOptions {
   titleFont?: TitleFont;
   bodyFont?: BodyFont;
   deckTitle?: string;
+  templateName?: string;
 }
 
 export function resolveSlideBackground(
@@ -151,11 +164,51 @@ export function resolveSlideBackground(
   index: number = 0,
   totalSlides: number = 1
 ): string {
-  if (slide?.backgroundImage) return slide.backgroundImage;
+  const isExplicitITB =
+    slide?.theme === "itb" ||
+    slide?.template === "itb" ||
+    slide?.institution === "itb" ||
+    slide?.paletteId === "itb" ||
+    (typeof slide?.badge === "string" && /institut\s*teknologi\s*bandung|itb\s*×\s*revou|\bitb\b/i.test(slide.badge)) ||
+    (typeof slide?.category === "string" && /institut\s*teknologi\s*bandung|itb\s*×\s*revou|\bitb\b/i.test(slide.category));
+
+  const isBinus =
+    !isExplicitITB &&
+    (slide?.theme === "binus" ||
+      slide?.template === "binus" ||
+      slide?.institution === "binus" ||
+      slide?.paletteId === "binus" ||
+      (typeof slide?.badge === "string" && /binus|bina\s*nusantara/i.test(slide.badge)) ||
+      (typeof slide?.category === "string" && /binus|bina\s*nusantara/i.test(slide.category)) ||
+      (typeof slide?.title === "string" && /binus|bina\s*nusantara/i.test(slide.title)));
+
+  const isUI =
+    !isExplicitITB &&
+    !isBinus &&
+    (slide?.theme === "ui" ||
+      slide?.template === "ui" ||
+      slide?.institution === "ui" ||
+      slide?.paletteId === "ui" ||
+      (typeof slide?.badge === "string" && /universitas\s*indonesia|ui\s*×\s*revou|\bui\b|makara/i.test(slide.badge)) ||
+      (typeof slide?.category === "string" && /universitas\s*indonesia|ui\s*×\s*revou|\bui\b|makara/i.test(slide.category)) ||
+      (typeof slide?.title === "string" && /universitas\s*indonesia|ui\s*×\s*revou|\bui\b|makara/i.test(slide.title)));
+
+  if (slide?.backgroundImage) {
+    let rawBg = String(slide.backgroundImage);
+    if (isUI && (rawBg.includes("/itb-deck/") || rawBg.includes("/binus-deck/"))) {
+      return rawBg.replace(/\/(itb|binus)-deck\//, "/ui-deck/");
+    }
+    if (isBinus && (rawBg.includes("/itb-deck/") || rawBg.includes("/ui-deck/"))) {
+      return rawBg.replace(/\/(itb|ui)-deck\//, "/binus-deck/");
+    }
+    return rawBg;
+  }
+
+  const bgPrefix = isBinus ? "/bg-deck/binus-deck" : isUI ? "/bg-deck/ui-deck" : "/bg-deck/itb-deck";
 
   // Rule 1: Cover slide — strictly once at the beginning (slide 1 / index 0)
   if (index === 0) {
-    return "/bg-deck/itb-deck/cover-deck.png";
+    return `${bgPrefix}/cover-deck.webp`;
   }
 
   const isLast = totalSlides > 0 && index === totalSlides - 1;
@@ -183,7 +236,7 @@ export function resolveSlideBackground(
       index === totalSlides - 1);
 
   if (isClosing) {
-    return "/bg-deck/itb-deck/closing-deck.png";
+    return `${bgPrefix}/closing-deck.webp`;
   }
 
   // Rule 3: Section Divider / Part header (Rule §5: Section dividers "Part N", break, guest hand-over)
@@ -193,7 +246,51 @@ export function resolveSlideBackground(
     /^(part|bagian|agenda utama|modul|bab)\s+\d+/i.test(titleLower.trim());
 
   if (isPart) {
-    return "/bg-deck/itb-deck/part-deck.png";
+    return `${bgPrefix}/part-deck.webp`;
+  }
+
+  // BINUS Specialized Backgrounds
+  if (isBinus) {
+    const isAgenda =
+      /^(agenda|table of contents|daftar isi|outline|roadmap|silabus)/i.test(titleLower.trim()) ||
+      combined.includes("agenda") ||
+      combined.includes("table of content") ||
+      combined.includes("daftar isi");
+
+    if (isAgenda && index <= 2) {
+      return `${bgPrefix}/tablecontent-deck.webp`;
+    }
+
+    const isLearningOutcome =
+      /^(learning outcome|capaian pembelajaran|tujuan pembelajaran|competency|objective)/i.test(titleLower.trim()) ||
+      combined.includes("learning outcome") ||
+      combined.includes("capaian pembelajaran") ||
+      combined.includes("tujuan pembelajaran");
+
+    if (isLearningOutcome && index <= 3) {
+      return `${bgPrefix}/learningoutcome-deck.webp`;
+    }
+
+    const isSpeaker =
+      layout === "splitProfile" ||
+      Boolean(slide?.profileData) ||
+      /speaker|fasilitator|profile|pembicara|narasumber|mentor/i.test(combined);
+
+    if (isSpeaker) {
+      return `${bgPrefix}/speaker-deck.webp`;
+    }
+
+    const isRecap =
+      layout === "checklist" ||
+      combined.includes("recap") ||
+      combined.includes("rangkuman") ||
+      combined.includes("takeaway") ||
+      combined.includes("ringkasan") ||
+      combined.includes("key takeaway");
+
+    if (isRecap) {
+      return `${bgPrefix}/recap-deck.webp`;
+    }
   }
 
   // Rule 4: Split / Task / Workshop / Exercise / Case Study (Rule §5: 2-4 per deck for split case comparisons & profiles)
@@ -204,28 +301,78 @@ export function resolveSlideBackground(
     layout === "splitPoll" ||
     layout === "caseStudy" ||
     layout === "caseExercise" ||
+    layout === "caseWorksheet" ||
     (layout === "twoColumn" && (badgeLower.includes("case") || badgeLower.includes("hands-on") || titleLower.includes("studi kasus")));
 
   if (isTaskSpeaker) {
-    return "/bg-deck/itb-deck/task-speaker-deck.png";
+    if (isBinus) {
+      const isProfile =
+        layout === "splitProfile" ||
+        Boolean(slide?.profileData) ||
+        /speaker|fasilitator|profile|pembicara|narasumber|mentor/i.test(combined);
+      if (isProfile) {
+        return `${bgPrefix}/speaker-deck.webp`;
+      }
+      return `${bgPrefix}/content-deck.webp`;
+    }
+    return `${bgPrefix}/task-speaker-deck.webp`;
+  }
+
+  // In UI: Recap background detection
+  if (isUI) {
+    const isRecap =
+      layout === "checklist" ||
+      combined.includes("recap") ||
+      combined.includes("rangkuman") ||
+      combined.includes("takeaway") ||
+      combined.includes("ringkasan") ||
+      combined.includes("key takeaway");
+
+    if (isRecap) {
+      return `${bgPrefix}/recap-deck.webp`;
+    }
   }
 
   // Rule 5: Default content deck
-  return "/bg-deck/itb-deck/content-deck.png";
+  return `${bgPrefix}/content-deck.webp`;
 }
 
 export async function fetchImageAsBase64(url: string): Promise<string | null> {
   try {
-    const targetUrl = url.endsWith(".webp") ? url.replace(/\.webp$/, ".png") : url;
+    const targetUrl = url;
     if (typeof window !== "undefined") {
       const res = await fetch(targetUrl);
       if (!res.ok) return null;
       const blob = await res.blob();
       return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = () => resolve(null);
-        reader.readAsDataURL(blob);
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          try {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth || 1920;
+            canvas.height = img.naturalHeight || 1080;
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+              ctx.drawImage(img, 0, 0);
+              resolve(canvas.toDataURL("image/png"));
+              return;
+            }
+          } catch {
+            // fallback if canvas taint or error
+          }
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        };
+        img.onerror = () => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        };
+        img.src = URL.createObjectURL(blob);
       });
     } else {
       const fs = await import("fs/promises");
@@ -233,11 +380,11 @@ export async function fetchImageAsBase64(url: string): Promise<string | null> {
       const cleanPath = targetUrl.startsWith("/") ? targetUrl.slice(1) : targetUrl;
       const fullPath = path.join(process.cwd(), "public", cleanPath);
       const buffer = await fs.readFile(fullPath);
-      const ext = path.extname(targetUrl).slice(1) || "png";
+      const ext = path.extname(targetUrl).slice(1) || "webp";
       return `data:image/${ext};base64,${buffer.toString("base64")}`;
     }
   } catch (e) {
-    console.warn("Could not load image as base64:", url, e);
+    console.error("fetchImageAsBase64 error:", e);
     return null;
   }
 }
@@ -265,7 +412,22 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
   const bgHex = isDarkTheme ? darkHex : lightHex;
   const textColor = isDarkTheme ? "FFFFFF" : "171717";
   const textMuted = isDarkTheme ? "999999" : "666666";
-  const titleColor = isDarkTheme ? "FFFFFF" : "005AAB";
+  const isUIDeck = Boolean(
+    options.palette?.id === "ui" ||
+    (options as any).templateName?.toLowerCase().includes("ui") ||
+    primaryHex === "FEDE3B"
+  );
+  const isBinusDeck = Boolean(
+    !isUIDeck && (
+      options.palette?.id === "binus" ||
+      (options as any).templateName?.toLowerCase().includes("binus") ||
+      primaryHex === "174A7F" ||
+      primaryHex === "23A3E7"
+    )
+  );
+  const isITBDeck = !isUIDeck && !isBinusDeck;
+
+  const titleColor = isDarkTheme ? "FFFFFF" : isUIDeck ? "000000" : isBinusDeck ? "174A7F" : "005AAB";
 
   const getPptxTitleFont = (tf?: TitleFont | string) => {
     switch (tf) {
@@ -336,13 +498,19 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
   function getSanitizedSlideBg(s: SlideData, i: number, total: number): string {
     let bg = s.backgroundImage || resolveSlideBackground(s, i, total);
-    // ITB Rule §5: closing-deck.png is ONLY for the last slide
-    if (bg && bg.includes("closing-deck.png") && i < total - 1) {
-      bg = "/bg-deck/itb-deck/content-deck.png";
+    const defaultFallback = bg && bg.includes("/binus-deck/")
+      ? "/bg-deck/binus-deck/content-deck.webp"
+      : bg && bg.includes("/ui-deck/")
+      ? "/bg-deck/ui-deck/content-deck.webp"
+      : "/bg-deck/itb-deck/content-deck.webp";
+
+    // Rule §5: closing-deck is ONLY for the last slide
+    if (bg && (bg.includes("closing-deck.png") || bg.includes("closing-deck.webp")) && i < total - 1) {
+      bg = defaultFallback;
     }
-    // ITB Rule §5: cover-deck.png is ONLY for slide 1
-    if (bg && bg.includes("cover-deck.png") && i > 0) {
-      bg = "/bg-deck/itb-deck/content-deck.png";
+    // Rule §5: cover-deck is ONLY for slide 1
+    if (bg && (bg.includes("cover-deck.png") || bg.includes("cover-deck.webp")) && i > 0) {
+      bg = defaultFallback;
     }
     return bg;
   }
@@ -358,7 +526,27 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
   }
 
   slides.forEach((slide, idx) => {
-    const pSlide = pptx.addSlide();
+    const rawSlide = pptx.addSlide();
+
+    // Universal Text Guardrail Proxy: Enforce wrap: true, fit: "shrink", isTextBox: true, and fontFace
+    const pSlide = new Proxy(rawSlide, {
+      get(target, prop, receiver) {
+        if (prop === "addText") {
+          return function (text: any, opts: any = {}) {
+            const guardedOpts = {
+              wrap: true,
+              fit: "shrink" as const,
+              isTextBox: true,
+              fontFace: opts.fontFace || fontBody,
+              ...opts,
+            };
+            return target.addText(text, guardedOpts);
+          };
+        }
+        const val = Reflect.get(target, prop, receiver);
+        return typeof val === "function" ? val.bind(target) : val;
+      },
+    });
 
     // Export Speaker Notes into PowerPoint Presenter View
     if (slide.speakerNotes || slide.description) {
@@ -452,51 +640,64 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
       case "title":
       case "hero": {
         if (hasTemplateBg) {
-          // ITB Template Cover (Safe zone: x 125–1360, y 300–1000 per Rule §5)
-          // Logos are located at y: 0.6–2.0 in. Title MUST start at y >= 2.35 in to prevent logo overlap.
+          // ITB / UI / BINUS Template Cover (Safe zone: x 0.9–8.8 in, y 2.25–6.6 in)
+          // Logos are located at y: 0.6–2.0 in. Title MUST start at y >= 2.25 in to prevent logo overlap.
+          const coverTitleLen = (slide.title || "").length;
+          const coverTitleSize = coverTitleLen > 70 ? 28 : coverTitleLen > 45 ? 32 : 38;
+          const coverTitleColor = isUIDeck ? "000000" : isBinusDeck ? "174A7F" : "174A7F";
+
           pSlide.addText(slide.title, {
             x: 0.9,
-            y: 2.35,
-            w: 7.8,
-            h: 1.85,
-            fontSize: 40,
-            color: "174A7F", // Navy Deep Blue per ITB rules
+            y: 2.25,
+            w: 7.9,
+            h: 1.9,
+            fontSize: coverTitleSize,
+            color: coverTitleColor,
             bold: true,
             fontFace: fontTitle,
             margin: 0,
             valign: "top",
+            wrap: true,
+            fit: "shrink",
           });
 
           if (slide.subtitle) {
+            const coverSubLen = (slide.subtitle || "").length;
+            const coverSubSize = coverSubLen > 90 ? 14 : coverSubLen > 60 ? 16 : 18;
+            const coverSubColor = isUIDeck ? "000000" : isBinusDeck ? "23A3E7" : "005AAB";
+
             pSlide.addText(slide.subtitle, {
               x: 0.9,
-              y: 4.3,
-              w: 7.8,
-              h: 0.85,
-              fontSize: 19,
+              y: 4.25,
+              w: 7.9,
+              h: 0.95,
+              fontSize: coverSubSize,
               bold: true,
-              color: "005AAB", // Deep Blue
+              color: coverSubColor,
               fontFace: fontTitle,
               margin: 0,
               valign: "top",
+              wrap: true,
+              fit: "shrink",
             });
           }
 
-          // 3 meta lines at bottom-left per ITB rules (week · program · facilitator)
-          const metaLine1 = slide.category || "Data-Driven & AI-Enabled Decision Making for Leaders";
+          // 3 meta lines at bottom-left per institutional rules (week · program · facilitator)
+          const metaLine1 = slide.category || "[Program Name]";
           const metaLine2 = slide.highlight || "Executive Education Program";
-          const metaLine3 = slide.quote?.author || slide.badge || "Direktorat Pendidikan Non Reguler ITB & RevoU";
+          const metaLine3 = slide.quote?.author || slide.badge || (isBinusDeck ? "BINUS University & RevoU" : isUIDeck ? "Universitas Indonesia & RevoU" : "Direktorat Pendidikan Non Reguler ITB & RevoU");
           pSlide.addText(`${metaLine1}\n${metaLine2}\n${metaLine3}`, {
             x: 0.9,
             y: 5.35,
-            w: 7.8,
+            w: 7.9,
             h: 1.25,
-            fontSize: 13,
+            fontSize: 12.5,
             italic: true,
             color: "595959",
             fontFace: fontBody,
             margin: 0,
             valign: "top",
+            wrap: true,
           });
 
           // Slide number at bottom-right
@@ -746,11 +947,11 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               const bDesc = parts.length > 1 ? parts.slice(1).join(" — ").trim() : bullet;
               const isYellow = i % 2 === 0;
 
-              const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB");
-              const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
-              const pillBg = isYellow ? "FFDD3C" : "005AAB";
-              const pillFg = isYellow ? "272525" : "FFFFFF";
-              const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "272525" : "005AAB");
+              const cardBg = isDarkTheme ? "1E293B" : isUIDeck ? "FFFDF5" : (isYellow ? "FFF9D6" : "EAF2FB");
+              const cardBorder = isDarkTheme ? "334155" : isUIDeck ? "FEDE3B" : (isYellow ? "FFDD3C" : "005AAB");
+              const pillBg = isUIDeck ? "FEDE3B" : (isYellow ? "FFDD3C" : "005AAB");
+              const pillFg = isUIDeck ? "000000" : (isYellow ? "272525" : "FFFFFF");
+              const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : isUIDeck ? "000000" : (isYellow ? "272525" : "005AAB");
               const cDescColor = isDarkTheme ? "E2E8F0" : (isYellow ? "4A4545" : "334155");
 
               pSlide.addShape(pptx.ShapeType.roundRect, {
@@ -829,11 +1030,11 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               const bTitle = parts.length > 1 ? parts[0]?.trim() : `Pillar 0${i + 1}`;
               const bDesc = parts.length > 1 ? parts.slice(1).join(" — ").trim() : bullet;
 
-              const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB");
-              const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
-              const pillBg = isYellow ? "FFDD3C" : "005AAB";
-              const pillFg = isYellow ? "272525" : "FFFFFF";
-              const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "272525" : "005AAB");
+              const cardBg = isDarkTheme ? "1E293B" : isUIDeck ? "FFFDF5" : (isYellow ? "FFF9D6" : "EAF2FB");
+              const cardBorder = isDarkTheme ? "334155" : isUIDeck ? "FEDE3B" : (isYellow ? "FFDD3C" : "005AAB");
+              const pillBg = isUIDeck ? "FEDE3B" : (isYellow ? "FFDD3C" : "005AAB");
+              const pillFg = isUIDeck ? "000000" : (isYellow ? "272525" : "FFFFFF");
+              const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : isUIDeck ? "000000" : (isYellow ? "272525" : "005AAB");
               const cDescColor = isDarkTheme ? "E2E8F0" : (isYellow ? "4A4545" : "334155");
 
               pSlide.addShape(pptx.ShapeType.roundRect, {
@@ -906,11 +1107,11 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               const bDesc = parts.length > 1 ? parts.slice(1).join(" — ").trim() : bullet;
               const isYellow = i % 2 === 0;
 
-              const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB");
-              const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
-              const pillBg = isYellow ? "FFDD3C" : "005AAB";
-              const pillFg = isYellow ? "272525" : "FFFFFF";
-              const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "272525" : "005AAB");
+              const cardBg = isDarkTheme ? "1E293B" : isUIDeck ? "FFFDF5" : (isYellow ? "FFF9D6" : "EAF2FB");
+              const cardBorder = isDarkTheme ? "334155" : isUIDeck ? "FEDE3B" : (isYellow ? "FFDD3C" : "005AAB");
+              const pillBg = isUIDeck ? "FEDE3B" : (isYellow ? "FFDD3C" : "005AAB");
+              const pillFg = isUIDeck ? "000000" : (isYellow ? "272525" : "FFFFFF");
+              const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : isUIDeck ? "000000" : (isYellow ? "272525" : "005AAB");
               const cDescColor = isDarkTheme ? "E2E8F0" : (isYellow ? "4A4545" : "334155");
 
               pSlide.addShape(pptx.ShapeType.roundRect, {
@@ -1042,8 +1243,8 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           const y = PAD.CONTENT_Y + 0.1 + sIdx * (stepH + 0.16);
           const isYellow = sIdx % 2 === 0;
 
-          const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB");
-          const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
+          const cardBg = isDarkTheme ? "1E293B" : isUIDeck ? "FFFDF5" : (isYellow ? "FFF9D6" : "EAF2FB");
+          const cardBorder = isDarkTheme ? "334155" : isUIDeck ? "FEDE3B" : (isYellow ? "FFDD3C" : "005AAB");
           const numBg = isYellow ? "FFDD3C" : "005AAB";
           const numFg = isYellow ? "272525" : "FFFFFF";
           const sTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "272525" : "005AAB");
@@ -1153,11 +1354,11 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             const bDesc = parts.length > 1 ? parts.slice(1).join(" — ").trim() : b;
             const isYellow = bIdx % 2 === 0;
 
-            const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB");
-            const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
-            const pillBg = isYellow ? "FFDD3C" : "005AAB";
-            const pillFg = isYellow ? "272525" : "FFFFFF";
-            const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "272525" : "005AAB");
+            const cardBg = isDarkTheme ? "1E293B" : isUIDeck ? "FFFDF5" : (isYellow ? "FFF9D6" : "EAF2FB");
+            const cardBorder = isDarkTheme ? "334155" : isUIDeck ? "FEDE3B" : (isYellow ? "FFDD3C" : "005AAB");
+            const pillBg = isUIDeck ? "FEDE3B" : (isYellow ? "FFDD3C" : "005AAB");
+            const pillFg = isUIDeck ? "000000" : (isYellow ? "272525" : "FFFFFF");
+            const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : isUIDeck ? "000000" : (isYellow ? "272525" : "005AAB");
             const cDescColor = isDarkTheme ? "E2E8F0" : (isYellow ? "4A4545" : "334155");
 
             pSlide.addShape(pptx.ShapeType.roundRect, {
@@ -1236,11 +1437,11 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             const bTitle = parts.length > 1 ? parts[0]?.trim() : `Pillar 0${bIdx + 1}`;
             const bDesc = parts.length > 1 ? parts.slice(1).join(" — ").trim() : b;
 
-            const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB");
-            const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
-            const pillBg = isYellow ? "FFDD3C" : "005AAB";
-            const pillFg = isYellow ? "272525" : "FFFFFF";
-            const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "272525" : "005AAB");
+            const cardBg = isDarkTheme ? "1E293B" : isUIDeck ? "FFFDF5" : (isYellow ? "FFF9D6" : "EAF2FB");
+            const cardBorder = isDarkTheme ? "334155" : isUIDeck ? "FEDE3B" : (isYellow ? "FFDD3C" : "005AAB");
+            const pillBg = isUIDeck ? "FEDE3B" : (isYellow ? "FFDD3C" : "005AAB");
+            const pillFg = isUIDeck ? "000000" : (isYellow ? "272525" : "FFFFFF");
+            const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : isUIDeck ? "000000" : (isYellow ? "272525" : "005AAB");
             const cDescColor = isDarkTheme ? "E2E8F0" : (isYellow ? "4A4545" : "334155");
 
             pSlide.addShape(pptx.ShapeType.roundRect, {
@@ -1318,11 +1519,11 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             const bDesc = parts.length > 1 ? parts.slice(1).join(" — ").trim() : b;
             const isYellow = bIdx % 2 === 0;
 
-            const cardBg = isDarkTheme ? "1E293B" : (isYellow ? "FFF9D6" : "EAF2FB");
-            const cardBorder = isDarkTheme ? "334155" : (isYellow ? "FFDD3C" : "005AAB");
-            const pillBg = isYellow ? "FFDD3C" : "005AAB";
-            const pillFg = isYellow ? "272525" : "FFFFFF";
-            const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : (isYellow ? "272525" : "005AAB");
+            const cardBg = isDarkTheme ? "1E293B" : isUIDeck ? "FFFDF5" : (isYellow ? "FFF9D6" : "EAF2FB");
+            const cardBorder = isDarkTheme ? "334155" : isUIDeck ? "FEDE3B" : (isYellow ? "FFDD3C" : "005AAB");
+            const pillBg = isUIDeck ? "FEDE3B" : (isYellow ? "FFDD3C" : "005AAB");
+            const pillFg = isUIDeck ? "000000" : (isYellow ? "272525" : "FFFFFF");
+            const cTitleColor = isDarkTheme ? (isYellow ? "FFDD3C" : "93C5FD") : isUIDeck ? "000000" : (isYellow ? "272525" : "005AAB");
             const cDescColor = isDarkTheme ? "E2E8F0" : (isYellow ? "4A4545" : "334155");
 
             pSlide.addShape(pptx.ShapeType.roundRect, {
@@ -1745,7 +1946,7 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           text: h,
           options: {
             bold: true,
-            fill: i === headers.length - 1 ? "005AAB" : (i % 2 === 0 ? "FFDD3C" : "F3F4F6"),
+            fill: isUIDeck ? "000000" : (i === headers.length - 1 ? "005AAB" : (i % 2 === 0 ? "FFDD3C" : "F3F4F6")),
             color: i === headers.length - 1 ? "FFFFFF" : (i % 2 === 0 ? "111827" : "333333"),
             align: (i === 0 ? "left" : "center") as "left" | "center",
             fontSize: 14,
@@ -3061,24 +3262,56 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
       case "imageSplitMetric": {
         // Left Column: Visual card + note card
-        pSlide.addShape(pptx.ShapeType.roundRect, {
-          x: PAD.LEFT,
-          y: PAD.CONTENT_Y,
-          w: 4.5,
-          h: 2.7,
-          fill: { color: isDarkTheme ? "1E293B" : "E5E7EB" },
-          rectRadius: 0.08,
-        });
-        pSlide.addText("[ Executive Visual ]", {
-          x: PAD.LEFT,
-          y: PAD.CONTENT_Y + 1.1,
-          w: 4.5,
-          h: 0.5,
-          fontSize: 14,
-          color: isDarkTheme ? "94A3B8" : "64748B",
-          align: "center",
-          fontFace: fontBody,
-        });
+        if (slide.imageUrl) {
+          try {
+            pSlide.addImage({
+              path: slide.imageUrl,
+              x: PAD.LEFT,
+              y: PAD.CONTENT_Y,
+              w: 4.5,
+              h: 2.7,
+              rounding: true,
+            });
+          } catch {
+            pSlide.addShape(pptx.ShapeType.roundRect, {
+              x: PAD.LEFT,
+              y: PAD.CONTENT_Y,
+              w: 4.5,
+              h: 2.7,
+              fill: { color: isDarkTheme ? "1E293B" : "E5E7EB" },
+              rectRadius: 0.08,
+            });
+            pSlide.addText("[ Executive Visual ]", {
+              x: PAD.LEFT,
+              y: PAD.CONTENT_Y + 1.1,
+              w: 4.5,
+              h: 0.5,
+              fontSize: 14,
+              color: isDarkTheme ? "94A3B8" : "64748B",
+              align: "center",
+              fontFace: fontBody,
+            });
+          }
+        } else {
+          pSlide.addShape(pptx.ShapeType.roundRect, {
+            x: PAD.LEFT,
+            y: PAD.CONTENT_Y,
+            w: 4.5,
+            h: 2.7,
+            fill: { color: isDarkTheme ? "1E293B" : "E5E7EB" },
+            rectRadius: 0.08,
+          });
+          pSlide.addText("[ Executive Visual ]", {
+            x: PAD.LEFT,
+            y: PAD.CONTENT_Y + 1.1,
+            w: 4.5,
+            h: 0.5,
+            fontSize: 14,
+            color: isDarkTheme ? "94A3B8" : "64748B",
+            align: "center",
+            fontFace: fontBody,
+          });
+        }
 
         pSlide.addShape(pptx.ShapeType.roundRect, {
           x: PAD.LEFT,
@@ -3556,57 +3789,63 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
       }
 
       case "breakSlide": {
-        if (!hasTemplateBg) {
-          pSlide.background = { color: primaryHex };
-        }
+        // Yellow bottom stripe
+        pSlide.addShape(pptx.ShapeType.rect, {
+          x: 0,
+          y: 7.35,
+          w: 13.333,
+          h: 0.15,
+          fill: { color: secondaryHex },
+          line: { color: secondaryHex },
+        });
 
-        pSlide.addText(slide.title, {
-          x: PAD.LEFT,
-          y: 2.0,
-          w: PAD.CONTENT_W,
-          h: 1.3,
-          fontSize: 42,
-          color: hasTemplateBg ? titleColor : primaryContrastColor,
+        // Yellow top bar accent
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 1.0,
+          y: 2.1,
+          w: 1.2,
+          h: 0.1,
+          fill: { color: secondaryHex },
+          rectRadius: 0.04,
+        });
+
+        // Break Tag (e.g. BREAK · 5 MINUTES)
+        const breakTag = (slide.badge || "BREAK · 5 MINUTES").toUpperCase();
+        pSlide.addText(breakTag, {
+          x: 1.0,
+          y: 2.35,
+          w: 11.0,
+          h: 0.4,
+          fontSize: 14,
           bold: true,
-          align: "center",
+          color: secondaryHex,
+          fontFace: fontBody,
+        });
+
+        // Break / Question Title (White)
+        pSlide.addText(slide.title, {
+          x: 1.0,
+          y: 2.85,
+          w: 11.2,
+          h: 1.8,
+          fontSize: 42,
+          bold: true,
+          color: "FFFFFF",
           fontFace: fontTitle,
         });
 
+        // Subtitle / Prompt Question (White/90)
         if (slide.subtitle) {
           pSlide.addText(slide.subtitle, {
-            x: PAD.LEFT,
-            y: 3.5,
-            w: PAD.CONTENT_W,
-            h: 0.8,
-            fontSize: 18,
-            color: hasTemplateBg ? currentMutedColor : primaryContrastColor,
-            align: "center",
+            x: 1.0,
+            y: 4.8,
+            w: 11.0,
+            h: 1.2,
+            fontSize: 20,
+            color: "E2E8F0",
             fontFace: fontBody,
           });
         }
-
-        const resumeText = slide.ctaText || "We resume at [insert return time]";
-        pSlide.addShape(pptx.ShapeType.roundRect, {
-          x: 3.9,
-          y: 4.8,
-          w: 5.5,
-          h: 0.75,
-          fill: { color: isDarkTheme ? "1E293B" : "FFFFFF" },
-          rectRadius: 0.35,
-          line: { color: isDarkTheme ? "334155" : "005AAB", width: 1.5 },
-        });
-
-        pSlide.addText(resumeText, {
-          x: 3.9,
-          y: 4.92,
-          w: 5.5,
-          h: 0.5,
-          fontSize: 15,
-          color: isDarkTheme ? "FFDD3C" : "005AAB",
-          bold: true,
-          align: "center",
-          fontFace: fontBody,
-        });
         break;
       }
 
@@ -4066,6 +4305,704 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
           color: "595959",
           fontFace: fontBody,
           lineSpacingMultiple: 1.25,
+        });
+        break;
+      }
+
+      /* ──── WORKED EXAMPLE / CONTROL CHART (STATISTICAL PROCESS CONTROL) ──── */
+      case "workedExample": {
+        // Slide Title (ITB Deep Blue)
+        pSlide.addText(slide.title, {
+          x: PAD.LEFT,
+          y: 0.7,
+          w: 11.5,
+          h: 0.8,
+          fontSize: 26,
+          bold: true,
+          color: primaryHex,
+          fontFace: fontTitle,
+        });
+
+        // LEFT: Control Chart Box
+        // Shaded Baseline rectangle
+        pSlide.addShape(pptx.ShapeType.rect, {
+          x: 2.0,
+          y: 1.7,
+          w: 1.6,
+          h: 4.5,
+          fill: { color: "EBF3FB" },
+          line: { color: "EBF3FB", width: 0 },
+        });
+        pSlide.addText("July baseline", {
+          x: 2.0,
+          y: 1.8,
+          w: 1.6,
+          h: 0.35,
+          fontSize: 10,
+          bold: true,
+          color: primaryHex,
+          fontFace: fontTitle,
+          align: "center",
+        });
+
+        // Y-Axis Labels
+        pSlide.addText("UCL", { x: 0.6, y: 2.2, w: 0.9, h: 0.3, fontSize: 10, bold: true, color: primaryHex, align: "right" });
+        pSlide.addText("Centre", { x: 0.6, y: 3.5, w: 0.9, h: 0.3, fontSize: 10, bold: true, color: primaryHex, align: "right" });
+        pSlide.addText("LCL", { x: 0.6, y: 4.8, w: 0.9, h: 0.3, fontSize: 10, bold: true, color: primaryHex, align: "right" });
+
+        // UCL dashed line
+        pSlide.addShape(pptx.ShapeType.line, {
+          x: 1.6,
+          y: 2.35,
+          w: 5.6,
+          h: 0,
+          line: { color: primaryHex, width: 2, dashType: "dash" },
+        });
+        // Centre solid line
+        pSlide.addShape(pptx.ShapeType.line, {
+          x: 1.6,
+          y: 3.65,
+          w: 5.6,
+          h: 0,
+          line: { color: primaryHex, width: 2.5 },
+        });
+        // LCL dashed line
+        pSlide.addShape(pptx.ShapeType.line, {
+          x: 1.6,
+          y: 4.95,
+          w: 5.6,
+          h: 0,
+          line: { color: primaryHex, width: 2, dashType: "dash" },
+        });
+        // Bottom X-Axis line
+        pSlide.addShape(pptx.ShapeType.line, {
+          x: 1.6,
+          y: 6.2,
+          w: 5.6,
+          h: 0,
+          line: { color: "272525", width: 1.5 },
+        });
+
+        // Time X-Axis markers
+        const timeLabels = ["1 Jul", "1 Aug", "1 Sep", "1 Oct"];
+        timeLabels.forEach((label, idx) => {
+          pSlide.addText(label, {
+            x: 1.4 + idx * 1.7,
+            y: 6.25,
+            w: 1.2,
+            h: 0.3,
+            fontSize: 9,
+            bold: true,
+            color: "595959",
+            align: "center",
+          });
+        });
+
+        // Outlier 1: 14 Aug
+        pSlide.addShape(pptx.ShapeType.ellipse, {
+          x: 3.5,
+          y: 5.6,
+          w: 0.25,
+          h: 0.25,
+          fill: { color: secondaryHex },
+          line: { color: "000000", width: 2 },
+        });
+        pSlide.addText("14 Aug · 94.1%", {
+          x: 3.8,
+          y: 5.55,
+          w: 2.0,
+          h: 0.35,
+          fontSize: 10,
+          bold: true,
+          color: "272525",
+        });
+
+        // Outlier 2: 26 Sep
+        pSlide.addShape(pptx.ShapeType.ellipse, {
+          x: 5.6,
+          y: 4.7,
+          w: 0.25,
+          h: 0.25,
+          fill: { color: secondaryHex },
+          line: { color: "000000", width: 2 },
+        });
+        pSlide.addText("26 Sep · 95.8%", {
+          x: 5.9,
+          y: 4.65,
+          w: 2.0,
+          h: 0.35,
+          fontSize: 10,
+          bold: true,
+          color: "272525",
+        });
+
+        // RIGHT: 3 Stacked Cards (x: 7.8, w: 4.8)
+        // 1. Big Stat Card (Golden Yellow)
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 7.8,
+          y: 1.6,
+          w: 4.8,
+          h: 1.3,
+          fill: { color: secondaryHex },
+          line: { color: secondaryHex, width: 0 },
+          rectRadius: 0.08,
+        });
+        const statVal = slide.stats?.[0]?.value || "40,000";
+        const statLbl = slide.stats?.[0]?.label || "top-ups a day";
+        pSlide.addText(statVal, {
+          x: 7.8,
+          y: 1.7,
+          w: 4.8,
+          h: 0.65,
+          fontSize: 34,
+          bold: true,
+          color: "272525",
+          fontFace: fontTitle,
+          align: "center",
+        });
+        pSlide.addText(statLbl, {
+          x: 7.8,
+          y: 2.35,
+          w: 4.8,
+          h: 0.45,
+          fontSize: 12,
+          bold: true,
+          color: "272525",
+          align: "center",
+        });
+
+        // 2. Baseline Limits Card (White with Blue border)
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 7.8,
+          y: 3.1,
+          w: 4.8,
+          h: 1.25,
+          fill: { color: "FFFFFF" },
+          line: { color: primaryHex, width: 2 },
+          rectRadius: 0.08,
+        });
+        pSlide.addText("JULY BASELINE", {
+          x: 8.0,
+          y: 3.2,
+          w: 4.4,
+          h: 0.3,
+          fontSize: 11,
+          bold: true,
+          color: primaryHex,
+          fontFace: fontTitle,
+        });
+        pSlide.addText("Centre 97.26%\nLimits 96.30% – 98.22%", {
+          x: 8.0,
+          y: 3.5,
+          w: 4.4,
+          h: 0.75,
+          fontSize: 12,
+          color: "272525",
+          bold: false,
+          lineSpacingMultiple: 1.2,
+        });
+
+        // 3. Incidents Card (Deep Blue card with Golden Yellow header)
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 7.8,
+          y: 4.55,
+          w: 4.8,
+          h: 1.9,
+          fill: { color: primaryHex },
+          line: { color: primaryHex, width: 0 },
+          rectRadius: 0.08,
+        });
+        pSlide.addText("BELOW THE LOWER LIMIT", {
+          x: 8.0,
+          y: 4.65,
+          w: 4.4,
+          h: 0.3,
+          fontSize: 10,
+          bold: true,
+          color: secondaryHex,
+          fontFace: fontTitle,
+        });
+        pSlide.addText("• 14 Aug · 94.1%: payment-gateway outage (logged)\n• 26 Sep · 95.8%: partner-bank maintenance (logged)", {
+          x: 8.0,
+          y: 5.0,
+          w: 4.4,
+          h: 1.35,
+          fontSize: 11,
+          color: "FFFFFF",
+          lineSpacingMultiple: 1.25,
+        });
+        break;
+      }
+
+      /* ──── MACHINE LEARNING 3-STEP PIPELINE ──── */
+      case "mlPipeline": {
+        // Title
+        pSlide.addText(slide.title, {
+          x: PAD.LEFT,
+          y: 0.65,
+          w: 11.5,
+          h: 0.7,
+          fontSize: 26,
+          bold: true,
+          color: primaryHex,
+          fontFace: fontTitle,
+        });
+
+        // 3-Step Chevrons (x: 0.8, y: 1.45, w: 11.7, h: 0.5)
+        const stepW = 3.8;
+        const stepLabels = [
+          { num: "1", title: "Data Preparation", color: secondaryHex, textColor: "111111" },
+          { num: "2", title: "Build the AI Model", color: primaryHex, textColor: "FFFFFF" },
+          { num: "3", title: "Run the AI Model", color: secondaryHex, textColor: "111111" },
+        ];
+        stepLabels.forEach((st, i) => {
+          pSlide.addShape(pptx.ShapeType.roundRect, {
+            x: 0.8 + i * 4.0,
+            y: 1.45,
+            w: stepW,
+            h: 0.55,
+            fill: { color: st.color },
+            rectRadius: 0.05,
+          });
+          pSlide.addText(`${st.num} · ${st.title}`, {
+            x: 0.8 + i * 4.0,
+            y: 1.45,
+            w: stepW,
+            h: 0.55,
+            fontSize: 12,
+            bold: true,
+            color: st.textColor,
+            align: "center",
+          });
+        });
+
+        // Col 1: Training Data Table (x: 0.8, y: 2.15, w: 3.7)
+        pSlide.addText("TRAINING DATA", {
+          x: 0.8,
+          y: 2.15,
+          w: 3.7,
+          h: 0.3,
+          fontSize: 10,
+          bold: true,
+          color: primaryHex,
+        });
+        const tableRows = [
+          [{ text: "Text Input", options: { bold: true, color: "FFFFFF", fill: { color: primaryHex } } }, { text: "Label Output", options: { bold: true, color: "FFFFFF", fill: { color: primaryHex } } }],
+          [{ text: "Terima kasih informasinya" }, { text: "NON SPAM" }],
+          [{ text: "Jumat jangan lupa jam 8 di PVJ, tempat biasa ya" }, { text: "NON SPAM" }],
+          [{ text: "Jangan kehabisan, diskon tiket nonton bareng..." }, { text: "SPAM" }],
+          [{ text: "..." }, { text: "" }],
+        ];
+        pSlide.addTable(tableRows, {
+          x: 0.8,
+          y: 2.5,
+          w: 3.7,
+          h: 2.6,
+          fontSize: 9,
+          border: { pt: 1, color: "D1D5DB" },
+        });
+
+        // Col 2: Decision Tree Model (x: 4.8, y: 2.15, w: 3.7)
+        pSlide.addText("Learn/extract pattern from data using Machine Learning algorithm. Model: symbolic (decision tree).", {
+          x: 4.8,
+          y: 2.15,
+          w: 3.7,
+          h: 0.65,
+          fontSize: 10,
+          color: "4B5563",
+        });
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 6.0,
+          y: 2.9,
+          w: 1.3,
+          h: 0.38,
+          fill: { color: primaryHex },
+          rectRadius: 0.05,
+        });
+        pSlide.addText("diskon", { x: 6.0, y: 2.9, w: 1.3, h: 0.38, fontSize: 10, bold: true, color: "FFFFFF", align: "center" });
+
+        pSlide.addShape(pptx.ShapeType.line, { x: 6.4, y: 3.3, w: -0.8, h: 0.5, line: { color: primaryHex, width: 1.5 } });
+        pSlide.addShape(pptx.ShapeType.line, { x: 6.9, y: 3.3, w: 0.8, h: 0.5, line: { color: primaryHex, width: 1.5 } });
+
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 5.1,
+          y: 3.85,
+          w: 1.1,
+          h: 0.35,
+          fill: { color: primaryHex },
+          rectRadius: 0.05,
+        });
+        pSlide.addText("pulsa", { x: 5.1, y: 3.85, w: 1.1, h: 0.35, fontSize: 9, bold: true, color: "FFFFFF", align: "center" });
+
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 7.2,
+          y: 3.85,
+          w: 1.1,
+          h: 0.35,
+          fill: { color: "F3F4F6" },
+          line: { color: "D1D5DB", width: 1 },
+          rectRadius: 0.05,
+        });
+        pSlide.addText("beli...", { x: 7.2, y: 3.85, w: 1.1, h: 0.35, fontSize: 9, color: "4B5563", align: "center" });
+
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 4.8,
+          y: 4.5,
+          w: 0.9,
+          h: 0.3,
+          fill: { color: secondaryHex },
+          rectRadius: 0.04,
+        });
+        pSlide.addText("spam", { x: 4.8, y: 4.5, w: 0.9, h: 0.3, fontSize: 9, bold: true, color: "111111", align: "center" });
+
+        // Col 3: Input / Output Inference Cards (x: 8.8, y: 2.15, w: 3.7)
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 8.8,
+          y: 2.2,
+          w: 3.7,
+          h: 1.2,
+          fill: { color: "FFFFFF" },
+          line: { color: primaryHex, width: 2 },
+          rectRadius: 0.08,
+        });
+        pSlide.addText("INPUT\ntersedia diskon pulsa 50% hanya di https://...", {
+          x: 9.0,
+          y: 2.3,
+          w: 3.3,
+          h: 1.0,
+          fontSize: 10,
+          bold: true,
+          color: "111111",
+          lineSpacingMultiple: 1.2,
+        });
+
+        pSlide.addText("↓", { x: 8.8, y: 3.45, w: 3.7, h: 0.35, fontSize: 16, bold: true, color: primaryHex, align: "center" });
+
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 8.8,
+          y: 3.85,
+          w: 3.7,
+          h: 1.25,
+          fill: { color: primaryHex },
+          rectRadius: 0.08,
+        });
+        pSlide.addText("OUTPUT\nSPAM", {
+          x: 9.0,
+          y: 3.95,
+          w: 3.3,
+          h: 1.05,
+          fontSize: 12,
+          bold: true,
+          color: "FFFFFF",
+          lineSpacingMultiple: 1.2,
+        });
+
+        // Bottom Note Banner (x: 0.8, y: 5.4, w: 11.7, h: 0.75)
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 0.8,
+          y: 5.4,
+          w: 11.7,
+          h: 0.75,
+          fill: { color: primaryHex },
+          rectRadius: 0.05,
+        });
+        pSlide.addShape(pptx.ShapeType.rect, {
+          x: 0.8,
+          y: 5.4,
+          w: 0.15,
+          h: 0.75,
+          fill: { color: secondaryHex },
+          line: { color: secondaryHex },
+        });
+        pSlide.addText("Note: If the data is incorrect (or of poor quality), the AI model will also learn incorrect patterns and produce incorrect outputs.", {
+          x: 1.1,
+          y: 5.45,
+          w: 11.2,
+          h: 0.65,
+          fontSize: 10,
+          color: "FFFFFF",
+        });
+        break;
+      }
+
+      /* ──── LLM TOKEN GENERATION & NEXT-WORD PROBABILITY ──── */
+      case "llmGeneration": {
+        // Title
+        pSlide.addText(slide.title, {
+          x: PAD.LEFT,
+          y: 0.65,
+          w: 11.5,
+          h: 0.7,
+          fontSize: 26,
+          bold: true,
+          color: primaryHex,
+          fontFace: fontTitle,
+        });
+
+        // Left Col (x: 0.8, y: 1.6, w: 5.6)
+        pSlide.addText("AI guesses an output word based on previous words. LLM: ChatGPT, Gemini, etc.", {
+          x: 0.8,
+          y: 1.6,
+          w: 5.6,
+          h: 0.5,
+          fontSize: 11,
+          color: "374151",
+        });
+
+        // Tokens
+        const tokens = ["<s>", "Golden", "Indonesia", "2045", "...", "</s>"];
+        tokens.forEach((tok, i) => {
+          const isSpecial = tok.startsWith("<");
+          pSlide.addShape(pptx.ShapeType.roundRect, {
+            x: 0.8 + i * 0.9,
+            y: 2.2,
+            w: 0.78,
+            h: 0.35,
+            fill: { color: isSpecial ? primaryHex : "FFFFFF" },
+            line: { color: isSpecial ? primaryHex : "D1D5DB", width: 1 },
+            rectRadius: 0.04,
+          });
+          pSlide.addText(tok, {
+            x: 0.8 + i * 0.9,
+            y: 2.2,
+            w: 0.78,
+            h: 0.35,
+            fontSize: 9,
+            bold: true,
+            color: isSpecial ? "FFFFFF" : "1F2937",
+            align: "center",
+          });
+        });
+
+        pSlide.addText("NEXT-WORD PROBABILITIES AFTER \"GOLDEN INDONESIA\"", {
+          x: 0.8,
+          y: 2.8,
+          w: 5.6,
+          h: 0.3,
+          fontSize: 10,
+          bold: true,
+          color: primaryHex,
+        });
+
+        const probBars = [
+          { word: "2045", pct: "20%", w: 3.2, top: true },
+          { word: "Emas", pct: "15%", w: 2.4, top: false },
+          { word: "term", pct: "14%", w: 2.2, top: false },
+          { word: "vision", pct: "10%", w: 1.6, top: false },
+          { word: "transform", pct: "8%", w: 1.3, top: false },
+        ];
+        probBars.forEach((bar, idx) => {
+          const barY = 3.2 + idx * 0.45;
+          pSlide.addText(bar.word, { x: 0.8, y: barY, w: 1.1, h: 0.35, fontSize: 10, bold: bar.top, color: "1F2937", align: "right" });
+          pSlide.addShape(pptx.ShapeType.roundRect, {
+            x: 2.0,
+            y: barY + 0.05,
+            w: bar.w,
+            h: 0.25,
+            fill: { color: bar.top ? primaryHex : "93BBE5" },
+            rectRadius: 0.02,
+          });
+          pSlide.addText(bar.pct, { x: 2.1 + bar.w, y: barY, w: 0.8, h: 0.35, fontSize: 10, bold: bar.top, color: "374151" });
+        });
+
+        // Right Col (x: 6.8, y: 1.6, w: 5.7)
+        // Prompt Card
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 6.8,
+          y: 1.6,
+          w: 5.7,
+          h: 1.2,
+          fill: { color: "FFFFFF" },
+          line: { color: primaryHex, width: 2 },
+          rectRadius: 0.08,
+        });
+        pSlide.addText("PROMPT\n\"Write about Golden Indonesia 2045\"", {
+          x: 7.0,
+          y: 1.7,
+          w: 5.3,
+          h: 1.0,
+          fontSize: 11,
+          bold: true,
+          color: "111111",
+          lineSpacingMultiple: 1.2,
+        });
+
+        // LLM Answer Card
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 6.8,
+          y: 3.1,
+          w: 5.7,
+          h: 2.2,
+          fill: { color: "F4F6F9" },
+          rectRadius: 0.08,
+        });
+        pSlide.addText("LLM ANSWER\nGolden Indonesia 2045 (Indonesia Emas 2045) is Indonesia's long-term national vision to transform the country into a sovereign, advanced, prosperous, and sustainable nation by 2045...", {
+          x: 7.0,
+          y: 3.2,
+          w: 5.3,
+          h: 2.0,
+          fontSize: 10,
+          color: "1F2937",
+          lineSpacingMultiple: 1.25,
+        });
+
+        // Pill Tag: Stochastic Parrot
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 6.8,
+          y: 5.5,
+          w: 2.2,
+          h: 0.45,
+          fill: { color: secondaryHex },
+          rectRadius: 0.2,
+        });
+        pSlide.addText("Stochastic Parrot", {
+          x: 6.8,
+          y: 5.5,
+          w: 2.2,
+          h: 0.45,
+          fontSize: 10,
+          bold: true,
+          color: "111111",
+          align: "center",
+        });
+        break;
+      }
+
+      /* ──── HANDS-ON CASE WORKSHEET SLIDE ──── */
+      case "caseWorksheet": {
+        // Title
+        pSlide.addText(slide.title, {
+          x: PAD.LEFT,
+          y: 0.6,
+          w: 9.2,
+          h: 0.65,
+          fontSize: 24,
+          bold: true,
+          color: primaryHex,
+          fontFace: fontTitle,
+        });
+
+        // HANDS-ON badge next to title
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 10.2,
+          y: 0.65,
+          w: 1.8,
+          h: 0.35,
+          fill: { color: secondaryHex },
+          rectRadius: 0.04,
+        });
+        pSlide.addText(slide.badge || "HANDS-ON", {
+          x: 10.2,
+          y: 0.65,
+          w: 1.8,
+          h: 0.35,
+          fontSize: 10,
+          bold: true,
+          color: "111111",
+          align: "center",
+        });
+
+        // Subtitle
+        if (slide.subtitle) {
+          pSlide.addText(slide.subtitle, {
+            x: PAD.LEFT,
+            y: 1.25,
+            w: 11.5,
+            h: 0.45,
+            fontSize: 11,
+            color: "4B5563",
+            fontFace: fontBody,
+          });
+        }
+
+        // 3 Need Cards (x: 0.8, y: 1.75, w: 3.7 each)
+        const cards = [
+          { tag: "NEED 1", team: "Call centre", desc: "3,000 calls a week asking \"When will my power come back?\" and \"What documents do I need for a new connection?\"", bg: secondaryHex, textColor: "111111", tagColor: "4B5563" },
+          { tag: "NEED 2", team: "Asset team", desc: "Early warning on which transformers are likely to fail in the next 3 months", bg: primaryHex, textColor: "FFFFFF", tagColor: secondaryHex },
+          { tag: "NEED 3", team: "Operations", desc: "Dispatch repair crews automatically for small, routine outages", bg: secondaryHex, textColor: "111111", tagColor: "4B5563" },
+        ];
+        cards.forEach((c, idx) => {
+          const cardX = 0.8 + idx * 4.0;
+          pSlide.addShape(pptx.ShapeType.roundRect, {
+            x: cardX,
+            y: 1.75,
+            w: 3.75,
+            h: 1.35,
+            fill: { color: c.bg },
+            rectRadius: 0.08,
+          });
+          pSlide.addText(c.tag, { x: cardX + 0.15, y: 1.82, w: 3.4, h: 0.25, fontSize: 9, bold: true, color: c.tagColor });
+          pSlide.addText(c.team, { x: cardX + 0.15, y: 2.05, w: 3.4, h: 0.3, fontSize: 11, bold: true, color: c.textColor });
+          pSlide.addText(c.desc, { x: cardX + 0.15, y: 2.35, w: 3.45, h: 0.7, fontSize: 9.5, color: c.textColor, lineSpacingMultiple: 1.15 });
+        });
+
+        // Task Directive Text
+        const taskText = "Task: for each need, choose system type (LLM alone / RAG assistant / copilot / predictive model / agentic workflow), name failure risk and human-in-the-loop.";
+        pSlide.addText(taskText, {
+          x: 0.8,
+          y: 3.25,
+          w: 11.7,
+          h: 0.35,
+          fontSize: 9.5,
+          color: "1F2937",
+          bold: true,
+        });
+
+        // Worksheet Table (x: 0.8, y: 3.65, w: 11.7, h: 2.1)
+        const wsRows = [
+          [
+            { text: "Need", options: { bold: true, color: "FFFFFF", fill: { color: primaryHex } } },
+            { text: "System type", options: { bold: true, color: "FFFFFF", fill: { color: primaryHex } } },
+            { text: "Main failure risk", options: { bold: true, color: "FFFFFF", fill: { color: primaryHex } } },
+            { text: "Human-in-the-loop where", options: { bold: true, color: "FFFFFF", fill: { color: primaryHex } } },
+          ],
+          [{ text: "1 · Call centre", options: { fill: { color: "EBF3FB" } } }, { text: "", options: { fill: { color: "EBF3FB" } } }, { text: "", options: { fill: { color: "EBF3FB" } } }, { text: "", options: { fill: { color: "EBF3FB" } } }],
+          [{ text: "2 · Asset team" }, { text: "" }, { text: "" }, { text: "" }],
+          [{ text: "3 · Operations", options: { fill: { color: "EBF3FB" } } }, { text: "", options: { fill: { color: "EBF3FB" } } }, { text: "", options: { fill: { color: "EBF3FB" } } }, { text: "", options: { fill: { color: "EBF3FB" } } }],
+        ];
+        pSlide.addTable(wsRows, {
+          x: 0.8,
+          y: 3.65,
+          w: 11.7,
+          h: 2.1,
+          fontSize: 10,
+          border: { pt: 1, color: "D1D5DB" },
+        });
+
+        // Bottom TWIST Callout
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: 0.8,
+          y: 5.95,
+          w: 2.2,
+          h: 0.35,
+          fill: { color: secondaryHex },
+          rectRadius: 0.04,
+        });
+        pSlide.addText("TWIST: [to be added]", {
+          x: 0.8,
+          y: 5.95,
+          w: 2.2,
+          h: 0.35,
+          fontSize: 9.5,
+          bold: true,
+          color: "111111",
+          align: "center",
+        });
+        pSlide.addText("Reply to the vendor (2–3 sentences): ...", {
+          x: 3.1,
+          y: 5.95,
+          w: 9.4,
+          h: 0.35,
+          fontSize: 10,
+          color: "4B5563",
+        });
+
+        pSlide.addShape(pptx.ShapeType.line, {
+          x: 0.8,
+          y: 6.4,
+          w: 11.7,
+          h: 0,
+          line: { color: "93C5FD", width: 1, dashType: "dash" },
         });
         break;
       }
@@ -4888,73 +5825,208 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
 
       /* ──── 7. CLOSING ACTION SLIDE ──── */
       case "closingAction": {
-        // Top 75% primary panel
-        pSlide.addShape(pptx.ShapeType.rect, {
-          x: 0,
-          y: 0,
-          w: 13.333,
-          h: 5.6,
-          fill: { color: primaryHex },
-          line: { color: primaryHex },
-        });
+        if (!hasTemplateBg) {
+          // Top 75% primary panel
+          pSlide.addShape(pptx.ShapeType.rect, {
+            x: 0,
+            y: 0,
+            w: 13.333,
+            h: 5.6,
+            fill: { color: primaryHex },
+            line: { color: primaryHex },
+          });
 
-        // Dividing accent line
-        pSlide.addShape(pptx.ShapeType.rect, {
-          x: 0,
-          y: 5.6,
-          w: 13.333,
-          h: 0.12,
-          fill: { color: secondaryHex },
-          line: { color: secondaryHex },
-        });
+          // Dividing accent line
+          pSlide.addShape(pptx.ShapeType.rect, {
+            x: 0,
+            y: 5.6,
+            w: 13.333,
+            h: 0.12,
+            fill: { color: secondaryHex },
+            line: { color: secondaryHex },
+          });
+        }
 
+        // Dedicated layout for UI deck when hasTemplateBg (ui-deck/closing-deck.webp has top ~31% yellow banner)
+        if (hasTemplateBg && isUIDeck) {
+          // Black Pill Tag in Yellow Banner
+          if (slide.badge) {
+            pSlide.addShape(pptx.ShapeType.roundRect, {
+              x: 1.0,
+              y: 0.4,
+              w: 2.5,
+              h: 0.32,
+              fill: { color: "000000" },
+              rectRadius: 0.16,
+            });
+            pSlide.addText(slide.badge, {
+              x: 1.0,
+              y: 0.42,
+              w: 2.5,
+              h: 0.28,
+              fontSize: 10,
+              bold: true,
+              color: "FEDE3B",
+              align: "center",
+              fontFace: fontBody,
+            });
+          }
+
+          // Title placed directly inside top yellow background with bold black typography
+          pSlide.addText(slide.title, {
+            x: 1.0,
+            y: slide.badge ? 0.8 : 0.55,
+            w: 11.2,
+            h: 0.95,
+            fontSize: 32,
+            bold: true,
+            color: "000000",
+            fontFace: fontTitle,
+            valign: "top",
+            lineSpacingMultiple: 1.15,
+          });
+
+          if (slide.subtitle) {
+            pSlide.addText(slide.subtitle, {
+              x: 1.0,
+              y: slide.badge ? 1.75 : 1.55,
+              w: 11.2,
+              h: 0.45,
+              fontSize: 14,
+              color: "262626",
+              fontFace: fontBody,
+              valign: "top",
+            });
+          }
+
+          // Actions List placed on white canvas below yellow banner
+          const actions = slide.bullets && slide.bullets.length > 0
+            ? slide.bullets
+            : [
+                "Aktifkan MFA pada akun email dan dokumen kerja Anda",
+                "Tanyakan ke tim: kapan terakhir backup diuji pulih?",
+                "Sepakati data apa yang boleh masuk ke tool AI publik",
+              ];
+
+          const actionsStartY = 2.65;
+          const actionGap = 0.85;
+
+          actions.slice(0, 4).forEach((act, aIdx) => {
+            const y = actionsStartY + aIdx * actionGap;
+            // Yellow square number badge
+            pSlide.addShape(pptx.ShapeType.roundRect, {
+              x: 1.0,
+              y: y + 0.02,
+              w: 0.38,
+              h: 0.38,
+              fill: { color: "FEDE3B" },
+              rectRadius: 0.08,
+            });
+            pSlide.addText(String(aIdx + 1), {
+              x: 1.0,
+              y: y + 0.04,
+              w: 0.38,
+              h: 0.34,
+              fontSize: 12,
+              bold: true,
+              color: "000000",
+              align: "center",
+              fontFace: fontBody,
+            });
+            // Action Text
+            pSlide.addText(act, {
+              x: 1.55,
+              y,
+              w: 10.5,
+              h: 0.5,
+              fontSize: 14,
+              color: "171717",
+              fontFace: fontBody,
+              bold: true,
+              valign: "middle",
+            });
+          });
+
+          // Bottom Clean Contact text
+          const exportContact = slide.contactFooterText;
+          const isCleanContact =
+            exportContact &&
+            !exportContact.includes("[") &&
+            !exportContact.includes("]") &&
+            !/facilitator|narasumber|pembicara/i.test(exportContact);
+
+          if (isCleanContact) {
+            pSlide.addText(exportContact, {
+              x: 1.0,
+              y: 6.4,
+              w: 11.0,
+              h: 0.5,
+              fontSize: 12.5,
+              color: "4A4A4A",
+              fontFace: fontBody,
+            });
+          }
+          break;
+        }
+
+        // Standard / ITB Closing Action Layout
         // Yellow Pill Tag
         pSlide.addShape(pptx.ShapeType.roundRect, {
           x: 1.0,
-          y: 0.85,
-          w: 3.0,
-          h: 0.48,
+          y: 0.65,
+          w: 2.8,
+          h: 0.38,
           fill: { color: secondaryHex },
-          rectRadius: 0.24,
+          rectRadius: 0.19,
         });
         pSlide.addText(slide.badge || "LANGKAH BERIKUTNYA", {
           x: 1.0,
-          y: 0.9,
-          w: 3.0,
-          h: 0.38,
-          fontSize: 12,
+          y: 0.68,
+          w: 2.8,
+          h: 0.32,
+          fontSize: 11.5,
           bold: true,
           color: "272525",
           align: "center",
           fontFace: fontBody,
         });
 
-        // Title
+        // Title with adaptive font size & dynamic height to prevent any overlap
+        const closingTitleLen = (slide.title || "").length;
+        const closingTitleFontSize = closingTitleLen > 55 ? 26 : closingTitleLen > 35 ? 30 : 36;
+        const closingTitleLines = Math.max(Math.ceil(closingTitleLen / (closingTitleFontSize > 30 ? 42 : 52)), 1);
+        const closingTitleH = Math.min(closingTitleLines * (closingTitleFontSize * 1.25 / 72), 1.3);
+        const closingTitleY = 1.15;
+
         pSlide.addText(slide.title, {
           x: 1.0,
-          y: 1.45,
-          w: 11.0,
-          h: 1.0,
-          fontSize: 40,
+          y: closingTitleY,
+          w: 11.2,
+          h: closingTitleH,
+          fontSize: closingTitleFontSize,
           bold: true,
           color: "FFFFFF",
           fontFace: fontTitle,
+          valign: "top",
+          lineSpacingMultiple: 1.15,
         });
 
-        // Subtitle
+        // Subtitle positioned dynamically below the title
+        const closingSubY = closingTitleY + closingTitleH + 0.12;
         if (slide.subtitle) {
           pSlide.addText(slide.subtitle, {
             x: 1.0,
-            y: 2.45,
-            w: 11.0,
-            h: 0.55,
-            fontSize: 18,
+            y: closingSubY,
+            w: 11.2,
+            h: 0.45,
+            fontSize: 15,
             color: "E5E7EB",
             fontFace: fontBody,
+            valign: "top",
           });
         }
 
-        // Actions List
+        // Actions List with dynamic vertical distribution
         const actions = slide.bullets && slide.bullets.length > 0
           ? slide.bullets
           : [
@@ -4963,20 +6035,24 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
               "Sepakati data apa yang boleh masuk ke tool AI publik",
             ];
 
+        const actionsStartY = closingSubY + (slide.subtitle ? 0.52 : 0.15);
+        const availableActionH = Math.max(5.35 - actionsStartY, 1.2);
+        const actionGap = Math.min(availableActionH / Math.max(actions.slice(0, 4).length, 1), 0.58);
+
         actions.slice(0, 4).forEach((act, aIdx) => {
-          const y = 3.1 + aIdx * 0.62;
+          const y = actionsStartY + aIdx * actionGap;
           pSlide.addText(
             [
-              { text: `${aIdx + 1}.  `, options: { bold: true, fontSize: 16, color: secondaryHex } },
-              { text: act, options: { fontSize: 15, color: "FFFFFF" } },
+              { text: `${aIdx + 1}.  `, options: { bold: true, fontSize: 15, color: secondaryHex } },
+              { text: act, options: { fontSize: 14, color: "FFFFFF" } },
             ],
             {
               x: 1.0,
               y,
-              w: 10.5,
-              h: 0.55,
+              w: 10.8,
+              h: 0.5,
               fontFace: fontBody,
-              lineSpacingMultiple: 1.2,
+              lineSpacingMultiple: 1.15,
             }
           );
         });
@@ -5000,6 +6076,837 @@ export async function exportDeckToPptx(slides: SlideData[], options: ExportOptio
             fontFace: fontBody,
           });
         }
+        break;
+      }
+
+      /* ──── 8. PYRAMID HIERARCHY (3-TIER STRATEGIC APEX) ──── */
+      case "pyramidHierarchy": {
+        pSlide.addText(slide.title, {
+          x: PAD.LEFT,
+          y: PAD.TITLE_Y,
+          w: PAD.CONTENT_W,
+          h: PAD.TITLE_H,
+          fontSize: 32,
+          color: titleColor,
+          bold: true,
+          fontFace: fontTitle,
+        });
+
+        if (slide.subtitle) {
+          pSlide.addText(slide.subtitle, {
+            x: PAD.LEFT,
+            y: PAD.SUB_Y,
+            w: PAD.CONTENT_W,
+            h: PAD.SUB_H,
+            fontSize: 15,
+            color: currentMutedColor,
+            fontFace: fontBody,
+          });
+        }
+
+        const rawTiers = slide.cards && slide.cards.length >= 3
+          ? slide.cards.slice(0, 3)
+          : (slide.bullets && slide.bullets.length >= 3
+            ? [
+                { title: slide.bullets[0], description: "Unified organizational priority & strategic north star", tag: "APEX · VISION" },
+                { title: slide.bullets[1], description: "Operational execution pillars & decision pipelines", tag: "PILLARS · STRATEGY" },
+                { title: slide.bullets[2], description: "Enabling data fabric, governance & infrastructure", tag: "FOUNDATION · ENABLERS" },
+              ]
+            : [
+                { title: "Strategic Apex & Vision", description: "Sustainable competitive edge & market leadership", tag: "APEX · VISION" },
+                { title: "Core Strategic Thrusts", description: "Autonomous execution pipelines & risk models", tag: "PILLARS · STRATEGY" },
+                { title: "Enabling Infrastructure", description: "Zero-trust security, real-time data fabric & governance", tag: "FOUNDATION · ENABLERS" },
+              ]);
+
+        // Tier 3: Apex Peak (Top, compact, Deep Blue)
+        const apexW = 7.0;
+        const apexX = PAD.LEFT + (PAD.CONTENT_W - apexW) / 2;
+        const apexY = 1.95;
+        const apexH = 1.15;
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: apexX,
+          y: apexY,
+          w: apexW,
+          h: apexH,
+          fill: { color: primaryHex },
+          line: { color: primaryHex },
+          rectRadius: 0.05,
+        });
+        pSlide.addText((rawTiers[0]?.tag || "TIER 3 · APEX VISION").toUpperCase(), {
+          x: apexX + 0.3,
+          y: apexY + 0.1,
+          w: apexW - 0.6,
+          h: 0.28,
+          fontSize: 11,
+          bold: true,
+          color: secondaryHex,
+          align: "center",
+          fontFace: fontBody,
+        });
+        pSlide.addText(rawTiers[0]?.title || "Apex Strategic Priority", {
+          x: apexX + 0.3,
+          y: apexY + 0.38,
+          w: apexW - 0.6,
+          h: 0.42,
+          fontSize: 15,
+          bold: true,
+          color: "FFFFFF",
+          align: "center",
+          fontFace: fontTitle,
+        });
+        if (rawTiers[0]?.description || (rawTiers[0] as any)?.subtitle) {
+          pSlide.addText(rawTiers[0]?.description || (rawTiers[0] as any)?.subtitle || "", {
+            x: apexX + 0.3,
+            y: apexY + 0.78,
+            w: apexW - 0.6,
+            h: 0.3,
+            fontSize: 11.5,
+            color: "EAF2FB",
+            align: "center",
+            fontFace: fontBody,
+          });
+        }
+
+        // Tier 2: Mid Strategic Thrusts (Middle, wider, Golden Yellow)
+        const midW = 9.4;
+        const midX = PAD.LEFT + (PAD.CONTENT_W - midW) / 2;
+        const midY = 3.28;
+        const midH = 1.25;
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: midX,
+          y: midY,
+          w: midW,
+          h: midH,
+          fill: { color: secondaryHex },
+          line: { color: secondaryHex },
+          rectRadius: 0.05,
+        });
+        pSlide.addText((rawTiers[1]?.tag || "TIER 2 · STRATEGIC PILLARS").toUpperCase(), {
+          x: midX + 0.35,
+          y: midY + 0.12,
+          w: midW - 0.7,
+          h: 0.28,
+          fontSize: 11,
+          bold: true,
+          color: "854D0E",
+          fontFace: fontBody,
+        });
+        pSlide.addText(rawTiers[1]?.title || "Strategic Execution Thrusts", {
+          x: midX + 0.35,
+          y: midY + 0.42,
+          w: midW - 0.7,
+          h: 0.42,
+          fontSize: 15,
+          bold: true,
+          color: "272525",
+          fontFace: fontTitle,
+        });
+        if (rawTiers[1]?.description || (rawTiers[1] as any)?.subtitle) {
+          pSlide.addText(rawTiers[1]?.description || (rawTiers[1] as any)?.subtitle || "", {
+            x: midX + 0.35,
+            y: midY + 0.84,
+            w: midW - 0.7,
+            h: 0.32,
+            fontSize: 12,
+            color: "333333",
+            fontFace: fontBody,
+          });
+        }
+
+        // Tier 1: Foundation Base (Bottom, widest, Soft Light Blue)
+        const baseW = PAD.CONTENT_W;
+        const baseX = PAD.LEFT;
+        const baseY = 4.71;
+        const baseH = 1.25;
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: baseX,
+          y: baseY,
+          w: baseW,
+          h: baseH,
+          fill: { color: "EAF2FB" },
+          line: { color: "9FB8D6", width: 1.5 },
+          rectRadius: 0.05,
+        });
+        pSlide.addText((rawTiers[2]?.tag || "TIER 1 · FOUNDATION & ENABLERS").toUpperCase(), {
+          x: baseX + 0.35,
+          y: baseY + 0.12,
+          w: baseW - 0.7,
+          h: 0.28,
+          fontSize: 11,
+          bold: true,
+          color: "005AAB",
+          fontFace: fontBody,
+        });
+        pSlide.addText(rawTiers[2]?.title || "Enabling Capabilities & Architecture", {
+          x: baseX + 0.35,
+          y: baseY + 0.42,
+          w: baseW - 0.7,
+          h: 0.42,
+          fontSize: 15,
+          bold: true,
+          color: "174A7F",
+          fontFace: fontTitle,
+        });
+        if (rawTiers[2]?.description || (rawTiers[2] as any)?.subtitle) {
+          pSlide.addText(rawTiers[2]?.description || (rawTiers[2] as any)?.subtitle || "", {
+            x: baseX + 0.35,
+            y: baseY + 0.84,
+            w: baseW - 0.7,
+            h: 0.32,
+            fontSize: 12,
+            color: "272525",
+            fontFace: fontBody,
+          });
+        }
+        break;
+      }
+
+      /* ──── 9. TRANSFORMATION DELTA BRIDGE (AS-IS → CATALYST → TO-BE) ──── */
+      case "transformationBridge": {
+        pSlide.addText(slide.title, {
+          x: PAD.LEFT,
+          y: PAD.TITLE_Y,
+          w: PAD.CONTENT_W,
+          h: PAD.TITLE_H,
+          fontSize: 32,
+          color: titleColor,
+          bold: true,
+          fontFace: fontTitle,
+        });
+
+        if (slide.subtitle) {
+          pSlide.addText(slide.subtitle, {
+            x: PAD.LEFT,
+            y: PAD.SUB_Y,
+            w: PAD.CONTENT_W,
+            h: PAD.SUB_H,
+            fontSize: 15,
+            color: currentMutedColor,
+            fontFace: fontBody,
+          });
+        }
+
+        const colW = 3.65;
+        const arrowW = 0.44;
+        const colH = 4.0;
+        const colY = 2.0;
+
+        // Column 1: As-Is (Soft grey/slate)
+        const x1 = PAD.LEFT;
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: x1,
+          y: colY,
+          w: colW,
+          h: colH,
+          fill: { color: "F1F5F9" },
+          line: { color: "CBD5E1", width: 1.5 },
+          rectRadius: 0.05,
+        });
+        pSlide.addText("KONDISI SAAT INI (AS-IS)", {
+          x: x1 + 0.3,
+          y: colY + 0.2,
+          w: colW - 0.6,
+          h: 0.3,
+          fontSize: 11,
+          bold: true,
+          color: "64748B",
+          fontFace: fontBody,
+        });
+        pSlide.addText(slide.pairedRows?.[0]?.left || slide.bullets?.[0] || "Legacy Operating Model", {
+          x: x1 + 0.3,
+          y: colY + 0.55,
+          w: colW - 0.6,
+          h: 0.6,
+          fontSize: 16,
+          bold: true,
+          color: "1E293B",
+          fontFace: fontTitle,
+        });
+        const asIsPoints = slide.pairedRows?.map((r) => r.left).slice(0, 3) || slide.bullets?.slice(0, 3) || [
+          "Manual approval bottlenecks",
+          "Fragmented data silos",
+          "Reactive risk mitigation",
+        ];
+        asIsPoints.forEach((pt, pIdx) => {
+          pSlide.addText(`•  ${pt}`, {
+            x: x1 + 0.3,
+            y: colY + 1.25 + pIdx * 0.75,
+            w: colW - 0.6,
+            h: 0.65,
+            fontSize: 13,
+            color: "334155",
+            fontFace: fontBody,
+          });
+        });
+
+        // Arrow 1
+        pSlide.addText("→", {
+          x: x1 + colW,
+          y: colY + 1.8,
+          w: arrowW,
+          h: 0.5,
+          fontSize: 24,
+          bold: true,
+          color: "005AAB",
+          align: "center",
+          fontFace: fontBody,
+        });
+
+        // Column 2: Catalyst (Golden Yellow)
+        const x2 = x1 + colW + arrowW;
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: x2,
+          y: colY,
+          w: colW,
+          h: colH,
+          fill: { color: secondaryHex },
+          line: { color: secondaryHex },
+          rectRadius: 0.05,
+        });
+        pSlide.addText("TRANSFORMATION ENGINE", {
+          x: x2 + 0.3,
+          y: colY + 0.2,
+          w: colW - 0.6,
+          h: 0.3,
+          fontSize: 11,
+          bold: true,
+          color: "854D0E",
+          fontFace: fontBody,
+        });
+        pSlide.addText(slide.highlight || "Automated Pipelines & Telemetry", {
+          x: x2 + 0.3,
+          y: colY + 0.55,
+          w: colW - 0.6,
+          h: 0.6,
+          fontSize: 16,
+          bold: true,
+          color: "272525",
+          fontFace: fontTitle,
+        });
+        pSlide.addText(slide.description || "Standardized automated governance across all squads with human-in-the-loop validation.", {
+          x: x2 + 0.3,
+          y: colY + 1.3,
+          w: colW - 0.6,
+          h: 1.5,
+          fontSize: 13.5,
+          color: "272525",
+          fontFace: fontBody,
+        });
+
+        // Arrow 2
+        pSlide.addText("→", {
+          x: x2 + colW,
+          y: colY + 1.8,
+          w: arrowW,
+          h: 0.5,
+          fontSize: 24,
+          bold: true,
+          color: "005AAB",
+          align: "center",
+          fontFace: fontBody,
+        });
+
+        // Column 3: To-Be (Solid Deep Blue)
+        const x3 = x2 + colW + arrowW;
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: x3,
+          y: colY,
+          w: colW,
+          h: colH,
+          fill: { color: primaryHex },
+          line: { color: primaryHex },
+          rectRadius: 0.05,
+        });
+        pSlide.addText("TARGET OUTCOME (TO-BE)", {
+          x: x3 + 0.3,
+          y: colY + 0.2,
+          w: colW - 0.6,
+          h: 0.3,
+          fontSize: 11,
+          bold: true,
+          color: secondaryHex,
+          fontFace: fontBody,
+        });
+        pSlide.addText(slide.pairedRows?.[0]?.right || "Autonomous Resilience", {
+          x: x3 + 0.3,
+          y: colY + 0.55,
+          w: colW - 0.6,
+          h: 0.6,
+          fontSize: 16,
+          bold: true,
+          color: "FFFFFF",
+          fontFace: fontTitle,
+        });
+        const toBePoints = slide.pairedRows?.map((r) => r.right).slice(0, 3) || [
+          "Unified telemetry & visibility",
+          "Proactive automated risk scoring",
+          "Rapid 4-hour recovery SLA",
+        ];
+        toBePoints.forEach((pt, pIdx) => {
+          pSlide.addText(`✓  ${pt}`, {
+            x: x3 + 0.3,
+            y: colY + 1.25 + pIdx * 0.75,
+            w: colW - 0.6,
+            h: 0.65,
+            fontSize: 13,
+            color: "EAF2FB",
+            fontFace: fontBody,
+          });
+        });
+        break;
+      }
+
+      /* ──── 10. RADIAL HUB & ECOSYSTEM ──── */
+      case "radialHub": {
+        pSlide.addText(slide.title, {
+          x: PAD.LEFT,
+          y: PAD.TITLE_Y,
+          w: PAD.CONTENT_W,
+          h: PAD.TITLE_H,
+          fontSize: 32,
+          color: titleColor,
+          bold: true,
+          fontFace: fontTitle,
+        });
+
+        if (slide.subtitle) {
+          pSlide.addText(slide.subtitle, {
+            x: PAD.LEFT,
+            y: PAD.SUB_Y,
+            w: PAD.CONTENT_W,
+            h: PAD.SUB_H,
+            fontSize: 15,
+            color: currentMutedColor,
+            fontFace: fontBody,
+          });
+        }
+
+        const sats = slide.cards && slide.cards.length >= 4
+          ? slide.cards.slice(0, 4)
+          : (slide.bullets && slide.bullets.length >= 4
+            ? slide.bullets.slice(0, 4).map((b, i) => {
+                const parts = b.split(/:\s*|—\s*|-\s*/);
+                return { title: parts[0]?.trim() || `Domain 0${i + 1}`, description: parts[1]?.trim() || b, tag: `DOMAIN 0${i + 1}` };
+              })
+            : [
+                { title: "Risk Governance", description: "Centralized policy compliance & automated guardrails", tag: "DOMAIN 01" },
+                { title: "Data Telemetry", description: "Unified logs and observability across cloud fabric", tag: "DOMAIN 02" },
+                { title: "Incident Response", description: "Standard operating procedures & hot standby drills", tag: "DOMAIN 03" },
+                { title: "Access Security", description: "Identity assertion, multi-factor & role governance", tag: "DOMAIN 04" },
+              ]);
+
+        // Left 2 Satellites
+        sats.slice(0, 2).forEach((s, idx) => {
+          const sy = 2.0 + idx * 2.0;
+          pSlide.addShape(pptx.ShapeType.roundRect, {
+            x: PAD.LEFT,
+            y: sy,
+            w: 3.5,
+            h: 1.8,
+            fill: { color: "F8FAFC" },
+            line: { color: "CBD5E1", width: 1.5 },
+            rectRadius: 0.05,
+          });
+          pSlide.addText((s.tag || `DOMAIN 0${idx + 1}`).toUpperCase(), {
+            x: PAD.LEFT + 0.25,
+            y: sy + 0.15,
+            w: 3.0,
+            h: 0.25,
+            fontSize: 10.5,
+            bold: true,
+            color: "005AAB",
+            fontFace: fontBody,
+          });
+          pSlide.addText(s.title, {
+            x: PAD.LEFT + 0.25,
+            y: sy + 0.42,
+            w: 3.0,
+            h: 0.45,
+            fontSize: 14.5,
+            bold: true,
+            color: "1E293B",
+            fontFace: fontTitle,
+          });
+          pSlide.addText(s.description || "", {
+            x: PAD.LEFT + 0.25,
+            y: sy + 0.88,
+            w: 3.0,
+            h: 0.75,
+            fontSize: 12,
+            color: "64748B",
+            fontFace: fontBody,
+          });
+        });
+
+        // Center Hub
+        const hubX = PAD.LEFT + 3.8;
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: hubX,
+          y: 2.3,
+          w: 4.2,
+          h: 3.2,
+          fill: { color: primaryHex },
+          line: { color: primaryHex },
+          rectRadius: 0.08,
+        });
+        pSlide.addText("CORE ORCHESTRATION HUB", {
+          x: hubX + 0.3,
+          y: 2.6,
+          w: 3.6,
+          h: 0.3,
+          fontSize: 11,
+          bold: true,
+          color: secondaryHex,
+          align: "center",
+          fontFace: fontBody,
+        });
+        pSlide.addText(slide.highlight || slide.title || "Unified Operational Spine", {
+          x: hubX + 0.3,
+          y: 3.0,
+          w: 3.6,
+          h: 0.8,
+          fontSize: 18,
+          bold: true,
+          color: "FFFFFF",
+          align: "center",
+          fontFace: fontTitle,
+        });
+        pSlide.addText(slide.description || "Central orchestration core managing synchronization, validation, and real-time state delivery.", {
+          x: hubX + 0.3,
+          y: 3.85,
+          w: 3.6,
+          h: 1.2,
+          fontSize: 13,
+          color: "EAF2FB",
+          align: "center",
+          fontFace: fontBody,
+        });
+
+        // Right 2 Satellites
+        const rightX = hubX + 4.5;
+        sats.slice(2, 4).forEach((s, idx) => {
+          const sy = 2.0 + idx * 2.0;
+          pSlide.addShape(pptx.ShapeType.roundRect, {
+            x: rightX,
+            y: sy,
+            w: 3.5,
+            h: 1.8,
+            fill: { color: "F8FAFC" },
+            line: { color: "CBD5E1", width: 1.5 },
+            rectRadius: 0.05,
+          });
+          pSlide.addText((s.tag || `DOMAIN 0${idx + 3}`).toUpperCase(), {
+            x: rightX + 0.25,
+            y: sy + 0.15,
+            w: 3.0,
+            h: 0.25,
+            fontSize: 10.5,
+            bold: true,
+            color: "005AAB",
+            fontFace: fontBody,
+          });
+          pSlide.addText(s.title, {
+            x: rightX + 0.25,
+            y: sy + 0.42,
+            w: 3.0,
+            h: 0.45,
+            fontSize: 14.5,
+            bold: true,
+            color: "1E293B",
+            fontFace: fontTitle,
+          });
+          pSlide.addText(s.description || "", {
+            x: rightX + 0.25,
+            y: sy + 0.88,
+            w: 3.0,
+            h: 0.75,
+            fontSize: 12,
+            color: "64748B",
+            fontFace: fontBody,
+          });
+        });
+        break;
+      }
+
+      /* ──── 11. FORMULA HERO SPLIT ──── */
+      case "formulaHero": {
+        pSlide.addText(slide.title, {
+          x: PAD.LEFT,
+          y: PAD.TITLE_Y,
+          w: PAD.CONTENT_W,
+          h: PAD.TITLE_H,
+          fontSize: 32,
+          color: titleColor,
+          bold: true,
+          fontFace: fontTitle,
+        });
+
+        if (slide.subtitle) {
+          pSlide.addText(slide.subtitle, {
+            x: PAD.LEFT,
+            y: PAD.SUB_Y,
+            w: PAD.CONTENT_W,
+            h: PAD.SUB_H,
+            fontSize: 15,
+            color: currentMutedColor,
+            fontFace: fontBody,
+          });
+        }
+
+        const cards = slide.cards && slide.cards.length >= 3 ? slide.cards.slice(0, 3) : [
+          { title: "Input Factor A", subtitle: "Core Variable", bullets: ["Quality Telemetry", "Clean Datasets"] },
+          { title: "Multiplier B", subtitle: "Execution Engine", bullets: ["Automated Governance", "Human-in-the-Loop"] },
+          { title: "Strategic Outcome", subtitle: "Compounded Impact", bullets: ["3x Velocity", "Zero-Defect Resilience"] },
+        ];
+
+        const fCardW = 3.4;
+        const opW = 0.8;
+        const cardY = 2.1;
+        const cardH = 3.9;
+
+        // Card 1
+        const xA = PAD.LEFT;
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: xA,
+          y: cardY,
+          w: fCardW,
+          h: cardH,
+          fill: { color: "F8FAFC" },
+          line: { color: "CBD5E1", width: 1.5 },
+          rectRadius: 0.05,
+        });
+        pSlide.addText(cards[0].title, { x: xA + 0.25, y: cardY + 0.3, w: fCardW - 0.5, h: 0.45, fontSize: 16, bold: true, color: "005AAB", fontFace: fontTitle });
+        pSlide.addText(cards[0].subtitle || "", { x: xA + 0.25, y: cardY + 0.78, w: fCardW - 0.5, h: 0.3, fontSize: 12, color: "64748B", fontFace: fontBody });
+        (cards[0].bullets || []).forEach((b, bi) => {
+          pSlide.addText(`•  ${b}`, { x: xA + 0.25, y: cardY + 1.25 + bi * 0.7, w: fCardW - 0.5, h: 0.6, fontSize: 13, color: "334155", fontFace: fontBody });
+        });
+
+        // Plus Operator
+        pSlide.addText("+", { x: xA + fCardW, y: cardY + 1.6, w: opW, h: 0.7, fontSize: 32, bold: true, color: "005AAB", align: "center", fontFace: fontBody });
+
+        // Card 2
+        const xB = xA + fCardW + opW;
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: xB,
+          y: cardY,
+          w: fCardW,
+          h: cardH,
+          fill: { color: secondaryHex },
+          line: { color: secondaryHex },
+          rectRadius: 0.05,
+        });
+        pSlide.addText(cards[1].title, { x: xB + 0.25, y: cardY + 0.3, w: fCardW - 0.5, h: 0.45, fontSize: 16, bold: true, color: "272525", fontFace: fontTitle });
+        pSlide.addText(cards[1].subtitle || "", { x: xB + 0.25, y: cardY + 0.78, w: fCardW - 0.5, h: 0.3, fontSize: 12, color: "854D0E", fontFace: fontBody });
+        (cards[1].bullets || []).forEach((b, bi) => {
+          pSlide.addText(`•  ${b}`, { x: xB + 0.25, y: cardY + 1.25 + bi * 0.7, w: fCardW - 0.5, h: 0.6, fontSize: 13, color: "272525", fontFace: fontBody });
+        });
+
+        // Equals Operator
+        pSlide.addText("=", { x: xB + fCardW, y: cardY + 1.6, w: opW, h: 0.7, fontSize: 32, bold: true, color: "005AAB", align: "center", fontFace: fontBody });
+
+        // Card 3: Outcome (Deep Blue)
+        const xC = xB + fCardW + opW;
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: xC,
+          y: cardY,
+          w: fCardW,
+          h: cardH,
+          fill: { color: primaryHex },
+          line: { color: primaryHex },
+          rectRadius: 0.05,
+        });
+        pSlide.addText(cards[2].title, { x: xC + 0.25, y: cardY + 0.3, w: fCardW - 0.5, h: 0.45, fontSize: 16, bold: true, color: "FFFFFF", fontFace: fontTitle });
+        pSlide.addText(cards[2].subtitle || "", { x: xC + 0.25, y: cardY + 0.78, w: fCardW - 0.5, h: 0.3, fontSize: 12, color: secondaryHex, fontFace: fontBody });
+        (cards[2].bullets || []).forEach((b, bi) => {
+          pSlide.addText(`✓  ${b}`, { x: xC + 0.25, y: cardY + 1.25 + bi * 0.7, w: fCardW - 0.5, h: 0.6, fontSize: 13, color: "EAF2FB", fontFace: fontBody });
+        });
+        break;
+      }
+
+      /* ──── 12. TREE COMPARISON / CASE EXERCISE ──── */
+      case "treeComparison":
+      case "caseExercise": {
+        pSlide.addText(slide.title, {
+          x: PAD.LEFT,
+          y: PAD.TITLE_Y,
+          w: PAD.CONTENT_W,
+          h: PAD.TITLE_H,
+          fontSize: 32,
+          color: titleColor,
+          bold: true,
+          fontFace: fontTitle,
+        });
+
+        if (slide.subtitle) {
+          pSlide.addText(slide.subtitle, {
+            x: PAD.LEFT,
+            y: PAD.SUB_Y,
+            w: PAD.CONTENT_W,
+            h: PAD.SUB_H,
+            fontSize: 15,
+            color: currentMutedColor,
+            fontFace: fontBody,
+          });
+        }
+
+        const compW = (PAD.CONTENT_W - PAD.GAP_H) / 2;
+        const compH = 4.1;
+
+        // Left Card (Context / Situation)
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: PAD.LEFT,
+          y: PAD.CONTENT_Y,
+          w: compW,
+          h: compH,
+          fill: { color: "F8FAFC" },
+          line: { color: "CBD5E1", width: 1.5 },
+          rectRadius: 0.05,
+        });
+        pSlide.addText("SITUATION & CONTEXT", {
+          x: PAD.LEFT + 0.3,
+          y: PAD.CONTENT_Y + 0.2,
+          w: compW - 0.6,
+          h: 0.3,
+          fontSize: 11,
+          bold: true,
+          color: "64748B",
+          fontFace: fontBody,
+        });
+        pSlide.addText(slide.exerciseData?.situationText || slide.description || "Evaluation of operational constraints and data governance architecture.", {
+          x: PAD.LEFT + 0.3,
+          y: PAD.CONTENT_Y + 0.6,
+          w: compW - 0.6,
+          h: 1.5,
+          fontSize: 14,
+          color: "1E293B",
+          fontFace: fontBody,
+          lineSpacingMultiple: 1.2,
+        });
+        const leftItems: string[] = slide.exerciseData?.dataMetrics?.map((m: { label: string; value: string }) => `${m.label}: ${m.value}`) || slide.bullets?.slice(0, 3) || [];
+        leftItems.forEach((it: string, idx: number) => {
+          pSlide.addText(`•  ${it}`, {
+            x: PAD.LEFT + 0.3,
+            y: PAD.CONTENT_Y + 2.2 + idx * 0.55,
+            w: compW - 0.6,
+            h: 0.48,
+            fontSize: 13,
+            color: "334155",
+            fontFace: fontBody,
+          });
+        });
+
+        // Right Card (Strategic Action / What to Write)
+        const rx = PAD.LEFT + compW + PAD.GAP_H;
+        pSlide.addShape(pptx.ShapeType.roundRect, {
+          x: rx,
+          y: PAD.CONTENT_Y,
+          w: compW,
+          h: compH,
+          fill: { color: "EAF2FB" },
+          line: { color: "005AAB", width: 1.5 },
+          rectRadius: 0.05,
+        });
+        pSlide.addText("ACTION FRAMEWORK & DECISION", {
+          x: rx + 0.3,
+          y: PAD.CONTENT_Y + 0.2,
+          w: compW - 0.6,
+          h: 0.3,
+          fontSize: 11,
+          bold: true,
+          color: "005AAB",
+          fontFace: fontBody,
+        });
+        const rightItems: string[] = slide.exerciseData?.exerciseLines || slide.bullets?.slice(3, 7) || [
+          "Establish human-in-the-loop validation boundary",
+          "Set automated alert threshold at 95% confidence",
+          "Require executive sign-off for policy bypass",
+        ];
+        rightItems.forEach((rit: string, idx: number) => {
+          pSlide.addText(`${idx + 1}.  ${rit}`, {
+            x: rx + 0.3,
+            y: PAD.CONTENT_Y + 0.7 + idx * 0.9,
+            w: compW - 0.6,
+            h: 0.75,
+            fontSize: 13.5,
+            color: "174A7F",
+            bold: true,
+            fontFace: fontBody,
+            lineSpacingMultiple: 1.2,
+          });
+        });
+        break;
+      }
+
+      /* ──── DEFAULT FALLBACK (PREVENTS ANY SLIDE FROM EVER BEING BLANK) ──── */
+      default: {
+        pSlide.addText(slide.title, {
+          x: PAD.LEFT,
+          y: PAD.TITLE_Y,
+          w: PAD.CONTENT_W,
+          h: PAD.TITLE_H,
+          fontSize: 32,
+          color: titleColor,
+          bold: true,
+          fontFace: fontTitle,
+        });
+
+        if (slide.subtitle) {
+          pSlide.addText(slide.subtitle, {
+            x: PAD.LEFT,
+            y: PAD.SUB_Y,
+            w: PAD.CONTENT_W,
+            h: PAD.SUB_H,
+            fontSize: 15,
+            color: currentMutedColor,
+            fontFace: fontBody,
+          });
+        }
+
+        const fallbackCards = slide.cards && slide.cards.length > 0 ? slide.cards : (
+          slide.bullets && slide.bullets.length > 0 ? slide.bullets.map((b, i) => ({
+            title: `Pilar 0${i + 1}`,
+            description: b,
+          })) : [
+            { title: "Analisis & Temuan", description: slide.description || "Temuan utama dari evaluasi arsitektur sistem." },
+            { title: "Rekomendasi Strategis", description: "Langkah mitigasi dan tata kelola berjenjang." }
+          ]
+        );
+
+        const cardCount = Math.min(fallbackCards.length, 3);
+        const cardW = (PAD.CONTENT_W - (cardCount - 1) * PAD.GAP_H) / cardCount;
+        fallbackCards.slice(0, 3).forEach((c, idx) => {
+          const cx = PAD.LEFT + idx * (cardW + PAD.GAP_H);
+          const isPrime = idx === 0;
+          pSlide.addShape(pptx.ShapeType.roundRect, {
+            x: cx,
+            y: PAD.CONTENT_Y,
+            w: cardW,
+            h: 4.2,
+            fill: { color: isPrime ? "EAF2FB" : "FFFFFF" },
+            line: { color: isPrime ? primaryHex : "CBD5E1", width: 1.5 },
+            rectRadius: 0.05,
+          });
+          pSlide.addText((c as any).title || `Poin 0${idx + 1}`, {
+            x: cx + 0.3,
+            y: PAD.CONTENT_Y + 0.25,
+            w: cardW - 0.6,
+            h: 0.5,
+            fontSize: 18,
+            bold: true,
+            color: "005AAB",
+            fontFace: fontTitle,
+          });
+          pSlide.addText((c as any).description || (c as any).subtitle || "", {
+            x: cx + 0.3,
+            y: PAD.CONTENT_Y + 0.85,
+            w: cardW - 0.6,
+            h: 3.0,
+            fontSize: 14,
+            color: "272525",
+            fontFace: fontBody,
+            lineSpacingMultiple: 1.2,
+          });
+        });
         break;
       }
     }

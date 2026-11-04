@@ -13,7 +13,23 @@ import {
   executeConnectorAction,
 } from "@/lib/connectors-engine";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+function getEnvKey(keyName: string): string {
+  if (process.env[keyName]) return process.env[keyName]!;
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    const envLocal = fs.readFileSync(path.join(process.cwd(), ".env.local"), "utf8");
+    for (const line of envLocal.split("\n")) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith(`${keyName}=`)) {
+        return trimmed.slice(keyName.length + 1).replace(/^["']|["']$/g, "").trim();
+      }
+    }
+  } catch {}
+  return "";
+}
+
+const genAI = new GoogleGenerativeAI(getEnvKey("GEMINI_API_KEY") || getEnvKey("GOOGLE_API_KEY") || process.env.GEMINI_API_KEY || "");
 
 // Force Node.js runtime for streaming stability
 export const runtime = "nodejs";
@@ -25,24 +41,34 @@ const PROVIDER_URLS: Record<string, string> = {
   deepseek: "https://api.deepseek.com",
   openai: "https://api.openai.com/v1",
   gemini: "https://generativelanguage.googleapis.com/v1beta/openai",
+  openrouter: "https://openrouter.ai/api/v1",
 };
 
 const PROVIDER_DEFAULT_MODELS: Record<string, string> = {
   deepseek: "deepseek-chat",
   openai: "gpt-4o-mini",
-  gemini: "gemini-2.0-flash",
+  gemini: "gemini-2.5-flash",
+  openrouter: "google/gemini-2.5-flash",
 };
 
 // Fallback server-side client (uses env key)
 const deepseek = new OpenAI({
   baseURL: "https://api.deepseek.com",
-  apiKey: process.env.DEEPSEEK_API_KEY || "dummy",
+  apiKey: getEnvKey("DEEPSEEK_API_KEY") || process.env.DEEPSEEK_API_KEY || "dummy",
 });
 
 // Create a dynamic OpenAI-compatible client for any provider
 function createProviderClient(provider: string, apiKey: string): OpenAI {
   const baseURL = PROVIDER_URLS[provider] || PROVIDER_URLS.deepseek;
-  return new OpenAI({ baseURL, apiKey: apiKey.trim(), timeout: 50000 });
+  return new OpenAI({
+    baseURL,
+    apiKey: apiKey.trim(),
+    timeout: 50000,
+    defaultHeaders: provider === "openrouter" ? {
+      "HTTP-Referer": "https://launcher-os.local",
+      "X-Title": "Launcher OS",
+    } : undefined,
+  });
 }
 
 // ============================================
@@ -1117,13 +1143,38 @@ export async function POST(req: Request) {
 
     if (byokApiKey && byokApiKey.trim().length > 0 && byokProvider !== "anthropic") {
       aiClient = createProviderClient(byokProvider, byokApiKey);
-      aiModelName = byokModel || PROVIDER_DEFAULT_MODELS[byokProvider] || "deepseek-chat";
-      providerLabel = byokProvider === "openai" ? "OpenAI" : byokProvider === "gemini" ? "Gemini" : "DeepSeek";
+      let resolvedModel = byokModel || PROVIDER_DEFAULT_MODELS[byokProvider] || "deepseek-chat";
+      if (byokProvider === "gemini") {
+        if (resolvedModel.includes("3.8") || resolvedModel.includes("3.5") || resolvedModel === "deepseek-chat" || !resolvedModel.includes("gemini")) {
+          resolvedModel = "gemini-2.5-flash";
+        }
+      }
+      if (byokProvider === "openrouter") {
+        if (!resolvedModel.includes("/")) {
+          if (resolvedModel.includes("gemini")) resolvedModel = `google/${resolvedModel}`;
+          else if (resolvedModel.includes("deepseek")) resolvedModel = "deepseek/deepseek-chat";
+          else resolvedModel = "google/gemini-2.5-flash";
+        }
+      }
+      aiModelName = resolvedModel;
+      providerLabel = byokProvider === "openai" ? "OpenAI" : byokProvider === "gemini" ? "Google Gemini" : byokProvider === "openrouter" ? "OpenRouter" : "DeepSeek";
+      console.log(`[BYOK] provider=${byokProvider}, model=${aiModelName}, keyPrefix=${byokApiKey.substring(0,8)}...`);
     } else {
-      // Fallback to server-side DeepSeek env key
-      aiClient = deepseek;
-      aiModelName = "deepseek-chat";
-      providerLabel = "DeepSeek V3";
+      // Fallback to server-side keys
+      const dsKey = getEnvKey("DEEPSEEK_API_KEY");
+      if (dsKey) {
+        aiClient = deepseek;
+        aiModelName = "deepseek-chat";
+        providerLabel = "DeepSeek V3";
+      } else {
+        const gemKey = getEnvKey("GEMINI_API_KEY") || getEnvKey("GOOGLE_API_KEY");
+        aiClient = new OpenAI({
+          baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+          apiKey: gemKey || "dummy",
+        });
+        aiModelName = "gemini-2.5-flash";
+        providerLabel = "Gemini 2.5 Flash";
+      }
     }
 
     // --- ENFORCE GENERATION QUOTA ---
@@ -1401,7 +1452,73 @@ ATURAN:
               const skillType = (type || "").toUpperCase();
               let skillPrompt = "";
 
-              if (skillType.includes("FINANCE") || skillType.includes("MARKET")) {
+              if (skillType.includes("PRE_LECTURE") || skillType.includes("READING") || skillType.includes("PRELECTURE")) {
+                skillPrompt = `
+=== SPECIALIZED OVERPOWER BRAIN: PRE-LECTURE READINGS & ACTIVATION CURATOR (UNIVERSAL INSTITUTIONAL STANDARD) 📚🔍 ===
+Mode Analisis: Curating Pre-Lecture Reading Materials, Web Articles, Official Documentation & Prep Protocols from Curricula.
+Target Disiplin: Universal & Multi-Disipliner (Data Science & AI, Software Engineering & Cloud, Product & Strategy, Strategic Finance, Digital Marketing, UI/UX, Governance, dll.).
+
+Anda adalah Master Academic Curator & Pre-Lecture Learning Designer kelas dunia.
+Tugas utama Anda adalah menelaah dokumen kurikulum, silabus, atau topik perkuliahan yang dikirim pengguna, lalu mengkurasi 2–3 bahan bacaan/artikel/link web berkualitas tinggi per sesi perkuliahan agar peserta memiliki 'aktivasi kognitif' sebelum masuk ke kelas.
+
+---
+## ATURAN BAKU & NON-NEGOTIABLE DIRECTIVES:
+
+1. ATURAN ANTI-MERINGKAS (CRITICAL):
+   Jika terdapat lampiran file dokumen aturan (.md) atau standar operasional yang dilampirkan pengguna, Anda WAJIB membaca dan mematuhi seluruh peraturannya secara 100% utuh tanpa meringkas atau memotong detail. JANGAN PERNAH merangkum isi file panduan tersebut kepada pengguna; melainkan TERAPKAN LANGSUNG aturan tersebut untuk menyusun kurasi Pre-Lecture Materials pada topik/silabus yang diminta pengguna.
+
+2. AKTIVASI, BUKAN PENGAJARAN (ACTIVATION, NOT INSTRUCTION):
+   - Pre-lecture readings dirancang untuk memicu rasa ingin tahu (mental priming), bukan menggantikan penjelasan dosen/instruktur di kelas.
+   - Jangan berikan tutorial teknis step-by-step yang panjang jika sesi tersebut bertujuan konseptual.
+   - Peserta harus datang ke kelas sambil memegang pertanyaan yang akan dijawab oleh sesi kuliah ("holding the question the lecture will answer").
+
+3. SPOILER PROTECTION (ANTI-BOCOR):
+   - DILARANG KERAS membocorkan solusi atau jawaban studi kasus, tugas graded (take-home assignment), kuis pemantik (warm-up poll), atau simulasi kelas.
+   - Guiding questions hanya boleh memancing sudut pandang kritis, tidak boleh membongkar jawaban atau template latihan kelas.
+
+4. SELEKSI SUMBER & KALIBRASI WAKTU (CREDIBLE & CURRENT SOURCES):
+   - Konsep Metode & Teori: Utamakan otoritas dan kredibilitas (Textbook standar, paper akademik peer-reviewed, HBR, MIT Sloan, Scikit-learn User Guide, MDN Web Docs, dll.).
+   - Tools, Library, & AI: Wajib versi stabil terkini (2024 atau lebih baru) dari dokumentasi resmi pengembang.
+   - Regulasi & Kebijakan: Wajib status terkini (misal UU PDP Indonesia, OJK, NIST AI RMF, GDPR) dan cantumkan tanggal verifikasi regulasi.
+   - Dilarang Menggunakan: SEO content farm, blog promosi vendor/marketing jualan, forum tanya-jawab acak, atau situs kamus AI abal-abal.
+   - Durasi Baca: 25–40 menit total per sesi kuliah (dibagi Must-Read vs Recommended).
+
+5. ANTI-HALUSINASI LINK & GROUNDING TAUTAN:
+   - DILARANG mengarang URL, judul artikel, nama penulis, atau nomor undang-undang.
+   - Cantumkan nama institusi/publisher resmi dan domain yang valid. Jika URL spesifik belum 100% terverifikasi, cantumkan domain resmi dan beri label [VERIFY LINK].
+   - Jika terdapat materi relevan dari konteks lokal (Indonesia), sertakan sumber kredibel (misal Komdigi, OJK, Katadata, BPS, dsb.) dengan penanda bendera 🇮🇩.
+
+6. FORMAT OUTPUT WAJIB PER SESI KULIAH:
+   Sajikan hasil kurasi bacaan per sesi dengan format baku berikut:
+
+   ### 📖 Pre-Lecture Readings: [Kode Sesi / Judul Sesi]
+   **Topik:** [Nama Topik dari Silabus]  
+   **Modul / Track:** [Modul & Minggu]  
+   **Target Waktu Baca:** Must Read ~[X] min | Total ~[Y] min  
+
+   #### 1. [Must Read] [Judul Artikel / Dokumentasi]
+   - **Sumber & Tahun:** [Penerbit / Penulis] ([Tahun])
+   - **Tautan Resmi:** [URL atau Domain Terpercaya]
+   - **Kategori / Tier:** [Official Docs · Academic · Regulator/Standard · Practitioner]
+   - **Bahasa:** [English / Bahasa Indonesia 🇮🇩]
+   - **Bagian yang Dibaca:** [Bab / Halaman / Section spesifik, bukan seluruh buku]
+   - **Why This Matters (Aktivasi):** 2–3 kalimat tajam mengapa materi ini penting sebelum masuk kelas.
+   - **Key Takeaways:**
+     1. [Takeaway poin 1]
+     2. [Takeaway poin 2]
+     3. [Takeaway poin 3]
+   - **Guiding Questions:** 2 pertanyaan pemicu refleksi/analisis saat membaca (tanpa spoiler tugas).
+   - **Catatan / Versi:** [Catatan versi tool, regulasi status, atau bahasa 🇮🇩 jika lokal]
+
+   #### 2. [Recommended] [Judul Artikel Pendukung / Sudut Pandang Praktisi]
+   ... (struktur sama) ...
+
+   ---
+   #### 🎒 Bring to Class (Persiapan Masuk Kelas)
+   - [ ] **Tools & Setup:** [Akun/software/library yang perlu diinstall/siap]
+   - [ ] **Bahan/File:** [Dataset/brief/template yang harus diunduh jika ada]
+   - [ ] **Pertanyaan Diskusi:** [1 pertanyaan atau pemikiran yang wajib dibawa ke sesi kelas]`;
+              } else if (skillType.includes("FINANCE") || skillType.includes("MARKET")) {
                 skillPrompt = `
 === SPECIALIZED OVERPOWER BRAIN: MARKET & FINANCIAL ANALYTICS (WALL STREET / CFO GRADE) 📊💰 ===
 Mode Analisis: Financial Modeling, Valuation, Unit Economics & Market Dynamics.
@@ -1434,6 +1551,9 @@ Mode Analisis: End-to-End Curriculum & Syllabus Translation into Structured Slid
 
 Anda adalah Master Presentation & Curriculum Architect. Tugas Anda adalah menerjemahkan dokumen silabus, kurikulum, topik perkuliahan, atau lampiran materi menjadi Blueprint Outline Slide Presentasi Eksekutif (120-Minute Standard Lecture / Workshop) menggunakan standar spesifikasi per-slide yang sangat disiplin dan ketat.
 
+ATURAN KRUSIAL ANTI-MERINGKAS:
+Jika terdapat lampiran file aturan (.md) seperti curriculum-deck-outline.md yang dilampirkan pengguna, Anda WAJIB membaca dan mematuhi seluruh peraturannya secara 100% utuh tanpa meringkas. JANGAN merangkum atau menjelaskan ulang isi aturan kepada pengguna; melainkan TERAPKAN LANGSUNG aturan 20 slide types dan 5-field spec untuk menghasilkan Master Slide Deck Outline dari kurikulum/topik yang diberikan pengguna.
+
 ---
 ## 1. THE PER-SLIDE SPEC (STRICT 5-FIELD CONTRACT)
 Setiap slide WAJIB ditulis dalam blok format spesifikasi berikut secara persis tanpa perkecualian (termasuk Break dan Section Divider slides):
@@ -1450,7 +1570,9 @@ Field Breakdown & Visibility Rules:
 - **Title**: The slide headline. Action-oriented conclusion, bukan topik pasif. Tampil di slide.
 - **Subtitle**: Supporting context atau framing line. Tampil di slide.
 - **Body**: Bullets, steps, table content, quiz options, exercise instructions, handout flags. Tampil di slide.
-- **Visual / layout prompt**: Design instruction: layout, chart, table, diagram, emphasis, icon use. (TIDAK tampil di slide — instruksi build visual).
+- **Visual / layout prompt**: Design instruction yang langsung dipahami oleh Deck Generator Launcher OS:
+  * Tulis rekomendasi tata letak struktural spesifik: \`Hero / Title\`, \`Two Column / Split Comparison\`, \`Process / Chevron Flow\`, \`Timeline Roadmap\`, \`Table Comparison\`, \`Quadrant Matrix (2x2)\`, \`Card Grid / Triad Pillars\`, \`Case Study / Worked Example\`, \`Stats / Metric Callout\` (hanya bila ada angka riil), \`Checklist\`, \`Closing Action / Call to Action\`, atau \`Flow Diagram\`.
+  * **ATURAN WARNA & GAYA (THEME-AGNOSTIC):** DILARANG menyebutkan warna spesifik (seperti biru ITB, kuning Makara, hijau, dll.) dalam visual prompt. Warna dan identitas visual dikontrol penuh secara otomatis oleh template/tema institusi (ITB, UI, BINUS, ITS, dll.) di Deck Generator. Fokuskan hanya pada bentuk arsitektur informasi.
 - **🎤 Speaker notes**: What the instructor says or needs to know; full case text on Case Display slides. (TIDAK tampil di slide — masuk ke notes pane).
 
 Rules:
@@ -1801,7 +1923,10 @@ Kualitas & Format Jawaban (STANDAR CHATGPT / CLAUDE):
 - Berikan jawaban yang kaya wawasan, mendalam, akurat, dan terstruktur rapi menggunakan format Markdown standar.
 - BAHASA RESPON: Sesuaikan dengan bahasa pengguna (jika pengguna bertanya dalam Bahasa Inggris, jawab dalam Bahasa Inggris yang natural, presisi, dan tajam; jika Bahasa Indonesia, jawab dalam Bahasa Indonesia yang profesional dan mengalir).
 - DAFTAR & BULLET POINTS: Gunakan format Markdown bullet list ("- " atau "* ") atau numbered list ("1. 2. 3. ") secara konsisten untuk tips, pilihan, klasifikasi, dan langkah-langkah.
-- TABEL & PERBANDINGAN: Jika menyajikan perbandingan, data terstruktur, jadwal, spesifikasi, atau matriks, SELALU gunakan Tabel Markdown standar dengan header dan garis pemisah (| Kolom A | Kolom B |\n|---|---|).
+- TABEL & PERBANDINGAN: Jika menyajikan perbandingan, data terstruktur, jadwal, spesifikasi, atau matriks, SELALU gunakan Tabel Markdown standar dengan header dan garis pemisah (| Kolom A | Kolom B |\n|---|---|) agar sistem Launcher OS dapat mengonversinya secara otomatis menjadi file Excel (.xlsx).
+- GENERASI DOKUMEN & FILE ARTIFACT (CLAUDE-STYLE):
+  * Pengguna dapat mengunduh hasil analisis Anda dalam format Word (.docx), Excel (.xlsx), PDF, atau Markdown (.md) yang otomatis disajikan di kartu unduhan di bawah bubble chat.
+  * Jika diminta membuat dokumen modul, silabus, atau beberapa studi kasus/simulasi terpisah (contoh: "Simulation A", "Simulation B", "Case Study 1"), gunakan heading (## atau ###) yang terstruktur jelas untuk masing-masing bagian agar sistem dapat memilahnya menjadi kartu file individual.
 - TEKS & PENEGASAN: Tebalkan istilah atau poin kunci dengan format **tebal** agar mudah dipindai (scannable).
 - KUTIPAN / CATATAN KHUSUS: Gunakan blockquote ("> ") untuk catatan penting, peringatan, atau kutipan.
 - Ketika ditanya tentang suatu topik, entitas, perusahaan, atau konsep (contoh: "kamu tahu X?", "apa itu Y?"):
@@ -1946,10 +2071,17 @@ ${liveConnectorContext}`;
              };
 
              for await (const chunk of completion) {
-                const rawText = chunk.choices[0]?.delta?.content || "";
-                lastFinishReason = (chunk as any).choices[0]?.finish_reason || "";
+                if ((chunk as any).error) {
+                  const chunkErr = (chunk as any).error?.message || JSON.stringify((chunk as any).error);
+                  console.error("[OpenRouter Chunk Error]:", chunkErr);
+                  throw new Error(`OpenRouter: ${chunkErr}`);
+                }
+                const delta = chunk.choices?.[0]?.delta as any;
+                const rawText = delta?.content || (delta?.reasoning && !inThought ? `<think>${delta.reasoning}</think>` : "") || "";
+                lastFinishReason = (chunk as any).choices?.[0]?.finish_reason || "";
                 const text = filterThoughtTokens(rawText);
                 if (text) { 
+                  fullText += text;
                   const displayChunk = isAssistant ? text.replace(/<<<ACTION:[\s\S]*?>>>/g, "") : text;
                   if (displayChunk) {
                     const finalType = (isAssistant && willEditDocument && !isMajorMismatch) ? "chunk" : (isAssistant ? "chat" : "chunk");
@@ -1980,7 +2112,9 @@ ${liveConnectorContext}`;
           };
 
           const attemptGemini = async (modelName: string) => {
-             const model = genAI.getGenerativeModel({ model: modelName });
+             const effectiveGemKey = (byokProvider === "gemini" && byokApiKey ? byokApiKey : null) || getEnvKey("GEMINI_API_KEY") || getEnvKey("GOOGLE_API_KEY") || process.env.GEMINI_API_KEY;
+             const activeGenAI = new GoogleGenerativeAI(effectiveGemKey || "");
+             const model = activeGenAI.getGenerativeModel({ model: modelName || "gemini-2.5-flash" });
              
              // Extract image part for Gemini if present
              let geminiImagePart: any = null;
@@ -2090,10 +2224,13 @@ ${liveConnectorContext}`;
                 for await (const chunk of result.stream) {
                   const rawText = chunk.text();
                   const text = filterGeminiThought(rawText);
-                  const displayChunk = isAssistant ? text.replace(/<<<ACTION:[\s\S]*?>>>/g, "") : text;
-                  if (displayChunk) {
-                    const finalType = (willEditDocument && !isMajorMismatch) ? "chunk" : "chat";
-                    send({ type: finalType, text: displayChunk }); 
+                  if (text) {
+                    fullText += text;
+                    const displayChunk = isAssistant ? text.replace(/<<<ACTION:[\s\S]*?>>>/g, "") : text;
+                    if (displayChunk) {
+                      const finalType = (willEditDocument && !isMajorMismatch) ? "chunk" : "chat";
+                      send({ type: finalType, text: displayChunk }); 
+                    }
                   }
                 }
                 if (!geminiInThought && geminiBuffer.length > 0) {
@@ -2142,24 +2279,48 @@ ${liveConnectorContext}`;
           
           try {
              send({ type: "stage", stage: 1, label: `${isAssistant ? 'Membalas Chat' : 'Menyusun Konten'} dengan ${finalProvider}...` });
-             if (image) {
+             console.log(`[Stream] Routing: provider=${byokProvider}, model=${aiModelName}, hasKey=${!!byokApiKey}, requestedModel=${requestedModel}`);
+             if (image && byokProvider !== "openrouter") {
                 // If user uploaded an image/SVG, route directly to Gemini 2.5 Flash for instant vision recognition
+                // OpenRouter supports vision via OpenAI-compatible API, so it goes through attemptDeepSeek
                 await attemptGemini("gemini-2.5-flash");
-             } else if (requestedModel === "deepseek" || byokProvider !== "gemini" || byokApiKey) {
+             } else if (byokProvider === "openrouter" || requestedModel === "deepseek" || byokProvider !== "gemini" || byokApiKey) {
                 await attemptDeepSeek();
              } else {
                 await attemptGemini("gemini-2.5-flash");
              }
           } catch (e: any) {
-             console.error("Primary model failed:", e.message);
+             console.error("Primary model failed:", e?.message);
              fullText = "";
-             try {
-                finalProvider = "Gemini 2.5 Flash (Fallback)";
-                send({ type: "stage", stage: 2, label: "Mencoba Jalur Alternatif..." });
-                await attemptGemini("gemini-2.5-flash");
-             } catch (e2) {
-                console.error("Secondary fallback failed...");
-                send({ type: "error", message: "Sistem AI sedang sibuk. Silakan coba lagi." });
+             let fallbackSuccess = false;
+
+             if (byokProvider === "openrouter" && byokApiKey) {
+               const openRouterFallbacks = ["google/gemini-2.0-flash-001", "deepseek/deepseek-chat", "openrouter/auto"].filter(m => m !== aiModelName);
+               for (const fallbackModel of openRouterFallbacks) {
+                 try {
+                   console.log(`[Stream] Trying OpenRouter fallback model: ${fallbackModel}`);
+                   finalProvider = `OpenRouter (${fallbackModel})`;
+                   send({ type: "stage", stage: 2, label: `Mencoba alternatif ${fallbackModel}...` });
+                   aiModelName = fallbackModel;
+                   await attemptDeepSeek();
+                   fallbackSuccess = true;
+                   break;
+                 } catch (fbErr: any) {
+                   console.warn(`[Stream] OpenRouter fallback ${fallbackModel} error:`, fbErr?.message);
+                 }
+               }
+             }
+
+             if (!fallbackSuccess) {
+               try {
+                  finalProvider = "Gemini 2.5 Flash (Fallback)";
+                  send({ type: "stage", stage: 2, label: "Mencoba Jalur Alternatif Server..." });
+                  await attemptGemini("gemini-2.5-flash");
+               } catch (e2: any) {
+                  console.error("Secondary fallback failed:", e2?.message);
+                  const finalErr = e?.message || e2?.message || "Sistem AI sedang sibuk. Silakan coba lagi.";
+                  send({ type: "error", message: finalErr });
+               }
              }
           }
 

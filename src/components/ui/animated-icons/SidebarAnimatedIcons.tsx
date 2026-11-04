@@ -48,10 +48,10 @@ export function AnimatedOverviewIcon({ className = "", size = 18, ...props }: An
 }
 
 /**
- * 2. 🧭 Animated LLM Mode Icon (Compass)
- * Dynamic 360° needle spin with spring settling on hover
+ * 2. ✨ Animated LLM Mode Icon (Frontier AI Sparkles / Intelligence Star)
+ * Modern clean aesthetic: Dual 4-point AI intelligence stars with celestial twinkle & smooth spin
  */
-export function AnimatedCompassIcon({ className = "", size = 18, ...props }: AnimatedIconProps) {
+export function AnimatedLLMIcon({ className = "", size = 18, ...props }: AnimatedIconProps) {
   return (
     <span className={`inline-flex items-center justify-center select-none ${className}`} style={{ width: size, height: size }}>
       <svg
@@ -68,35 +68,61 @@ export function AnimatedCompassIcon({ className = "", size = 18, ...props }: Ani
         {...props}
       >
         <style dangerouslySetInnerHTML={{ __html: `
-          .group:hover .compass-needle {
-            animation: compassSpin 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            transform-origin: 12px 12px;
+          .group:hover .ai-star-primary {
+            animation: aiPrimaryTwinkle 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
           }
-          .group:hover .compass-ring {
-            animation: compassPulse 0.5s ease-out forwards;
-            transform-origin: 12px 12px;
+          .group:hover .ai-star-secondary {
+            animation: aiSecondaryTwinkle 0.5s ease-out 0.1s forwards;
           }
-          @keyframes compassSpin {
-            0% { transform: rotate(0deg); }
-            60% { transform: rotate(385deg); }
-            80% { transform: rotate(355deg); }
-            100% { transform: rotate(360deg); }
+          .group:hover .ai-star-spark-dot {
+            animation: aiDotPop 0.4s ease-out 0.2s forwards;
           }
-          @keyframes compassPulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.06); }
-            100% { transform: scale(1); }
+          @keyframes aiPrimaryTwinkle {
+            0% { transform: scale(1) rotate(0deg); }
+            45% { transform: scale(1.2) rotate(35deg); }
+            80% { transform: scale(0.96) rotate(-8deg); }
+            100% { transform: scale(1) rotate(0deg); }
+          }
+          @keyframes aiSecondaryTwinkle {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.35) rotate(-25deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); }
+          }
+          @keyframes aiDotPop {
+            0% { transform: scale(0.8); opacity: 0.4; }
+            50% { transform: scale(1.5); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.75; }
           }
         ` }} />
-        <circle cx="12" cy="12" r="10" className="compass-ring" />
+
+        {/* Primary 4-pointed AI Intelligence Star */}
         <path
-          d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z"
-          className="compass-needle"
+          d="M10.5 2C10.5 6.7 6.7 10.5 2 10.5C6.7 10.5 10.5 14.3 10.5 19C10.5 14.3 14.3 10.5 19 10.5C14.3 10.5 10.5 6.7 10.5 2Z"
+          className="ai-star-primary origin-[10.5px_10.5px]"
+        />
+
+        {/* Secondary Satellite AI Star (Top Right) */}
+        <path
+          d="M18.5 2C18.5 3.93 16.93 5.5 15 5.5C16.93 5.5 18.5 7.07 18.5 9C18.5 7.07 20.07 5.5 22 5.5C20.07 5.5 18.5 3.93 18.5 2Z"
+          className="ai-star-secondary origin-[18.5px_5.5px]"
+        />
+
+        {/* Subtle Micro Sparkle Accent (Bottom Right) */}
+        <circle
+          cx="18.5"
+          cy="18.5"
+          r="1.25"
+          fill="currentColor"
+          className="ai-star-spark-dot origin-[18.5px_18.5px]"
         />
       </svg>
     </span>
   );
 }
+
+// Aliases for clean semantic naming & zero regressions
+export const AnimatedBrainAIIcon = AnimatedLLMIcon;
+export const AnimatedCompassIcon = AnimatedLLMIcon;
 
 /**
  * 3. 📽️ Animated Deck Icon (Presentation)

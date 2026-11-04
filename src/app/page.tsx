@@ -658,10 +658,10 @@ function LoginPageContent() {
 
           {/* Header */}
           <div className="space-y-1.5 text-center">
-            <h2 className="text-2xl sm:text-[28px] font-bold tracking-tight text-neutral-950 leading-tight">
+            <h2 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-neutral-950 leading-tight">
               {isSignUp ? "Create your account" : "Sign in to your account"}
             </h2>
-            <p className="text-sm font-medium text-neutral-500">
+            <p className="text-sm text-neutral-500">
               {isSignUp
                 ? "Enter your details below to create your profile"
                 : "Enter your credentials to continue to Launcher OS"}
@@ -803,7 +803,7 @@ function LoginPageContent() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 mt-2 rounded-[7px] bg-[#FFE54C] hover:bg-[#FFDE3C] active:bg-[#FCD526] text-neutral-950 font-bold text-sm sm:text-[15px] border border-[#E5BC10] flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99] shadow-xs disabled:opacity-50"
+              className="w-full h-11 mt-2 rounded-[7px] bg-[#FFE54C] hover:bg-[#FFDE3C] active:bg-[#FCD526] text-neutral-950 font-semibold text-sm sm:text-[15px] border border-[#E5BC10] flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99] shadow-xs disabled:opacity-50"
             >
               {loading ? (
                 <>

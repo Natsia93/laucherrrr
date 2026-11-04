@@ -114,7 +114,7 @@ export function FlowDiagram({
             initial={{ opacity: 0, y: 12, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.35, delay: i * 0.1, ease: "easeOut" }}
-            className="flex-1 min-w-[90px] sm:min-w-[120px] bg-white dark:bg-[#181818] border border-neutral-200 dark:border-neutral-800 rounded-md p-3 sm:p-4 relative flex flex-col justify-between"
+            className="flex-1 min-w-[90px] sm:min-w-[120px] bg-white border border-neutral-200 rounded-md p-3 sm:p-4 relative flex flex-col justify-between"
           >
             {/* Top Tag */}
             <div className="flex items-center justify-between mb-1.5">
@@ -127,11 +127,11 @@ export function FlowDiagram({
             </div>
 
             {/* Node Title & Subtitle */}
-            <h4 className={`${isPresentation ? "text-base" : "text-xs sm:text-sm"} font-bold text-neutral-900 dark:text-white leading-tight`}>
+            <h4 className={`${isPresentation ? "text-base" : "text-xs sm:text-sm"} font-bold text-neutral-900 leading-tight`}>
               {node.title}
             </h4>
             {node.subtitle && (
-              <p className={`${isPresentation ? "text-xs" : "text-[10px] sm:text-[11px]"} text-neutral-500 dark:text-neutral-400 mt-1 leading-snug`}>
+              <p className={`${isPresentation ? "text-xs" : "text-[10px] sm:text-[11px]"} text-neutral-500 mt-1 leading-snug`}>
                 {node.subtitle}
               </p>
             )}
@@ -143,7 +143,7 @@ export function FlowDiagram({
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, delay: i * 0.1 + 0.05 }}
-              className="shrink-0 text-neutral-400 dark:text-neutral-600 flex items-center justify-center"
+              className="shrink-0 text-neutral-400 flex items-center justify-center"
             >
               <ArrowRight className={`${isPresentation ? "w-5 h-5" : "w-3.5 h-3.5"}`} style={{ color: primaryColor === "#FFDE3C" ? "#E5BC10" : primaryColor }} />
             </motion.div>
@@ -168,19 +168,25 @@ export interface TableRow {
 export function ComparisonTable({
   rows,
   headers,
-  primaryColor = "#FFDE3C",
+  primaryColor = "#005AAB",
   isPresentation = false,
+  isUIDeck = false,
+  isBinusDeck = false,
 }: {
   rows?: TableRow[];
   headers?: string[];
   primaryColor?: string;
   isPresentation?: boolean;
+  isUIDeck?: boolean;
+  isBinusDeck?: boolean;
 }) {
   if (!rows || rows.length === 0) {
     return null;
   }
 
   const items = rows;
+  const isUI = isUIDeck || primaryColor === "#FEDE3B" || primaryColor === "#FFDE3C";
+  const isBinus = isBinusDeck || primaryColor === "#174A7F";
 
   // Detect custom multi-column table if headers are explicitly provided or cells array exists
   const hasCustomHeaders = headers && headers.length > 0;
@@ -192,118 +198,144 @@ export function ComparisonTable({
     ? items[0].cells.map((_, i) => `Column ${i + 1}`)
     : ["Dimension", "Current State", "Target State"];
 
+  // Clean, downgraded cell content without SaaS neon pulse or flashy gradients
   const renderCellContent = (val: unknown, isLastCol: boolean = false) => {
     if (typeof val === "boolean") {
       return val ? (
         <span
-          className="inline-flex items-center justify-center w-5 h-5 rounded-full text-neutral-950"
-          style={{ backgroundColor: primaryColor }}
+          className={`inline-flex items-center justify-center w-5 h-5 rounded-full ${
+            isUI ? "bg-[#FEDE3B] text-neutral-950" : isBinus ? "bg-[#23A3E7] text-white" : "bg-[#005AAB] text-white"
+          }`}
         >
           <Check className="w-3.5 h-3.5 stroke-[3]" />
         </span>
       ) : (
-        <X className="w-4 h-4 mx-auto text-neutral-400" />
+        <X className="w-4 h-4 mx-auto text-[#9A9A9A]" />
       );
     }
     const str = String(val || "");
 
-    // RAG badge highlighting
-    if (/\b(?:GREEN|HIJAU)\b/i.test(str)) {
+    // Clean status badge formatting per ITB design rules (No emoji, no neon pulse):
+    // OK / Green = Light Blue #EAF2FB + Deep Blue #005AAB text
+    if (/\b(?:GREEN|HIJAU|OK|PASS|LOW|RENDAH)\b/i.test(str)) {
+      const cleanLabel = str.replace(/[→\-\*]/g, "").trim();
       return (
-        <div className="flex items-center gap-1.5 justify-center flex-wrap">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            {str.replace(/\b(?:GREEN|HIJAU)\b/i, "").replace(/[→\-\*]/g, "").trim() || "GREEN"}
-          </span>
-        </div>
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] sm:text-xs font-bold bg-[#EAF2FB] text-[#005AAB] border border-[#9FB8D6]">
+          {cleanLabel}
+        </span>
       );
     }
-    if (/\b(?:AMBER|KUNING|YELLOW)\b/i.test(str)) {
+    // Risk / Amber = Yellow #FFEC8E / #FFDD3C + Text #272525
+    if (/\b(?:AMBER|KUNING|YELLOW|RISK|PARTIAL|MEDIUM|SEDANG)\b/i.test(str)) {
+      const cleanLabel = str.replace(/[→\-\*]/g, "").trim();
       return (
-        <div className="flex items-center gap-1.5 justify-center flex-wrap">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-            {str.replace(/\b(?:AMBER|KUNING|YELLOW)\b/i, "").replace(/[→\-\*]/g, "").trim() || "AMBER"}
-          </span>
-        </div>
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] sm:text-xs font-bold bg-[#FFEC8E] text-[#272525] border border-[#FFDD3C]">
+          {cleanLabel}
+        </span>
       );
     }
-    if (/\b(?:RED|MERAH)\b/i.test(str)) {
+    // Wrong / Red = Deep Blue + White text, or clean neutral tag (Fail = dark outline)
+    if (/\b(?:RED|MERAH|WRONG|FAIL|HIGH|TINGGI)\b/i.test(str)) {
+      const cleanLabel = str.replace(/[→\-\*]/g, "").trim();
       return (
-        <div className="flex items-center gap-1.5 justify-center flex-wrap">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-            {str.replace(/\b(?:RED|MERAH)\b/i, "").replace(/[→\-\*]/g, "").trim() || "RED"}
-          </span>
-        </div>
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] sm:text-xs font-bold bg-[#005AAB] text-white">
+          {cleanLabel}
+        </span>
       );
     }
 
     if (isLastCol && !hasCustomHeaders) {
       return (
         <span
-          className="px-2 py-0.5 rounded text-neutral-950 font-semibold"
-          style={{ backgroundColor: `${primaryColor}40` }}
+          className={`px-2 py-0.5 rounded font-bold ${
+            isUI
+              ? "bg-[#FEDE3B] text-neutral-950"
+              : isBinus
+              ? "bg-[#EAF2FB] text-[#018ED5]"
+              : "bg-[#FFF6CC] text-[#005AAB] border border-[#FFEC8E]"
+          }`}
         >
           {str}
         </span>
       );
     }
 
-    return <span className="leading-snug">{str}</span>;
+    return <span className="leading-snug text-[#272525]">{str}</span>;
   };
 
   return (
-    <div className={`w-full flex-1 min-h-0 overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-[#151515]/95 shadow-2xs flex flex-col ${isPresentation ? "my-auto justify-center" : ""}`}>
-      <table className={`w-full text-left border-collapse ${isPresentation ? "text-xs sm:text-sm lg:text-[15px] h-full" : "text-[11px] sm:text-xs"}`}>
+    <div className={`w-full flex-1 min-h-0 overflow-hidden rounded-lg border-[1.5px] ${
+      isUI
+        ? "border-[#FEDE3B]"
+        : isBinus
+        ? "border-[#23A3E7]"
+        : "border-[#9FB8D6]"
+    } bg-white flex flex-col shadow-none ${isPresentation ? "my-auto justify-center" : ""}`}>
+      <table className={`w-full text-left border-collapse ${isPresentation ? "text-xs sm:text-sm lg:text-[14px]" : "text-[11px] sm:text-xs"}`}>
         <thead>
-          <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/90 dark:bg-neutral-900/70 sticky top-0 z-10 backdrop-blur-xs">
+          <tr className={`${
+            isUI
+              ? "bg-gradient-to-b from-[#FFF58A] via-[#FEDE3B] to-[#F5C400] text-neutral-950 border-b border-[#D8A700]/50"
+              : isBinus
+              ? "bg-[#174A7F] text-white"
+              : "bg-[#005AAB] text-white"
+          } sticky top-0 z-10`}>
             {tableHeaders.map((hdr, i) => (
               <th
                 key={i}
                 className={`font-bold uppercase tracking-wider ${
-                  i === 0 ? "text-neutral-700 dark:text-neutral-200" : "text-center text-neutral-500 dark:text-neutral-400"
-                } ${isPresentation ? "text-xs sm:text-sm lg:text-sm p-3 sm:p-4" : "p-1.5 sm:p-2 text-[10px] sm:text-[11px]"}`}
-                style={i === tableHeaders.length - 1 && !hasCustomHeaders ? { color: primaryColor === "#FFDE3C" ? "#B45309" : primaryColor } : undefined}
+                  isUI ? "text-neutral-950" : "text-white"
+                } ${
+                  i === 0 ? "text-left" : "text-center"
+                } ${isPresentation ? "p-2.5 sm:p-3 lg:p-3.5 text-xs sm:text-sm" : "p-1.5 sm:p-2 text-[10px] sm:text-[11px]"}`}
               >
-                {hdr}
+                <span>{hdr}</span>
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className={`divide-y divide-neutral-100 dark:divide-neutral-800/80 ${isPresentation ? "divide-y-2" : ""}`}>
-          {items.slice(0, 5).map((row, idx) => (
-            <motion.tr
-              key={idx}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: idx * 0.05, ease: "easeOut" }}
-              className={`hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30 transition-colors ${isPresentation ? "min-h-[48px]" : ""}`}
-            >
-              {isMultiCol && row.cells ? (
-                row.cells.map((cellVal, cIdx) => (
-                  <td
-                    key={cIdx}
-                    className={`${isPresentation ? "p-3 sm:p-4 lg:p-4.5" : "p-1.5 sm:p-2"} ${cIdx === 0 ? "font-semibold text-neutral-900 dark:text-white" : "text-center text-neutral-700 dark:text-neutral-300"}`}
-                  >
-                    {renderCellContent(cellVal, cIdx === row.cells!.length - 1)}
-                  </td>
-                ))
-              ) : (
-                <>
-                  <td className={`${isPresentation ? "p-3 sm:p-4 lg:p-4.5" : "p-1.5 sm:p-2"} font-semibold text-neutral-800 dark:text-neutral-200`}>
-                    {row.feature || ""}
-                  </td>
-                  <td className={`${isPresentation ? "p-3 sm:p-4 lg:p-4.5" : "p-1.5 sm:p-2"} text-center text-neutral-600 dark:text-neutral-400`}>
-                    {renderCellContent(row.current)}
-                  </td>
-                  <td className={`${isPresentation ? "p-3 sm:p-4 lg:p-4.5" : "p-1.5 sm:p-2"} text-center font-bold text-neutral-950 dark:text-white`}>
-                    {renderCellContent(row.proposed, true)}
-                  </td>
-                </>
-              )}
-            </motion.tr>
-          ))}
+        <tbody className={`divide-y ${isUI ? "divide-neutral-200" : "divide-[#D6E4F5]"}`}>
+          {items.slice(0, 6).map((row, idx) => {
+            // ITB Rule §6: alternate #EAF2FB / white body rows
+            const isStriped = isUI ? idx % 2 === 1 : idx % 2 === 0;
+            const rowBg = isUI
+              ? (isStriped ? "bg-[#FFFDF5]" : "bg-white")
+              : isBinus
+              ? (isStriped ? "bg-[#F0F6FC]" : "bg-white")
+              : (isStriped ? "bg-[#EAF2FB]" : "bg-white");
+
+            return (
+              <tr
+                key={idx}
+                className={`${rowBg} ${isUI ? "hover:bg-[#FFFDE8]" : "hover:bg-[#D6E4F5]/35"} transition-colors`}
+              >
+                {isMultiCol && row.cells ? (
+                  row.cells.map((cellVal, cIdx) => (
+                    <td
+                      key={cIdx}
+                      className={`${isPresentation ? "p-2 sm:p-2.5 lg:p-3" : "p-1.5 sm:p-2"} ${
+                        cIdx === 0 ? "font-bold text-[#272525]" : "text-center text-[#272525]"
+                      }`}
+                    >
+                      {renderCellContent(cellVal, cIdx === row.cells!.length - 1)}
+                    </td>
+                  ))
+                ) : (
+                  <>
+                    <td className={`${isPresentation ? "p-2 sm:p-2.5 lg:p-3" : "p-1.5 sm:p-2"} font-bold text-[#272525]`}>
+                      {row.feature || ""}
+                    </td>
+                    <td className={`${isPresentation ? "p-2 sm:p-2.5 lg:p-3" : "p-1.5 sm:p-2"} text-center text-[#595959]`}>
+                      {renderCellContent(row.current)}
+                    </td>
+                    <td className={`${isPresentation ? "p-2 sm:p-2.5 lg:p-3" : "p-1.5 sm:p-2"} text-center font-bold text-[#272525]`}>
+                      {renderCellContent(row.proposed, true)}
+                    </td>
+                  </>
+                )}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -339,7 +371,7 @@ export function MilestoneTimeline({
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="absolute top-[28px] left-[5%] right-[5%] h-0.5 bg-neutral-200 dark:bg-neutral-800 origin-left"
+        className="absolute top-[28px] left-[5%] right-[5%] h-0.5 bg-neutral-200 origin-left"
       />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 relative z-10">
@@ -361,15 +393,15 @@ export function MilestoneTimeline({
                   isActive
                     ? "ring-4 ring-amber-400/30"
                     : isDone
-                    ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                    : "bg-white dark:bg-neutral-900 border-2 border-neutral-300 dark:border-neutral-700"
+                    ? "bg-neutral-900 text-white"
+                    : "bg-white border-2 border-neutral-300"
                 }`}
                 style={{ backgroundColor: isActive ? primaryColor : undefined }}
               >
                 {isDone ? (
                   <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                 ) : (
-                  <span className="w-2 h-2 rounded-full bg-neutral-600 dark:bg-neutral-400" />
+                  <span className="w-2 h-2 rounded-full bg-neutral-600" />
                 )}
               </div>
 
@@ -379,10 +411,10 @@ export function MilestoneTimeline({
               </span>
 
               {/* Title & Description */}
-              <h5 className={`${isPresentation ? "text-sm sm:text-base" : "text-xs sm:text-[13px]"} font-bold text-neutral-900 dark:text-white leading-tight mb-1`}>
+              <h5 className={`${isPresentation ? "text-sm sm:text-base" : "text-xs sm:text-[13px]"} font-bold text-neutral-900 leading-tight mb-1`}>
                 {m.title}
               </h5>
-              <p className={`${isPresentation ? "text-xs" : "text-[10px] sm:text-[11px]"} text-neutral-500 dark:text-neutral-400 leading-snug max-w-[170px]`}>
+              <p className={`${isPresentation ? "text-xs" : "text-[10px] sm:text-[11px]"} text-neutral-500 leading-snug max-w-[170px]`}>
                 {m.description}
               </p>
             </motion.div>
@@ -417,7 +449,7 @@ export function ArchitectureStack({
             initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.35, delay: i * 0.1, ease: "easeOut" }}
-            className="flex items-center gap-3 p-3 sm:p-3.5 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#161616]"
+            className="flex items-center gap-3 p-3 sm:p-3.5 rounded-md border border-neutral-200 bg-white"
           >
             <div
               className="w-8 h-8 sm:w-9 sm:h-9 rounded-md flex items-center justify-center shrink-0 text-neutral-950"
@@ -426,10 +458,10 @@ export function ArchitectureStack({
               <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <h5 className={`${isPresentation ? "text-sm sm:text-base" : "text-xs sm:text-sm"} font-bold text-neutral-900 dark:text-white leading-tight`}>
+              <h5 className={`${isPresentation ? "text-sm sm:text-base" : "text-xs sm:text-sm"} font-bold text-neutral-900 leading-tight`}>
                 {l.name}
               </h5>
-              <p className={`${isPresentation ? "text-xs" : "text-[10px] sm:text-[11px]"} text-neutral-500 dark:text-neutral-400 leading-snug mt-0.5`}>
+              <p className={`${isPresentation ? "text-xs" : "text-[10px] sm:text-[11px]"} text-neutral-500 leading-snug mt-0.5`}>
                 {l.detail}
               </p>
             </div>
@@ -519,18 +551,18 @@ export function QuadrantMatrix({
       items: q3Items,
       defaultTitle: "Automate with Caution",
       style: {
-        container: "bg-white dark:bg-[#161616] text-neutral-900 dark:text-neutral-100 border border-neutral-200 dark:border-neutral-800 shadow-2xs",
-        title: "text-neutral-900 dark:text-white font-bold",
-        desc: "text-neutral-600 dark:text-neutral-400 font-normal",
+        container: "bg-white text-neutral-900 border border-neutral-200 shadow-2xs",
+        title: "text-neutral-900 font-bold",
+        desc: "text-neutral-600 font-normal",
       },
     },
     {
       items: q4Items,
       defaultTitle: "Delegate & Supervise",
       style: {
-        container: "bg-white dark:bg-[#161616] text-neutral-900 dark:text-neutral-100 border-2 border-[#005AAB] shadow-2xs",
-        title: "text-[#005AAB] dark:text-[#60A5FA] font-bold",
-        desc: "text-neutral-600 dark:text-neutral-400 font-normal",
+        container: "bg-white text-neutral-900 border-2 border-[#005AAB] shadow-2xs",
+        title: "text-[#005AAB] font-bold",
+        desc: "text-neutral-600 font-normal",
       },
     },
   ];
@@ -543,7 +575,7 @@ export function QuadrantMatrix({
   return (
     <div className="w-full flex-1 flex flex-col justify-center my-auto relative pl-6 pb-6 pt-2 pr-2">
       {/* Y-Axis Arrow and Labels */}
-      <div className="absolute left-0 top-0 bottom-6 w-5 flex flex-col justify-between items-center text-[10px] sm:text-[11px] font-bold text-[#005AAB] dark:text-[#60A5FA] select-none">
+      <div className="absolute left-0 top-0 bottom-6 w-5 flex flex-col justify-between items-center text-[10px] sm:text-[11px] font-bold text-[#005AAB] select-none">
         <span className="text-center leading-tight tracking-tight">{yTop}</span>
         <div className="w-0.5 flex-1 my-1 bg-[#005AAB] relative flex items-start justify-center">
           <div className="w-0 h-0 border-l-[3.5px] border-l-transparent border-r-[3.5px] border-r-transparent border-b-[6px] border-b-[#005AAB] absolute -top-1" />
@@ -575,7 +607,7 @@ export function QuadrantMatrix({
               </div>
 
               {q.items.length > 1 && !first?.subtitle && (
-                <div className="space-y-1 mt-2 pt-1 border-t border-black/10 dark:border-white/10">
+                <div className="space-y-1 mt-2 pt-1 border-t border-black/10">
                   {q.items.slice(1, 3).map((it, iIdx) => (
                     <div key={iIdx} className="text-[10px] sm:text-[11px] opacity-90 truncate flex items-center gap-1.5">
                       <span>•</span>
@@ -595,7 +627,7 @@ export function QuadrantMatrix({
         <div className="flex-1 mx-3 h-0.5 bg-[#005AAB] relative flex items-center justify-end">
           <div className="w-0 h-0 border-t-[3.5px] border-t-transparent border-b-[3.5px] border-b-transparent border-l-[6px] border-l-[#005AAB] absolute -right-1" />
         </div>
-        <span className="text-[#005AAB] dark:text-[#60A5FA]">{xRight}</span>
+        <span className="text-[#005AAB]">{xRight}</span>
       </div>
     </div>
   );
@@ -637,7 +669,7 @@ export function FunnelDiagram({
             initial={{ opacity: 0, scaleX: 0.85 }}
             animate={{ opacity: 1, scaleX: 1 }}
             transition={{ duration: 0.35, delay: i * 0.08, ease: "easeOut" }}
-            className={`${widthClass} transition-all duration-300 rounded-md border border-neutral-200 dark:border-neutral-800 p-2 sm:p-2.5 flex items-center justify-between`}
+            className={`${widthClass} transition-all duration-300 rounded-md border border-neutral-200 p-2 sm:p-2.5 flex items-center justify-between`}
             style={{
               backgroundColor: isLast
                 ? `${primaryColor}20`
@@ -655,11 +687,11 @@ export function FunnelDiagram({
                 0{i + 1}
               </span>
               <div className="min-w-0">
-                <h5 className={`${isPresentation ? "text-sm" : "text-xs"} font-bold text-neutral-900 dark:text-white truncate font-sf`}>
+                <h5 className={`${isPresentation ? "text-sm" : "text-xs"} font-bold text-neutral-900 truncate font-sf`}>
                   {stage.label}
                 </h5>
                 {stage.subtext && (
-                  <p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate hidden sm:block font-sf">
+                  <p className="text-[10px] text-neutral-500 truncate hidden sm:block font-sf">
                     {stage.subtext}
                   </p>
                 )}
@@ -667,11 +699,11 @@ export function FunnelDiagram({
             </div>
 
             <div className="text-right shrink-0 pl-2">
-              <span className={`${isPresentation ? "text-sm sm:text-base" : "text-xs sm:text-sm"} font-extrabold text-neutral-900 dark:text-white tabular-nums font-sf`}>
+              <span className={`${isPresentation ? "text-sm sm:text-base" : "text-xs sm:text-sm"} font-extrabold text-neutral-900 tabular-nums font-sf`}>
                 {stage.value}
               </span>
               {stage.rate && (
-                <span className="block text-[9px] sm:text-[10px] font-sf font-sans text-emerald-600 dark:text-emerald-400 font-bold tabular-nums">
+                <span className="block text-[9px] sm:text-[10px] font-sf font-sans text-emerald-600 font-bold tabular-nums">
                   {stage.rate}
                 </span>
               )}
@@ -715,7 +747,7 @@ export function CycleLoop({
           initial={{ opacity: 0, y: 12, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.35, delay: i * 0.09, ease: "easeOut" }}
-          className="relative bg-white dark:bg-[#181818] border border-neutral-200 dark:border-neutral-800 rounded-md p-3 flex flex-col justify-between group hover:border-neutral-400 dark:hover:border-neutral-600 transition-all"
+          className="relative bg-white border border-neutral-200 rounded-md p-3 flex flex-col justify-between group hover:border-neutral-400:border-neutral-600 transition-all"
         >
           {/* Top Stage Indicator */}
           <div className="flex items-center justify-between mb-2">
@@ -733,11 +765,11 @@ export function CycleLoop({
           </div>
 
           <div>
-            <h5 className={`${isPresentation ? "text-sm sm:text-base" : "text-xs sm:text-[13px]"} font-bold text-neutral-900 dark:text-white leading-tight`}>
+            <h5 className={`${isPresentation ? "text-sm sm:text-base" : "text-xs sm:text-[13px]"} font-bold text-neutral-900 leading-tight`}>
               {node.title}
             </h5>
             {node.description && (
-              <p className={`${isPresentation ? "text-xs" : "text-[10px] sm:text-[11px]"} text-neutral-500 dark:text-neutral-400 mt-1 leading-snug`}>
+              <p className={`${isPresentation ? "text-xs" : "text-[10px] sm:text-[11px]"} text-neutral-500 mt-1 leading-snug`}>
                 {node.description}
               </p>
             )}
@@ -788,7 +820,7 @@ export function ChevronProcessBar({
             <div key={i} className="text-center px-1">
               {step.position === "top" && (
                 <div className="flex flex-col items-center">
-                  <span className={`${isPresentation ? "text-2xl" : "text-sm sm:text-base"} font-black text-neutral-900 dark:text-white`}>
+                  <span className={`${isPresentation ? "text-2xl" : "text-sm sm:text-base"} font-black text-neutral-900`}>
                     {step.percentage}
                   </span>
                   <p className={`${isPresentation ? "text-xs" : "text-[9px]"} text-neutral-500 truncate max-w-full`}>
@@ -841,7 +873,7 @@ export function ChevronProcessBar({
           {items.map((step, i) => (
             <div key={i} className="flex flex-col justify-start items-start text-left px-1">
               {step.description && (
-                <p className={`text-neutral-700 dark:text-neutral-300 ${
+                <p className={`text-neutral-700 ${
                   isPresentation ? "text-xs sm:text-sm leading-relaxed" : "text-[10px] sm:text-[11px] leading-snug"
                 } line-clamp-3 font-normal`}>
                   {step.description}
@@ -853,7 +885,7 @@ export function ChevronProcessBar({
                     isPresentation ? "text-[11px] sm:text-xs" : "text-[9.5px] sm:text-[10px]"
                   } ${
                     step.pillType === "neutral"
-                      ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700"
+                      ? "bg-neutral-100 text-neutral-600 border border-neutral-200"
                       : "bg-[#005AAB] text-white shadow-2xs"
                   }`}>
                     {step.pill}
@@ -870,7 +902,7 @@ export function ChevronProcessBar({
             <div key={i} className="text-center px-1">
               {step.position === "bottom" && (
                 <div className="flex flex-col items-center">
-                  <span className={`${isPresentation ? "text-2xl" : "text-sm sm:text-base"} font-black text-neutral-900 dark:text-white`}>
+                  <span className={`${isPresentation ? "text-2xl" : "text-sm sm:text-base"} font-black text-neutral-900`}>
                     {step.percentage}
                   </span>
                   <p className={`${isPresentation ? "text-xs" : "text-[9px]"} text-neutral-500 truncate max-w-full`}>
@@ -885,7 +917,7 @@ export function ChevronProcessBar({
 
       {/* Full-Width Key Insight Bar (Slide 1 Bottom Pattern) */}
       {keyInsight && (
-        <div className={`w-full mt-3 sm:mt-4 rounded-md overflow-hidden flex items-stretch border border-neutral-200/80 dark:border-neutral-800 shadow-2xs`} style={{ backgroundColor: primaryColor }}>
+        <div className={`w-full mt-3 sm:mt-4 rounded-md overflow-hidden flex items-stretch border border-neutral-200/80 shadow-2xs`} style={{ backgroundColor: primaryColor }}>
           <div className="w-2 sm:w-2.5 shrink-0" style={{ backgroundColor: accentColor }} />
           <div className={`p-2.5 sm:p-3 text-white font-medium ${
             isPresentation ? "text-xs sm:text-sm lg:text-[15px]" : "text-[11px] sm:text-xs"
@@ -934,7 +966,7 @@ export function GaugeRings({
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.35, delay: i * 0.08, ease: "easeOut" }}
-            className={`flex items-center gap-3 ${isMulti ? "p-2.5 sm:p-3" : "p-3 sm:p-4"} rounded-md border border-neutral-200/90 dark:border-neutral-800 bg-white/95 dark:bg-[#161616]/95 overflow-hidden`}
+            className={`flex items-center gap-3 ${isMulti ? "p-2.5 sm:p-3" : "p-3 sm:p-4"} rounded-md border border-neutral-200/90 bg-white/95 overflow-hidden`}
           >
             {/* SVG Radial Gauge */}
             <div className={`relative ${isMulti ? "w-12 h-12 sm:w-14 sm:h-14" : "w-16 h-16 sm:w-20 sm:h-20"} shrink-0 flex items-center justify-center`}>
@@ -943,7 +975,7 @@ export function GaugeRings({
                   cx="50"
                   cy="50"
                   r={radius}
-                  className="stroke-neutral-200 dark:stroke-neutral-800"
+                  className="stroke-neutral-200"
                   strokeWidth="10"
                   fill="transparent"
                 />
@@ -961,7 +993,7 @@ export function GaugeRings({
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className={`${isMulti ? "text-xs sm:text-sm" : isPresentation ? "text-lg" : "text-sm sm:text-base"} font-black text-neutral-950 dark:text-white tabular-nums`}>
+                <span className={`${isMulti ? "text-xs sm:text-sm" : isPresentation ? "text-lg" : "text-sm sm:text-base"} font-black text-neutral-950 tabular-nums`}>
                   {gauge.percentage}%
                 </span>
               </div>
@@ -969,10 +1001,10 @@ export function GaugeRings({
 
             {/* Description Details */}
             <div className="min-w-0 flex-1">
-              <h5 className={`${isMulti ? "text-xs" : isPresentation ? "text-base" : "text-xs sm:text-sm"} font-bold text-neutral-950 dark:text-white leading-snug line-clamp-1`}>
+              <h5 className={`${isMulti ? "text-xs" : isPresentation ? "text-base" : "text-xs sm:text-sm"} font-bold text-neutral-950 leading-snug line-clamp-1`}>
                 {gauge.title}
               </h5>
-              <p className={`${isMulti ? "text-[9px] sm:text-[10px]" : isPresentation ? "text-xs" : "text-[10px] sm:text-[11px]"} text-neutral-500 dark:text-neutral-400 mt-0.5 leading-snug line-clamp-2`}>
+              <p className={`${isMulti ? "text-[9px] sm:text-[10px]" : isPresentation ? "text-xs" : "text-[10px] sm:text-[11px]"} text-neutral-500 mt-0.5 leading-snug line-clamp-2`}>
                 {gauge.description}
               </p>
             </div>
@@ -1028,7 +1060,7 @@ export function AscendingTrajectory({
               className={`flex flex-col items-center ${heightClass} transition-all`}
             >
               <div
-                className="rounded-md p-2 sm:p-3 border border-neutral-200 dark:border-neutral-800 flex items-center gap-2"
+                className="rounded-md p-2 sm:p-3 border border-neutral-200 flex items-center gap-2"
                 style={{ backgroundColor: primaryColor }}
               >
                 <span className={`${isPresentation ? "text-xl sm:text-2xl" : "text-sm sm:text-base"} font-black text-neutral-950`}>
@@ -1041,7 +1073,7 @@ export function AscendingTrajectory({
                   )}
                 </div>
               </div>
-              <div className="w-3 h-3 rounded-full bg-neutral-900 dark:bg-white mt-2 ring-4 ring-amber-400/30" />
+              <div className="w-3 h-3 rounded-full bg-neutral-900 mt-2 ring-4 ring-amber-400/30" />
             </motion.div>
           );
         })}
@@ -1090,12 +1122,12 @@ export function VerticalProgressStack({
           </span>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
-              <h5 className={`${isPresentation ? "text-sm" : "text-xs font-bold"} text-neutral-900 dark:text-white truncate font-sf`}>
+              <h5 className={`${isPresentation ? "text-sm" : "text-xs font-bold"} text-neutral-900 truncate font-sf`}>
                 {item.title}
               </h5>
               <span className="text-[10px] font-sf font-sans font-bold text-neutral-500 tabular-nums">{item.percentage}%</span>
             </div>
-            <div className="w-full h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+            <div className="w-full h-1.5 rounded-full bg-neutral-200 overflow-hidden">
               <div
                 className="h-full rounded-full"
                 style={{ backgroundColor: primaryColor, width: `${item.percentage}%` }}
@@ -1156,12 +1188,12 @@ export function BubbleClusterDiagram({
           transition={{ duration: 0.4, delay: 0.15 }}
           className="absolute left-[54%] sm:left-[56%] top-[8%] flex items-center gap-2.5 z-20"
         >
-          <div className="w-6 sm:w-10 h-[1.5px] bg-neutral-300 dark:bg-neutral-700 shrink-0" />
-          <span className={`${isPresentation ? "text-xl sm:text-2xl" : "text-base sm:text-lg"} font-black text-neutral-950 dark:text-white font-sf tabular-nums shrink-0`}>
+          <div className="w-6 sm:w-10 h-[1.5px] bg-neutral-300 shrink-0" />
+          <span className={`${isPresentation ? "text-xl sm:text-2xl" : "text-base sm:text-lg"} font-black text-neutral-950 font-sf tabular-nums shrink-0`}>
             {items[0].percentage}%
           </span>
           {items[0].description && (
-            <span className="text-[9px] sm:text-[10px] text-neutral-500 dark:text-neutral-400 max-w-[130px] sm:max-w-[150px] line-clamp-2 leading-tight">
+            <span className="text-[9px] sm:text-[10px] text-neutral-500 max-w-[130px] sm:max-w-[150px] line-clamp-2 leading-tight">
               {items[0].description}
             </span>
           )}
@@ -1187,14 +1219,14 @@ export function BubbleClusterDiagram({
           className="absolute right-[64%] sm:right-[65%] top-[34%] flex items-center gap-2.5 z-20"
         >
           {items[1].description && (
-            <span className="text-[9px] sm:text-[10px] text-neutral-500 dark:text-neutral-400 max-w-[130px] sm:max-w-[150px] text-right line-clamp-2 leading-tight">
+            <span className="text-[9px] sm:text-[10px] text-neutral-500 max-w-[130px] sm:max-w-[150px] text-right line-clamp-2 leading-tight">
               {items[1].description}
             </span>
           )}
-          <span className={`${isPresentation ? "text-xl sm:text-2xl" : "text-base sm:text-lg"} font-black text-neutral-950 dark:text-white font-sf tabular-nums shrink-0`}>
+          <span className={`${isPresentation ? "text-xl sm:text-2xl" : "text-base sm:text-lg"} font-black text-neutral-950 font-sf tabular-nums shrink-0`}>
             {items[1].percentage}%
           </span>
-          <div className="w-6 sm:w-10 h-[1.5px] bg-neutral-300 dark:bg-neutral-700 shrink-0" />
+          <div className="w-6 sm:w-10 h-[1.5px] bg-neutral-300 shrink-0" />
         </motion.div>
 
         {/* Circle 3 - Large Bottom Right Primary */}
@@ -1217,12 +1249,12 @@ export function BubbleClusterDiagram({
           transition={{ duration: 0.4, delay: 0.25 }}
           className="absolute left-[64%] sm:left-[66%] bottom-[8%] flex items-center gap-2.5 z-20"
         >
-          <div className="w-6 sm:w-10 h-[1.5px] bg-neutral-300 dark:bg-neutral-700 shrink-0" />
-          <span className={`${isPresentation ? "text-xl sm:text-2xl" : "text-base sm:text-lg"} font-black text-neutral-950 dark:text-white font-sf tabular-nums shrink-0`}>
+          <div className="w-6 sm:w-10 h-[1.5px] bg-neutral-300 shrink-0" />
+          <span className={`${isPresentation ? "text-xl sm:text-2xl" : "text-base sm:text-lg"} font-black text-neutral-950 font-sf tabular-nums shrink-0`}>
             {items[2].percentage}%
           </span>
           {items[2].description && (
-            <span className="text-[9px] sm:text-[10px] text-neutral-500 dark:text-neutral-400 max-w-[130px] sm:max-w-[150px] line-clamp-2 leading-tight">
+            <span className="text-[9px] sm:text-[10px] text-neutral-500 max-w-[130px] sm:max-w-[150px] line-clamp-2 leading-tight">
               {items[2].description}
             </span>
           )}
@@ -1272,23 +1304,23 @@ export function ConnectedVerticalRings({
           >
             {/* Ring Circle */}
             <div
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white dark:bg-neutral-900 border-4 flex items-center justify-center shrink-0"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white border-4 flex items-center justify-center shrink-0"
               style={{ borderColor: primaryColor }}
             >
-              <span className={`${isPresentation ? "text-base sm:text-lg" : "text-xs sm:text-sm"} font-extrabold text-neutral-900 dark:text-white font-sf`}>
+              <span className={`${isPresentation ? "text-base sm:text-lg" : "text-xs sm:text-sm"} font-extrabold text-neutral-900 font-sf`}>
                 {item.percentage}%
               </span>
             </div>
 
             {/* Horizontal Connector Line */}
-            <div className="w-4 sm:w-8 h-[2px] bg-neutral-300 dark:bg-neutral-700 shrink-0" />
+            <div className="w-4 sm:w-8 h-[2px] bg-neutral-300 shrink-0" />
 
             {/* Right Text Content Row */}
-            <div className="flex-1 min-w-0 bg-neutral-50/80 dark:bg-neutral-900/60 p-2.5 sm:p-3 rounded-lg border border-neutral-100 dark:border-neutral-800">
-              <h5 className={`${isPresentation ? "text-base" : "text-xs sm:text-sm"} font-bold text-neutral-900 dark:text-white leading-tight font-sf`}>
+            <div className="flex-1 min-w-0 bg-neutral-50/80 p-2.5 sm:p-3 rounded-lg border border-neutral-100">
+              <h5 className={`${isPresentation ? "text-base" : "text-xs sm:text-sm"} font-bold text-neutral-900 leading-tight font-sf`}>
                 {item.title}
               </h5>
-              <p className={`${isPresentation ? "text-xs" : "text-[10px] sm:text-[11px]"} text-neutral-500 dark:text-neutral-400 mt-1 leading-snug line-clamp-2`}>
+              <p className={`${isPresentation ? "text-xs" : "text-[10px] sm:text-[11px]"} text-neutral-500 mt-1 leading-snug line-clamp-2`}>
                 {item.description}
               </p>
             </div>
@@ -1346,10 +1378,10 @@ export function HorizontalMilestonesBar({
             transition={{ duration: 0.35, delay: i * 0.08 }}
             className="flex flex-col"
           >
-            <h5 className={`${isPresentation ? "text-sm sm:text-base" : "text-[11px] sm:text-xs"} font-bold text-neutral-900 dark:text-white leading-tight font-sf`}>
+            <h5 className={`${isPresentation ? "text-sm sm:text-base" : "text-[11px] sm:text-xs"} font-bold text-neutral-900 leading-tight font-sf`}>
               {m.title}
             </h5>
-            <p className={`${isPresentation ? "text-xs" : "text-[9px] sm:text-[10px]"} text-neutral-500 dark:text-neutral-400 mt-1 leading-snug line-clamp-3`}>
+            <p className={`${isPresentation ? "text-xs" : "text-[9px] sm:text-[10px]"} text-neutral-500 mt-1 leading-snug line-clamp-3`}>
               {m.description}
             </p>
           </motion.div>
@@ -1413,7 +1445,7 @@ export function SplitMetricHero({
       </motion.div>
 
       {/* Thin Vertical Dividing Line */}
-      <div className="w-[1.5px] self-stretch bg-neutral-200 dark:bg-neutral-800" />
+      <div className="w-[1.5px] self-stretch bg-neutral-200" />
 
       {/* Right Column: 3 Numbered Progress Rows */}
       <div className="flex-1 flex flex-col gap-3">
@@ -1435,7 +1467,7 @@ export function SplitMetricHero({
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
-                <h5 className={`${isPresentation ? "text-sm" : "text-xs"} font-bold text-neutral-900 dark:text-white truncate font-sf`}>
+                <h5 className={`${isPresentation ? "text-sm" : "text-xs"} font-bold text-neutral-900 truncate font-sf`}>
                   {item.title}
                 </h5>
                 <span className="text-[10px] font-sf font-sans font-bold text-neutral-500 shrink-0 tabular-nums">{item.percentage}%</span>
@@ -1446,7 +1478,7 @@ export function SplitMetricHero({
                 </p>
               )}
               {/* Active Progress Bar */}
-              <div className="w-full h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 mt-1.5 overflow-hidden">
+              <div className="w-full h-1.5 rounded-full bg-neutral-200 mt-1.5 overflow-hidden">
                 <div
                   className="h-full rounded-full"
                   style={{ backgroundColor: primaryColor, width: `${item.percentage}%` }}
@@ -1508,7 +1540,7 @@ export function CurvedCycleLoop({
         </motion.div>
         {/* Label Node 1 (Right of Top Circle) */}
         <div className="absolute top-[12px] left-[225px] max-w-[130px]">
-          <div className="text-[10px] sm:text-[11px] font-bold text-neutral-900 dark:text-white leading-tight">{items[0].title}</div>
+          <div className="text-[10px] sm:text-[11px] font-bold text-neutral-900 leading-tight">{items[0].title}</div>
           <div className="text-[8px] sm:text-[9px] text-neutral-500 line-clamp-1">{items[0].description}</div>
         </div>
 
@@ -1524,7 +1556,7 @@ export function CurvedCycleLoop({
         </motion.div>
         {/* Label Node 2 (Right of Circle 2) */}
         <div className="absolute bottom-[28px] right-[10px] translate-x-full max-w-[110px] hidden sm:block">
-          <div className="text-[10px] sm:text-[11px] font-bold text-neutral-900 dark:text-white leading-tight">{items[1].title}</div>
+          <div className="text-[10px] sm:text-[11px] font-bold text-neutral-900 leading-tight">{items[1].title}</div>
           <div className="text-[8px] sm:text-[9px] text-neutral-500 line-clamp-1">{items[1].description}</div>
         </div>
 
@@ -1568,7 +1600,7 @@ export function AsymmetricMatrixGrid({
         className="flex items-center gap-3"
       >
         <div className="w-[30%] text-center">
-          <span className={`${isPresentation ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"} font-black text-neutral-950 dark:text-white font-sf`}>
+          <span className={`${isPresentation ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"} font-black text-neutral-950 font-sf`}>
             {activeItems[0].stat}
           </span>
         </div>
@@ -1594,7 +1626,7 @@ export function AsymmetricMatrixGrid({
           {activeItems[1].text}
         </div>
         <div className="w-[30%] text-center">
-          <span className={`${isPresentation ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"} font-black text-neutral-950 dark:text-white font-sf`}>
+          <span className={`${isPresentation ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"} font-black text-neutral-950 font-sf`}>
             {activeItems[1].stat}
           </span>
         </div>
@@ -1608,7 +1640,7 @@ export function AsymmetricMatrixGrid({
         className="flex items-center gap-3"
       >
         <div className="w-[30%] text-center">
-          <span className={`${isPresentation ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"} font-black text-neutral-950 dark:text-white font-sf`}>
+          <span className={`${isPresentation ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"} font-black text-neutral-950 font-sf`}>
             {activeItems[2].stat}
           </span>
         </div>
@@ -1756,12 +1788,12 @@ export function PairedRows({
           className={`flex items-center gap-2.5 sm:gap-4 w-full min-h-0`}
         >
           {/* Left Problem Box (Neutral Wash) */}
-          <div className={`flex-1 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200/80 dark:border-neutral-700/80 ${
+          <div className={`flex-1 rounded-lg bg-neutral-100 border border-neutral-200/80 ${
             isPresentation
               ? "py-3 sm:py-4 px-4 sm:px-5 text-xs sm:text-sm lg:text-[15px]"
               : "py-2 sm:py-2.5 px-3.5 text-[11px] sm:text-xs"
-          } text-neutral-800 dark:text-neutral-200 font-medium leading-relaxed line-clamp-2 overflow-hidden shadow-2xs`}>
-            {row.leftLead && <strong className="font-bold text-neutral-950 dark:text-white mr-1.5">{row.leftLead}</strong>}
+          } text-neutral-800 font-medium leading-relaxed line-clamp-2 overflow-hidden shadow-2xs`}>
+            {row.leftLead && <strong className="font-bold text-neutral-950 mr-1.5">{row.leftLead}</strong>}
             {row.left}
           </div>
 
@@ -1917,13 +1949,13 @@ export function ConnectedRailStepper({
             </div>
 
             {/* Title & Description */}
-            <h4 className={`font-bold text-neutral-900 dark:text-white leading-tight px-1 line-clamp-2 ${
+            <h4 className={`font-bold text-neutral-900 leading-tight px-1 line-clamp-2 ${
               isPresentation ? "text-xs sm:text-sm" : "text-[11px] sm:text-xs"
             }`}>
               {step.title}
             </h4>
             {step.description && (
-              <p className={`text-neutral-600 dark:text-neutral-400 mt-0.5 leading-snug px-1 line-clamp-2 ${
+              <p className={`text-neutral-600 mt-0.5 leading-snug px-1 line-clamp-2 ${
                 isPresentation ? "text-[11px] sm:text-xs" : "text-[9.5px] sm:text-[10.5px]"
               }`}>
                 {step.description}
@@ -2004,73 +2036,117 @@ export function AscendingColumns({
  * ─────────────────────────────────────────────────── */
 export function ExecutiveChecklist({
   items,
-  badgeLabel = "CHECKLIST",
+  badgeLabel = "EXERCISE 1",
   primaryColor = "#005AAB",
   isPresentation = false,
+  isUIDeck = false,
+  isBinusDeck = false,
 }: {
   items: string[];
   badgeLabel?: string;
   primaryColor?: string;
   isPresentation?: boolean;
+  isUIDeck?: boolean;
+  isBinusDeck?: boolean;
 }) {
   if (!items || items.length === 0) return null;
 
-  // Split items into 2 balanced columns
-  const half = Math.ceil(items.length / 2);
-  const col1 = items.slice(0, half);
-  const col2 = items.slice(half);
+  const isUI = isUIDeck || primaryColor === "#FEDE3B" || primaryColor === "#FFDE3C";
+  const isBinus = isBinusDeck || primaryColor === "#174A7F";
+  const isCompact = items.length >= 5;
 
   return (
-    <div className="w-full flex flex-col my-auto gap-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 w-full">
-        {/* Column 1 */}
-        <div className="flex flex-col gap-2.5 sm:gap-3.5">
-          {col1.map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: i * 0.06 }}
-              className="flex items-center gap-3 pb-2.5 sm:pb-3 border-b border-blue-100 dark:border-neutral-800"
-            >
-              <div
-                className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg shrink-0 flex items-center justify-center border-2"
-                style={{ borderColor: primaryColor }}
-              >
-                <Check className="w-4 h-4 sm:w-5 sm:h-5 stroke-[3]" style={{ color: primaryColor }} />
-              </div>
-              <span className={`font-medium text-neutral-800 dark:text-neutral-200 leading-snug ${
-                isPresentation ? "text-base sm:text-lg" : "text-xs sm:text-sm"
-              }`}>
-                {item}
-              </span>
-            </motion.div>
-          ))}
+    <div className="w-full my-auto flex flex-col justify-center min-h-0 overflow-hidden">
+      {/* Outer Card: Clean 2px border in ITB Deep Blue #005AAB, BINUS Sky Blue, or UI Yellow. No drop shadows. */}
+      <div className={`w-full rounded-lg border-[2px] ${
+        isUI
+          ? "border-[#FEDE3B] shadow-[0_4px_20px_rgba(254,222,59,0.18)]"
+          : isBinus
+          ? "border-[#23A3E7] shadow-[0_4px_20px_rgba(35,163,231,0.14)]"
+          : "border-[#005AAB]"
+      } bg-white overflow-hidden flex flex-col`}>
+        {/* Header Strip: Glossy Yellow in UI, Deep Blue in BINUS, Solid ITB Deep Blue in ITB */}
+        <div className={`relative px-4 sm:px-6 ${isCompact ? "py-1.5 sm:py-2" : "py-2 sm:py-2.5"} ${
+          isUI
+            ? "bg-gradient-to-b from-[#FFF58A] via-[#FEDE3B] to-[#F5C400] text-neutral-950 border-b border-[#D8A700]/50 shadow-xs"
+            : isBinus
+            ? "bg-gradient-to-r from-[#174A7F] via-[#1E5F9E] to-[#23A3E7] text-white"
+            : "bg-[#005AAB] text-white"
+        } flex items-center justify-between overflow-hidden`}>
+          {/* Subtle glossy glass sheen overlay on the top half of the header in UI mode */}
+          {isUI && (
+            <div className="absolute inset-x-0 top-0 h-1/2 pointer-events-none bg-gradient-to-b from-white/75 via-white/25 to-transparent" />
+          )}
+
+          {/* Left: Exercise / Checklist Title in Uppercase Bold */}
+          <span className={`font-black text-xs sm:text-sm lg:text-[15px] uppercase tracking-wider relative z-10 ${
+            isUI ? "text-neutral-950 drop-shadow-[0_1px_0_rgba(255,255,255,0.8)]" : "text-white"
+          }`}>
+            {badgeLabel}
+          </span>
+
+          {/* Right: Pair / Participant fill-in blank */}
+          <div className={`flex items-center gap-1.5 text-xs sm:text-sm ${
+            isUI ? "text-neutral-950 font-black" : "text-[#FFDD3C] font-bold"
+          } relative z-10`}>
+            <span className={isUI ? "text-neutral-950" : "text-[#FFDD3C]"}>Pair:</span>
+            <span className={`inline-block w-14 sm:w-20 border-b-[2px] ${
+              isUI ? "border-neutral-950/70" : "border-[#FFDD3C]"
+            } transform translate-y-[-1px]`} />
+          </div>
         </div>
 
-        {/* Column 2 */}
-        <div className="flex flex-col gap-2.5 sm:gap-3.5">
-          {col2.map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: (half + i) * 0.06 }}
-              className="flex items-center gap-3 pb-2.5 sm:pb-3 border-b border-blue-100 dark:border-neutral-800"
-            >
-              <div
-                className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg shrink-0 flex items-center justify-center border-2"
-                style={{ borderColor: primaryColor }}
+        {/* Rows List: Ruled rows with rounded checkbox pills and index markers */}
+        <div className={`divide-y ${isUI ? "divide-neutral-200" : isBinus ? "divide-[#E6EDF8]" : "divide-[#D6E4F5]"} bg-white`}>
+          {items.slice(0, 6).map((item, i) => {
+            const indexLabel = `1.${i + 1}`;
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: i * 0.04 }}
+                className={`${isCompact ? "px-3.5 sm:px-5 py-1.5 sm:py-2" : "px-4 sm:px-6 py-2.5 sm:py-3"} flex items-center justify-between gap-3 sm:gap-4 ${
+                  isUI ? "hover:bg-[#FFFDE8]" : "hover:bg-[#EAF2FB]/50"
+                } transition-colors`}
               >
-                <Check className="w-4 h-4 sm:w-5 sm:h-5 stroke-[3]" style={{ color: primaryColor }} />
-              </div>
-              <span className={`font-medium text-neutral-800 dark:text-neutral-200 leading-snug ${
-                isPresentation ? "text-base sm:text-lg" : "text-xs sm:text-sm"
-              }`}>
-                {item}
-              </span>
-            </motion.div>
-          ))}
+                <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                  {/* Clean Rounded Checkbox Pill in ITB Deep Blue #005AAB */}
+                  <div className={`${
+                    isCompact ? "w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-[5px] sm:rounded-[6px]" : "w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-[7px] sm:rounded-[8px]"
+                  } border-[2px] ${
+                    isUI
+                      ? "border-neutral-900 bg-gradient-to-b from-white to-[#FFFCEB] shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.06)] hover:border-[#D8A700]"
+                      : isBinus
+                      ? "border-[#23A3E7] bg-white hover:border-[#174A7F]"
+                      : "border-[#005AAB] bg-white hover:border-[#003E78]"
+                  } shrink-0 flex items-center justify-center cursor-pointer transition-colors`} />
+
+                  {/* Row Text */}
+                  <span className={`font-normal text-[#272525] ${
+                    isCompact
+                      ? "text-[11px] sm:text-[12px] lg:text-[13px] leading-snug line-clamp-2"
+                      : (isPresentation ? "text-xs sm:text-sm lg:text-[15px] leading-snug" : "text-[11.5px] sm:text-xs leading-snug")
+                  } line-clamp-2`}>
+                    {item}
+                  </span>
+                </div>
+
+                {/* Right Item Identifier Pill */}
+                <div className="shrink-0 text-right">
+                  <span className={`text-[10px] sm:text-[11.5px] font-black font-mono tracking-tight px-1.5 py-0.5 rounded ${
+                    isUI
+                      ? "text-neutral-950 bg-amber-400/20"
+                      : isBinus
+                      ? "text-[#018ED5] bg-[#EAF2FB] font-semibold"
+                      : "text-[#005AAB] bg-[#EAF2FB] font-bold"
+                  }`}>
+                    {indexLabel}
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -2088,6 +2164,7 @@ export function SectionDivider({
   accentColor = "#FFDD3C",
   isPresentation = false,
   transparentBg = false,
+  isDarkBg = true,
 }: {
   partLabel?: string;
   title: string;
@@ -2096,64 +2173,72 @@ export function SectionDivider({
   accentColor?: string;
   isPresentation?: boolean;
   transparentBg?: boolean;
+  isDarkBg?: boolean;
 }) {
+  const isLight = transparentBg && !isDarkBg;
+  const titleColor = isLight ? "#000000" : "#FFFFFF";
+  const subtitleColor = isLight ? "text-neutral-900 font-medium" : "text-white/90 font-normal";
+  const barColor = isLight ? "#000000" : accentColor;
+  const labelColor = isLight ? "#000000" : accentColor;
+
   return (
     <div
-      className="w-full h-full flex flex-col justify-center items-start p-[8%] sm:p-[10%] relative overflow-hidden"
+      className="w-full h-full flex flex-col justify-center items-start px-[7%] sm:px-[9%] py-[8%] sm:py-[10%] relative overflow-hidden select-none"
       style={{
         background: transparentBg ? "transparent" : `linear-gradient(150deg, ${primaryColor} 0%, #007AE8 100%)`,
-        color: "#FFFFFF",
+        color: titleColor,
       }}
     >
-      {/* Yellow bottom accent bar (only if not transparentBg, since template already includes it) */}
-      {!transparentBg && (
-        <div
-          className="absolute left-0 bottom-0 right-0 h-3"
-          style={{ backgroundColor: accentColor }}
-        />
-      )}
-
-      {/* Short Yellow Accent Bar Top */}
+      {/* Bottom accent bar */}
       <div
-        className="w-24 sm:w-32 h-2.5 sm:h-3 rounded-full mb-3"
-        style={{ backgroundColor: accentColor }}
+        className="absolute left-0 bottom-0 right-0 h-1 sm:h-1.5 z-10"
+        style={{ backgroundColor: barColor }}
       />
 
-      {/* Part Label */}
-      {partLabel && (
-        <span
-          className="text-xs sm:text-sm font-extrabold uppercase tracking-widest mb-3"
-          style={{ color: accentColor }}
-        >
-          {partLabel}
-        </span>
-      )}
+      <div className="my-auto max-w-4xl flex flex-col items-start z-10">
+        {/* Short Accent Bar Top */}
+        <div
+          className="w-12 sm:w-16 h-1.5 sm:h-2 rounded-sm mb-3.5"
+          style={{ backgroundColor: barColor }}
+        />
 
-      {/* Title */}
-      <motion.h1
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className={`font-black text-white leading-tight tracking-tight ${
-          isPresentation ? "text-4xl sm:text-6xl" : "text-2xl sm:text-4xl"
-        }`}
-      >
-        {title}
-      </motion.h1>
+        {/* Part or Break Label */}
+        {partLabel && (
+          <span
+            className="text-xs sm:text-sm font-bold uppercase tracking-wider mb-2.5"
+            style={{ color: labelColor }}
+          >
+            {partLabel}
+          </span>
+        )}
 
-      {/* Subtitle */}
-      {subtitle && (
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
+        {/* Title */}
+        <motion.h1
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className={`text-white/90 font-normal mt-3 max-w-3xl leading-relaxed ${
-            isPresentation ? "text-lg sm:text-2xl" : "text-xs sm:text-base"
+          transition={{ duration: 0.4 }}
+          className={`font-bold leading-tight tracking-tight ${
+            isPresentation ? "text-4xl sm:text-6xl lg:text-7xl" : "text-2xl sm:text-4xl lg:text-5xl"
           }`}
+          style={{ color: titleColor }}
         >
-          {subtitle}
-        </motion.p>
-      )}
+          {title}
+        </motion.h1>
+
+        {/* Subtitle / Reflection question */}
+        {subtitle && (
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className={`mt-2.5 max-w-3xl leading-relaxed ${subtitleColor} ${
+              isPresentation ? "text-lg sm:text-2xl" : "text-sm sm:text-lg"
+            }`}
+          >
+            {subtitle}
+          </motion.p>
+        )}
+      </div>
     </div>
   );
 }
@@ -2171,6 +2256,8 @@ export function ClosingAction({
   accentColor = "#FFDD3C",
   isPresentation = false,
   transparentBg = false,
+  isDarkBg = false,
+  isUIDeck = false,
 }: {
   tag?: string;
   title: string;
@@ -2181,6 +2268,8 @@ export function ClosingAction({
   accentColor?: string;
   isPresentation?: boolean;
   transparentBg?: boolean;
+  isDarkBg?: boolean;
+  isUIDeck?: boolean;
 }) {
   // Sanitize contactText: per ITB rules §11, facilitator directions and bracketed placeholders
   // like [Facilitator Name], [kontak...], [date/time] must NEVER appear on the visual slide canvas.
@@ -2190,34 +2279,102 @@ export function ClosingAction({
     !contactText.includes("]") &&
     !/facilitator|narasumber|pembicara/i.test(contactText);
 
+  // Dedicated layout for UI × RevoU closing deck:
+  // ui-deck/closing-deck.webp has a top ~31% yellow banner (y: 0–330px) and a bottom white content canvas.
+  // The title and subtitle belong directly in the yellow banner with bold black typography.
+  if (isUIDeck && transparentBg) {
+    return (
+      <div className="w-full h-full flex flex-col justify-between relative overflow-hidden bg-transparent select-text">
+        {/* Top ~31% Yellow Header Band: Title and Subtitle placed directly on the yellow canvas */}
+        <div className="w-full h-[31%] px-[6%] sm:px-[7%] pt-3.5 sm:pt-5 pb-2 flex flex-col justify-center items-start relative shrink-0">
+          {tag && (
+            <span className="px-3 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider mb-1 bg-black text-[#FEDE3B] shadow-2xs">
+              {tag}
+            </span>
+          )}
+
+          <h1
+            className={`font-black leading-tight tracking-tight text-black line-clamp-2 ${
+              isPresentation ? "text-3xl sm:text-5xl" : "text-xl sm:text-3xl"
+            }`}
+            style={{ color: "#000000" }}
+          >
+            {title}
+          </h1>
+
+          {subtitle && (
+            <p
+              className={`font-medium text-neutral-900/85 mt-1 line-clamp-1 ${
+                isPresentation ? "text-base sm:text-lg" : "text-xs sm:text-sm"
+              }`}
+            >
+              {subtitle}
+            </p>
+          )}
+        </div>
+
+        {/* Lower White Content Area: Action List Items */}
+        <div className="w-full flex-1 px-[6%] sm:px-[7%] pt-5 sm:pt-7 pb-2 flex flex-col justify-start items-start">
+          {actions && actions.length > 0 && (
+            <div className="flex flex-col gap-2.5 sm:gap-3.5 w-full max-w-3xl">
+              {actions.map((act, i) => (
+                <div key={i} className="flex items-start gap-3 text-neutral-900 leading-snug">
+                  <span className="w-6 h-6 rounded-md bg-[#FEDE3B] text-black font-extrabold flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-2xs border border-neutral-300/40">
+                    {i + 1}
+                  </span>
+                  <span className={`font-semibold text-neutral-900 ${isPresentation ? "text-base sm:text-lg" : "text-xs sm:text-sm"}`}>
+                    {act}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Bottom Clean Contact / Reminder Band */}
+        {isCleanContact && (
+          <div className="h-12 sm:h-14 px-[6%] sm:px-[7%] flex items-center text-xs sm:text-sm font-semibold text-neutral-700">
+            {contactText}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const titleTextColor = isDarkBg ? "#FFFFFF" : "#000000";
+  const subtitleTextColor = isDarkBg ? "text-white/90" : "text-neutral-700";
+  const actionTextColor = isDarkBg ? "text-white/95" : "text-neutral-800";
+
   return (
-    <div className={`w-full h-full flex flex-col justify-between relative overflow-hidden ${transparentBg ? "bg-transparent" : "bg-white dark:bg-[#111114]"}`}>
-      {/* Top 75% Primary Gradient Area */}
+    <div className={`w-full h-full flex flex-col justify-between relative overflow-hidden ${transparentBg ? "bg-transparent" : "bg-white"}`}>
+      {/* Top 75% Primary Area */}
       <div
         className="w-full flex-1 p-[6%] sm:p-[7%] flex flex-col justify-center items-start relative"
         style={{
-          background: transparentBg ? "transparent" : `linear-gradient(150deg, ${primaryColor} 0%, #007AE8 100%)`,
-          color: "#FFFFFF",
+          background: transparentBg ? "transparent" : (isDarkBg ? `linear-gradient(150deg, ${primaryColor} 0%, #005AAB 100%)` : "transparent"),
         }}
       >
         {/* Accent Tag */}
         {tag && (
           <span
-            className="px-4 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-2.5"
-            style={{ backgroundColor: accentColor, color: "#272525" }}
+            className="px-4 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-2.5 shadow-2xs"
+            style={{ backgroundColor: accentColor || "#FEDE3B", color: "#000000" }}
           >
             {tag}
           </span>
         )}
 
-        <h1 className={`font-black text-white leading-tight tracking-tight ${
-          isPresentation ? "text-3xl sm:text-5xl" : "text-xl sm:text-3xl"
-        }`}>
+        <h1
+          className={`font-black leading-tight tracking-tight ${
+            isPresentation ? "text-3xl sm:text-5xl" : "text-xl sm:text-3xl"
+          }`}
+          style={{ color: titleTextColor }}
+        >
           {title}
         </h1>
 
         {subtitle && (
-          <p className={`text-white/90 font-normal mt-1.5 mb-4 ${
+          <p className={`font-normal mt-1.5 mb-4 ${subtitleTextColor} ${
             isPresentation ? "text-base sm:text-xl" : "text-xs sm:text-sm"
           }`}>
             {subtitle}
@@ -2228,7 +2385,7 @@ export function ClosingAction({
         {actions && actions.length > 0 && (
           <div className="flex flex-col gap-2 sm:gap-2.5 w-full max-w-3xl">
             {actions.map((act, i) => (
-              <div key={i} className="flex items-start gap-2.5 text-white/95 leading-snug">
+              <div key={i} className={`flex items-start gap-2.5 ${actionTextColor} leading-snug`}>
                 <span className="font-bold opacity-80">{i + 1}.</span>
                 <span className={`font-medium ${isPresentation ? "text-base sm:text-lg" : "text-xs sm:text-sm"}`}>
                   {act}
@@ -2249,7 +2406,7 @@ export function ClosingAction({
 
       {/* Bottom Clean Contact / Reminder Band (only if clean public contact, never facilitator scripts) */}
       {isCleanContact && (
-        <div className={`h-12 sm:h-14 px-[6%] sm:px-[7%] flex items-center text-xs sm:text-sm font-semibold ${transparentBg ? "bg-transparent text-neutral-800" : "text-neutral-600 dark:text-neutral-400"}`}>
+        <div className={`h-12 sm:h-14 px-[6%] sm:px-[7%] flex items-center text-xs sm:text-sm font-semibold ${transparentBg ? "bg-transparent text-neutral-800" : "text-neutral-600"}`}>
           {contactText}
         </div>
       )}
@@ -2318,7 +2475,7 @@ export function FormulaHeroSplit({
           {factors.slice(0, 3).map((f, idx) => (
             <div
               key={idx}
-              className="p-3 sm:p-3.5 rounded-lg bg-neutral-50/80 dark:bg-neutral-900/50 border border-neutral-200/80 dark:border-neutral-800 flex flex-col justify-start"
+              className="p-3 sm:p-3.5 rounded-lg bg-neutral-50/80 border border-neutral-200/80 flex flex-col justify-start"
             >
               <div className="flex items-center gap-2 mb-1.5">
                 <span
@@ -2330,11 +2487,11 @@ export function FormulaHeroSplit({
                 >
                   {idx + 1}
                 </span>
-                <span className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-neutral-100 leading-tight">
+                <span className="text-xs sm:text-sm font-bold text-neutral-900 leading-tight">
                   {f.title}
                 </span>
               </div>
-              <p className="text-[11px] sm:text-xs text-neutral-600 dark:text-neutral-400 font-normal leading-relaxed line-clamp-3">
+              <p className="text-[11px] sm:text-xs text-neutral-600 font-normal leading-relaxed line-clamp-3">
                 {f.description}
               </p>
             </div>
@@ -2388,6 +2545,19 @@ export interface TreeComparisonProps {
   isPresentation?: boolean;
 }
 
+export interface TreeComparisonProps {
+  topCallout?: {
+    stat?: string;
+    label?: string;
+    note?: string;
+  };
+  cards: TreeCardItem[];
+  bottomTakeaway?: string;
+  primaryColor?: string;
+  accentColor?: string;
+  isPresentation?: boolean;
+}
+
 export function TreeComparisonCards({
   topCallout,
   cards = [],
@@ -2396,97 +2566,99 @@ export function TreeComparisonCards({
   accentColor = "#FFDD3C",
   isPresentation = false,
 }: TreeComparisonProps) {
+  // Root decision question
+  const rootQuestion = topCallout?.note || topCallout?.label || "What is one point?";
+
+  const displayCards = cards.slice(0, 3);
+  const cardCount = Math.max(displayCards.length, 1);
+
   return (
-    <div className="w-full flex-1 flex flex-col justify-between my-auto gap-3 sm:gap-4 overflow-hidden">
-      {/* Top Compact Stat Callout Banner */}
-      {topCallout && (topCallout.stat || topCallout.note) && (
-        <div className="flex items-center gap-3 sm:gap-4">
-          {topCallout.stat && (
-            <div
-              className="px-3.5 py-1.5 rounded-lg flex items-center gap-2 shadow-2xs shrink-0"
-              style={{ backgroundColor: accentColor, color: "#111111" }}
-            >
-              <span className="text-sm sm:text-base font-black">{topCallout.stat}</span>
-              {topCallout.label && (
-                <span className="text-[10px] sm:text-[11px] font-semibold leading-tight">{topCallout.label}</span>
-              )}
-            </div>
-          )}
-          {topCallout.note && (
-            <p className="text-xs sm:text-sm font-semibold text-neutral-800 dark:text-neutral-200 leading-snug">
-              {topCallout.note}
-            </p>
-          )}
+    <div className="w-full flex-1 flex flex-col items-center justify-center my-auto py-2 sm:py-4 select-none">
+      {/* 1. Root Decision Box (Deep Royal Blue with rounded corners) */}
+      <div className="relative z-10">
+        <div
+          className="px-6 sm:px-10 py-3 sm:py-3.5 rounded-[10px] text-white font-bold text-xs sm:text-sm lg:text-base text-center shadow-[0_4px_14px_rgba(0,90,171,0.18)]"
+          style={{ backgroundColor: primaryColor }}
+        >
+          {rootQuestion}
         </div>
-      )}
-
-      {/* 3 Diagram Cards with Visual Tree / Node Branches inside */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 items-stretch flex-1">
-        {cards.slice(0, 3).map((c, i) => (
-          <div
-            key={i}
-            className="rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-[#161616] p-3.5 sm:p-4 flex flex-col justify-between shadow-2xs hover:border-neutral-400 dark:hover:border-neutral-700 transition-colors"
-          >
-            <div>
-              <h5 className="text-xs sm:text-sm font-bold text-[#005AAB] dark:text-[#60A5FA] mb-3">
-                {c.title}
-              </h5>
-
-              {/* Mini Flow Tree Diagram inside Card */}
-              <div className="flex flex-col items-center my-2 select-none">
-                {/* Root Node */}
-                <div
-                  className="px-3 py-1 rounded text-[10.5px] sm:text-xs font-bold text-white shadow-2xs text-center"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  {c.rootNode || "Core Driver"}
-                </div>
-
-                {/* Branching SVG Connector Line */}
-                <svg className="w-24 h-4 my-0.5 text-neutral-400" viewBox="0 0 100 20" fill="none">
-                  <path d="M 50 0 L 50 10 L 20 10 L 20 20 M 50 10 L 80 10 L 80 20" stroke="currentColor" strokeWidth="1.5" />
-                </svg>
-
-                {/* 2 Child Nodes */}
-                <div className="flex items-center justify-between w-full gap-2">
-                  <div
-                    className="flex-1 py-1 px-1.5 rounded text-[10px] font-bold text-center truncate shadow-2xs"
-                    style={{
-                      backgroundColor: i % 2 === 0 ? accentColor : "#E2E8F0",
-                      color: "#111111",
-                    }}
-                  >
-                    {c.childNodes?.[0] || "Branch A"}
-                  </div>
-                  <div
-                    className="flex-1 py-1 px-1.5 rounded text-[10px] font-bold text-center truncate shadow-2xs"
-                    style={{
-                      backgroundColor: i % 2 === 0 ? accentColor : "#E2E8F0",
-                      color: "#111111",
-                    }}
-                  >
-                    {c.childNodes?.[1] || "Branch B"}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-[10.5px] sm:text-xs text-neutral-600 dark:text-neutral-400 font-normal leading-relaxed mt-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800 line-clamp-3">
-              {c.description}
-            </p>
-          </div>
-        ))}
       </div>
 
-      {/* Bottom Takeaway Quote Strip with Vertical Yellow Bar Accent */}
-      {bottomTakeaway && (
-        <div className="flex items-stretch gap-2.5 mt-1">
-          <div className="w-1.5 rounded-full shrink-0" style={{ backgroundColor: accentColor }} />
-          <p className="text-[11px] sm:text-xs text-neutral-700 dark:text-neutral-300 font-medium leading-relaxed">
-            {bottomTakeaway}
-          </p>
-        </div>
-      )}
+      {/* 2. Orthogonal Decision Tree Connector Lines */}
+      <div className="w-full max-w-4xl h-10 sm:h-12 relative flex justify-center">
+        {/* Vertical line down from Root */}
+        <div className="w-[2.5px] h-5 sm:h-6 bg-[#005AAB]" />
+
+        {/* Horizontal connector spanning across child columns */}
+        {cardCount > 1 && (
+          <div
+            className="absolute top-5 sm:top-6 h-[2.5px] bg-[#005AAB]"
+            style={{
+              left: cardCount === 3 ? "16.66%" : "25%",
+              right: cardCount === 3 ? "16.66%" : "25%",
+            }}
+          />
+        )}
+
+        {/* 3 Vertical Drops going straight down to each card */}
+        {cardCount === 3 ? (
+          <>
+            <div className="absolute top-5 sm:top-6 left-[16.66%] w-[2.5px] h-5 sm:h-6 bg-[#005AAB]" />
+            <div className="absolute top-5 sm:top-6 left-1/2 -translate-x-1/2 w-[2.5px] h-5 sm:h-6 bg-[#005AAB]" />
+            <div className="absolute top-5 sm:top-6 right-[16.66%] w-[2.5px] h-5 sm:h-6 bg-[#005AAB]" />
+          </>
+        ) : cardCount === 2 ? (
+          <>
+            <div className="absolute top-5 sm:top-6 left-[25%] w-[2.5px] h-5 sm:h-6 bg-[#005AAB]" />
+            <div className="absolute top-5 sm:top-6 right-[25%] w-[2.5px] h-5 sm:h-6 bg-[#005AAB]" />
+          </>
+        ) : null}
+      </div>
+
+      {/* 3. Three Decision Branch Cards with Yellow / Blue Bottom Pill Banners */}
+      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-stretch">
+        {displayCards.map((c, i) => {
+          // Alternating color pattern: Yellow -> Blue -> Yellow
+          const isYellow = i % 2 === 0;
+          const borderColor = isYellow ? "#FFDD3C" : "#005AAB";
+          const bannerBg = isYellow ? "#FFDD3C" : "#005AAB";
+          const bannerTextColor = isYellow ? "#272525" : "#FFFFFF";
+          const bannerLabel = c.title || c.rootNode || `Outcome ${i + 1}`;
+
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: i * 0.06 }}
+              className="rounded-lg bg-white p-4 sm:p-5 flex flex-col justify-between shadow-[0_4px_16px_rgba(0,0,0,0.04)]"
+              style={{
+                border: `2px solid ${borderColor}`,
+              }}
+            >
+              {/* Card Body Description / Question */}
+              <div className="min-h-[64px] sm:min-h-[80px] flex items-center">
+                <p className="text-xs sm:text-sm text-[#272525] font-normal leading-relaxed">
+                  {c.description || (c.childNodes ? c.childNodes.join(" · ") : "Condition details")}
+                </p>
+              </div>
+
+              {/* Bottom Result Pill / Banner */}
+              <div className="mt-3 pt-2">
+                <div
+                  className="w-full py-2 sm:py-2.5 px-3 rounded-[10px] text-center font-bold text-xs sm:text-sm lg:text-base tracking-tight shadow-xs"
+                  style={{
+                    backgroundColor: bannerBg,
+                    color: bannerTextColor,
+                  }}
+                >
+                  {bannerLabel}
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -2525,11 +2697,11 @@ export function CaseStudyExercise({
       {/* Left Column (7 of 12 cols): Scenario + Data Tiles + Twist Warning */}
       <div className="md:col-span-7 flex flex-col justify-between gap-2.5">
         {/* Situation Block */}
-        <div className="p-3 sm:p-3.5 rounded-lg bg-neutral-100/80 dark:bg-neutral-850/70 border border-neutral-200/70 dark:border-neutral-800">
+        <div className="p-3 sm:p-3.5 rounded-lg bg-neutral-100/80 border border-neutral-200/70">
           <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-neutral-500 block mb-1">
             {situationTitle}
           </span>
-          <p className="text-[11.5px] sm:text-xs text-neutral-800 dark:text-neutral-200 leading-relaxed font-normal">
+          <p className="text-[11.5px] sm:text-xs text-neutral-800 leading-relaxed font-normal">
             {situationText}
           </p>
         </div>
@@ -2540,12 +2712,12 @@ export function CaseStudyExercise({
             {dataMetrics.slice(0, 3).map((m, mIdx) => (
               <div
                 key={mIdx}
-                className="p-2 sm:p-2.5 rounded-lg bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/50 dark:border-blue-900/40 flex flex-col justify-center"
+                className="p-2 sm:p-2.5 rounded-lg bg-blue-50/60 border border-blue-200/50 flex flex-col justify-center"
               >
-                <span className="text-base sm:text-lg font-black text-[#005AAB] dark:text-[#60A5FA] leading-tight">
+                <span className="text-base sm:text-lg font-black text-[#005AAB] leading-tight">
                   {m.value}
                 </span>
-                <span className="text-[10px] text-neutral-600 dark:text-neutral-400 font-medium leading-tight mt-0.5">
+                <span className="text-[10px] text-neutral-600 font-medium leading-tight mt-0.5">
                   {m.label}
                 </span>
               </div>
@@ -2569,12 +2741,12 @@ export function CaseStudyExercise({
       </div>
 
       {/* Right Column (5 of 12 cols): 3-Line Exercise Sheet with Dashed Dividers */}
-      <div className="md:col-span-5 rounded-lg border-2 border-[#005AAB] p-3.5 sm:p-4 bg-white dark:bg-[#161616] shadow-2xs flex flex-col justify-between">
-        <span className="text-[10.5px] sm:text-xs font-bold uppercase tracking-wider text-[#005AAB] dark:text-[#60A5FA] block pb-2 border-b border-neutral-100 dark:border-neutral-800">
+      <div className="md:col-span-5 rounded-lg border-2 border-[#005AAB] p-3.5 sm:p-4 bg-white shadow-2xs flex flex-col justify-between">
+        <span className="text-[10.5px] sm:text-xs font-bold uppercase tracking-wider text-[#005AAB] block pb-2 border-b border-neutral-100">
           {exerciseTitle}
         </span>
 
-        <div className="space-y-2.5 sm:space-y-3.5 my-auto py-2 divide-y divide-dashed divide-neutral-200 dark:divide-neutral-800">
+        <div className="space-y-2.5 sm:space-y-3.5 my-auto py-2 divide-y divide-dashed divide-neutral-200">
           {(exerciseLines.length > 0 ? exerciseLines : [
             "Which AIDM mode fits the monthly replacement queue? Why?",
             "Which part of the decision must stay Override, and why?",
@@ -2587,7 +2759,7 @@ export function CaseStudyExercise({
               >
                 {idx + 1}
               </span>
-              <p className="text-[11px] sm:text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-snug">
+              <p className="text-[11px] sm:text-xs font-medium text-neutral-800 leading-snug">
                 {line}
               </p>
             </div>
@@ -2704,16 +2876,16 @@ export function PyramidHierarchy({
 
       {/* Tier 1: Foundation Base */}
       <div className="flex justify-center w-full">
-        <div className="w-full max-w-3xl rounded-lg p-2 sm:p-2.5 bg-neutral-50/90 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 shadow-2xs">
+        <div className="w-full max-w-3xl rounded-lg p-2 sm:p-2.5 bg-neutral-50/90 border border-neutral-200/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 shadow-2xs">
           <div className="flex-1 min-w-0">
             <span className="text-[9px] sm:text-[9.5px] font-bold uppercase tracking-wider text-neutral-500 block mb-0.5">
               {items[2]?.level || "TIER 1 · FOUNDATION & ENABLERS"}
             </span>
-            <h5 className="text-xs sm:text-[13px] font-bold text-neutral-900 dark:text-neutral-100 leading-tight line-clamp-1">
+            <h5 className="text-xs sm:text-[13px] font-bold text-neutral-900 leading-tight line-clamp-1">
               {items[2]?.title}
             </h5>
             {items[2]?.description && (
-              <p className="text-[10px] sm:text-[11px] text-neutral-600 dark:text-neutral-400 font-normal mt-0.5 leading-tight line-clamp-2">
+              <p className="text-[10px] sm:text-[11px] text-neutral-600 font-normal mt-0.5 leading-tight line-clamp-2">
                 {items[2]?.description}
               </p>
             )}
@@ -2723,7 +2895,7 @@ export function PyramidHierarchy({
               {items[2].items.map((it, idx) => (
                 <span
                   key={idx}
-                  className="px-1.5 py-0.5 rounded bg-neutral-200/80 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-[9px] font-semibold border border-neutral-300/60 dark:border-neutral-700 truncate max-w-[130px]"
+                  className="px-1.5 py-0.5 rounded bg-neutral-200/80 text-neutral-800 text-[9px] font-semibold border border-neutral-300/60 truncate max-w-[130px]"
                 >
                   {it}
                 </span>
@@ -2797,24 +2969,24 @@ export function TransformationBridge({
   return (
     <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 my-auto items-stretch overflow-hidden py-1">
       {/* Left Panel: As-Is State (4 of 12 cols) */}
-      <div className="md:col-span-4 rounded-lg bg-neutral-50/90 dark:bg-neutral-900/50 border border-neutral-200/80 dark:border-neutral-800 p-3.5 sm:p-4 flex flex-col justify-between shadow-2xs">
+      <div className="md:col-span-4 rounded-lg bg-neutral-50/90 border border-neutral-200/80 p-3.5 sm:p-4 flex flex-col justify-between shadow-2xs">
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 block mb-1">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 block mb-1">
             {currentAsIs.tag || "CURRENT (AS-IS)"}
           </span>
-          <h4 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-neutral-100 mb-2.5">
+          <h4 className="text-xs sm:text-sm font-bold text-neutral-900 mb-2.5">
             {currentAsIs.title}
           </h4>
           <ul className="space-y-1.5">
             {currentAsIs.points.map((pt, i) => (
-              <li key={i} className="text-[11px] sm:text-xs text-neutral-600 dark:text-neutral-400 flex items-start gap-1.5 leading-snug">
+              <li key={i} className="text-[11px] sm:text-xs text-neutral-600 flex items-start gap-1.5 leading-snug">
                 <span className="text-rose-500 font-bold shrink-0">✕</span>
                 <span>{pt}</span>
               </li>
             ))}
           </ul>
         </div>
-        <span className="text-[9.5px] font-medium text-neutral-400 italic mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+        <span className="text-[9.5px] font-medium text-neutral-400 italic mt-3 pt-2 border-t border-neutral-100">
           Status Quo Baseline
         </span>
       </div>
@@ -2849,24 +3021,24 @@ export function TransformationBridge({
       </div>
 
       {/* Right Panel: To-Be State (4 of 12 cols) */}
-      <div className="md:col-span-4 rounded-lg bg-blue-50/40 dark:bg-blue-950/20 border-2 border-[#005AAB] p-3.5 sm:p-4 flex flex-col justify-between shadow-2xs">
+      <div className="md:col-span-4 rounded-lg bg-blue-50/40 border-2 border-[#005AAB] p-3.5 sm:p-4 flex flex-col justify-between shadow-2xs">
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#005AAB] dark:text-[#60A5FA] block mb-1">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#005AAB] block mb-1">
             {currentToBe.tag || "TARGET OUTCOME (TO-BE)"}
           </span>
-          <h4 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-neutral-100 mb-2.5">
+          <h4 className="text-xs sm:text-sm font-bold text-neutral-900 mb-2.5">
             {currentToBe.title}
           </h4>
           <ul className="space-y-1.5">
             {currentToBe.points.map((pt, i) => (
-              <li key={i} className="text-[11px] sm:text-xs text-neutral-700 dark:text-neutral-300 flex items-start gap-1.5 leading-snug">
-                <span className="text-[#005AAB] dark:text-[#60A5FA] font-bold shrink-0">✓</span>
+              <li key={i} className="text-[11px] sm:text-xs text-neutral-700 flex items-start gap-1.5 leading-snug">
+                <span className="text-[#005AAB] font-bold shrink-0">✓</span>
                 <span>{pt}</span>
               </li>
             ))}
           </ul>
         </div>
-        <span className="text-[9.5px] font-bold text-[#005AAB] dark:text-[#60A5FA] mt-3 pt-2 border-t border-blue-100 dark:border-blue-900/40">
+        <span className="text-[9.5px] font-bold text-[#005AAB] mt-3 pt-2 border-t border-blue-100">
           Target State Benchmark
         </span>
       </div>
@@ -2913,18 +3085,18 @@ export function RadialHubEcosystem({
         {cards.slice(0, 2).map((sat, i) => (
           <div
             key={i}
-            className="rounded-lg p-3 sm:p-3.5 bg-neutral-50/80 dark:bg-neutral-900/50 border border-neutral-200/80 dark:border-neutral-800 flex items-center justify-between gap-3 shadow-2xs"
+            className="rounded-lg p-3 sm:p-3.5 bg-neutral-50/80 border border-neutral-200/80 flex items-center justify-between gap-3 shadow-2xs"
           >
             <div>
               {sat.tag && (
-                <span className="text-[9.5px] font-bold uppercase tracking-wider text-[#005AAB] dark:text-[#60A5FA] block mb-0.5">
+                <span className="text-[9.5px] font-bold uppercase tracking-wider text-[#005AAB] block mb-0.5">
                   {sat.tag}
                 </span>
               )}
-              <h5 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-neutral-100 leading-tight">
+              <h5 className="text-xs sm:text-sm font-bold text-neutral-900 leading-tight">
                 {sat.title}
               </h5>
-              <p className="text-[10.5px] sm:text-[11.5px] text-neutral-600 dark:text-neutral-400 leading-snug mt-0.5">
+              <p className="text-[10.5px] sm:text-[11.5px] text-neutral-600 leading-snug mt-0.5">
                 {sat.description}
               </p>
             </div>
@@ -2966,18 +3138,18 @@ export function RadialHubEcosystem({
         {cards.slice(2, 4).map((sat, i) => (
           <div
             key={i}
-            className="rounded-lg p-3 sm:p-3.5 bg-neutral-50/80 dark:bg-neutral-900/50 border border-neutral-200/80 dark:border-neutral-800 flex items-center justify-between gap-3 shadow-2xs"
+            className="rounded-lg p-3 sm:p-3.5 bg-neutral-50/80 border border-neutral-200/80 flex items-center justify-between gap-3 shadow-2xs"
           >
             <div>
               {sat.tag && (
-                <span className="text-[9.5px] font-bold uppercase tracking-wider text-[#005AAB] dark:text-[#60A5FA] block mb-0.5">
+                <span className="text-[9.5px] font-bold uppercase tracking-wider text-[#005AAB] block mb-0.5">
                   {sat.tag}
                 </span>
               )}
-              <h5 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-neutral-100 leading-tight">
+              <h5 className="text-xs sm:text-sm font-bold text-neutral-900 leading-tight">
                 {sat.title}
               </h5>
-              <p className="text-[10.5px] sm:text-[11.5px] text-neutral-600 dark:text-neutral-400 leading-snug mt-0.5">
+              <p className="text-[10.5px] sm:text-[11.5px] text-neutral-600 leading-snug mt-0.5">
                 {sat.description}
               </p>
             </div>
@@ -3014,6 +3186,8 @@ export function SplitCaseComparison({
   insightText = "Key insight: AI didn't replace the leader. It changed what the leader decides.",
   isPresentation = false,
   fontTitleClass = "",
+  isUIDeck = false,
+  isBinusDeck = false,
 }: {
   title: string;
   subtitle?: string;
@@ -3027,13 +3201,27 @@ export function SplitCaseComparison({
   insightText?: string;
   isPresentation?: boolean;
   fontTitleClass?: string;
+  isUIDeck?: boolean;
+  isBinusDeck?: boolean;
 }) {
+  const isFinanceOrUI = isUIDeck || /universitas\s*indonesia|ui\s*×\s*revou|\bui\b|makara/i.test(`${title} ${subtitle || ""} ${insightText} ${afterTitle}`);
+  const isBinus = !isUIDeck && (isBinusDeck || /binus|bina\s*nusantara/i.test(`${title} ${subtitle || ""} ${insightText} ${afterTitle}`));
+  const card2Bg = isFinanceOrUI ? "bg-neutral-950 text-white" : isBinus ? "bg-[#23A3E7] text-white" : "bg-[#005AAB] text-white";
+  const accentColor = isFinanceOrUI ? "#FEDE3B" : isBinus ? "#FFDE3D" : "#FFDD3C";
+  const arrowColor = isFinanceOrUI ? "text-neutral-950" : isBinus ? "text-[#23A3E7]" : "text-[#005AAB]";
+  const insightBg = isFinanceOrUI ? "bg-neutral-950" : isBinus ? "bg-[#174A7F]" : "bg-[#005AAB]";
+
+  const leftBgColor = isFinanceOrUI ? "#000000" : isBinus ? "#174A7F" : "#005AAB";
+
   return (
-    <div className="w-full h-full flex flex-row relative select-none overflow-hidden bg-transparent">
-      {/* Left Blue Panel (~33% width, sits directly over laptop graphic) */}
-      <div className="w-[33%] sm:w-[32%] h-full pt-[13%] sm:pt-[15%] pl-[5%] sm:pl-[6%] pr-3 sm:pr-4 flex flex-col justify-start relative z-10">
-        {/* Yellow accent bar 140x12px */}
-        <div className="w-16 sm:w-24 h-2 sm:h-2.5 bg-[#FFDD3C] rounded-full mb-3 shrink-0" />
+    <div className="w-full h-full flex flex-row relative select-none overflow-hidden bg-white">
+      {/* Left Split Panel (~33% width) with Institution Dark Background */}
+      <div
+        className="w-[33%] sm:w-[32%] h-full pt-[13%] sm:pt-[15%] pl-[5%] sm:pl-[6%] pr-3 sm:pr-4 flex flex-col justify-start relative z-10 shadow-sm"
+        style={{ backgroundColor: leftBgColor }}
+      >
+        {/* Yellow accent bar */}
+        <div className="w-16 sm:w-24 h-2 sm:h-2.5 rounded-full mb-3 shrink-0" style={{ backgroundColor: accentColor }} />
 
         {/* Title: 700 Bold, White text */}
         <h1
@@ -3044,12 +3232,13 @@ export function SplitCaseComparison({
           {title}
         </h1>
 
-        {/* Subtitle: 600 Semibold, Golden Yellow */}
+        {/* Subtitle */}
         {subtitle && (
           <p
-            className={`font-semibold text-[#FFDD3C] mt-2 sm:mt-2.5 leading-snug line-clamp-2 ${
+            className={`font-semibold mt-2 sm:mt-2.5 leading-snug line-clamp-2 ${
               isPresentation ? "text-sm sm:text-base lg:text-lg" : "text-xs sm:text-sm lg:text-[15px]"
             }`}
+            style={{ color: accentColor }}
           >
             {subtitle}
           </p>
@@ -3063,16 +3252,16 @@ export function SplitCaseComparison({
         )}
       </div>
 
-      {/* Right White Panel (~67% width, sits on the clean white area) */}
-      <div className="w-[67%] sm:w-[68%] h-full pt-[8%] sm:pt-[9%] pr-[5%] sm:pr-[6%] pl-4 sm:pl-6 pb-[12%] sm:pb-[14%] flex flex-col justify-center gap-3 sm:gap-4 relative z-10">
+      {/* Right White Panel (~67% width) */}
+      <div className="w-[67%] sm:w-[68%] h-full pt-[8%] sm:pt-[9%] pr-[5%] sm:pr-[6%] pl-4 sm:pl-6 pb-[12%] sm:pb-[14%] flex flex-col justify-center gap-3 sm:gap-4 relative z-10 bg-white">
         {/* Two Comparison Cards: Before vs After */}
         <div className="flex items-center gap-2 sm:gap-3 flex-1 min-h-0">
-          {/* Card 1: BEFORE AI (Light Grey #F1F1F1) */}
-          <div className="flex-1 h-full rounded-2xl bg-[#F1F1F1] dark:bg-neutral-800/80 p-3.5 sm:p-4.5 flex flex-col justify-start overflow-hidden border border-neutral-200/50 dark:border-neutral-700/50">
-            <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-[#595959] dark:text-neutral-400 mb-2 block">
+          {/* Card 1: BEFORE AI (Light Grey) */}
+          <div className="flex-1 h-full rounded-lg bg-[#F1F1F1] p-3.5 sm:p-4.5 flex flex-col justify-start overflow-hidden border border-neutral-200/50">
+            <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-[#595959] mb-2 block">
               {beforeTitle}
             </span>
-            <div className="space-y-1.5 text-xs sm:text-[13px] text-[#272525] dark:text-neutral-200 leading-relaxed overflow-hidden scrollbar-none">
+            <div className="space-y-1.5 text-xs sm:text-[13px] text-[#272525] leading-relaxed overflow-hidden scrollbar-none">
               {beforeItems && beforeItems.length > 0 ? (
                 beforeItems.map((item, idx) => (
                   <p key={idx} className="leading-snug line-clamp-3 sm:line-clamp-4">{item}</p>
@@ -3085,15 +3274,15 @@ export function SplitCaseComparison({
             </div>
           </div>
 
-          {/* Blue Arrow */}
-          <div className="text-[#005AAB] font-black text-xl sm:text-2xl shrink-0 px-1">
+          {/* Arrow */}
+          <div className={`${arrowColor} font-black text-xl sm:text-2xl shrink-0 px-1`}>
             →
           </div>
 
-          {/* Card 2: AFTER AI (Solid Deep Blue #005AAB with Yellow Top Accent) */}
-          <div className="flex-1 h-full rounded-2xl bg-[#005AAB] text-white p-3.5 sm:p-4.5 flex flex-col justify-start overflow-hidden relative shadow-sm">
-            <div className="w-8 sm:w-10 h-1 bg-[#FFDD3C] rounded-full mb-2 shrink-0" />
-            <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-[#FFDD3C] mb-2 block">
+          {/* Card 2: AFTER AI (Solid Black in UI, Solid Deep Blue in ITB) */}
+          <div className={`flex-1 h-full rounded-lg ${card2Bg} p-3.5 sm:p-4.5 flex flex-col justify-start overflow-hidden relative shadow-sm`}>
+            <div className="w-8 sm:w-10 h-1 rounded-full mb-2 shrink-0" style={{ backgroundColor: accentColor }} />
+            <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider mb-2 block" style={{ color: accentColor }}>
               {afterTitle}
             </span>
             <div className="space-y-1.5 text-xs sm:text-[13px] text-white/95 leading-relaxed overflow-hidden scrollbar-none">
@@ -3111,8 +3300,8 @@ export function SplitCaseComparison({
         </div>
 
         {/* Bottom Full-Width Key Insight Bar */}
-        <div className="w-full bg-[#005AAB] border-l-[8px] sm:border-l-[12px] border-[#FFDD3C] rounded-xl px-4 py-2.5 sm:py-3 text-white text-xs sm:text-[13px] font-medium leading-snug shrink-0 shadow-xs">
-          <span className="font-extrabold text-[#FFDD3C] mr-1.5">Key insight:</span>
+        <div className={`w-full ${insightBg} border-l-[8px] sm:border-l-[12px] rounded-md px-4 py-2.5 sm:py-3 text-white text-xs sm:text-[13px] font-medium leading-snug shrink-0 shadow-xs`} style={{ borderLeftColor: accentColor }}>
+          <span className="font-extrabold mr-1.5" style={{ color: accentColor }}>Key insight:</span>
           <span>{insightText}</span>
         </div>
       </div>
@@ -3135,6 +3324,9 @@ export function SplitProfileSlide({
   photoUrl,
   isPresentation = false,
   fontTitleClass = "",
+  isUIDeck = false,
+  isBinusDeck = false,
+  transparentBg = false,
 }: {
   title: string;
   subtitle?: string;
@@ -3145,12 +3337,30 @@ export function SplitProfileSlide({
   photoUrl?: string;
   isPresentation?: boolean;
   fontTitleClass?: string;
+  isUIDeck?: boolean;
+  isBinusDeck?: boolean;
+  transparentBg?: boolean;
 }) {
+  const isFinanceOrUI = isUIDeck || /universitas\s*indonesia|ui\s*×\s*revou|\bui\b|makara/i.test(`${title} ${subtitle || ""} ${tag}`);
+  const isBinus = !isUIDeck && (isBinusDeck || /binus|bina\s*nusantara/i.test(`${title} ${subtitle || ""} ${tag}`));
+  const accentColor = isFinanceOrUI ? "#FEDE3B" : isBinus ? "#FFDE3D" : "#FFDD3C";
+  const photoBorder = isFinanceOrUI
+    ? "border-[#FEDE3B] bg-[#FFFDF5] text-neutral-900"
+    : isBinus
+    ? "border-[#23A3E7] bg-[#EAF5FC] text-[#174A7F]"
+    : "border-[#005AAB] bg-[#EAF2FB] text-[#005AAB]";
+  const tagColor = isFinanceOrUI ? "text-neutral-950 font-black" : isBinus ? "text-[#018ED5] font-black" : "text-[#005AAB]";
+
+  const leftBgColor = transparentBg ? "transparent" : (isFinanceOrUI ? "#000000" : isBinus ? "#174A7F" : "#005AAB");
+
   return (
-    <div className="w-full h-full flex flex-row relative select-none overflow-hidden bg-transparent">
-      {/* Left Blue Panel (~33% width) */}
-      <div className="w-[33%] sm:w-[32%] h-full pt-[13%] sm:pt-[15%] pl-[5%] sm:pl-[6%] pr-3 sm:pr-4 flex flex-col justify-start relative z-10">
-        <div className="w-16 sm:w-24 h-2 sm:h-2.5 bg-[#FFDD3C] rounded-full mb-3 shrink-0" />
+    <div className={`w-full h-full flex flex-row relative select-none overflow-hidden ${transparentBg ? "bg-transparent" : "bg-white"}`}>
+      {/* Left Split Panel (~33% width) with Institution Dark Background */}
+      <div
+        className={`w-[33%] sm:w-[32%] h-full pt-[13%] sm:pt-[15%] pl-[5%] sm:pl-[6%] pr-3 sm:pr-4 flex flex-col justify-start relative z-10 ${transparentBg ? "" : "shadow-sm"}`}
+        style={transparentBg ? undefined : { backgroundColor: leftBgColor }}
+      >
+        <div className="w-16 sm:w-24 h-2 sm:h-2.5 rounded-full mb-3 shrink-0" style={{ backgroundColor: accentColor }} />
         <h1
           className={`font-bold text-white ${fontTitleClass} leading-[1.18] tracking-tight line-clamp-3 ${
             isPresentation ? "text-2xl sm:text-3xl lg:text-4xl" : "text-xl sm:text-2xl lg:text-[28px]"
@@ -3160,9 +3370,10 @@ export function SplitProfileSlide({
         </h1>
         {subtitle && (
           <p
-            className={`font-semibold text-[#FFDD3C] mt-2 sm:mt-2.5 leading-snug line-clamp-2 ${
+            className={`font-semibold mt-2 sm:mt-2.5 leading-snug line-clamp-2 ${
               isPresentation ? "text-sm sm:text-base lg:text-lg" : "text-xs sm:text-sm lg:text-[15px]"
             }`}
+            style={{ color: accentColor }}
           >
             {subtitle}
           </p>
@@ -3174,10 +3385,10 @@ export function SplitProfileSlide({
         )}
       </div>
 
-      {/* Right White Panel (~67% width) */}
-      <div className="w-[67%] sm:w-[68%] h-full pt-[8%] sm:pt-[9%] pr-[5%] sm:pr-[6%] pl-4 sm:pl-6 pb-[12%] sm:pb-[14%] flex items-center gap-6 sm:gap-8 relative z-10">
+      {/* Right Content Panel (~67% width) */}
+      <div className={`w-[67%] sm:w-[68%] h-full pt-[8%] sm:pt-[9%] pr-[5%] sm:pr-[6%] pl-4 sm:pl-6 pb-[12%] sm:pb-[14%] flex items-center gap-6 sm:gap-8 relative z-10 ${transparentBg ? "bg-transparent" : "bg-white"}`}>
         {/* Circle Photo */}
-        <div className="w-28 sm:w-36 h-28 sm:h-36 rounded-full border-4 border-[#005AAB] flex items-center justify-center bg-[#EAF2FB] text-[#005AAB] font-bold text-xs sm:text-sm shrink-0 overflow-hidden shadow-xs">
+        <div className={`w-28 sm:w-36 h-28 sm:h-36 rounded-full border-4 ${photoBorder} flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 overflow-hidden shadow-xs`}>
           {photoUrl ? (
             <img src={photoUrl} alt={title} className="w-full h-full object-cover" />
           ) : (
@@ -3187,7 +3398,7 @@ export function SplitProfileSlide({
 
         {/* Bio Details */}
         <div className="flex-1 space-y-2">
-          <span className="text-xs sm:text-sm font-bold text-[#005AAB] tracking-widest uppercase block">
+          <span className={`text-xs sm:text-sm font-bold ${tagColor} tracking-widest uppercase block`}>
             {tag}
           </span>
           <h3 className="text-base sm:text-lg font-bold text-[#272525]">
@@ -3197,6 +3408,696 @@ export function SplitProfileSlide({
             {bio || "[Short bio: expertise, research focus, industry experience]"}
           </p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────────────────────────────────
+ * 31. Control Chart Worked Example (RevoU / Claude Statistical Process Control)
+ * ─────────────────────────────────────────────────── */
+export interface ControlChartWorkedExampleProps {
+  bigStat?: {
+    value: string;
+    label: string;
+  };
+  baselineBox?: {
+    title?: string;
+    centreText?: string;
+    limitsText?: string;
+  };
+  incidentBox?: {
+    title?: string;
+    incidents?: Array<{ date: string; value: string; reason: string }>;
+  };
+  chartData?: {
+    baselineLabel?: string;
+    uclLabel?: string;
+    centreLabel?: string;
+    lclLabel?: string;
+    timePoints?: string[];
+    outliers?: Array<{ label: string; date: string; value: string; xPercent: number; yPercent: number }>;
+  };
+  isPresentation?: boolean;
+}
+
+export function ControlChartWorkedExample({
+  bigStat = { value: "40,000", label: "top-ups a day" },
+  baselineBox = {
+    title: "JULY BASELINE",
+    centreText: "Centre 97.26%",
+    limitsText: "Limits 96.30% – 98.22%",
+  },
+  incidentBox = {
+    title: "BELOW THE LOWER LIMIT",
+    incidents: [
+      { date: "14 Aug", value: "94.1%", reason: "payment-gateway outage (logged)" },
+      { date: "26 Sep", value: "95.8%", reason: "partner-bank maintenance (logged)" },
+    ],
+  },
+  chartData = {
+    baselineLabel: "July baseline",
+    uclLabel: "UCL",
+    centreLabel: "Centre",
+    lclLabel: "LCL",
+    timePoints: ["1 Jul", "1 Aug", "1 Sep", "1 Oct"],
+    outliers: [
+      { label: "14 Aug · 94.1%", date: "14 Aug", value: "94.1%", xPercent: 37, yPercent: 78 },
+      { label: "26 Sep · 95.8%", date: "26 Sep", value: "95.8%", xPercent: 72, yPercent: 48 },
+    ],
+  },
+  isPresentation = false,
+}: ControlChartWorkedExampleProps) {
+  return (
+    <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-8 items-center my-auto">
+      {/* Left Column (7 of 12 cols): Native Control Chart (XmR / p-chart) */}
+      <div className="md:col-span-7 flex flex-col justify-center h-full">
+        <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] max-h-[360px] bg-transparent">
+          {/* Shaded Baseline Region (e.g. July baseline) */}
+          <div className="absolute top-0 bottom-6 left-[16%] w-[20%] bg-[#EBF3FB] rounded-t-sm flex flex-col items-center pt-1.5">
+            <span className="text-[11px] sm:text-xs font-semibold text-[#005AAB]">
+              {chartData.baselineLabel || "July baseline"}
+            </span>
+          </div>
+
+          {/* Left Y-Axis Labels */}
+          <div className="absolute top-0 bottom-6 left-0 w-[14%] flex flex-col justify-between text-right pr-2 text-xs font-bold text-[#005AAB] select-none">
+            <span className="translate-y-2">{chartData.uclLabel || "UCL"}</span>
+            <span>{chartData.centreLabel || "Centre"}</span>
+            <span className="-translate-y-2">{chartData.lclLabel || "LCL"}</span>
+          </div>
+
+          {/* Upper Control Limit (UCL) - Dashed Blue */}
+          <div className="absolute top-[18%] left-[15%] right-0 border-b-[2px] border-dashed border-[#005AAB]" />
+
+          {/* Centre Line - Solid Deep Blue */}
+          <div className="absolute top-[50%] left-[15%] right-0 border-b-[2.5px] border-solid border-[#005AAB]" />
+
+          {/* Lower Control Limit (LCL) - Dashed Blue */}
+          <div className="absolute top-[82%] left-[15%] right-0 border-b-[2px] border-dashed border-[#005AAB]" />
+
+          {/* Outlier Data Points (Yellow Glow Dots with Black Core) */}
+          {chartData.outliers?.map((pt, idx) => (
+            <div
+              key={idx}
+              className="absolute flex items-center gap-2 -translate-y-1/2 z-10"
+              style={{ left: `${pt.xPercent}%`, top: `${pt.yPercent}%` }}
+            >
+              {/* Point Dot */}
+              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#FFDD3C] border-[3px] border-[#1F2937] shrink-0 shadow-xs" />
+              {/* Point Label */}
+              <span className="text-[11px] sm:text-xs font-bold text-neutral-900 whitespace-nowrap bg-white/80 px-1 py-0.5 rounded">
+                {pt.label}
+              </span>
+            </div>
+          ))}
+
+          {/* Bottom X-Axis Solid Line */}
+          <div className="absolute bottom-6 left-[15%] right-0 border-b-[2px] border-neutral-700" />
+
+          {/* Bottom X-Axis Time Labels */}
+          <div className="absolute bottom-0 left-[15%] right-0 flex justify-between text-[11px] sm:text-xs text-neutral-600 font-medium select-none pt-1">
+            {chartData.timePoints?.map((tp, idx) => (
+              <span key={idx}>{tp}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column (5 of 12 cols): 3 Stacked Cards */}
+      <div className="md:col-span-5 flex flex-col gap-3 sm:gap-4 justify-center">
+        {/* 1. Yellow Big Stat Card */}
+        <div className="rounded-lg bg-[#FFDD3C] p-4 sm:p-5 text-center flex flex-col justify-center items-center shadow-xs">
+          <span className="text-3xl sm:text-4xl lg:text-[42px] font-black text-neutral-950 tracking-tight leading-none">
+            {bigStat.value}
+          </span>
+          <span className="text-xs sm:text-sm font-semibold text-neutral-900 mt-1">
+            {bigStat.label}
+          </span>
+        </div>
+
+        {/* 2. White Card with Thin Blue Border (Baseline Limits) */}
+        <div className="rounded-lg border-[2px] border-[#005AAB] bg-white p-3.5 sm:p-4 shadow-xs">
+          <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#005AAB] block mb-1">
+            {baselineBox.title || "JULY BASELINE"}
+          </span>
+          <p className="text-xs sm:text-sm font-medium text-neutral-800 leading-snug">
+            {baselineBox.centreText}
+          </p>
+          <p className="text-xs sm:text-sm font-medium text-neutral-800 leading-snug">
+            {baselineBox.limitsText}
+          </p>
+        </div>
+
+        {/* 3. Solid Deep Blue Card (Incidents Below Lower Limit) */}
+        <div className="rounded-lg bg-[#005AAB] p-3.5 sm:p-4 text-white shadow-xs">
+          <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#FFDD3C] block mb-1.5">
+            {incidentBox.title || "BELOW THE LOWER LIMIT"}
+          </span>
+          <div className="space-y-1.5 text-xs sm:text-sm leading-snug">
+            {incidentBox.incidents?.map((inc, i) => (
+              <p key={i}>
+                <strong className="text-white font-bold">{inc.date} · {inc.value}:</strong>{" "}
+                <span className="text-blue-100">{inc.reason}</span>
+              </p>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────────────────────────────────
+ * 32. Machine Learning Pipeline Slide (3-Stage Hands-on Pipeline)
+ * ─────────────────────────────────────────────────── */
+export interface MLPipelineSlideProps {
+  steps?: Array<{ stepNumber: number; title: string; color?: "yellow" | "blue" }>;
+  tableData?: {
+    tag?: string;
+    headers?: string[];
+    rows?: Array<{ input: string; output: string }>;
+  };
+  modelData?: {
+    description?: string;
+    rootNode?: string;
+    leftBranchLabel?: string;
+    rightBranchLabel?: string;
+    leftChildNode?: string;
+    rightChildNode?: string;
+    leafYellowNode?: string;
+  };
+  inferenceData?: {
+    inputLabel?: string;
+    inputText?: string;
+    outputLabel?: string;
+    outputText?: string;
+  };
+  bottomNote?: string;
+  isPresentation?: boolean;
+}
+
+export function MLPipelineSlide({
+  steps = [
+    { stepNumber: 1, title: "Data Preparation", color: "yellow" },
+    { stepNumber: 2, title: "Build the AI Model", color: "blue" },
+    { stepNumber: 3, title: "Run the AI Model", color: "yellow" },
+  ],
+  tableData = {
+    tag: "TRAINING DATA",
+    headers: ["Text Input", "Label Output"],
+    rows: [
+      { input: "Terima kasih informasinya", output: "NON SPAM" },
+      { input: "Jumat jangan lupa jam 8 di PVJ, tempat biasa ya", output: "NON SPAM" },
+      { input: "Jangan kehabisan, diskon tiket nonton bareng, akses di https://...", output: "SPAM" },
+      { input: "...", output: "" },
+    ],
+  },
+  modelData = {
+    description: "Learn/extract pattern from data using a Machine Learning/Deep Learning algorithm. Model type: symbolic (decision tree).",
+    rootNode: "diskon",
+    leftBranchLabel: "ya",
+    rightBranchLabel: "tidak",
+    leftChildNode: "pulsa",
+    rightChildNode: "beli...",
+    leafYellowNode: "spam",
+  },
+  inferenceData = {
+    inputLabel: "INPUT",
+    inputText: "tersedia diskon pulsa 50% hanya di https://...",
+    outputLabel: "OUTPUT",
+    outputText: "SPAM",
+  },
+  bottomNote = "Note: If the data is incorrect (or of poor quality), the AI model will also learn incorrect patterns and produce incorrect outputs.",
+  isPresentation = false,
+}: MLPipelineSlideProps) {
+  return (
+    <div className="w-full flex-1 flex flex-col justify-between py-1 my-auto">
+      {/* 3-Step Chevron Header Bar */}
+      <div className="w-full flex items-center h-10 sm:h-12 mb-4 sm:mb-6">
+        {steps.map((st, i) => {
+          const isYellow = st.color === "yellow" || i % 2 === 0;
+          const bg = isYellow ? "#FFDD3C" : "#005AAB";
+          const textColor = isYellow ? "#111111" : "#FFFFFF";
+
+          return (
+            <div
+              key={i}
+              className={`flex-1 h-full flex items-center justify-center font-bold relative ${
+                isPresentation ? "text-sm sm:text-base" : "text-xs sm:text-sm"
+              }`}
+              style={{
+                backgroundColor: bg,
+                color: textColor,
+                clipPath:
+                  i === 0
+                    ? "polygon(0% 0%, calc(100% - 14px) 0%, 100% 50%, calc(100% - 14px) 100%, 0% 100%)"
+                    : i === steps.length - 1
+                    ? "polygon(0% 0%, calc(100% - 14px) 0%, 100% 50%, calc(100% - 14px) 100%, 0% 100%, 14px 50%)"
+                    : "polygon(0% 0%, calc(100% - 14px) 0%, 100% 50%, calc(100% - 14px) 100%, 0% 100%, 14px 50%)",
+              }}
+            >
+              <span className="truncate px-4">
+                {st.stepNumber} · {st.title}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 3 Columns Content Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 items-start flex-1 min-h-0 mb-4">
+        {/* Column 1: Training Data Table */}
+        <div className="flex flex-col h-full">
+          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#005AAB] mb-1.5">
+            {tableData.tag || "TRAINING DATA"}
+          </span>
+          <div className="rounded-md border border-neutral-200 overflow-hidden bg-white shadow-2xs">
+            <table className="w-full text-left text-xs sm:text-[13px] border-collapse">
+              <thead>
+                <tr className="bg-[#005AAB] text-white">
+                  <th className="py-2 px-3 font-semibold border-r border-blue-600">
+                    {tableData.headers?.[0] || "Text Input"}
+                  </th>
+                  <th className="py-2 px-3 font-semibold whitespace-nowrap">
+                    {tableData.headers?.[1] || "Label Output"}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200">
+                {tableData.rows?.map((row, rIdx) => (
+                  <tr key={rIdx} className={rIdx % 2 === 1 ? "bg-neutral-50/60" : "bg-white"}>
+                    <td className="py-2 px-3 text-neutral-800 leading-snug border-r border-neutral-200">
+                      {row.input}
+                    </td>
+                    <td className="py-2 px-3 font-medium text-neutral-700 whitespace-nowrap">
+                      {row.output}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Column 2: Build the AI Model (Decision Tree Diagram) */}
+        <div className="flex flex-col h-full justify-between">
+          <p className="text-xs sm:text-[13px] text-neutral-600 leading-relaxed mb-3">
+            {modelData.description}
+          </p>
+
+          {/* Mini Decision Tree Diagram */}
+          <div className="my-auto flex flex-col items-center justify-center py-2">
+            {/* Root Node */}
+            <div className="px-4 py-1 rounded-md bg-[#005AAB] text-white font-bold text-xs shadow-xs">
+              {modelData.rootNode || "diskon"}
+            </div>
+
+            {/* Tree Branch SVG */}
+            <svg className="w-48 h-8 text-neutral-400" viewBox="0 0 192 32" fill="none">
+              <path d="M96 0 V10 L44 24 V32" stroke="#005AAB" strokeWidth="2" />
+              <path d="M96 0 V10 L148 24 V32" stroke="#005AAB" strokeWidth="2" />
+              <text x="60" y="14" fill="#555" fontSize="10" fontWeight="bold">
+                {modelData.leftBranchLabel || "ya"}
+              </text>
+              <text x="120" y="14" fill="#555" fontSize="10" fontWeight="bold">
+                {modelData.rightBranchLabel || "tidak"}
+              </text>
+            </svg>
+
+            {/* Level 2 Nodes */}
+            <div className="w-full flex justify-around items-center px-2">
+              {/* Left Child Branch: Pulsa */}
+              <div className="flex flex-col items-center">
+                <div className="px-3 py-1 rounded-md bg-[#005AAB] text-white font-bold text-xs shadow-xs">
+                  {modelData.leftChildNode || "pulsa"}
+                </div>
+                {/* Branch to leaves */}
+                <svg className="w-24 h-6 text-neutral-400" viewBox="0 0 96 24" fill="none">
+                  <path d="M48 0 V8 L20 18 V24" stroke="#005AAB" strokeWidth="2" />
+                  <path d="M48 0 V8 L76 18 V24" stroke="#005AAB" strokeWidth="2" />
+                </svg>
+                <div className="flex gap-3 items-center">
+                  <span className="px-2.5 py-0.5 rounded-sm bg-[#FFDD3C] text-neutral-900 font-bold text-[11px] shadow-2xs">
+                    {modelData.leafYellowNode || "spam"}
+                  </span>
+                  <span className="text-neutral-400 text-xs font-bold">....</span>
+                </div>
+              </div>
+
+              {/* Right Child Node */}
+              <div className="px-3 py-1 rounded-md bg-neutral-100 border border-neutral-300 text-neutral-600 font-medium text-xs">
+                {modelData.rightChildNode || "beli..."}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Column 3: Run the AI Model (Input & Output Cards) */}
+        <div className="flex flex-col h-full justify-center space-y-3">
+          {/* Input Card: White with Deep Blue border */}
+          <div className="rounded-lg border-2 border-[#005AAB] p-3 sm:p-3.5 bg-white shadow-xs">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#005AAB] block mb-1">
+              {inferenceData.inputLabel || "INPUT"}
+            </span>
+            <p className="text-xs sm:text-[13px] font-semibold text-neutral-900 leading-snug">
+              {inferenceData.inputText}
+            </p>
+          </div>
+
+          {/* Down Arrow Indicator */}
+          <div className="text-center text-[#005AAB] text-lg font-bold leading-none select-none">
+            ↓
+          </div>
+
+          {/* Output Card: Solid Deep Blue with Yellow Header */}
+          <div className="rounded-lg bg-[#005AAB] p-3.5 sm:p-4 text-white shadow-xs">
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#FFDD3C] block mb-1">
+              {inferenceData.outputLabel || "OUTPUT"}
+            </span>
+            <p className="text-xl sm:text-2xl font-black text-white tracking-wide">
+              {inferenceData.outputText}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Full-Width Note Callout Banner at Bottom */}
+      {bottomNote && (
+        <div className="w-full rounded-md bg-[#005AAB] text-white p-2.5 sm:p-3 flex items-center gap-3 relative overflow-hidden shadow-2xs">
+          <div className="w-1.5 self-stretch bg-[#FFDD3C] rounded-full shrink-0" />
+          <p className="text-xs sm:text-[13px] leading-snug font-normal">
+            <strong className="font-bold text-[#FFDD3C]">Note:</strong> {bottomNote.replace(/^Note:\s*/i, "")}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ───────────────────────────────────────────────────
+ * 33. LLM Token Prediction & Generation Slide
+ * ─────────────────────────────────────────────────── */
+export interface LLMGenerationSlideProps {
+  overviewText?: string;
+  tokens?: string[];
+  probabilities?: Array<{ word: string; pct: number; isTop?: boolean }>;
+  promptText?: string;
+  answerText?: string;
+  tagPill?: string;
+  isPresentation?: boolean;
+}
+
+export function LLMGenerationSlide({
+  overviewText = "AI guesses an output word based on the previous words. LLM (Large Language Model): ChatGPT, Gemini, etc.",
+  tokens = ["<s>", "Golden", "Indonesia", "2045", "...", "</s>"],
+  probabilities = [
+    { word: "2045", pct: 20, isTop: true },
+    { word: "Emas", pct: 15 },
+    { word: "term", pct: 14 },
+    { word: "vision", pct: 10 },
+    { word: "transform", pct: 8 },
+  ],
+  promptText = '"Write about Golden Indonesia 2045"',
+  answerText = "Golden Indonesia 2045 (Indonesia Emas 2045) is Indonesia's long-term national vision to transform the country into a sovereign, advanced, prosperous, and sustainable nation by 2045, coinciding with the 100th anniversary of Indonesia's independence. The vision is embedded in Indonesia's National Long-Term Development Plan (RPJPN) 2025–2045.",
+  tagPill = "Stochastic Parrot",
+  isPresentation = false,
+}: LLMGenerationSlideProps) {
+  const maxPct = Math.max(...probabilities.map((p) => p.pct), 20);
+
+  return (
+    <div className="w-full flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-center my-auto py-2">
+      {/* Left Column (cols 1-6): Token Prediction & Probability Distribution */}
+      <div className="md:col-span-6 flex flex-col justify-between h-full space-y-4">
+        {/* Overview text */}
+        <p className="text-xs sm:text-sm text-neutral-700 leading-relaxed">
+          {overviewText}
+        </p>
+
+        {/* Token Sequence Chain */}
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 select-none">
+          {tokens.map((tok, i) => {
+            const isSpecial = tok.startsWith("<") && tok.endsWith(">");
+            return (
+              <React.Fragment key={i}>
+                <span
+                  className={`px-2.5 py-1 rounded-md text-xs sm:text-[13px] font-semibold transition-all ${
+                    isSpecial
+                      ? "bg-[#005AAB] text-white"
+                      : "bg-white border border-neutral-300 text-neutral-800 shadow-2xs"
+                  }`}
+                >
+                  {tok}
+                </span>
+                {i < tokens.length - 1 && (
+                  <span className="text-neutral-400 font-bold text-xs">→</span>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+
+        {/* Next-Word Probability Bar Chart */}
+        <div className="flex flex-col pt-1">
+          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#005AAB] mb-2.5">
+            NEXT-WORD PROBABILITIES AFTER &quot;GOLDEN INDONESIA&quot;
+          </span>
+          <div className="space-y-2">
+            {probabilities.map((item, pIdx) => {
+              const widthPct = Math.round((item.pct / maxPct) * 100);
+              const isTop = item.isTop ?? pIdx === 0;
+
+              return (
+                <div key={pIdx} className="flex items-center gap-3 text-xs sm:text-sm">
+                  <span
+                    className={`w-20 text-right truncate font-medium ${
+                      isTop ? "text-neutral-900 font-bold" : "text-neutral-600"
+                    }`}
+                  >
+                    {item.word}
+                  </span>
+
+                  {/* Horizontal Bar */}
+                  <div className="flex-1 bg-neutral-100 rounded-xs h-4 overflow-hidden relative">
+                    <div
+                      className={`h-full rounded-xs transition-all duration-500 ${
+                        isTop ? "bg-[#005AAB]" : "bg-[#93BBE5]"
+                      }`}
+                      style={{ width: `${widthPct}%` }}
+                    />
+                  </div>
+
+                  <span
+                    className={`w-10 text-left font-bold ${
+                      isTop ? "text-neutral-900" : "text-neutral-500"
+                    }`}
+                  >
+                    {item.pct}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column (cols 7-12): Prompt & LLM Answer */}
+      <div className="md:col-span-6 flex flex-col justify-center space-y-4">
+        {/* Prompt Card: White with Deep Blue border */}
+        <div className="rounded-lg border-2 border-[#005AAB] p-3.5 sm:p-4 bg-white shadow-xs">
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#005AAB] block mb-1.5">
+            PROMPT
+          </span>
+          <p className="text-xs sm:text-sm font-semibold text-neutral-800 leading-snug">
+            {promptText}
+          </p>
+        </div>
+
+        {/* LLM Answer Card: Soft Light Gray Background */}
+        <div className="rounded-lg bg-[#F4F6F9] p-4 sm:p-5 border border-neutral-200/60 shadow-xs">
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-neutral-500 block mb-2">
+            LLM ANSWER
+          </span>
+          <p className="text-xs sm:text-[13px] text-neutral-800 leading-relaxed font-normal">
+            {answerText}
+          </p>
+        </div>
+
+        {/* Tag Pill (e.g. Stochastic Parrot) */}
+        {tagPill && (
+          <div className="pt-1">
+            <span className="inline-block px-3.5 py-1 rounded-full bg-[#FFDD3C] text-neutral-950 font-bold text-xs tracking-wide shadow-2xs">
+              {tagPill}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────────────────────────────────
+ * 34. Hands-On Case Worksheet Slide (3 Need Cards + Exercise Table + TWIST)
+ * ─────────────────────────────────────────────────── */
+export interface CaseWorksheetSlideProps {
+  needCards?: Array<{
+    tag: string;
+    team: string;
+    description: string;
+    color?: "yellow" | "blue";
+  }>;
+  taskInstruction?: string;
+  tableHeaders?: string[];
+  tableRows?: Array<{
+    need: string;
+    systemType?: string;
+    failureRisk?: string;
+    humanInTheLoop?: string;
+  }>;
+  twistBadge?: string;
+  twistPrompt?: string;
+  isPresentation?: boolean;
+}
+
+export function CaseWorksheetSlide({
+  needCards = [
+    {
+      tag: "NEED 1",
+      team: "Call centre",
+      description: '3,000 calls a week asking "When will my power come back?" and "What documents do I need for a new connection?"',
+      color: "yellow",
+    },
+    {
+      tag: "NEED 2",
+      team: "Asset team",
+      description: "Early warning on which transformers are likely to fail in the next 3 months",
+      color: "blue",
+    },
+    {
+      tag: "NEED 3",
+      team: "Operations",
+      description: "Dispatch repair crews automatically for small, routine outages",
+      color: "yellow",
+    },
+  ],
+  taskInstruction = "Task: for each need, choose the system type (LLM alone / RAG knowledge assistant / copilot / predictive non-GenAI model / agentic workflow), name the main failure risk and where a human must stay in the loop. Then read the TWIST and write your reply to the vendor.",
+  tableHeaders = ["Need", "System type", "Main failure risk", "Human-in-the-loop where"],
+  tableRows = [
+    { need: "1 · Call centre" },
+    { need: "2 · Asset team" },
+    { need: "3 · Operations" },
+  ],
+  twistBadge = "TWIST: [to be added]",
+  twistPrompt = "Reply to the vendor (2–3 sentences): ...",
+  isPresentation = false,
+}: CaseWorksheetSlideProps) {
+  return (
+    <div className="w-full flex-1 flex flex-col justify-between py-1 my-auto space-y-3.5">
+      {/* 3 Need Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4 items-stretch">
+        {needCards.map((card, i) => {
+          const isBlue = card.color === "blue" || i === 1;
+
+          return (
+            <div
+              key={i}
+              className={`rounded-lg p-3.5 sm:p-4 flex flex-col justify-between transition-all ${
+                isBlue
+                  ? "bg-[#005AAB] text-white shadow-xs"
+                  : "bg-[#FFDD3C] text-neutral-900 shadow-2xs"
+              }`}
+            >
+              <div>
+                <span
+                  className={`text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider block mb-1 ${
+                    isBlue ? "text-[#FFDD3C]" : "text-neutral-800"
+                  }`}
+                >
+                  {card.tag}
+                </span>
+                <h4
+                  className={`text-xs sm:text-sm font-bold block mb-1 ${
+                    isBlue ? "text-white" : "text-neutral-950"
+                  }`}
+                >
+                  {card.team}
+                </h4>
+              </div>
+              <p
+                className={`text-[11px] sm:text-xs leading-snug ${
+                  isBlue ? "text-blue-100" : "text-neutral-900"
+                }`}
+              >
+                {card.description}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Task Instruction Line */}
+      {taskInstruction && (
+        <p className="text-[11px] sm:text-xs text-neutral-800 font-medium leading-relaxed">
+          <strong className="font-bold text-neutral-950">Task:</strong> {taskInstruction.replace(/^Task:\s*/i, "")}
+        </p>
+      )}
+
+      {/* 4-Column Worksheet Table */}
+      <div className="rounded-md border border-neutral-200 overflow-hidden bg-white shadow-2xs">
+        <table className="w-full text-left text-xs sm:text-[13px] border-collapse">
+          <thead>
+            <tr className="bg-[#005AAB] text-white">
+              {tableHeaders.map((head, hIdx) => (
+                <th
+                  key={hIdx}
+                  className={`py-2 px-3 font-semibold ${
+                    hIdx < tableHeaders.length - 1 ? "border-r border-blue-600" : ""
+                  } ${hIdx === 0 ? "w-[22%]" : "w-[26%]"}`}
+                >
+                  {head}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-200">
+            {tableRows.map((row, rIdx) => {
+              const isSoftBlueRow = rIdx % 2 === 0;
+
+              return (
+                <tr
+                  key={rIdx}
+                  className={isSoftBlueRow ? "bg-[#EBF3FB]/75" : "bg-white"}
+                >
+                  <td className="py-2.5 px-3 font-medium text-neutral-900 border-r border-neutral-200 whitespace-nowrap">
+                    {row.need}
+                  </td>
+                  <td className="py-2.5 px-3 text-neutral-700 border-r border-neutral-200">
+                    {row.systemType || ""}
+                  </td>
+                  <td className="py-2.5 px-3 text-neutral-700 border-r border-neutral-200">
+                    {row.failureRisk || ""}
+                  </td>
+                  <td className="py-2.5 px-3 text-neutral-700">
+                    {row.humanInTheLoop || ""}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Bottom TWIST Callout & Dotted Participant Line */}
+      <div className="space-y-1.5 pt-1">
+        <div className="flex items-center gap-3">
+          <span className="px-3 py-0.5 rounded-sm bg-[#FFDD3C] text-neutral-950 font-bold text-xs uppercase tracking-wider shrink-0 shadow-2xs">
+            {twistBadge}
+          </span>
+          <span className="text-xs sm:text-[13px] text-neutral-700 font-medium">
+            {twistPrompt}
+          </span>
+        </div>
+        <div className="w-full border-b border-dashed border-blue-300 h-2" />
       </div>
     </div>
   );

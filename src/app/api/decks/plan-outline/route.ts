@@ -50,6 +50,13 @@ These become your most visually distinctive and memorable slides.
 Catalog available: statistics, case studies, frameworks, quotes, comparisons, processes, exercises.
 Flag gaps where placeholders [INSTRUCTOR TO CONFIRM] are needed.
 
+=== NATURAL HUMAN WRITING & ANTI-AI SLOP (NON-NEGOTIABLE) ===
+- NO EM DASHES: Do not use "—" in titles or blueprints. Use commas, brackets, or new sentences.
+- NO "NOT X BUT Y": Ban "not X but Y", "it's not X, it's Y", or "You don't need X. You need Y." State assertions directly.
+- NO COLON-REVEAL RHYTHM: Never write "The answer: ..." or "Three things matter: ...".
+- NO AI BUZZWORDS: Ban "delve", "leverage", "foster", "robust", "seamless", "landscape", "ecosystem", "tapestry", "journey", "pivotal", "crucial", "holistic", "game-changer".
+- NATURAL VARIATION: Write with realistic human tone, plain vocabulary, and zero theatrical pseudo-profound slogans.
+
 === 9-STAGE NARRATIVE ARC (CONTENT-ADAPTIVE DRAMATURGY) ===
 
 Your deck MUST follow this dramaturgical arc, adapted by content taxonomy:
@@ -176,6 +183,22 @@ Return ONLY a valid, parseable JSON array. No markdown, no backticks, no preambl
 If the user's raw content explicitly requests a specific language (e.g. "in English", "bahasa inggris", "dalam bahasa Inggris", "use English"), ALL generated text — headlines, subheadlines, and descriptions — MUST be written ENTIRELY in that requested language. Do NOT mix languages. Do NOT default to Indonesian if the user asked for English. The user's language instruction ALWAYS overrides any template examples.
 `;
 
+function getEnvKey(keyName: string): string {
+  if (process.env[keyName]) return process.env[keyName]!;
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    const envLocal = fs.readFileSync(path.join(process.cwd(), ".env.local"), "utf8");
+    for (const line of envLocal.split("\n")) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith(`${keyName}=`)) {
+        return trimmed.slice(keyName.length + 1).replace(/^["']|["']$/g, "").trim();
+      }
+    }
+  } catch {}
+  return "";
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -195,34 +218,105 @@ export async function POST(req: NextRequest) {
 
     const count = Math.min(Math.max(parseInt(String(targetCount), 10) || 10, 3), 100);
     let rulesDoc = (templateRulesMarkdown || clonedStyleDirectives || "").trim();
-    const effectiveTemplateName = templateName || "ITB × RevoU Deck Design System";
+    const tNameLower = (templateName || "").toLowerCase();
+    const rulesLower = rulesDoc.toLowerCase();
+    const lowerContent = `${content || ""}`.toLowerCase();
+
+    // 1. Detect institution strictly from template rules markdown or template name first
+    const isExplicitITB =
+      tNameLower.includes("itb") ||
+      rulesLower.includes("itb-deck-design-rules") ||
+      rulesLower.includes("itb × revou") ||
+      rulesLower.includes("itb-deck") ||
+      rulesLower.includes("deep blue #005aab");
+
+    const isExplicitUI =
+      !isExplicitITB &&
+      (tNameLower.includes("ui") ||
+        rulesLower.includes("ui-deck-design-rules") ||
+        rulesLower.includes("universitas indonesia") ||
+        rulesLower.includes("ui-deck") ||
+        rulesLower.includes("#fede3b"));
+
+    const isExplicitBinus =
+      !isExplicitITB &&
+      !isExplicitUI &&
+      (tNameLower.includes("binus") ||
+        rulesLower.includes("binus-deck-design-rules") ||
+        rulesLower.includes("bina nusantara") ||
+        rulesLower.includes("binus-deck") ||
+        rulesLower.includes("#174a7f") ||
+        rulesLower.includes("#23a3e7"));
+
+    let isITB = isExplicitITB;
+    let isUI = isExplicitUI;
+    let isBinus = isExplicitBinus;
+
+    // 2. If no explicit template rules found, check explicit institution mentions in prompt/content (never topic keywords!)
+    if (!isITB && !isUI && !isBinus) {
+      if (/binus|bina\s*nusantara/i.test(lowerContent)) {
+        isBinus = true;
+      } else if (/universitas\s*indonesia|ui\s*×\s*revou|\bui\b|makara/i.test(lowerContent)) {
+        isUI = true;
+      } else {
+        isITB = true; // Default standard institution is ITB
+      }
+    }
 
     if (!rulesDoc) {
       try {
         const fs = await import("fs/promises");
         const path = await import("path");
-        const skillPath = path.join(process.cwd(), ".agents/skills/itb-deck-design-rules/SKILL.md");
+        const skillPath = isBinus
+          ? path.join(process.cwd(), ".agents/skills/binus-deck-design-rules/SKILL.md")
+          : isUI
+          ? path.join(process.cwd(), ".agents/skills/ui-deck-design-rules/SKILL.md")
+          : path.join(process.cwd(), ".agents/skills/itb-deck-design-rules/SKILL.md");
         rulesDoc = await fs.readFile(skillPath, "utf-8");
       } catch (err) {
-        console.warn("Could not load default ITB skill file in plan-outline:", err);
+        console.warn("Could not load default skill file in plan-outline:", err);
       }
     }
 
-    // ──── LANGUAGE DETECTION ────
+    const effectiveTemplateName = isBinus
+      ? "BINUS Applied Cybersecurity"
+      : isUI
+      ? "UI × RevoU Deck Design System"
+      : "ITB × RevoU Deck Design System";
+
+    // ──── COMPREHENSIVE LANGUAGE DETECTION ────
     const contentLower = (content || "").toLowerCase();
-    let detectedLanguage = "";
-    if (/(?:in\s+english|bahasa\s*inggris|dalam\s*(?:bahasa\s*)?inggris|use\s+english|english\s+(?:language|version|deck|presentation))/i.test(content)) {
+    
+    // Explicit English indicators
+    const hasEnglishExplicit = /(?:in\s+english|\benglish\b|\binggris\b|bahasa\s*inggris|bhs\s*inggris|use\s+english|write\s+in\s+english|deck\s+in\s+english|pake\s+bahasa\s*inggris|pake\s+inggris|translate\s+to\s+english|lang\s*:\s*en)/i.test(content);
+    
+    // Explicit Indonesian indicators
+    const hasIndonesianExplicit = /(?:dalam\s*(?:bahasa\s*)?indonesia|bahasa\s*indonesia|bhs\s*indonesia|gunakan\s*(?:bahasa\s*)?indonesia|pake\s+bahasa\s*indonesia|pake\s+indo|indonesian\s+language|lang\s*:\s*id)/i.test(content);
+
+    // Stopwords & domain keywords check
+    const englishWordMatches = contentLower.match(/\b(the|and|for|with|that|this|from|about|threat|security|cybersecurity|architecture|incident|response|zero|trust|governance|compliance|strategy|leaders|framework|intelligence|vulnerability|roadmap|executive|mitigation|detection|defense|enterprise)\b/g);
+    const indonesianWordMatches = contentLower.match(/\b(dan|yang|di|untuk|dari|dengan|tentang|buatkan|tolong|kerangka|materi|alur|ancaman|keamanan|tata|kelola|langkah|panduan|perusahaan|institusi|tahap|strategi)\b/g);
+
+    const englishWordCount = englishWordMatches ? englishWordMatches.length : 0;
+    const indonesianWordCount = indonesianWordMatches ? indonesianWordMatches.length : 0;
+
+    let detectedLanguage = "Indonesian (Bahasa Indonesia)";
+    if (hasEnglishExplicit || (englishWordCount > indonesianWordCount && englishWordCount >= 2)) {
       detectedLanguage = "English";
-    } else if (/(?:bahasa\s*indonesia|dalam\s*(?:bahasa\s*)?indonesia|gunakan\s*(?:bahasa\s*)?indonesia|indonesian)/i.test(content)) {
+    } else if (hasIndonesianExplicit) {
       detectedLanguage = "Indonesian (Bahasa Indonesia)";
-    } else if (/(?:bahasa\s*jepang|japanese|日本語)/i.test(content)) {
-      detectedLanguage = "Japanese";
-    } else if (/(?:bahasa\s*mandarin|chinese|中文)/i.test(content)) {
-      detectedLanguage = "Chinese";
     }
-    const languageDirective = detectedLanguage
-      ? `\n⚠️ MANDATORY LANGUAGE: ALL generated text (headlines, subheadlines, descriptions, keyPoints, speakerNotes) MUST be written ENTIRELY in ${detectedLanguage}. Do NOT use any other language. This overrides all examples in the system prompt.\n`
-      : "";
+
+    const isEnglish = detectedLanguage === "English";
+
+    const languageDirective = `
+================================================================================
+🚨 MANDATORY LANGUAGE DIRECTIVE: ${detectedLanguage.toUpperCase()} ONLY 🚨
+ALL generated text (headlines, subheadlines, descriptions, keyPoints, speakerNotes) MUST be written 100% ENTIRELY in ${detectedLanguage}.
+${isEnglish ? "DO NOT use any Indonesian words or phrases. Every slide headline, subheadline, card heading, and description MUST be natural, professional executive English." : "Gunakan bahasa Indonesia baku dan berwibawa tingkat eksekutif."}
+This directive STRICTLY OVERRIDES any template examples or source document languages!
+================================================================================
+`;
 
     const userPrompt = `
 RAW TOPIC / MATERIALS / CURRICULUM:
@@ -260,154 +354,197 @@ ${languageDirective}
 Generate a master blueprint with EXACTLY ${count} sequential slides in strict JSON array format.
 `;
 
-    // ──── STRICT BYOK PROVIDER EXECUTION ────
-    // Always prioritize the user's selected provider!
-    const effectiveProvider = (provider || (apiKey?.startsWith("sk-") ? "deepseek" : "deepseek")).toLowerCase();
+    // ──── PROVIDER EXECUTION WITH AUTOMATIC CASCADING FALLBACK ────
+    const initialProvider = (provider || (apiKey?.startsWith("sk-or-") ? "openrouter" : apiKey?.startsWith("sk-") ? "deepseek" : "deepseek")).toLowerCase();
+    const tryProviders = [...new Set([initialProvider, "openrouter", "gemini", "deepseek", "openai", "anthropic"])];
 
-    // 1. DeepSeek (BYOK First)
-    if (effectiveProvider === "deepseek") {
-      const deepseekKey = apiKey || process.env.DEEPSEEK_API_KEY;
-      if (deepseekKey) {
-        try {
-          const client = new OpenAI({
-            baseURL: "https://api.deepseek.com",
-            apiKey: deepseekKey,
-          });
-
-          const selectedModel = requestedModel || "deepseek-chat";
-          const isReasoner = selectedModel === "deepseek-reasoner" || selectedModel.includes("reasoner");
-
-          const res = await client.chat.completions.create({
-            model: selectedModel,
-            ...(isReasoner ? {} : { temperature: 0.4 }),
-            messages: isReasoner
-              ? [{ role: "user", content: `${OUTLINE_SYSTEM_PROMPT}\n\n${userPrompt}` }]
-              : [
-                  { role: "system", content: OUTLINE_SYSTEM_PROMPT },
-                  { role: "user", content: userPrompt },
-                ],
-          });
-
-          const raw = res.choices[0]?.message?.content || "";
-          const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
-          const parsed = JSON.parse(cleaned);
-
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const sanitized = sanitizeOutlineItems(parsed, count);
-            return NextResponse.json({ success: true, outline: sanitized, source: "deepseek" });
-          }
-        } catch (dsErr: any) {
-          console.error("DeepSeek outline planning error:", dsErr?.message);
-        }
-      }
-    }
-
-    // 2. OpenAI
-    if (effectiveProvider === "openai") {
-      const openAiKey = apiKey || process.env.OPENAI_API_KEY;
-      if (openAiKey) {
-        try {
-          const client = new OpenAI({
-            baseURL: "https://api.openai.com/v1",
-            apiKey: openAiKey,
-          });
-
-          const res = await client.chat.completions.create({
-            model: requestedModel || "gpt-4o",
-            temperature: 0.4,
-            messages: [
-              { role: "system", content: OUTLINE_SYSTEM_PROMPT },
-              { role: "user", content: userPrompt },
-            ],
-          });
-
-          const raw = res.choices[0]?.message?.content || "";
-          const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
-          const parsed = JSON.parse(cleaned);
-
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const sanitized = sanitizeOutlineItems(parsed, count);
-            return NextResponse.json({ success: true, outline: sanitized, source: "openai" });
-          }
-        } catch (openAiErr: any) {
-          console.error("OpenAI outline planning error:", openAiErr?.message);
-        }
-      }
-    }
-
-    // 3. Anthropic (Claude)
-    if (effectiveProvider === "anthropic") {
-      const anthropicKey = apiKey || process.env.ANTHROPIC_API_KEY;
-      if (anthropicKey) {
-        const modelsToTry = [requestedModel, "claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20241022"].filter(Boolean) as string[];
-        for (const mName of modelsToTry) {
+    for (const p of tryProviders) {
+      // 1. Google Gemini (Tier-1 or Server Env)
+      if (p === "gemini") {
+        const geminiKey = (p === initialProvider ? apiKey : "") || getEnvKey("GEMINI_API_KEY") || getEnvKey("GOOGLE_API_KEY");
+        if (geminiKey) {
           try {
-            const response = await fetch("https://api.anthropic.com/v1/messages", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-api-key": anthropicKey,
-                "anthropic-version": "2023-06-01",
-              },
-              body: JSON.stringify({
-                model: mName,
-                max_tokens: 8192,
+            const genAI = new GoogleGenerativeAI(geminiKey);
+            const mName = (p === initialProvider && requestedModel && !requestedModel.includes("3.8") && requestedModel.includes("gemini"))
+              ? requestedModel
+              : "gemini-2.5-flash";
+            const model = genAI.getGenerativeModel({
+              model: mName,
+              generationConfig: {
+                responseMimeType: "application/json",
                 temperature: 0.4,
-                system: OUTLINE_SYSTEM_PROMPT,
-                messages: [{ role: "user", content: userPrompt }],
-              }),
+              },
             });
 
-            if (response.ok) {
-              const data = await response.json();
-              const raw = data.content?.[0]?.text || "";
-              const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
-              const parsed = JSON.parse(cleaned);
+            const result = await model.generateContent([OUTLINE_SYSTEM_PROMPT, userPrompt]);
+            const text = result.response.text().trim();
+            const parsed = parseJsonFromLlm(text);
 
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                const sanitized = sanitizeOutlineItems(parsed, count);
-                return NextResponse.json({ success: true, outline: sanitized, source: "anthropic" });
-              }
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const sanitized = sanitizeOutlineItems(parsed, count, isEnglish);
+              return NextResponse.json({ success: true, outline: sanitized, source: "gemini" });
             }
-          } catch (anthropicErr: any) {
-            console.error("Anthropic Claude outline error:", anthropicErr?.message);
+          } catch (gemErr: any) {
+            console.warn(`Gemini outline planning error, trying next provider:`, gemErr?.message);
           }
         }
       }
-    }
 
-    // 4. Google Gemini
-    if (effectiveProvider === "gemini") {
-      const geminiKey = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-      if (geminiKey) {
-        try {
-          const genAI = new GoogleGenerativeAI(geminiKey);
-          const mName = requestedModel || "gemini-3.8-flash";
-          const model = genAI.getGenerativeModel({
-            model: mName,
-            generationConfig: {
-              responseMimeType: "application/json",
-              temperature: 0.4,
-            },
-          });
+      // 2. DeepSeek (BYOK First)
+      if (p === "deepseek") {
+        const deepseekKey = (p === initialProvider ? apiKey : "") || getEnvKey("DEEPSEEK_API_KEY");
+        if (deepseekKey) {
+          try {
+            const client = new OpenAI({
+              baseURL: "https://api.deepseek.com",
+              apiKey: deepseekKey,
+            });
 
-          const result = await model.generateContent([OUTLINE_SYSTEM_PROMPT, userPrompt]);
-          const text = result.response.text().trim();
-          const cleaned = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
-          const parsed = JSON.parse(cleaned);
+            const selectedModel = (p === initialProvider ? requestedModel : "") || "deepseek-chat";
+            const isReasoner = selectedModel === "deepseek-reasoner" || selectedModel.includes("reasoner");
 
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const sanitized = sanitizeOutlineItems(parsed, count);
-            return NextResponse.json({ success: true, outline: sanitized, source: "gemini" });
+            const res = await client.chat.completions.create({
+              model: selectedModel,
+              ...(isReasoner ? {} : { temperature: 0.4 }),
+              messages: isReasoner
+                ? [{ role: "user", content: `${OUTLINE_SYSTEM_PROMPT}\n\n${userPrompt}` }]
+                : [
+                    { role: "system", content: OUTLINE_SYSTEM_PROMPT },
+                    { role: "user", content: userPrompt },
+                  ],
+            });
+
+            const raw = res.choices[0]?.message?.content || "";
+            const parsed = parseJsonFromLlm(raw);
+
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const sanitized = sanitizeOutlineItems(parsed, count, isEnglish);
+              return NextResponse.json({ success: true, outline: sanitized, source: "deepseek" });
+            }
+          } catch (dsErr: any) {
+            console.warn("DeepSeek outline planning error, trying next provider:", dsErr?.message);
           }
-        } catch (gemErr: any) {
-          console.warn(`Gemini outline planning error:`, gemErr?.message);
+        }
+      }
+
+      // 3. OpenAI
+      if (p === "openai") {
+        const openAiKey = (p === initialProvider ? apiKey : "") || getEnvKey("OPENAI_API_KEY");
+        if (openAiKey) {
+          try {
+            const client = new OpenAI({
+              baseURL: "https://api.openai.com/v1",
+              apiKey: openAiKey,
+            });
+
+            const res = await client.chat.completions.create({
+              model: (p === initialProvider ? requestedModel : "") || "gpt-4o",
+              temperature: 0.4,
+              messages: [
+                { role: "system", content: OUTLINE_SYSTEM_PROMPT },
+                { role: "user", content: userPrompt },
+              ],
+            });
+
+            const raw = res.choices[0]?.message?.content || "";
+            const parsed = parseJsonFromLlm(raw);
+
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const sanitized = sanitizeOutlineItems(parsed, count, isEnglish);
+              return NextResponse.json({ success: true, outline: sanitized, source: "openai" });
+            }
+          } catch (openAiErr: any) {
+            console.warn("OpenAI outline planning error, trying next provider:", openAiErr?.message);
+          }
+        }
+      }
+
+      // 4. Anthropic (Claude)
+      if (p === "anthropic") {
+        const anthropicKey = (p === initialProvider ? apiKey : "") || getEnvKey("ANTHROPIC_API_KEY");
+        if (anthropicKey) {
+          const modelsToTry = [(p === initialProvider ? requestedModel : ""), "claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20241022"].filter(Boolean) as string[];
+          for (const mName of modelsToTry) {
+            try {
+              const response = await fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-api-key": anthropicKey,
+                  "anthropic-version": "2023-06-01",
+                },
+                body: JSON.stringify({
+                  model: mName,
+                  max_tokens: 8192,
+                  temperature: 0.4,
+                  system: OUTLINE_SYSTEM_PROMPT,
+                  messages: [{ role: "user", content: userPrompt }],
+                }),
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                const raw = data.content?.[0]?.text || "";
+                const parsed = parseJsonFromLlm(raw);
+
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  const sanitized = sanitizeOutlineItems(parsed, count, isEnglish);
+                  return NextResponse.json({ success: true, outline: sanitized, source: "anthropic" });
+                }
+              }
+            } catch (anthropicErr: any) {
+              console.warn("Anthropic Claude outline error, trying next provider:", anthropicErr?.message);
+            }
+          }
+        }
+      }
+
+      // 5. OpenRouter
+      if (p === "openrouter") {
+        const openrouterKey = (p === initialProvider ? apiKey : "") || (provider === "openrouter" ? apiKey : "") || getEnvKey("OPENROUTER_API_KEY");
+        if (openrouterKey) {
+          try {
+            const client = new OpenAI({
+              baseURL: "https://openrouter.ai/api/v1",
+              apiKey: openrouterKey,
+              defaultHeaders: {
+                "HTTP-Referer": "https://launcher-os.local",
+                "X-Title": "Launcher OS",
+              },
+            });
+
+            let orModel = (p === initialProvider && requestedModel ? requestedModel : "") || "google/gemini-2.5-flash";
+            if (!orModel.includes("/")) {
+              if (orModel.includes("gemini")) orModel = `google/${orModel}`;
+              else if (orModel.includes("deepseek")) orModel = "deepseek/deepseek-chat";
+              else orModel = "google/gemini-2.5-flash";
+            }
+
+            const res = await client.chat.completions.create({
+              model: orModel,
+              temperature: 0.4,
+              messages: [
+                { role: "system", content: OUTLINE_SYSTEM_PROMPT },
+                { role: "user", content: userPrompt },
+              ],
+            });
+
+            const raw = res.choices[0]?.message?.content || "";
+            const parsed = parseJsonFromLlm(raw);
+
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const sanitized = sanitizeOutlineItems(parsed, count, isEnglish);
+              return NextResponse.json({ success: true, outline: sanitized, source: "openrouter" });
+            }
+          } catch (openRouterErr: any) {
+            console.warn("OpenRouter outline planning error, trying next provider:", openRouterErr?.message);
+          }
         }
       }
     }
 
     // High-quality domain-aware fallback generator if all API keys fail or are empty
-    const fallbackOutline: OutlineSlideItem[] = generateFallbackBlueprint(content, count, purpose);
+    const fallbackOutline: OutlineSlideItem[] = generateFallbackBlueprint(content, count, purpose, isEnglish);
     return NextResponse.json({ success: true, outline: fallbackOutline, source: "intelligent-fallback" });
   } catch (error: any) {
     console.error("Plan Outline API Error:", error);
@@ -415,7 +552,48 @@ Generate a master blueprint with EXACTLY ${count} sequential slides in strict JS
   }
 }
 
-function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideItem[] {
+function parseJsonFromLlm(raw: string): any {
+  if (!raw) throw new Error("Empty response from AI");
+  let text = raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+
+  // Try direct parse after removing codeblock markers
+  const simpleClean = text
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
+  try {
+    return JSON.parse(simpleClean);
+  } catch (_) {}
+
+  // Match markdown block ```json [...] ```
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (codeBlockMatch && codeBlockMatch[1]) {
+    try {
+      return JSON.parse(codeBlockMatch[1].trim());
+    } catch (_) {}
+  }
+
+  // Match outermost [...]
+  const arrayMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+  if (arrayMatch) {
+    try {
+      return JSON.parse(arrayMatch[0]);
+    } catch (_) {}
+  }
+
+  // Match outermost {...}
+  const objMatch = text.match(/\{[\s\S]*\}/);
+  if (objMatch) {
+    try {
+      return JSON.parse(objMatch[0]);
+    } catch (_) {}
+  }
+
+  throw new Error(`Failed to extract valid JSON from LLM: ${raw.slice(0, 150)}...`);
+}
+
+function sanitizeOutlineItems(parsed: any[], targetCount: number, isEnglish: boolean = false): OutlineSlideItem[] {
   const arcLayouts = [
     "Split Comparison",
     "Two Column",
@@ -459,7 +637,7 @@ function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideI
     const lastItem = items.length > 0 ? items[items.length - 1] : null;
     const initialItems = items.length > 1 ? items.slice(0, -1) : items;
 
-    const expansionTemplates = [
+    const indonesianExpansion = [
       {
         headline: "Studi Komparasi Dampak & Efektivitas Solusi",
         subheadline: "Evaluasi terukur performa operasional sebelum dan sesudah penerapan inisiatif",
@@ -497,6 +675,47 @@ function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideI
         description: "Model kuantitatif membuktikan bahwa otomatisasi deteksi secara langsung memangkas kerugian operasional.",
       },
     ];
+
+    const englishExpansion = [
+      {
+        headline: "Comparative Impact & Solution Efficacy Analysis",
+        subheadline: "Empirical benchmarking of operational performance before and after transformation",
+        visualLayout: "Split Comparison",
+        description: "Quantified performance proof validating cycle-time compression and systemic risk reduction.",
+      },
+      {
+        headline: "Risk Exposure & Strategic Decision Matrix",
+        subheadline: "Multi-dimensional classification of strategic initiatives by financial impact and urgency",
+        visualLayout: "Table Comparison",
+        description: "Executive prioritization model identifying optimal resource allocation for maximum return.",
+      },
+      {
+        headline: "Unified Ecosystem Integration & Telemetry Hub",
+        subheadline: "Consolidating cross-functional workflows and intelligence into an integrated architecture",
+        visualLayout: "Radial Hub",
+        description: "Connecting core operational nodes to establish seamless end-to-end visibility.",
+      },
+      {
+        headline: "Governance Readiness & System Oversight Checklist",
+        subheadline: "Rigorous verification of operational standards and regulatory compliance protocols",
+        visualLayout: "Checklist",
+        description: "Comprehensive audit controls ensuring long-term institutional stability and audit readiness.",
+      },
+      {
+        headline: "Strategic Execution Roadmap & Value Milestones",
+        subheadline: "Phased implementation timeline with verifiable capability checkpoints across horizons",
+        visualLayout: "Timeline",
+        description: "Structured delivery horizon designed to secure sustainable enterprise value.",
+      },
+      {
+        headline: "Success Equation: Visibility × Speed of Response = Controlled Risk",
+        subheadline: "Quantifying security return on investment and business continuity assurance",
+        visualLayout: "Formula Hero",
+        description: "Empirical model proving proactive automation directly mitigates systemic operational loss.",
+      },
+    ];
+
+    const expansionTemplates = isEnglish ? englishExpansion : indonesianExpansion;
 
     const added: any[] = [];
     for (let k = 0; k < deficit; k++) {
@@ -565,6 +784,8 @@ function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideI
 
     const speakerNotes = item.speakerNotes
       ? String(item.speakerNotes)
+      : isEnglish
+      ? `Intent: Emphasize ${headline} within the narrative arc. Key message: ${headline}. Delivery: Present with executive authority and invite leadership discussion. Transition: Advance to the next strategic dimension.`
       : `Intent: Menekankan ${headline} dalam alur narasi. Key message: ${headline}. Delivery: Sampaikan dengan otoritas dan berikan jeda refleksi bagi audiens. Transition: Lanjutkan ke analisis dimensi berikutnya.`;
 
     const result: OutlineSlideItem = {
@@ -583,9 +804,18 @@ function sanitizeOutlineItems(parsed: any[], targetCount: number): OutlineSlideI
   return sanitized;
 }
 
-function generateFallbackBlueprint(content: string, count: number, purpose: string): OutlineSlideItem[] {
+function generateFallbackBlueprint(content: string, count: number, purpose: string, isEnglishOverride?: boolean): OutlineSlideItem[] {
   // Detect requested language
-  const isEnglish = /(?:in\s+english|bahasa\s*inggris|dalam\s*(?:bahasa\s*)?inggris|use\s+english|english\s+(?:language|version|deck|presentation))/i.test(content);
+  const contentLower = (content || "").toLowerCase();
+  const hasEnglishExplicit = /(?:in\s+english|\benglish\b|\binggris\b|bahasa\s*inggris|bhs\s*inggris|use\s+english|write\s+in\s+english|deck\s+in\s+english|pake\s+bahasa\s*inggris|pake\s+inggris|translate\s+to\s+english|lang\s*:\s*en)/i.test(content);
+  const englishWordMatches = contentLower.match(/\b(the|and|for|with|that|this|from|about|threat|security|cybersecurity|architecture|incident|response|zero|trust|governance|compliance|strategy|leaders|framework|intelligence|vulnerability|roadmap|executive|mitigation|detection|defense|enterprise)\b/g);
+  const indonesianWordMatches = contentLower.match(/\b(dan|yang|di|untuk|dari|dengan|tentang|buatkan|tolong|kerangka|materi|alur|ancaman|keamanan|tata|kelola|langkah|panduan|perusahaan|institusi|tahap|strategi)\b/g);
+  const englishWordCount = englishWordMatches ? englishWordMatches.length : 0;
+  const indonesianWordCount = indonesianWordMatches ? indonesianWordMatches.length : 0;
+
+  const isEnglish = typeof isEnglishOverride === "boolean"
+    ? isEnglishOverride
+    : (hasEnglishExplicit || (englishWordCount > indonesianWordCount && englishWordCount >= 2));
 
   // Clean user prompt to extract true subject
   const cleanedTopic = content

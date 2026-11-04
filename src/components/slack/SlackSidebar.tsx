@@ -90,7 +90,7 @@ export function SlackSidebar({
             placeholder="Cari channel, DM, inbox..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-2.5 py-1.5 rounded-lg text-xs bg-neutral-100/70 dark:bg-neutral-900/70 text-neutral-900 dark:text-white placeholder:text-neutral-400 border border-transparent focus:border-[#FFE500] focus:bg-white dark:focus:bg-[#161616] focus:outline-none transition-all"
+            className="w-full pl-8 pr-2.5 py-1.5 rounded-lg text-xs bg-neutral-100/70 dark:bg-neutral-900/70 text-neutral-900 dark:text-white placeholder:text-neutral-400 border border-transparent focus:border-neutral-400 dark:focus:border-neutral-600 focus:bg-white dark:focus:bg-[#161616] focus:outline-none transition-all"
           />
         </div>
       </div>

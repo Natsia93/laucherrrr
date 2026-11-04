@@ -97,6 +97,10 @@ import {
   RadialHubEcosystem,
   SplitCaseComparison,
   SplitProfileSlide,
+  ControlChartWorkedExample,
+  MLPipelineSlide,
+  LLMGenerationSlide,
+  CaseWorksheetSlide,
 } from "@/components/decks/SlideDiagrams";
 import { CloneStyleModal, type ClonedStyleResult } from "@/components/decks/CloneStyleModal";
 
@@ -248,7 +252,11 @@ type SlideLayout =
   | "transformationBridge"
   | "radialHub"
   | "splitComparison"
-  | "splitProfile";
+  | "splitProfile"
+  | "workedExample"
+  | "mlPipeline"
+  | "llmGeneration"
+  | "caseWorksheet";
 
 type ContentMode = "generate" | "summarize" | "preserve";
 type BgStyle = "mixed" | "solid" | "dualtone" | "gradient" | "dark" | "warm";
@@ -460,9 +468,9 @@ export function parsePromptBreakdown(text: string): ParsedSlideBreakdown[] {
       const headerLine = m[0].trim();
       const blockText = text.substring(startIndex, endIndex).trim();
 
-      // Extract headline: title after Slide X: or top # line or Headline:
+      // Extract headline: title after Slide X: or top # line or Headline/Title/Judul:
       const headerTitleMatch = headerLine.match(/Slide\s*\d+\s*[:·\-]\s*(.+)/i);
-      const explicitHeadlineMatch = blockText.match(/(?:(?:\*\*|#)?\s*(?:Headline|Title):\s*(?:\*\*)?)\s*([^\n]+)/i);
+      const explicitHeadlineMatch = blockText.match(/(?:(?:\*\*|#)?\s*(?:Headline|Title|Judul):\s*(?:\*\*)?)\s*([^\n]+)/i);
       const topHeaderMatch = blockText.split("\n")[0]?.match(/^#\s+([^#\n]+)/);
 
       let headline = explicitHeadlineMatch
@@ -474,15 +482,15 @@ export function parsePromptBreakdown(text: string): ParsedSlideBreakdown[] {
         : `Slide ${idx + 1}`;
       headline = headline.replace(/^\*+|\*+$/g, "").trim();
 
-      // Extract subheadline: ## Subtitle or Subtitle:
+      // Extract subheadline: ## Subtitle or Subtitle/Subheadline/Subjudul:
       const subheadlineMatch =
-        blockText.match(/(?:(?:\*\*|#)?\s*(?:Subheadline|Subtitle):\s*(?:\*\*)?)\s*([^\n]+)/i) ||
+        blockText.match(/(?:(?:\*\*|#)?\s*(?:Subheadline|Subtitle|Subjudul):\s*(?:\*\*)?)\s*([^\n]+)/i) ||
         blockText.match(/(?:^|\n)\s*##\s+([^#\n]+)/);
       const subheadline = subheadlineMatch ? subheadlineMatch[1].replace(/^\*+|\*+$/g, "").trim() : undefined;
 
-      // Extract visual layout hint: 🗒️ Note: or Visual: or Layout:
+      // Extract visual layout hint: 🗒️ Note: or Visual: or Layout: or Rekomendasi Visual:
       const visualMatch = blockText.match(
-        /(?:(?:\*\*|#)?\s*(?:🗒️\s*)?(?:Note|Visual\/Smart Layout Recommendation|Visual Recommendation|Visual|Layout|Catatan Desain|Rekomendasi Visual|Design Note)[^:]*:\s*(?:\*\*)?)\s*([^\n]+)/i
+        /(?:(?:\*\*|#)?\s*(?:🗒️\s*)?(?:Note|Visual\/Smart Layout Recommendation|Visual Recommendation|Visual|Layout|Catatan Desain|Rekomendasi Visual|Design Note|Bentuk Visual)[^:]*:\s*(?:\*\*)?)\s*([^\n]+)/i
       );
       let visualLayout = visualMatch ? visualMatch[1].trim() : undefined;
 
@@ -496,15 +504,22 @@ export function parsePromptBreakdown(text: string): ParsedSlideBreakdown[] {
         visualLayout = "Comparison Table";
       }
 
-      // Extract bullets
+      // Extract explicit description if tagged (#Deskripsi: or **Deskripsi:** or Description:)
+      const explicitDescMatch = blockText.match(/(?:(?:\*\*|#)?\s*(?:Deskripsi|Description):\s*(?:\*\*)?)\s*([^\n]+)/i);
+
+      // Extract explicit speaker notes if present (**🎤 Speaker notes:** or #Notes:)
+      const speakerNotesMatch = blockText.match(/(?:(?:\*\*|#)?\s*(?:🎤\s*)?(?:Speaker\s*notes|Notes|Catatan\s*Pembicara|Catatan\s*Presenter):\s*(?:\*\*)?)\s*([^\n]+)/i);
+      const speakerNotes = speakerNotesMatch ? speakerNotesMatch[1].trim() : undefined;
+
+      // Extract bullets (supports bullets, numbered list, or lines under "Konten:" / "Body:")
       const bullets = blockText
         .split("\n")
         .map((l) => l.trim())
         .filter((l) => /^[•\-\*\+]\s+/.test(l) || /^\d+[\.\)]\s+/.test(l))
         .map((l) => l.replace(/^[•\-\*\+\d\.\)\s]+/, "").trim())
-        .filter((l) => l.length > 0 && !l.startsWith("Note:") && !l.startsWith("Visual:"));
+        .filter((l) => l.length > 0 && !l.startsWith("Note:") && !l.startsWith("Visual:") && !l.startsWith("Deskripsi:") && !l.startsWith("Konten:"));
 
-      // Extract narrative description
+      // Extract narrative description (fallback to untagged prose if no explicitDeskMatch)
       const nonBullets = blockText
         .split("\n")
         .map((l) => l.trim())
@@ -515,9 +530,9 @@ export function parsePromptBreakdown(text: string): ParsedSlideBreakdown[] {
             !/^[•\-\*\+]\s+/.test(l) &&
             !/^\d+[\.\)]\s+/.test(l) &&
             !l.startsWith("|") &&
-            !/(?:🗒️|Note:|Visual:|Headline:|Subtitle:|Deskripsi:)/i.test(l)
+            !/(?:🗒️|Note:|Visual:|Headline:|Title:|Judul:|Subtitle:|Subjudul:|Deskripsi:|Description:|Konten:|Body:|🎤|Speaker notes:)/i.test(l)
         );
-      const description = nonBullets.length > 0 ? nonBullets.join(" ") : undefined;
+      const description = explicitDescMatch ? explicitDescMatch[1].trim() : (nonBullets.length > 0 ? nonBullets.join(" ") : undefined);
 
       return {
         slideNumber: idx + 1,
@@ -527,6 +542,7 @@ export function parsePromptBreakdown(text: string): ParsedSlideBreakdown[] {
         description,
         bullets: bullets.length > 0 ? bullets : undefined,
         tableSummary,
+        speakerNotes,
       };
     });
   }
@@ -535,14 +551,14 @@ export function parsePromptBreakdown(text: string): ParsedSlideBreakdown[] {
   const dashBlocks = extractDashSlideBlocks(text);
   if (dashBlocks.length > 1 || (dashBlocks.length === 1 && (/-{3,}/.test(text) || /#(?:Headline|Title|Visual|Deskripsi)/i.test(text)))) {
     return dashBlocks.map((block, idx) => {
-      const headlineMatch = block.match(/#(?:Headline|Title):\s*([^\n]+)/i);
+      const headlineMatch = block.match(/#(?:Headline|Title|Judul):\s*([^\n]+)/i);
       const headline = headlineMatch
         ? headlineMatch[1].trim()
         : block.split("\n")[0]?.replace(/^#+\s*/, "").trim() || `Slide ${idx + 1}`;
 
-      const subheadline = block.match(/#(?:Subheadline|Subtitle):\s*([^\n]+)/i)?.[1]?.trim();
+      const subheadline = block.match(/#(?:Subheadline|Subtitle|Subjudul):\s*([^\n]+)/i)?.[1]?.trim();
       
-      let visualLayout = block.match(/(?:#(?:Visual|Layout)|(?:🗒️\s*)?(?:Note|Design Note)):\s*([^\n]+)/i)?.[1]?.trim();
+      let visualLayout = block.match(/(?:#(?:Visual|Layout|Rekomendasi Visual)|(?:🗒️\s*)?(?:Note|Design Note|Rekomendasi Visual)):\s*([^\n]+)/i)?.[1]?.trim();
       if (!visualLayout) {
         if (/bar chart|barchart|clustered bar/i.test(block)) visualLayout = "Bar Chart Comparison";
         else if (/pie chart|donut/i.test(block)) visualLayout = "Pie / Donut Chart Breakdown";
@@ -593,9 +609,9 @@ export function parsePromptBreakdown(text: string): ParsedSlideBreakdown[] {
     });
   }
 
-  // 3. Numbered list (e.g. 1. Slide 1 (Title): ..., 2. Slide 2 (Bar Chart): ...)
+  // 3. Numbered list (e.g. 1. Intro, 2. Threat Landscape ... 40. Conclusion, OR 1) ..., OR Slide 1: ...)
   const numberedPattern =
-    /(?:^|\n)\s*(\d+)[\.\)]\s*(?:Slide\s*\d+[^:\n]*[:\-\.]\s*|(?:\*\*Slide\s*\d+\*\*[:\-\.]?\s*))?([^\n]+(?:\n(?!\d+[\.\)]\s*(?:Slide|\*\*Slide))[^\n]+)*)/gi;
+    /(?:^|\n)\s*(\d+)[\.\)]\s*(?:Slide\s*\d+[^:\n]*[:\-\.]\s*|(?:\*\*Slide\s*\d+\*\*[:\-\.]?\s*))?([^\n]+(?:\n(?!\s*\d+[\.\)]\s+)[^\n]+)*)/gi;
   const matches = [...text.matchAll(numberedPattern)];
   if (matches.length >= 2) {
     return matches.map((m, idx) => {
@@ -619,19 +635,76 @@ export function parsePromptBreakdown(text: string): ParsedSlideBreakdown[] {
         /\b(?:Q\d|CAC|LTV|CSAT|Retention|B2C|B2B|Bootcamp|[A-Za-z]+)\s*[:=]\s*[\$\d\.,%/\-]+/gi
       );
 
+      // Extract bullet lines inside item
+      const bulletLines = rawLine
+        .split("\n")
+        .slice(1)
+        .map((l) => l.trim())
+        .filter((l) => /^[•\-\*\+]\s+/.test(l))
+        .map((l) => l.replace(/^[•\-\*\+\s]+/, "").trim());
+
       return {
         slideNumber: idx + 1,
         headline: headline || `Slide ${idx + 1}`,
         subheadline: `Slide ${idx + 1} • ${visualLayout}`,
         visualLayout,
         description: fullText.length > 200 ? fullText.slice(0, 197) + "..." : fullText,
+        bullets: bulletLines.length > 0 ? bulletLines : undefined,
         stats: statMatches && statMatches.length > 0 ? statMatches : undefined,
       };
     });
   }
 
+  // 3b. Markdown heading list: e.g. ## 1. Intro, ## 2. Analysis ... or # Section 1, # Section 2
+  const mdHeadingMatches = Array.from(text.matchAll(/(?:^|\n)\s*(?:#{1,3})\s+([^\n]+)/g));
+  if (mdHeadingMatches.length >= 2) {
+    return mdHeadingMatches.map((m, idx) => {
+      const startIndex = m.index! + m[0].length;
+      const endIndex = idx + 1 < mdHeadingMatches.length ? mdHeadingMatches[idx + 1].index! : text.length;
+      const blockText = text.substring(startIndex, endIndex).trim();
+      let rawHeading = m[1].replace(/^\*+|\*+$/g, "").trim();
+      let headline = rawHeading.replace(/^(?:Slide\s*\d+[:\-\.]?\s*|\d+[\.\)]\s*)/i, "").trim() || rawHeading;
+
+      let visualLayout = "Structured Layout";
+      if (idx === 0) visualLayout = "Title / Executive Hero";
+      else if (/table|komparasi/i.test(blockText + headline)) visualLayout = "Comparison Table";
+      else if (/metric|kpi|stat/i.test(blockText + headline)) visualLayout = "Metrics & KPI Grid";
+      else if (/timeline|roadmap/i.test(blockText + headline)) visualLayout = "Strategic Roadmap Timeline";
+
+      const bullets = blockText
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => /^[•\-\*\+]\s+/.test(l))
+        .map((l) => l.replace(/^[•\-\*\+\s]+/, "").trim());
+
+      return {
+        slideNumber: idx + 1,
+        headline,
+        subheadline: `Slide ${idx + 1} • ${visualLayout}`,
+        visualLayout,
+        description: blockText.slice(0, 200),
+        bullets: bullets.length > 0 ? bullets : undefined,
+      };
+    });
+  }
+
+  // 3c. Bullet items list (if >= 3 distinct bullet points and no other pattern matched)
+  const bulletLines = text.split("\n").map(l => l.trim()).filter(l => /^[•\-\*]\s+[A-Za-z0-9]/.test(l));
+  if (bulletLines.length >= 3) {
+    return bulletLines.map((b, idx) => {
+      const clean = b.replace(/^[•\-\*]\s+/, "").trim();
+      const headline = clean.split(/[:\.]/)[0]?.trim() || `Slide ${idx + 1}`;
+      return {
+        slideNumber: idx + 1,
+        headline,
+        subheadline: `Slide ${idx + 1} • Structured Layout`,
+        visualLayout: idx === 0 ? "Title / Executive Hero" : "Structured Layout",
+        description: clean,
+      };
+    });
+  }
+
   // 4. Fallback: Split by paragraphs ONLY if there are at least 2 distinct paragraphs.
-  // A single paragraph or prompt is an instruction for the AI, not a pre-formatted multi-slide deck!
   const paras = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
   if (paras.length < 2) return [];
 
@@ -699,7 +772,17 @@ export function formatBreakdownToMarkdown(cards: ParsedSlideBreakdown[]): string
  * ─────────────────────────────────────────────────── */
 export function cleanPlaceholders(str: string): string {
   if (!str) return "";
-  return str
+  let s = str
+    // 1. Strip code blocks / markdown fences if accidentally leaked into text
+    .replace(/```(?:json|markdown|html|ts|js)?\s*([\s\S]*?)\s*```/gi, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    // 2. Strip raw markdown bold/italic asterisks & underscores
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    // 3. Strip stray HTML tags
+    .replace(/<[^>]+>/g, " ")
+    // 4. Standard business presentation placeholders
     .replace(/\[X\]\s*months?/gi, "6-12 months")
     .replace(/\[X\]\s*weeks?/gi, "4-8 weeks")
     .replace(/\[X\]\s*years?/gi, "3-5 years")
@@ -707,7 +790,32 @@ export function cleanPlaceholders(str: string): string {
     .replace(/\[X\]/gi, "12")
     .replace(/\[Company(?:\s+Name)?\]/gi, "Organization")
     .replace(/\[insert[^\]]*\]/gi, "")
-    .replace(/\[TBD\]/gi, "Active Roadmap");
+    .replace(/\[TBD\]/gi, "Active Roadmap")
+    // 5. Clean multi-spaces
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  // 6. If the entire string is literally a leaked JSON object e.g. {"text": "..."}, extract human text
+  if (s.startsWith("{") && s.endsWith("}")) {
+    try {
+      const parsed = JSON.parse(s);
+      if (parsed && typeof parsed === "object") {
+        return cleanPlaceholders(
+          parsed.text ||
+          parsed.content ||
+          parsed.description ||
+          parsed.title ||
+          parsed.item ||
+          parsed.detail ||
+          Object.values(parsed).filter((v) => typeof v === "string").join(" - ")
+        );
+      }
+    } catch {
+      // not JSON, keep s
+    }
+  }
+
+  return s;
 }
 
 export function safeString(val: any, fallback = ""): string {
@@ -715,18 +823,33 @@ export function safeString(val: any, fallback = ""): string {
   if (typeof val === "string") return cleanPlaceholders(val);
   if (typeof val === "number" || typeof val === "boolean") return String(val);
   if (typeof val === "object") {
+    // Extract any meaningful string property from object
     if (val.title && val.description) return cleanPlaceholders(`${val.title}: ${val.description}`);
+    if (val.verb && val.text) return cleanPlaceholders(`${val.verb} ${val.text}`);
+    if (val.left && val.right) return cleanPlaceholders(`${val.left} → ${val.right}`);
     if (val.title) return cleanPlaceholders(String(val.title));
     if (val.text) return cleanPlaceholders(String(val.text));
+    if (val.content) return cleanPlaceholders(String(val.content));
     if (val.description) return cleanPlaceholders(String(val.description));
+    if (val.item) return cleanPlaceholders(String(val.item));
+    if (val.point) return cleanPlaceholders(String(val.point));
+    if (val.action) return cleanPlaceholders(String(val.action));
+    if (val.step) return cleanPlaceholders(String(val.step));
     if (val.label) return cleanPlaceholders(String(val.label));
     if (val.value !== undefined) return cleanPlaceholders(String(val.value));
     if (val.name) return cleanPlaceholders(String(val.name));
-    try {
-      return cleanPlaceholders(JSON.stringify(val));
-    } catch {
-      return fallback;
+    if (val.headline) return cleanPlaceholders(String(val.headline));
+    if (val.subheadline) return cleanPlaceholders(String(val.subheadline));
+    if (val.detail) return cleanPlaceholders(String(val.detail));
+
+    // Fallback: extract all string values from the object without dumping raw JSON syntax
+    const stringValues = Object.values(val)
+      .filter((v) => typeof v === "string" && (v as string).trim().length > 0)
+      .map((v) => cleanPlaceholders(v as string));
+    if (stringValues.length > 0) {
+      return stringValues.join(" - ");
     }
+    return fallback;
   }
   return cleanPlaceholders(String(val));
 }
@@ -735,7 +858,11 @@ export function mapVisualLayoutToLayout(val?: string): SlideLayout {
   if (!val) return "twoColumn";
   const lower = val.toLowerCase();
   if (lower.includes("profile") || lower.includes("speaker") || lower.includes("pembicara") || lower.includes("fasilitator") || lower.includes("instruktur")) return "splitProfile";
-  if (lower.includes("split case") || lower.includes("split comparison") || lower.includes("before vs after") || lower.includes("before and after") || (lower.includes("split") && (lower.includes("case") || lower.includes("comparison") || lower.includes("worked")))) return "splitComparison";
+  if (lower.includes("pipeline") || (lower.includes("build") && lower.includes("model")) || lower.includes("ml pipeline") || lower.includes("machine learning model")) return "mlPipeline";
+  if (lower.includes("llm") || lower.includes("token") || lower.includes("probability") || lower.includes("stochastic") || lower.includes("generative ai produces") || lower.includes("next-word")) return "llmGeneration";
+  if (lower.includes("worksheet") || (lower.includes("case") && lower.includes("hands-on")) || (lower.includes("need") && lower.includes("task")) || lower.includes("twist")) return "caseWorksheet";
+  if (lower.includes("control chart") || lower.includes("xmr") || lower.includes("p-chart") || lower.includes("c-chart") || (lower.includes("worked") && lower.includes("example"))) return "workedExample";
+  if (lower.includes("split case") || lower.includes("split comparison") || lower.includes("before vs after") || lower.includes("before and after") || (lower.includes("split") && (lower.includes("case") || lower.includes("comparison")))) return "splitComparison";
   if (lower.includes("section") || lower.includes("divider") || lower.includes("pembagi")) return "sectionDivider";
   if (lower.includes("pyramid") || lower.includes("piramida") || lower.includes("hierarchy") || lower.includes("hierarki")) return "pyramidHierarchy";
   if (lower.includes("transformation") || lower.includes("transformasi") || lower.includes("as-is") || lower.includes("to-be") || lower.includes("shift")) return "transformationBridge";
@@ -770,11 +897,56 @@ export function resolveSlideBackground(
   index: number = 0,
   totalSlides: number = 1
 ): string {
-  if (slide?.backgroundImage) return slide.backgroundImage;
+  const combinedMeta = `${slide?.badge || ""} ${slide?.category || ""} ${slide?.title || ""} ${slide?.description || ""} ${slide?.subtitle || ""} ${slide?.deckTitle || ""} ${slide?.templateName || ""} ${slide?.theme || ""}`.toLowerCase();
+
+  const isITB =
+    slide?.theme === "itb" ||
+    slide?.template === "itb" ||
+    slide?.institution === "itb" ||
+    slide?.paletteId === "itb" ||
+    /institut teknologi bandung|itb × revou|\bitb\b/i.test(combinedMeta);
+
+  const isBinus =
+    !isITB &&
+    (slide?.theme === "binus" ||
+      slide?.template === "binus" ||
+      slide?.institution === "binus" ||
+      slide?.paletteId === "binus" ||
+      /binus|bina nusantara/i.test(combinedMeta));
+
+  const isUI =
+    !isITB &&
+    !isBinus &&
+    (slide?.theme === "ui" ||
+      slide?.template === "ui" ||
+      slide?.institution === "ui" ||
+      slide?.paletteId === "ui" ||
+      /universitas indonesia|ui × revou|\bui\b|makara/i.test(combinedMeta));
+
+  if (slide?.backgroundImage) {
+    let rawBg = String(slide.backgroundImage);
+    if (isITB) {
+      if (rawBg.includes("recap-deck") || rawBg.includes("tablecontent-deck") || rawBg.includes("learningoutcome-deck")) {
+        return "/bg-deck/itb-deck/content-deck.webp";
+      }
+      if (rawBg.includes("/binus-deck/") || rawBg.includes("/ui-deck/")) {
+        return rawBg.replace(/\/(binus|ui)-deck\//, "/itb-deck/");
+      }
+    }
+    if (isUI && (rawBg.includes("/itb-deck/") || rawBg.includes("/binus-deck/"))) {
+      return rawBg.replace(/\/(itb|binus)-deck\//, "/ui-deck/");
+    }
+    if (isBinus && (rawBg.includes("/itb-deck/") || rawBg.includes("/ui-deck/"))) {
+      return rawBg.replace(/\/(itb|ui)-deck\//, "/binus-deck/");
+    }
+    return rawBg;
+  }
+
+  const bgPrefix = isBinus ? "/bg-deck/binus-deck" : isUI ? "/bg-deck/ui-deck" : "/bg-deck/itb-deck";
 
   // Rule 1: Cover slide — strictly once at the beginning (slide 1 / index 0)
   if (index === 0) {
-    return "/bg-deck/itb-deck/cover-deck.webp";
+    return `${bgPrefix}/cover-deck.webp`;
   }
 
   const isLast = totalSlides > 0 && index === totalSlides - 1;
@@ -803,7 +975,7 @@ export function resolveSlideBackground(
       index === totalSlides - 1);
 
   if (isClosing) {
-    return "/bg-deck/itb-deck/closing-deck.webp";
+    return `${bgPrefix}/closing-deck.webp`;
   }
 
   // Rule 3: Section Divider / Part header (Rule §5: Section dividers "Part N", break, guest hand-over)
@@ -813,7 +985,51 @@ export function resolveSlideBackground(
     /^(part|bagian|agenda utama|modul|bab)\s+\d+/i.test(titleLower.trim());
 
   if (isPart) {
-    return "/bg-deck/itb-deck/part-deck.webp";
+    return `${bgPrefix}/part-deck.webp`;
+  }
+
+  // BINUS Specialized Backgrounds
+  if (isBinus) {
+    const isAgenda =
+      /^(agenda|table of contents|daftar isi|outline|roadmap|silabus)/i.test(titleLower.trim()) ||
+      combined.includes("agenda") ||
+      combined.includes("table of content") ||
+      combined.includes("daftar isi");
+
+    if (isAgenda && index <= 2) {
+      return `${bgPrefix}/tablecontent-deck.webp`;
+    }
+
+    const isLearningOutcome =
+      /^(learning outcome|capaian pembelajaran|tujuan pembelajaran|competency|objective)/i.test(titleLower.trim()) ||
+      combined.includes("learning outcome") ||
+      combined.includes("capaian pembelajaran") ||
+      combined.includes("tujuan pembelajaran");
+
+    if (isLearningOutcome && index <= 3) {
+      return `${bgPrefix}/learningoutcome-deck.webp`;
+    }
+
+    const isSpeaker =
+      layout === "splitProfile" ||
+      Boolean(slide?.profileData) ||
+      /speaker|fasilitator|profile|pembicara|narasumber|mentor/i.test(combined);
+
+    if (isSpeaker) {
+      return `${bgPrefix}/speaker-deck.webp`;
+    }
+
+    const isRecap =
+      layout === "checklist" ||
+      combined.includes("recap") ||
+      combined.includes("rangkuman") ||
+      combined.includes("takeaway") ||
+      combined.includes("ringkasan") ||
+      combined.includes("key takeaway");
+
+    if (isRecap) {
+      return `${bgPrefix}/recap-deck.webp`;
+    }
   }
 
   // Rule 4: Split / Task / Workshop / Exercise / Case Study (Rule §5: 2-4 per deck for split case comparisons & profiles)
@@ -824,14 +1040,33 @@ export function resolveSlideBackground(
     layout === "splitPoll" ||
     layout === "caseStudy" ||
     layout === "caseExercise" ||
+    layout === "caseWorksheet" ||
     (layout === "twoColumn" && (badgeLower.includes("case") || badgeLower.includes("hands-on") || titleLower.includes("studi kasus")));
 
   if (isTaskSpeaker) {
-    return "/bg-deck/itb-deck/task-speaker-deck.webp";
+    if (isBinus) {
+      return `${bgPrefix}/speaker-deck.webp`;
+    }
+    return `${bgPrefix}/task-speaker-deck.webp`;
+  }
+
+  // In UI: Recap background detection
+  if (isUI) {
+    const isRecap =
+      layout === "checklist" ||
+      combined.includes("recap") ||
+      combined.includes("rangkuman") ||
+      combined.includes("takeaway") ||
+      combined.includes("ringkasan") ||
+      combined.includes("key takeaway");
+
+    if (isRecap) {
+      return `${bgPrefix}/recap-deck.webp`;
+    }
   }
 
   // Rule 5: Default content deck — all other standard content slides (process, rail, timeline, bullets, etc.)
-  return "/bg-deck/itb-deck/content-deck.webp";
+  return `${bgPrefix}/content-deck.webp`;
 }
 
 export function normalizeSlide(raw: any, index: number = 0, totalSlides: number = 1): SlideData {
@@ -853,7 +1088,8 @@ export function normalizeSlide(raw: any, index: number = 0, totalSlides: number 
     "asymmetricMatrix", "boldStatement", "imageSplitMetric", "boldImpact", "cta",
     "actionList", "cardGrid", "caseStudy", "splitPoll", "interactiveCase", "breakSlide", "keyInsight",
     "sectionDivider", "pairedRows", "horizontalStack", "connectedRailStepper", "ascendingColumns", "checklist", "closingAction",
-    "formulaHero", "treeComparison", "caseExercise", "pyramidHierarchy", "transformationBridge", "radialHub", "splitComparison", "splitProfile"
+    "formulaHero", "treeComparison", "caseExercise", "pyramidHierarchy", "transformationBridge", "radialHub", "splitComparison", "splitProfile",
+    "workedExample", "mlPipeline", "llmGeneration", "caseWorksheet"
   ];
   let layout: SlideLayout = raw.layout || "twoColumn";
   if (!validLayouts.includes(layout)) {
@@ -1266,12 +1502,19 @@ export function normalizeSlide(raw: any, index: number = 0, totalSlides: number 
     footer: raw.footer ? safeString(raw.footer) : undefined,
     slideNumber: raw.slideNumber ? safeString(raw.slideNumber) : undefined,
     backgroundImage: (() => {
-      let bg = raw.backgroundImage ? safeString(raw.backgroundImage) : resolveSlideBackground(raw, index, totalSlides);
+      let bg = resolveSlideBackground(raw, index, totalSlides);
+      const isBinus = Boolean(bg && bg.includes("/binus-deck/"));
+      const isUI = Boolean(bg && bg.includes("/ui-deck/"));
+      const contentFallback = isBinus
+        ? "/bg-deck/binus-deck/content-deck.webp"
+        : isUI
+        ? "/bg-deck/ui-deck/content-deck.webp"
+        : "/bg-deck/itb-deck/content-deck.webp";
       if (bg && bg.includes("closing-deck") && index < totalSlides - 1) {
-        bg = "/bg-deck/itb-deck/content-deck.webp";
+        bg = contentFallback;
       }
       if (bg && bg.includes("cover-deck") && index > 0) {
-        bg = "/bg-deck/itb-deck/content-deck.webp";
+        bg = contentFallback;
       }
       return bg;
     })(),
@@ -1346,6 +1589,28 @@ const COLOR_PALETTES: ColorPalette[] = [
     bgDark: "dark:bg-[#00274D]",
     textPrimary: "text-[#272525]",
     badgeBg: "bg-[#005AAB] text-white",
+  },
+  {
+    id: "ui",
+    name: "Universitas Indonesia Makara",
+    primary: "#FEDE3B",
+    secondary: "#000000",
+    accent: "#AC9629",
+    bgLight: "bg-[#FAFAF7]",
+    bgDark: "dark:bg-[#121212]",
+    textPrimary: "text-[#000000]",
+    badgeBg: "bg-[#FEDE3B] text-black",
+  },
+  {
+    id: "binus",
+    name: "BINUS Applied Cybersecurity",
+    primary: "#174A7F",
+    secondary: "#23A3E7",
+    accent: "#FFDE3D",
+    bgLight: "bg-white",
+    bgDark: "dark:bg-[#071322]",
+    textPrimary: "text-[#174A7F]",
+    badgeBg: "bg-[#174A7F] text-white",
   },
 ];
 
@@ -1503,7 +1768,7 @@ description: Visual design and content generation rules for ITB × RevoU slide d
 ---
 
 # ITB × RevoU Deck Design System
-### A single source of truth for any AI (Claude, ChatGPT, Gemini, Copilot, Gamma, etc.) that creates, restyles, reviews or exports slide decks for the ITB × RevoU "Data-Driven & AI-Enabled Decision Making for Leaders" program.
+### A single source of truth for any AI (Claude, ChatGPT, Gemini, Copilot, Launcher OS, etc.) that creates, restyles, reviews or exports slide decks for ITB × RevoU executive programs ([Program Name]).
 
 > **How to use this file:** paste it (or attach it) before your request. Every rule is written as a measurable value. If a rule and the user's outline conflict, keep the outline's wording and apply the rule to the visual form. Never invent facts, numbers, names or dates.
 
@@ -1592,7 +1857,7 @@ PowerPoint and Google Slides only have **Bold on/off**. Map like this:
 - **Bold:** only for lead-ins ("Note:", "Rule:", "Key insight:") and one key phrase per block.
 - **Italic:** only for quotes, example answers, prompts and "how to spot it" descriptions.
 - **Title length:** shorten the title rather than wrap to 3 lines.
-- **Language:** keep the outline's language. Indonesian terms stay Indonesian.
+- **Language:** Strictly obey the user's requested language. If the user asks for English (or inputs in English), 100% of all generated slide headlines, subheadlines, descriptions, and notes MUST be in English. If the user asks for Indonesian, use Indonesian. Never force Indonesian onto an English request.
 
 ---
 
@@ -1686,7 +1951,7 @@ Five prepared 1920 × 1080 backgrounds. Place each as a **full-bleed picture at 
 
 | Element | Spec |
 |---|---|
-| **Rounded card** | Radius 16–22 px, padding 22–36 px. No shadows. No gradient fills. |
+| **Rounded card** | Radius 6–8 px (rounded-lg / rounded-md, halus & profesional), padding 22–36 px. No shadows. No gradient fills. |
 | **Header-band card** | White body, 3 px colored border, colored top band (yellow or blue) holding the label/heading. |
 | **Pill / chip** | Fully rounded (radius = height/2), 24 px bold text, height ~40–48 px. For tags, verdicts, durations, module codes. |
 | **HANDS-ON tag** | Golden Yellow pill **beside** the title, 26 px bold, letter-spacing 2 px, text "HANDS-ON". Meta line underneath: "10 minutes, squad". |
@@ -1789,7 +2054,7 @@ Ask first: *what is this slide's idea?* Then draw that idea.
 - No shadows, glows, bevels or 3D.
 
 ### 9.6 Shapes
-- Cards = **Rounded Rectangle**. Corner radius: pptxgenjs \`rectRadius\` in inches (16–22 px → 0.11–0.15 in); in raw OOXML the \`adj\` value = radius ÷ min(width, height) × 50,000 (cap 50,000).
+- Cards = **Rounded Rectangle**. Corner radius: pptxgenjs \`rectRadius\` in inches (6–8 px → 0.04–0.06 in (subtle rounded-lg)); in raw OOXML the \`adj\` value = radius ÷ min(width, height) × 50,000 (cap 50,000).
 - Pills = Rounded Rectangle with radius = height ÷ 2.
 - Circles = Ellipse with equal width/height.
 - Accent bars (yellow left edge, divider bar) = thin Rectangles, not borders.
@@ -1852,6 +2117,777 @@ The structure, spacing, element specs and export rules stay the same. Swap only:
 3. The **program facts**: names, cases, weeks and rubrics always come from that program's own materials.
 `;
 
+const UI_SKILL_MD = `# UI × RevoU Deck Design System
+### A single source of truth for any AI (Claude, ChatGPT, Gemini, Copilot, Launcher OS, etc.) that creates, restyles, reviews or exports slide decks for Universitas Indonesia (UI) × RevoU executive programs.
+
+> **How to use this file:** paste it (or attach it) before your request. Every rule is written as a measurable value. If a rule and the user's outline conflict, keep the outline's wording and apply the rule to the visual form. Never invent facts, numbers, names or dates.
+
+---
+
+## 0. Quick tokens (machine-readable)
+
+\`\`\`json
+{
+  "canvas": { "width_px": 1920, "height_px": 1080, "width_in": 13.333, "height_in": 7.5, "aspect": "16:9" },
+  "units": { "px_to_pt": 0.5, "px_to_in": 0.006944, "px_to_emu": 6350, "pt_to_emu": 12700, "in_to_emu": 914400 },
+  "font": { "family": "Red Hat Display", "fallback": ["Arial", "sans-serif"], "min_size_px": 24 },
+  "type_scale_px": {
+    "cover_title": 104, "cover_subtitle": 46, "cover_meta": 30,
+    "divider_title": 96, "slide_title": 72, "lead": 30, "meta": 26,
+    "card_heading": [28, 36], "body": [24, 30], "label": 24, "big_number": [56, 300]
+  },
+  "weights": { "light": 300, "regular": 400, "semibold": 600, "bold": 700, "extrabold": 800 },
+  "line_height": { "titles": 1.1, "body": [1.25, 1.35] },
+  "colors": {
+    "ui_yellow": "#FEDE3B",
+    "black": "#000000",
+    "accent_brown": "#AC9629",
+    "grey": "#4A4A4A",
+    "off_white": "#FAFAF7",
+    "light_grey": "#F2F2F2",
+    "border_grey": "#E0E0E0",
+    "mid_grey": "#BDBDBD",
+    "white": "#FFFFFF",
+    "soft_yellow": "rgba(254, 222, 59, 0.55)"
+  },
+  "spacing_scale_px": [4, 8, 12, 16, 20, 24, 32, 40, 48, 64],
+  "radius_px": { "card": [16, 22], "pill": 999, "small": [8, 12] },
+  "stroke_px": { "card_border": 3, "row_rule": [2, 3], "connector": [4, 6], "accent_bar": [12, 14] }
+}
+\`\`\`
+
+---
+
+## 1. Canvas & Units
+
+| Item | Value |
+|---|---|
+| Slide size | 1920 × 1080 px = **13.333 × 7.5 in** (PowerPoint "Widescreen 16:9"). Never use 10 × 5.625 in. |
+| Unit conversion | 1 px = 0.5 pt = 1/144 in = 6,350 EMU. **Font size in pt = px ÷ 2.** |
+| Content safe area (content slides) | x 108–1812 px, y 84–920 px (0.75–12.58 in, 0.58–6.39 in). Nothing below y 930 px. |
+| Max words per slide | ~170. Denser content → split the slide or move detail to speaker notes. |
+| Min text size | **24 px (12 pt)**, everywhere, including table cells, labels, captions, footnotes. |
+
+---
+
+## 2. Typography
+
+**One family only: Red Hat Display** (Google Fonts, free). Fallback: Arial → sans-serif. Never mix a second font.
+
+### 2.1 Type scale
+
+| Role | px | pt (PPTX) | Weight | Color | Case / Style |
+|---|---|---|---|---|---|
+| Cover title | 104 | 52 | 700 Bold | Black #000000 | Title Case |
+| Cover subtitle | 46 | 23 | 600 Semibold | Accent #AC9629 | Title Case |
+| Cover meta (week · program · facilitator) | 30 | 15 | 300 Light, italic | Grey #4A4A4A | Sentence case, 3 lines |
+| Divider title | 96–100 | 48–50 | 700 Bold | White #FFFFFF | Title Case |
+| Divider label ("PART 2") | 26 | 13 | 800 ExtraBold | UI Yellow #FEDE3B | UPPERCASE, letter-spacing 2 px |
+| Slide title | 72 | 36 | 700 Bold | Black #000000 | Title Case, left-aligned, 1 line preferred (max 2) |
+| Lead / subtitle under title | 30 | 15 | 400 | Black #000000 or Grey #4A4A4A | Sentence case |
+| Meta line (timing, format) | 26 | 13 | 400 | Grey #4A4A4A | "10 minutes, pairs" |
+| Card / block heading | 28–36 | 14–18 | 700–800 | Black #000000, or White on Black | Title Case |
+| Body text | 24–30 | 12–15 | 400–600 | Black #000000 or Grey #4A4A4A | Sentence case |
+| Small label | 24 | 12 | 700–800 | Accent #AC9629 on white, UI Yellow on black | UPPERCASE, letter-spacing 2 px |
+| Big numbers / stats | 56–300 | 28–150 | 800 ExtraBold | Black #000000 or UI Yellow #FEDE3B | Numerals only |
+
+### 2.2 Weight mapping (important for PPTX / Google Slides)
+
+PowerPoint and Google Slides only have **Bold on/off**. Map like this:
+
+| Design weight | PPTX / Google Slides setting |
+|---|---|
+| 300 Light | Regular (or font name "Red Hat Display Light" if installed) |
+| 400 Regular | Regular |
+| 600 Semibold | **Bold** |
+| 700 Bold | **Bold** |
+| 800 ExtraBold | **Bold** (or font name "Red Hat Display ExtraBold" if installed) |
+
+### 2.3 Text rules
+
+- **Alignment:** titles and body left-aligned. Center only big numbers inside a card, divider-style statements and timers.
+- **Line height:** titles 1.1; body 1.25–1.35 (PPTX: line spacing multiple 1.25–1.3). Never double-spaced.
+- **Paragraph spacing:** use space-after 6–12 pt between paragraphs, never empty lines.
+- **Letter spacing:** only on UPPERCASE labels: 2 px (PPTX \`charSpacing\` 1 pt). Never on body text.
+- **Bold:** only for lead-ins ("Note:", "Rule:", "Key insight:") and one key phrase per block.
+- **Italic:** only for quotes, example answers, prompts and "how to spot it" descriptions.
+- **Title length:** shorten the title rather than wrap to 3 lines.
+- **Language:** Strictly obey the user's requested language. If the user asks for English (or inputs in English), 100% of all generated slide headlines, subheadlines, descriptions, and notes MUST be in English. If the user asks for Indonesian, use Indonesian. Never force Indonesian onto an English request.
+
+---
+
+## 3. Color
+
+### 3.1 Palette (use only these)
+
+| Colour | HEX | What it's for |
+|---|---|---|
+| **UI Yellow** | \`#FEDE3B\` | Partner cards, tags, HANDS-ON pill, highlights, number circles on black, accent bars |
+| **Black** | \`#000000\` | Titles, key messages, primary cards, table headers, insight bars, connectors, flow lines |
+| **Accent (yellowish brown)** | \`#AC9629\` | Small caps labels on white, cover subtitle, bold section badges on light surfaces |
+| **Grey** | \`#4A4A4A\` | Meta lines (timing, format), neutral labels, captions |
+| **Off-white** | \`#FAFAF7\` | Soft card fill, standard container cards |
+| **Light grey** | \`#F2F2F2\` | Table stripes, "weak / before" panels, chat bubbles |
+| **Border grey** | \`#E0E0E0\` | Thin rules between rows, card borders, mock-document borders |
+| **Mid grey** | \`#BDBDBD\` | Dashed "fragile / don't" outlines and icons only |
+| **White** | \`#FFFFFF\` | Card fill, text on black cards / headers |
+| **Soft yellow** | \`rgba(254, 222, 59, 0.55)\` | Note boxes, section tags (ILLUSTRATIVE, PLACEHOLDER) |
+
+### 3.2 Color roles
+
+- **Solid Black = conclusion / rule / key message / recommended option** → White text on Black.
+- **Solid UI Yellow = equal-weight partner, call to action, active tag** → Black text on Yellow (#000000).
+- **Off-white or White = long text, worksheets, forms, standard reading cards.**
+- **Light grey with dashed mid-grey outline = weak / before / fragile / don't side** of a comparison.
+- **Parallel items (2–5 items): alternate UI Yellow → Black → UI Yellow…, always starting with UI Yellow.**
+- **Increasing intensity (risk, autonomy, confidence):** step from UI Yellow toward Black.
+
+### 3.3 Contrast rules (non-negotiable)
+
+| Text on… | Allowed text color |
+|---|---|
+| Black #000000 | White #FFFFFF, UI Yellow #FEDE3B (labels / numbers only) |
+| UI Yellow #FEDE3B | Black #000000. **Never white.** |
+| White / Off-white / Light Grey | Black #000000, Grey #4A4A4A, Accent #AC9629 (labels only). **Never yellow text.** |
+
+- **No emoji.**
+- **No red or green status colors.** Write status as words instead: **Strong / Medium / Weak**, **Pass / Partial / Fail**, or **High / Medium / Low**.
+- Don't use color alone to carry meaning; pair it with a word, label or icon.
+- \`#AC9629\` is only for bold labels and large text on white, **never body text**.
+
+---
+
+## 4. Spacing & Sizing System
+
+Base unit **8 px**. Allowed values: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64 px.
+
+| Spacing | px | in (PPTX) |
+|---|---|---|
+| Slide padding (content slides) | top 84–96, sides 108, bottom 140 (logo band) | 0.6 / 0.75 / 0.97 |
+| Title → lead | 12–16 | 0.08–0.11 |
+| Title block → main visual | 24–40 | 0.17–0.28 |
+| Gap between cards in a row | 16–24 | 0.11–0.17 |
+| Gap between stacked rows | 10–16 | 0.07–0.11 |
+| Card inner padding | 22–36 | 0.15–0.25 |
+| Pill padding | 6–10 vertical, 14–24 horizontal | — |
+| Table cell padding | 12–22 | 0.08–0.15 |
+
+**Vertical budget:** a content slide has ~836 px of usable height. Estimate before placing:
+- Text block height ≈ font-size × lines × line-height.
+- Table row ≈ 2.1 × font-size per text line.
+- Card height = content + padding. **Never set a card shorter than its text; let it grow.**
+- If it doesn't fit → split the slide. **Never shrink text below 24 px to make it fit.**
+
+---
+
+## 5. Backgrounds (supplied images — never redraw)
+
+Six prepared 1920 × 1080 backgrounds in \`/bg-deck/ui-deck/\` (PNG and WebP). Place each as a **full-bleed picture at the very back** (first layer). Logos are part of the images; never add logos separately or cover the logo tab.
+
+| File | Use for | Safe zone (px) |
+|---|---|---|
+| \`cover-deck.webp\` (\`cover.webp\`) | Slide 1 only | x 125–1360, y 300–1000. Title top, meta bottom-left |
+| \`content-deck.webp\` (\`content.webp\`) | Most standard content slides | x 108–1812, y 84–920. Nothing below y 930 |
+| \`task-speaker-deck.webp\` (\`task-speakerdeck.webp\`) | Case studies, worked examples, hands-on tasks, split panels, speaker profiles (2–4 per deck) | Left panel x 64–584 (white title, yellow subtitle). Right x 720–1812 |
+| \`part-deck.webp\` | Section dividers ("Part N"), agenda utama, break, guest handover | x 110–1812, y 88–880, vertically centered |
+| \`recap-deck.webp\` | Summary, key takeaways, and modular review slides (1–3 per deck) | x 108–1812, y 84–920. Structured recap cards or ruled list |
+| \`closing-deck.webp\` | Last slide only: next session / next steps / thank you | Action area x 110–1540 |
+
+### Fixed structures
+
+- **Cover (\`cover-deck.webp\`):** title (Black #000000) → subtitle (Accent #AC9629) → 3 meta lines (week · program · facilitator) in Grey #4A4A4A. No cards.
+- **Divider (\`part-deck.webp\`):** yellow accent bar 140 × 12 px → "PART N" UI Yellow caps label → large white title → white subtitle. No cards.
+- **Task & Speaker (\`task-speaker-deck.webp\`):** yellow accent bar, white title (~62 px), yellow subtitle (~32 px) in the left panel; content / exercise on the right.
+- **Recap (\`recap-deck.webp\`):** dedicated summary background for modular synthesis, key takeaways, and reflection checklists.
+- **Closing (\`closing-deck.webp\`):** yellow pill label ("NEXT SESSION — WEEK X") → large white title → white description.
+
+---
+
+## 6. Elements (exact specs)
+
+| Element | Spec |
+|---|---|
+| **Rounded card** | Radius 6–8 px (rounded-lg / rounded-md, halus & profesional), padding 22–36 px. Off-white #FAFAF7 or White #FFFFFF fill, thin border #E0E0E0. No shadows. No gradient fills. |
+| **Primary card** | Solid Black #000000 fill, White text, radius 6–8 px (rounded-lg / rounded-md). Used for conclusions, key recommendations, final pillars. |
+| **Partner card** | Solid UI Yellow #FEDE3B fill, Black #000000 text, radius 6–8 px (rounded-lg / rounded-md). Equal-weight counterpart to primary cards. |
+| **Header-band card** | White body, 3 px colored border (Black or UI Yellow), colored top band holding the label/heading. |
+| **Pill / chip** | Fully rounded (radius = height/2), 24 px bold text, height ~40–48 px. UI Yellow with black text, or Black with white text. |
+| **HANDS-ON tag** | UI Yellow #FEDE3B pill **beside** the title, Black #000000 text, 26 px bold, letter-spacing 2 px, text "HANDS-ON". Meta line underneath: "10 minutes, squad" in Grey #4A4A4A. |
+| **Section tag above title** | Optional (Soft Yellow pill, 24 px uppercase). **Default for this team: don't use pills above titles.** Keep titles clean. |
+| **Prompt card** | White card, 3 px Black border, small Accent #AC9629 uppercase label ("PROMPT", "TEMPLATE"), prompt text 24–30 px in quotes, blanks as **[bold bracketed placeholders]** in black. |
+| **Note box** | Soft Yellow (UI Yellow at 55% transparency), radius 6–8 px, black text, bold lead-in ("Note:", "Rule:"). Max one per slide. |
+| **Insight bar** | Solid Black #000000 fill, 14 px UI Yellow #FEDE3B left edge, White text, bold UI Yellow lead-in ("Key insight:"). |
+| **Pull-quote line** | Text with a 12 px UI Yellow left bar, no box. |
+| **Stat card** | Solid UI Yellow or Black, big number 64–110 px weight 800 + short caption. Numbers only from the source. |
+| **Number circle / step marker** | Circle 44–72 px, number 24–32 px bold, opposite color of its card (UI Yellow circle on Black, Black circle on UI Yellow). |
+| **Icon** | Simple line icon 32–48 px inside a 56–76 px circle; icon color contrasts with the circle. No emoji. |
+| **Verdict pills** | Strong = UI Yellow + black text · Medium = Off-white + black text & border #E0E0E0 · Weak = Light grey #F2F2F2 with dashed border #BDBDBD. |
+| **Table** | Black #000000 header row, white semibold text; body rows alternate Light grey #F2F2F2 / White #FFFFFF; no vertical gridlines; first column bold; 24–28 px text; padding 12–22 px. Keep every row. 6+ rows → 24 px. Highlight one row with Soft Yellow if needed. |
+| **Form / worksheet** | White card, 3 px Black border, Black header strip with uppercase form title + "Participant: ____" on the right, ruled rows (2–3 px #E0E0E0), dashed blank lines for writing, checkbox pills (☐ Ready / ☐ Ready with fixes). |
+| **Chat / message mock** | Light grey (#F2F2F2) bubble for "them/before", Black or White-with-Black-border bubble for "us/after"; corner radius 4 px on the speaker side, 22 px elsewhere. Mark mock data as illustrative. |
+| **Connector / arrow** | 4–6 px Black #000000; solid = flow, dashed (12–16 dash / 8–12 gap) = relationship; small triangular arrowheads. No curved decorative swooshes. |
+| **Row rule** | 2–3 px #E0E0E0 between list rows. |
+| **Image placeholder** | Dashed 3 px #BDBDBD box, light background #FAFAF7, label "IMAGE · FROM ORIGINAL SLIDE N" + description. |
+
+---
+
+## 7. Layout Selection (pick by meaning, not habit)
+
+Ask first: *what is this slide's idea?* Then draw that idea.
+
+| Content type | Layouts that work |
+|---|---|
+| Time split / agenda | Proportional bar (widths = real minutes), Gantt, stacked bar + legend |
+| Sequence / process | Chevrons, connected stepper, road with milestones, stepping stones, pill chain with arrows |
+| Cycle / loop | Circular loop diagram |
+| Rising intensity / levels | Rising columns (height = level), stepped progression slider |
+| Decision logic | Real Yes/No decision tree with connectors |
+| Comparison (good vs weak) | Black panel vs light grey dashed panel with VS badge; solid lane vs dashed lane; center spine |
+| Before → after / problem → fix | Paired rows: light grey "problem" → arrow → black "fix" |
+| Hierarchy / roles | Org chart with connectors, hub-and-spoke, stacked layers |
+| People / personas | Persona cards with large initials |
+| Framework with named parts | Stacked blocks forming one whole, pillars, header-band cards |
+| Scenario / case | Mock artifact: email, chat bubble, data table, document, file cards |
+| Worksheet / template | Form with black header strip, ruled rows, checkbox pills |
+| Checklist | Checkbox rows (1–2 columns) with a count badge |
+| One big idea | Giant number or pull-quote + short support line; insight bar |
+| Takeaways / Recap | Ruled numbered list, bookmark cards, icon tiles (ideal for \`recap-deck.webp\`) |
+| Data | Native chart or bars whose lengths equal the real values; label values directly |
+
+**Rhythm rules**
+1. **No layout more than twice in a row.** Check the sequence after drafting.
+2. Don't make every slide a card grid or a table. Tables only for genuinely tabular data (3+ attributes per item) or worksheets.
+3. **Visuals must carry meaning:** bar length, column height or slice size must reflect a real quantity from the source. Never decorative shapes.
+4. Title always in the same place (top-left of the safe area) on every content slide.
+5. Use task/split backgrounds (\`task-speaker-deck.webp\`) 2–4 times per deck and recap backgrounds (\`recap-deck.webp\`) 1–2 times per deck for visual pacing and rhythm.
+
+---
+
+## 8. How to Create Each Slide (build order)
+
+1. **Background picture** (full-bleed, back layer from \`/bg-deck/ui-deck/\`).
+2. **Title** (72 px, Black #000000, top-left) → optional **lead line** (30 px) or **meta line** (26 px).
+3. **Main visual** chosen from §7 (one idea per slide).
+4. **Supporting element** (max one): insight bar, note box, or pull-quote.
+5. **Speaker notes** (in the notes pane, never on the slide).
+
+**Content handling**
+- Keep the outline's wording, order and slide count.
+- "Visual:" lines describe what to draw; never print them.
+- Bracket labels in titles ([HANDS-ON], [SECTION DIVIDER]) are instructions; apply them, don't print them.
+- Mentor/facilitator notes → speaker notes.
+- Replace emoji with words (Strong / Medium / Weak, or Pass / Partial / Fail).
+- Unknown facts → visible placeholders: [Name], [date], [__]%, [X]-minute. List them for the user.
+- Program facts (names, cases, weeks, rubric) come only from the materials the user provides.
+
+**Speaker notes:** 2–6 sentences, only where useful: intent, timing, what to watch for, expected answers, setup needed. Never repeat the slide text.
+
+---
+
+## 9. Exporting to PPTX (works in PowerPoint, Keynote and Google Slides import)
+
+### 9.1 File setup
+- Slide size **13.333 × 7.5 in** (pptxgenjs: \`LAYOUT_WIDE\`; python-pptx: \`Inches(13.333) × Inches(7.5)\`). Set it **before** adding slides.
+- One slide per source slide, in order. Name each shape meaningfully (e.g., \`title\`, \`card_1\`, \`insight_bar\`).
+- Put speaker notes in the **notes pane** (\`slide.addNotes()\` / \`notes_slide.notes_text_frame\`).
+
+### 9.2 Coordinates
+- Convert every px value: **in = px ÷ 144**, **pt = px ÷ 2**, **EMU = px × 6,350**.
+- Example: title at (108, 96) px, 72 px font → x 0.75 in, y 0.667 in, 36 pt.
+
+### 9.3 Backgrounds
+- Insert the background image as a full-slide picture (0, 0, 13.333 × 7.5 in) as the **first** object, or set it as the slide background image.
+- Gradients are images only. PPTX gradient shape fills often break across apps.
+
+### 9.4 Text boxes
+- Every text element is a **native, editable text box** (never text baked into an image).
+- Set internal margins to **0** when text must align with shapes (pptxgenjs \`margin: 0\`; python-pptx \`margin_left = 0\`, etc.).
+- **Auto-fit off / "Do not autofit"** and word wrap on, so text never silently shrinks below 12 pt.
+- Font: \`Red Hat Display\` with bold per §2.2. Install the font before opening the file, or PowerPoint substitutes Arial; Google Slides has Red Hat Display built in.
+- Line spacing 1.25–1.3 multiple; paragraph space-after 6–12 pt. Bullets: real bullets (\`bullet: true\`), never typed "•".
+- Letter spacing for labels: \`charSpacing: 1\` (pt). (\`letterSpacing\` is ignored in pptxgenjs.)
+
+### 9.5 Colors
+- Hex without \`#\` in pptxgenjs (\`"FEDE3B"\`, \`"000000"\`). Never 8-digit hex. Transparency via the \`transparency\` property (0–100).
+- No shadows, glows, bevels or 3D.
+
+### 9.6 Shapes
+- Cards = **Rounded Rectangle**. Corner radius: pptxgenjs \`rectRadius\` in inches (6–8 px → 0.04–0.06 in (subtle rounded-lg)); in raw OOXML the \`adj\` value = radius ÷ min(width, height) × 50,000 (cap 50,000).
+- Pills = Rounded Rectangle with radius = height ÷ 2.
+- Circles = Ellipse with equal width/height.
+- Accent bars (yellow left edge, divider bar) = thin Rectangles, not borders.
+- Borders: 3 px = **1.5 pt**, 2 px = 1 pt; dashed = \`dash: "dash"\`.
+- Arrows/connectors = native lines or connectors with triangle end-arrowheads, 2–3 pt.
+
+### 9.7 Tables, charts, icons, diagrams
+- **Tables:** native PPTX tables (not images). Header fill 000000 with white bold text; alternate row fills F2F2F2 / FFFFFF; no vertical borders; cell margins 0.08–0.15 in; text ≥ 12 pt.
+- **Charts:** native PPTX charts (\`addChart\`) with direct data labels, palette colors, light gridlines or none; single series → no legend. Only use an image if PowerPoint has no native form.
+- **Icons:** PNG rendered at ≥ 256 px (or native shapes); never emoji.
+- **Diagrams** (trees, loops, matrices): build from native shapes + connectors when possible so they stay editable. If drawn as SVG, convert to PNG at 2× size and say so.
+- Group related shapes (e.g., a card + its text) so they move together.
+
+### 9.8 Google Slides import notes
+- Import via **File → Import slides → upload .pptx → select all**.
+- Expect: images stay images; native shapes and tables stay editable; spacing may shift a few px; only simple transitions survive (fade, slide/push, dissolve).
+- After import, check: fonts render as Red Hat Display, nothing overlaps the logo tab, tables didn't overflow.
+
+### 9.9 Validate before delivering
+- Open the PPTX in PowerPoint or LibreOffice once, or run a validator (e.g., \`validate.py\` from the PPTX skill), and render a thumbnail grid to spot overflow.
+- Fix problems in the generator, not by hand-editing the packed XML.
+
+---
+
+## 10. QA Checklist (run on every deck)
+
+- [ ] Correct background on every slide from \`/bg-deck/ui-deck/\` (cover, content, part, task-speaker, recap, closing); nothing over the logo tab or below y 930 px
+- [ ] Only Red Hat Display; titles Black #000000, left-aligned, same position on every content slide
+- [ ] No text under 24 px (12 pt); ≤ ~170 words per slide
+- [ ] Only UI palette colors; no emoji; no white-on-yellow or yellow-on-white text
+- [ ] Parallel items alternate UI Yellow → Black; the conclusion/key message is Black
+- [ ] \`#AC9629\` used only for small caps labels / subtitles on white, never body text
+- [ ] HANDS-ON tag + meta line on every hands-on slide; prompts in prompt cards
+- [ ] No layout used more than twice in a row; tables only where data is tabular
+- [ ] Bars/columns/slices match real quantities from the source
+- [ ] Outline wording kept; "Visual:" lines, bracket labels and mentor notes handled
+- [ ] No invented facts; placeholders visible and listed for the user
+- [ ] Speaker notes only where they add context; none that repeat the slide
+- [ ] PPTX: 13.333 × 7.5 in, native editable text and tables, autofit off, notes in notes pane, file opens without repair prompts
+
+---
+
+## 11. Don'ts (summary)
+
+- Don't recreate, redraw or decorate the backgrounds.
+- Don't use a second font, extra colors, emoji, shadows or gradient-filled cards.
+- Don't put pills/tags above slide titles (team preference).
+- Don't make every slide a card grid or a table.
+- Don't bake text into images.
+- Don't put facilitator instructions on the slide.
+- Don't invent statistics, dates, names or quotes to fill a visual.
+- Don't shrink text to make it fit; split the slide instead.
+- Don't use red/green indicators for status. Always use words: Strong, Medium, Weak.
+
+---
+
+## 12. Program Context & Background Mapping
+
+Universitas Indonesia (UI) × RevoU executive programs have 6 distinct background roles:
+1. \`cover-deck.webp\`: Title slide only (Week, Program, Facilitator).
+2. \`content-deck.webp\`: Core framework, concepts, and data.
+3. \`part-deck.webp\`: Structural agenda and part transitions.
+4. \`task-speaker-deck.webp\`: Hands-on sprints, case studies, and speaker introductions.
+5. \`recap-deck.webp\`: Synthesis of key learnings and milestone checklists.
+6. \`closing-deck.webp\`: Action items, assignments, and contact channels.
+`;
+
+const BINUS_SKILL_MD = `# BINUS × RevoU Deck Design System
+### A single source of truth for any AI (Claude, ChatGPT, Gemini, DeepSeek, etc.) that creates, restyles, reviews or exports slide decks for BINUS × RevoU executive and professional programs in Launcher OS.
+
+> **How to use this file:** paste it (or attach it) before your request. Every rule is written as a measurable value. If a rule and the user's outline conflict, keep the outline's wording and apply the rule to the visual form. Never invent facts, numbers, names or dates.
+
+---
+
+## 0. Quick tokens (machine-readable)
+
+\`\`\`json
+{
+  "canvas": { "width_px": 1920, "height_px": 1080, "width_in": 13.333, "height_in": 7.5, "aspect": "16:9" },
+  "units": { "px_to_pt": 0.5, "px_to_in": 0.006944, "px_to_emu": 6350, "pt_to_emu": 12700, "in_to_emu": 914400 },
+  "font": { "family": "Red Hat Display", "fallback": ["Arial", "sans-serif"], "min_size_px": 24 },
+  "type_scale_px": {
+    "cover_title": 104, "cover_subtitle": 46, "cover_meta": 30,
+    "divider_title": 96, "slide_title": 72, "lead": 30, "meta": 26,
+    "card_heading": [28, 36], "body": [24, 30], "label": 24, "big_number": [56, 300]
+  },
+  "weights": { "light": 300, "regular": 400, "semibold": 600, "bold": 700, "extrabold": 800 },
+  "line_height": { "titles": 1.1, "body": [1.25, 1.35] },
+  "colors": {
+    "deep_blue": "#174A7F",
+    "medium_blue": "#018ED5",
+    "dominant_sky_blue": "#23A3E7",
+    "light_orange": "#F2941B",
+    "deep_orange": "#E27F2D",
+    "golden_yellow": "#FFDE3D",
+    "soft_yellow": "#FFEC8E",
+    "soft_sky_tint": "#EAF5FC",
+    "light_grey": "#F4F6F8",
+    "border_blue": "#B9D5E8",
+    "border_subtle": "#E2EDF5",
+    "text_dark": "#174A7F",
+    "text_body": "#1E293B",
+    "text_muted": "#64748B",
+    "footer_grey": "#8C9BAE",
+    "white": "#FFFFFF"
+  },
+  "spacing_scale_px": [4, 8, 12, 16, 20, 24, 32, 40, 48, 64],
+  "radius_px": { "card": [12, 16], "pill": 999, "small": [6, 8] },
+  "stroke_px": { "card_border": 2, "row_rule": [2, 3], "connector": [4, 6], "accent_bar": [12, 14] }
+}
+\`\`\`
+
+---
+
+## 1. Canvas & Units
+
+| Item | Value |
+|---|---|
+| Slide size | 1920 × 1080 px = **13.333 × 7.5 in** (PowerPoint "Widescreen 16:9"). Never use 10 × 5.625 in. |
+| Unit conversion | 1 px = 0.5 pt = 1/144 in = 6,350 EMU. **Font size in pt = px ÷ 2.** |
+| Content safe area (content slides) | x 108–1812 px, y 84–920 px (0.75–12.58 in, 0.58–6.39 in). Nothing below y 930 px. |
+| Max words per slide | ~170. Denser content → split the slide or move detail to speaker notes. |
+| Min text size | **24 px (12 pt)**, everywhere, including table cells, labels, captions, footnotes. |
+
+---
+
+## 2. Typography
+
+**One family only: Red Hat Display** (Google Fonts, free). Fallback: Arial → sans-serif. Never mix a second font.
+
+### 2.1 Type scale
+
+| Role | px | pt (PPTX) | Weight | Color | Case / Style |
+|---|---|---|---|---|---|
+| Cover title | 104 | 52 | 700 Bold | Deep Blue \`#174A7F\` | Title Case |
+| Cover subtitle | 46 | 23 | 600 Semibold | Medium Blue \`#018ED5\` | Title Case |
+| Cover meta (module · cohort · facilitator) | 30 | 15 | 300 Light, italic | Slate \`#64748B\` | Sentence case, 3 lines |
+| Divider title | 96–100 | 48–50 | 700 Bold | White \`#FFFFFF\` | Title Case |
+| Divider label ("PART 2" / "MODUL 02") | 26 | 13 | 800 ExtraBold | Golden Yellow \`#FFDE3D\` | UPPERCASE, letter-spacing 2 px |
+| Slide title | 72 | 36 | 700 Bold | Deep Blue \`#174A7F\` | Title Case, left-aligned, 1 line preferred (max 2) |
+| Lead / subtitle under title | 30 | 15 | 400 | Medium Blue \`#018ED5\` or Dark Slate \`#1E293B\` | Sentence case |
+| Meta line (timing, format) | 26 | 13 | 400 | Slate \`#64748B\` | "15 minutes, team breakout" |
+| Card / block heading | 28–36 | 14–18 | 700–800 | Deep Blue \`#174A7F\`, or White on \`#174A7F\` / \`#23A3E7\` | Title Case |
+| Body text | 24–30 | 12–15 | 400–600 | Dark Slate \`#1E293B\` | Sentence case |
+| Small label | 24 | 12 | 700–800 | Medium Blue \`#018ED5\`, or Golden Yellow \`#FFDE3D\` on dark | UPPERCASE, letter-spacing 2 px |
+| Big numbers / stats | 56–300 | 28–150 | 800 ExtraBold | Deep Blue \`#174A7F\` or Golden Yellow \`#FFDE3D\` | Numerals only |
+
+### 2.2 Weight mapping (PowerPoint / Google Slides)
+
+PowerPoint and Google Slides have **Bold on/off**. Map like this:
+
+| Design weight | PPTX / Google Slides setting |
+|---|---|
+| 300 Light | Regular (or font name "Red Hat Display Light" if installed) |
+| 400 Regular | Regular |
+| 600 Semibold | **Bold** |
+| 700 Bold | **Bold** |
+| 800 ExtraBold | **Bold** (or font name "Red Hat Display ExtraBold" if installed) |
+
+### 2.3 Text rules
+
+- **Alignment:** titles and body left-aligned. Center only big numbers inside a card, divider-style statements and timers.
+- **Line height:** titles 1.1; body 1.25–1.35 (PPTX: line spacing multiple 1.25–1.3). Never double-spaced.
+- **Paragraph spacing:** use space-after 6–12 pt between paragraphs, never empty lines.
+- **Letter spacing:** only on UPPERCASE labels: 2 px (PPTX \`charSpacing\` 1 pt). Never on body text.
+- **Bold:** only for lead-ins ("Note:", "Rule:", "Key insight:", "Framework:") and one key phrase per block.
+- **Italic:** only for quotes, prompts, case references and illustrative context descriptions.
+- **Title length:** shorten the title rather than wrap to 3 lines.
+- **Language:** Strictly obey the user's requested language. If the user asks for English (or inputs in English), 100% of all generated slide headlines, subheadlines, descriptions, and notes MUST be in English. If the user asks for Indonesian, use Indonesian. Never force Indonesian onto an English request.
+
+---
+
+## 3. Color System (BINUS Palette Standard)
+
+### 3.1 Palette (use strictly these)
+
+| Role | Colour Name | Hex Code | Purpose & Application |
+|---|---|---|---|
+| **Primary** | Deep Blue | \`#174A7F\` | Slide titles, table headers, primary cards, authority anchors, conclusion banners |
+| **Secondary** | Medium Blue | \`#018ED5\` | Subtitles, secondary pill badges, subheadings, process connectors |
+| **Dominant** | Light Sky Blue | \`#23A3E7\` | Main fills, active cards, diagram nodes, category blocks, interactive highlights |
+| **Warm Support** | Light Orange | \`#F2941B\` | Warnings, comparative contrast, transition badges, intermediate steps |
+| **Warm Emphasis** | Deep Orange | \`#E27F2D\` | Critical alerts, executive priority focus, high-impact callouts |
+| **Accent** | Golden Yellow | \`#FFDE3D\` | Highlights, callouts, key numbers, HANDS-ON badge (use sparingly as high-value accent) |
+| **Soft Accent** | Soft Yellow | \`#FFEC8E\` | Note boxes, warning callout cards, highlighted table rows |
+| **Reading Tint** | Soft Sky Tint | \`#EAF5FC\` | Content card backgrounds, alternating table rows, clean reading surfaces |
+| **Neutral Tint** | Light Grey | \`#F4F6F8\` | Context boxes, "before / baseline" cards in comparisons |
+| **Border Blue** | Border Sky | \`#B9D5E8\` | Card borders, table dividers, framework container boundaries |
+| **Neutral Space**| White | \`#FFFFFF\` | Slide background, primary card fill, high-contrast text on deep blue |
+| **Footer** | Slate Light Grey | \`#8C9BAE\` | Slide footer metadata (\`M#/L# · ##\`) |
+| **Text Dark** | Dark Slate | \`#1E293B\` | Body copy for maximum legibility on light surfaces |
+| **Text Muted** | Slate | \`#64748B\` | Subtitles, captions, metadata lines |
+
+### 3.2 Color roles & visual hierarchy
+
+- **Dominant Tone:** Light Sky Blue (\`#23A3E7\`) is the dominant tone for visual energy, structural blocks, and active diagram nodes.
+- **Authority & Conclusion:** Deep Blue (\`#174A7F\`) anchors titles, table headers, and the final key takeaways/conclusions.
+- **Strategic Accent:** Golden Yellow (\`#FFDE3D\`) is strictly an accent—never use it as a massive wall-to-wall fill; use it for badges, stat numbers, and high-impact pills.
+- **Contrast & Comparison:** Light Orange (\`#F2941B\`) and Deep Orange (\`#E27F2D\`) provide high-contrast warm support in comparisons, risks, caveats, or trade-offs.
+- **Reading Comfort:** Standard reading cards use Soft Sky Tint (\`#EAF5FC\`) or pure White (\`#FFFFFF\`) with \`#B9D5E8\` borders, ensuring effortless scannability.
+
+### 3.3 Strict contrast rules (non-negotiable)
+
+| Background Surface | Allowed Text Color | Prohibited Text Color |
+|---|---|---|
+| Deep Blue \`#174A7F\` | White \`#FFFFFF\`, Golden Yellow \`#FFDE3D\` (stats/labels only) | Dark text, Orange |
+| Light Sky Blue \`#23A3E7\` | White \`#FFFFFF\`, Deep Blue \`#174A7F\` (bold labels) | Yellow, Orange, Grey |
+| Golden Yellow \`#FFDE3D\` | Deep Blue \`#174A7F\`, Dark Slate \`#1E293B\` | White (unreadable!), Light blue |
+| Soft Sky Tint \`#EAF5FC\` | Dark Slate \`#1E293B\`, Deep Blue \`#174A7F\` | White, Yellow |
+| White \`#FFFFFF\` / Light Grey | Dark Slate \`#1E293B\`, Deep Blue \`#174A7F\`, Slate \`#64748B\` | Yellow, White |
+
+- **No UI Yellow (\`#FEDE3B\`) or ITB Blue (\`#005AAB\`):** Stick strictly to BINUS Deep Blue (\`#174A7F\`) and Dominant Sky Blue (\`#23A3E7\`).
+- **No emoji:** Express meaning through clear typography, structured pill badges, or simple geometric icons.
+- **No red/green traffic lights:** Use words: **High / Medium / Low**, **Strong / Moderate / Weak**, or **Optimal / Review / Action Needed**.
+
+---
+
+## 4. Spacing & Sizing System
+
+Base unit **8 px**. Allowed values: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64 px.
+
+| Spacing Element | px | in (PPTX) |
+|---|---|---|
+| Slide safe padding (content slides) | top 84–96, sides 108, bottom 140 (logo band) | 0.6 / 0.75 / 0.97 |
+| Title → lead subtitle | 12–16 | 0.08–0.11 |
+| Title block → main visual | 24–40 | 0.17–0.28 |
+| Gap between cards in a row | 16–24 | 0.11–0.17 |
+| Gap between stacked rows | 12–16 | 0.08–0.11 |
+| Card inner padding | 22–36 | 0.15–0.25 |
+| Pill / badge padding | 6–10 vertical, 14–24 horizontal | — |
+| Table cell padding | 12–22 | 0.08–0.15 |
+
+**Vertical budget calculation:** A content slide provides ~836 px of usable height.
+- Text block height ≈ \`font-size × lines × line-height\`.
+- Card height = content + padding. Never clip or truncate text; allow cards to size gracefully.
+- If content exceeds the safe boundary, split the slide into two logical parts rather than shrinking text below 24 px.
+
+---
+
+## 5. Backgrounds (8 Prepared Assets in \`/bg-deck/binus-deck/\`)
+
+All 8 backgrounds are 1920 × 1080 px WebP/PNG assets placed as a full-bleed picture on the bottom layer. Never cover logos or bottom institutional bands.
+
+| File Name | Intended Usage | Safe Content Area (px) |
+|---|---|---|
+| \`cover-deck.webp\` | Slide 1 only: Title, Subtitle, Cohort & Facilitator metadata | x 125–1360, y 300–1000 |
+| \`tablecontent-deck.webp\` | Agenda, Table of Contents, Module Roadmap (Slide 2) | x 108–1812, y 84–920 |
+| \`learningoutcome-deck.webp\` | Learning Objectives, Competency Milestones (Slide 3) | x 108–1812, y 84–920 |
+| \`speaker-deck.webp\` | Facilitator / Speaker bio, Mentor background, Guest Intro | x 108–1812, y 84–920 (Left profile, Right content) |
+| \`part-deck.webp\` | Section Dividers ("PART N", "MODUL N"), Agenda shifts | x 110–1812, y 88–880 (Centered) |
+| \`content-deck.webp\` | Standard Content: Wide white canvas for diagrams & frameworks | x 108–1812, y 84–920 |
+| \`recap-deck.webp\` | Modular Synthesis, Key Takeaways, Action Checklist | x 108–1812, y 84–920 |
+| \`closing-deck.webp\` | Last Slide: Next Session, Action Items, Q&A, Contact Info | x 110–1540, y 88–880 |
+
+### Fixed structures per background role:
+
+1. **Cover (\`cover-deck.webp\`):**
+   - Title: Deep Blue \`#174A7F\` (104 px, Bold)
+   - Subtitle: Medium Blue \`#018ED5\` (46 px, Semibold)
+   - Meta lines (Module · Date · Facilitator): Slate \`#64748B\` (30 px, Light italic)
+2. **Table of Contents (\`tablecontent-deck.webp\`):**
+   - Clean numbered agenda blocks or interconnected timeline cards.
+3. **Learning Outcomes (\`learningoutcome-deck.webp\`):**
+   - 3–4 competency cards in Soft Sky Tint (\`#EAF5FC\`) with Deep Blue headers and Golden Yellow check badges.
+4. **Speaker Profile (\`speaker-deck.webp\`):**
+   - Left side: Avatar/photo frame with Deep Blue name tag and credential badge.
+   - Right side: Experience pillars, key achievements, and professional background.
+5. **Section Divider (\`part-deck.webp\`):**
+   - Accent bar (Golden Yellow \`#FFDE3D\`, 140 × 12 px)
+   - "PART N" or "MODUL N" uppercase pill label in Golden Yellow
+   - Large white title (96–100 px, Bold)
+   - Supporting subtitle in White or Soft Sky Blue
+6. **Content (\`content-deck.webp\`):**
+   - Clean, expansive white canvas providing maximum freedom for rich visual diagrams, tables, and frameworks.
+7. **Recap (\`recap-deck.webp\`):**
+   - Ruled summary cards, key takeaways, and action items.
+8. **Closing (\`closing-deck.webp\`):**
+   - Next session badge, Q&A prompt, contact info, and clear closing statement.
+
+---
+
+## 6. Elements & Component Specifications
+
+| Element | Exact Specification |
+|---|---|
+| **Standard Card** | Fill: White \`#FFFFFF\` or Soft Sky Tint \`#EAF5FC\`. Border: 2 px \`#B9D5E8\`. Radius: 12–16 px. Inner padding: 22–36 px. No heavy drop-shadows. |
+| **Primary Authority Card** | Solid Deep Blue \`#174A7F\` fill, White text, radius 12–16 px. Used for conclusions, key frameworks, and core mandates. |
+| **Dominant Visual Card** | Solid Light Sky Blue \`#23A3E7\` fill, White text, radius 12–16 px. Used for active stages, focal categories, and dominant nodes. |
+| **Accent / Highlight Card** | Solid Golden Yellow \`#FFDE3D\` fill, Deep Blue \`#174A7F\` text. Reserved for key statistics, pivotal insights, and summary callouts. |
+| **Pill / Chip Badge** | Radius 999 px (fully rounded). 24 px bold text, height 40–48 px. Deep Blue fill with white text, or Golden Yellow fill with Deep Blue text. |
+| **HANDS-ON Badge** | Golden Yellow \`#FFDE3D\` pill beside the slide title. Deep Blue \`#174A7F\` text, 26 px bold, letter-spacing 2 px. Subtitle underneath: "15 minutes, team breakout". |
+| **Prompt Card** | White card with 2 px Deep Blue \`#174A7F\` border. Medium Blue label ("PROMPT / EXERCISE"), prompt text in quotes (24–30 px), placeholders as **[bold bracketed tokens]**. |
+| **Note Box** | Soft Yellow \`#FFEC8E\` fill, radius 8–12 px, Dark Slate \`#1E293B\` text, bold Deep Blue lead-in ("Note:", "Rule:", "Guiding Principle:"). |
+| **Insight Bar** | Solid Deep Blue \`#174A7F\` container with 14 px Golden Yellow \`#FFDE3D\` left accent bar. White text, bold yellow lead-in ("Key Insight:"). |
+| **Pull-Quote** | Large 32–40 px italic text with a 12 px Light Sky Blue \`#23A3E7\` left accent bar. Author attribution in Medium Blue \`#018ED5\`. |
+| **Stat / Metric Card** | White or Soft Sky Tint card with giant number (64–110 px, ExtraBold 800) in Deep Blue or Golden Yellow + concise label. |
+| **Process Stepper** | Horizontal rail connecting rounded step cards (1 → 2 → 3 → 4). Step numbers inside Deep Blue or Sky Blue circular badges. |
+| **Comparison Table** | Deep Blue \`#174A7F\` header row with white bold text; alternating rows Soft Sky Tint \`#EAF5FC\` and White \`#FFFFFF\`. Thin \`#B9D5E8\` row rules. No vertical gridlines. Text ≥ 24 px. |
+| **Split Comparison** | Left panel (Baseline / Problem / Traditional): Light Grey \`#F4F6F8\` with subtle border. Right panel (Target / Strategic Fix / Modern): Deep Blue \`#174A7F\` or Light Sky Blue \`#23A3E7\` with white text. Central "VS" badge. |
+| **Connectors & Arrows** | 4–6 px Deep Blue \`#174A7F\` or Medium Blue \`#018ED5\`. Solid = sequence/flow; dashed = relationship/reference. Clean triangular arrowheads. |
+| **Row Rule** | 2–3 px \`#B9D5E8\` between list rows. |
+| **Image Placeholder** | Dashed 2 px \`#B9D5E8\` box, Soft Sky Tint background, label "IMAGE · [DESCRIPTION]". |
+
+---
+
+## 7. Layout Selection & Canvas Creativity
+
+The \`content-deck.webp\` background features an expansive white canvas. Never default to boring plain bullet lists. Select diagrams and visual arrangements that match the fundamental idea:
+
+| Content Type | Recommended Visual Layout |
+|---|---|
+| **Process & Workflow** | Connected rail stepper, horizontal chevrons, milestone timeline |
+| **Pillars & Architecture** | 3–4 vertical columns with Deep Blue headers, Light Sky Blue feature cards |
+| **Comparison & Trade-offs** | Split case cards (Current vs Proposed), feature comparison matrix table |
+| **Maturity & Growth** | Ascending columns/steps, maturity tier staircase |
+| **Hub & Interconnection** | Central core idea with radiating satellite feature cards |
+| **Decision & Logic Flow** | Decision tree branching cards with clear Yes/No connector labels |
+| **Metrics & KPI Impact** | Large metric cards with giant numerals, trend delta badges, and contextual captions |
+| **Frameworks with Layers** | Stacked horizontal cards, hierarchical pyramid layers |
+| **Summary & Synthesis** | Checklist grid with bold checkmarks, numbered takeaway cards |
+
+### Visual Rhythm Rules:
+1. **Never use the same visual layout more than twice in a row.**
+2. Balance dense analytical slides (tables, matrices) with spacious conceptual slides (hero stat, 3-pillar framework, stepper).
+3. Keep the slide title and category badge anchored consistently in the top safe zone on every content slide.
+
+---
+
+## 8. Slide Construction Protocol (Build Order)
+
+1. **Background Asset:** Place full-bleed background picture from \`/bg-deck/binus-deck/\` as layer 0.
+2. **Slide Header:** Title (72 px Bold Deep Blue \`#174A7F\`, left-aligned) + optional lead/subtitle (30 px Medium Blue or Slate).
+3. **Core Visual Structure:** Construct primary diagram, cards, or table using the 8 px spacing grid.
+4. **Strategic Highlights:** Add single supporting element if needed (Insight bar, Note box, or Metric callout).
+5. **Speaker Notes:** Include 2–4 concise sentences in the notes pane with strategic context and facilitator guidance.
+
+### Content handling:
+- Keep the outline's wording, order, and slide count.
+- "Visual:" lines describe what to draw; never print them on the slide.
+- Bracket labels in titles (\`[HANDS-ON]\`, \`[SECTION DIVIDER]\`) are instructions; apply them, don't print them.
+- Facilitator notes go into speaker notes pane.
+- Replace emoji with words (OK, Risk, Review, Critical).
+- Unknown facts → visible placeholders: \`[Name]\`, \`[Date]\`, \`[__]%\`, \`[X]-minute\`. List them for the user.
+
+---
+
+## 9. Exporting to PPTX (PowerPoint, Keynote & Google Slides)
+
+### 9.1 File setup
+- Slide size **13.333 × 7.5 in** (pptxgenjs: \`LAYOUT_WIDE\`; python-pptx: \`Inches(13.333) × Inches(7.5)\`). Set it **before** adding slides.
+- One slide per source slide, in order. Name each shape meaningfully (e.g., \`title\`, \`card_1\`, \`insight_bar\`).
+- Put speaker notes in the **notes pane** (\`slide.addNotes()\` / \`notes_slide.notes_text_frame\`).
+
+### 9.2 Coordinates
+- Convert every px value: **in = px ÷ 144**, **pt = px ÷ 2**, **EMU = px × 6,350**.
+- Example: title at (108, 96) px, 72 px font → x 0.75 in, y 0.667 in, 36 pt.
+
+### 9.3 Backgrounds
+- Insert the background PNG/WebP as a full-slide picture (0, 0, 13.333 × 7.5 in) as the **first** object, or set it as the slide background image.
+- Dedicated backgrounds are located in \`/bg-deck/binus-deck/\`.
+
+### 9.4 Text boxes
+- Every text element is a **native, editable text box** (never text baked into an image).
+- Set internal margins to **0** when text must align with shapes (pptxgenjs \`margin: 0\`; python-pptx \`margin_left = 0\`).
+- **Auto-fit off / "Do not autofit"** and word wrap on, so text never silently shrinks below 12 pt.
+- Font: \`Red Hat Display\` with bold per §2.2.
+- Line spacing 1.25–1.3 multiple; paragraph space-after 6–12 pt. Bullets: real bullets (\`bullet: true\`), never typed "•".
+- Letter spacing for labels: \`charSpacing: 1\` pt.
+
+### 9.5 Colors
+- Hex without \`#\` in pptxgenjs (\`"174A7F"\`, \`"23A3E7"\`, \`"FFDE3D"\`). Never 8-digit hex. Transparency via the \`transparency\` property (0–100).
+- No shadows, glows, bevels, or 3D effects.
+
+### 9.6 Shapes
+- Cards = **Rounded Rectangle**. Corner radius: pptxgenjs \`rectRadius\` in inches (12–16 px → 0.08–0.11 in); in raw OOXML the \`adj\` value = radius ÷ min(width, height) × 50,000.
+- Pills = Rounded Rectangle with radius = height ÷ 2.
+- Circles = Ellipse with equal width/height.
+- Accent bars (yellow left edge, divider bar) = thin Rectangles, not borders.
+- Borders: 2 px = 1 pt; dashed = \`dash: "dash"\`.
+- Arrows/connectors = native lines or connectors with triangle end-arrowheads, 2–3 pt.
+
+### 9.7 Tables, charts, icons, diagrams
+- **Tables:** native PPTX tables (not images). Header fill \`174A7F\` with white bold text; alternate row fills \`EAF5FC\` / \`FFFFFF\`; no vertical borders; cell margins 0.08–0.15 in; text ≥ 12 pt.
+- **Charts:** native PPTX charts (\`addChart\`) with direct data labels, palette colors, light gridlines or none; single series → no legend.
+- **Icons:** PNG rendered at ≥ 256 px (or native shapes); never emoji.
+- **Diagrams** (trees, loops, matrices): build from native shapes + connectors when possible so they stay editable.
+- Group related shapes so they move together.
+
+### 9.8 Google Slides import notes
+- Import via **File → Import slides → upload .pptx → select all**.
+- Expect: images stay images; native shapes and tables stay editable; spacing may shift a few px.
+- After import, check: fonts render as Red Hat Display, nothing overlaps institutional logos, tables didn't overflow.
+
+### 9.9 Validate before delivering
+- Open the PPTX in PowerPoint or LibreOffice once, or run a validator, and render a thumbnail grid to spot overflow.
+- Fix problems in the generator, not by hand-editing the packed XML.
+
+---
+
+## 10. Quality Assurance Checklist
+
+- [ ] Background correctly selected from \`/bg-deck/binus-deck/\` (8 dedicated options available).
+- [ ] Font is exclusively **Red Hat Display** (no secondary font).
+- [ ] No text below 24 px (12 pt); word count ≤ ~170 words.
+- [ ] Strictly BINUS palette: Deep Blue \`#174A7F\`, Medium Blue \`#018ED5\`, Dominant Sky Blue \`#23A3E7\`, Golden Yellow \`#FFDE3D\`.
+- [ ] Zero UI Yellow (\`#FEDE3B\`) or ITB Blue (\`#005AAB\`) leaks.
+- [ ] Golden Yellow used strictly as an accent, not large flood fills.
+- [ ] High contrast maintained across all cards and text boxes.
+- [ ] No layout repeated more than twice in succession.
+- [ ] Wording from the user's outline preserved accurately.
+- [ ] No mention of Gamma; generated exclusively for Launcher OS.
+- [ ] PPTX export opens seamlessly in PowerPoint and Google Slides without repair dialogs.
+
+---
+
+## 11. Don'ts (summary)
+
+- Don't recreate, redraw or decorate the backgrounds.
+- Don't use a second font, extra colors, emoji, shadows or gradient-filled cards.
+- Don't put pills/tags above slide titles.
+- Don't make every slide a card grid or a table.
+- Don't bake text into images.
+- Don't put facilitator instructions on the slide (use notes pane).
+- Don't invent statistics, dates, names or quotes to fill a visual.
+- Don't shrink text to make it fit; split the slide instead.
+- Don't use red/green indicators for status. Use words: High, Medium, Low, Critical, Optimal.
+- Don't use UI Yellow (\`#FEDE3B\`) or ITB Blue (\`#005AAB\`).
+
+---
+
+## 12. Program Context & Background Mapping
+
+BINUS × RevoU executive programs (Applied Cybersecurity & Professional Tracks) utilize 8 dedicated 16:9 backgrounds from \`/bg-deck/binus-deck/\`:
+1. \`cover-deck.webp\`: Slide 1 only: Title (\`#174A7F\`), Subtitle (\`#018ED5\`), Cohort/Facilitator Meta (\`#64748B\`).
+2. \`tablecontent-deck.webp\`: Agenda, Table of Contents, Module Roadmap (Slide 2).
+3. \`learningoutcome-deck.webp\`: Learning Objectives, Competency Milestones (Slide 3).
+4. \`speaker-deck.webp\`: Facilitator & Speaker profiles, mentor introductions, credentials.
+5. \`part-deck.webp\`: Section dividers ("Part N", "Modul N"), agenda transitions.
+6. \`content-deck.webp\`: Core frameworks, concept models, process flows, data architecture, case scenarios.
+7. \`recap-deck.webp\`: Summary, key takeaways, security checklists, milestone reviews.
+8. \`closing-deck.webp\`: Final slide only: Q&A, Next Session, Next Steps, Thank You, and contact info.
+`;
+
+function getInstitutionalSkill(
+  queryText: string = "",
+  attached?: AttachedSkill | null
+): { name: string; content: string; id: "ui" | "binus" | "itb" } {
+  if (attached && attached.content) {
+    const attachedLower = `${attached.id} ${attached.name}`.toLowerCase();
+    if (attachedLower.includes("ui") || attached.id === "ui") {
+      return { id: "ui", name: attached.name || "UI_Deck_Rules.md", content: attached.content };
+    }
+    if (attachedLower.includes("binus") || attached.id === "binus") {
+      return { id: "binus", name: attached.name || "BINUS_Deck_Rules.md", content: attached.content };
+    }
+    if (attachedLower.includes("itb") || attached.id === "itb") {
+      return { id: "itb", name: attached.name || "ITB_Deck_Rules.md", content: attached.content };
+    }
+    return { id: "itb", name: attached.name, content: attached.content };
+  }
+
+  const lower = (queryText || "").toLowerCase();
+  const isBinus = /binus|bina\s*nusantara/i.test(lower);
+  const isUI = !isBinus && /universitas\s*indonesia|ui\s*×\s*revou|\bui\b|makara/i.test(lower);
+  const isITB = !isBinus && !isUI;
+
+  if (isBinus) {
+    return { id: "binus", name: "BINUS_Deck_Rules.md", content: BINUS_SKILL_MD };
+  }
+  if (isUI) {
+    return { id: "ui", name: "UI_Deck_Rules.md", content: UI_SKILL_MD };
+  }
+  return { id: "itb", name: "ITB_Deck_Rules.md", content: ITB_SKILL_MD };
+}
+
 /* ───────────────────────────────────────────────────
  * Dummy Showcase Decks (16:9 Aspect Ratio)
  * ─────────────────────────────────────────────────── */
@@ -1877,11 +2913,11 @@ const SHOWCASE_DECKS: ShowcaseDeck[] = [
     updatedAt: "Skill Active",
     accentColor: "#005AAB",
     layoutType: "hero",
-    image: "/ITB.png",
+    image: "/ITB.webp",
     badge: "ITB SKILL INSTALLED",
     sampleContent: `#Headline: Governance, Risk & Compliance for Data and AI Strategy
 #Subheadline: Guardrails + Approvals + Auditability
-#Description: Program Eksekutif ITB × RevoU: Data-Driven & AI-Enabled Decision Making for Leaders.
+#Description: Program Eksekutif ITB × RevoU: [Program Name].
 #Badge: ITB × REVOU
 #SpeakerNotes: Sambut para eksekutif dan buka sesi modul ke-10 mengenai Governance, Risk & Compliance. Jelaskan bagaimana pengawasan AI menjadi pembeda utama organisasi resilient.
 #Visual: Title / Hero
@@ -1922,6 +2958,116 @@ const SHOWCASE_DECKS: ShowcaseDeck[] = [
 - Action Plan: Rumuskan langkah mitigasi sebelum presentasi di hadapan dewan pengawas
 #Badge: HANDS-ON 10 MIN
 #SpeakerNotes: Latihan squad 10 menit. Minta peserta mengisi placeholder bracket dengan kasus nyata dari unit kerja masing-masing.
+#Visual: Two Column / Comparison`,
+  },
+  {
+    id: "sc-ui",
+    title: "Product Strategy & Technological Innovation for Digital Leaders",
+    category: "UI × RevoU Program",
+    slidesCount: 10,
+    updatedAt: "Skill Active",
+    accentColor: "#FEDE3B",
+    layoutType: "hero",
+    image: "/UI.webp",
+    badge: "UI SKILL INSTALLED",
+    sampleContent: `#Headline: Product Strategy & Technological Innovation for Digital Leaders
+#Subheadline: Alignment + Rapid Prototyping + Scalable Governance
+#Description: Program Eksekutif UI × RevoU: Transformasi Digital & Inovasi Teknologi untuk Para Pemimpin.
+#Badge: UI × REVOU
+#SpeakerNotes: Sambut para eksekutif dan buka modul strategi produk dan inovasi UI × RevoU. Tekankan pentingnya kecepatan eksekusi berbasis data dan eksperimen terukur.
+#Visual: Title / Hero
+
+-----
+
+#Headline: 3 Pilar Utama Akselerasi Transformasi Digital
+#Subheadline: Kerangka kerja integratif untuk memvalidasi ide dan menekan risiko adopsi teknologi
+#Description: Setiap pilar dirancang untuk memastikan keselarasan strategis antara teknologi dan nilai bisnis nyata.
+#Bullet:
+- Alignment: Penyelarasan visi produk dengan prioritas bisnis jangka panjang
+- Rapid Prototyping: Validasi konsep berisiko tinggi melalui eksperimen iteratif kilat
+- Scalable Governance: Struktur pengawasan fleksibel yang tidak memperlambat inovasi
+#SpeakerNotes: Alokasikan waktu untuk membahas pilar kedua. Eksperimen cepat meminimalisir sunk cost.
+#Visual: Key Insights / Bullets
+
+-----
+
+#Headline: Framework Validasi Solusi Digital Berkelanjutan
+#Subheadline: Tahapan terstruktur dari identifikasi friksi hingga deployment berskala penuh
+#Description: Metodologi 4 tahap standar industri untuk menguji hipotesis produk secara ketat.
+#Bullet:
+- Tahap 01: Problem Discovery & Customer Friction Analysis
+- Tahap 02: MVP Scoping & Technical Feasibility Check
+- Tahap 03: Controlled Beta Testing & Value Metric Tracking
+- Tahap 04: Executive Sign-off & Cross-Unit Scaling
+#SpeakerNotes: Jelaskan bahwa tahap 2 harus menetapkan kill criteria yang jelas sebelum masuk fase pengembangan intensif.
+#Visual: Process / Workflow
+
+-----
+
+#Headline: [HANDS-ON] Audit Keputusan Inovasi Menggunakan AI Prompt Card
+#Subheadline: Format evaluasi terstruktur untuk menilai kesiapan inisiatif produk digital
+#Description: Gunakan template prompt audit di bawah ini pada AI analitis untuk mengidentifikasi celah adopsi teknologi.
+#Bullet:
+- PROMPT CARD: "Sebagai Chief Technology & Product Officer, lakukan stress-test terhadap proposal inovasi [Nama Inisiatif] dengan asumsi adopsi pasar [X]% dan kendala sistem legacy [Y]."
+- Evaluasi Tingkat Kesiapan: Klasifikasikan status implementasi ke dalam Strong, Medium, atau Weak
+- Action Plan: Rumuskan 3 langkah mitigasi sebelum presentasi di hadapan dewan penasehat
+#Badge: HANDS-ON 10 MIN
+#SpeakerNotes: Latihan squad 10 menit. Arahkan peserta untuk mengisi bracket placeholder dengan studi kasus divisi masing-masing.
+#Visual: Two Column / Comparison`,
+  },
+  {
+    id: "sc-binus",
+    title: "Applied Cybersecurity & Enterprise Threat Defense Strategy",
+    category: "BINUS Executive Program",
+    slidesCount: 10,
+    updatedAt: "Skill Active",
+    accentColor: "#174A7F",
+    layoutType: "hero",
+    image: "/BINUS.webp",
+    badge: "BINUS SKILL INSTALLED",
+    sampleContent: `#Headline: Applied Cybersecurity & Enterprise Threat Defense Strategy
+#Subheadline: Threat Modeling + Incident Response + Zero Trust Architecture
+#Description: Program Eksekutif BINUS: Strategi Pertahanan Siber Terapan & Ketahanan Digital Institusi.
+#Badge: BINUS CYBERSECURITY
+#SpeakerNotes: Sambut para eksekutif dan buka sesi Applied Cybersecurity. Tekankan bahwa pertahanan siber modern bukan sekadar masalah IT teknis, melainkan pilar kelangsungan bisnis tingkat eksekutif.
+#Visual: Title / Hero
+
+-----
+
+#Headline: 3 Pilar Utama Pertahanan Siber & Arsitektur Zero Trust
+#Subheadline: Kerangka kerja integratif untuk melindungi aset digital kritis dari ancaman kontemporer
+#Description: Setiap pilar dirancang untuk memastikan verifikasi berkelanjutan dan penekanan perimeter serangan secara sistematis.
+#Bullet:
+- Identitas & Akses: Verifikasi eksplisit tanpa toleransi kepercayaan tersirat (Zero Trust Core)
+- Deteksi Proaktif: Telemetri ancaman real-time dan orkestrasi respons otomatis (SIEM & SOAR)
+- Ketahanan Pemulihan: Protokol isolasi cepat dan arsitektur redundansi tanpa gangguan operasional
+#SpeakerNotes: Bahas pilar pertama secara mendalam. Jangan pernah mempercayai entitas di dalam jaringan tanpa otentikasi berkelanjutan.
+#Visual: Key Insights / Bullets
+
+-----
+
+#Headline: Alur Investigasi & Mitigasi Insiden Keamanan
+#Subheadline: Dari deteksi anomali telemetri hingga evaluasi pasca-insiden (PIR)
+#Description: Siklus 4 tahap standar NIST / SANS untuk merespons intrusi jaringan secara terkoordinasi.
+#Bullet:
+- Tahap 01: Anomaly Triaging & Threat Scope Identification
+- Tahap 02: Network Segmentation & Threat Containment
+- Tahap 03: Root-Cause Forensic Eradication & System Hardening
+- Tahap 04: Post-Incident Review & Compliance Board Briefing
+#SpeakerNotes: Alokasikan 8 menit untuk bedah kasus di tahap isolasi. Kesalahan fatal sering terjadi saat tim panik mematikan sistem tanpa snapshot bukti forensik.
+#Visual: Process / Workflow
+
+-----
+
+#Headline: [HANDS-ON] Audit Kerentanan Sistem Menggunakan Cyber Prompt Card
+#Subheadline: Format evaluasi terstruktur untuk mengidentifikasi celah keamanan aplikasi institusi
+#Description: Gunakan template prompt audit di bawah ini pada AI analitis untuk memetakan vektor serangan potensial dan risiko eksploitasi.
+#Bullet:
+- PROMPT CARD: "Sebagai Senior Cyber Defense Architect, lakukan threat modeling terhadap arsitektur [Nama Sistem] dengan asumsi kompromi kredensial [X] dan akses lateral ke basis data [Y]."
+- Evaluasi Tingkat Risiko: Klasifikasikan temuan ke dalam status Secure, Risk, atau Critical Threat
+- Action Plan: Rumuskan 3 langkah mitigasi mendesak sebelum audit keamanan dewan komisaris
+#Badge: HANDS-ON 15 MIN
+#SpeakerNotes: Latihan squad 15 menit. Arahkan peserta menggunakan kasus nyata arsitektur teknologi dari divisi masing-masing.
 #Visual: Two Column / Comparison`,
   },
   {
@@ -2145,125 +3291,181 @@ function getContrastTextColor(hexColor?: string): string {
  * Dynamic Slide Renderer
  * ─────────────────────────────────────────────────── */
 function SlideRenderer({
-  slide: rawSlide,
-  slideIndex = 0,
-  totalSlides = 1,
-  isPresentation = false,
-  isThumbnail = false,
-  palette = COLOR_PALETTES[0],
-  bgStyle = "solid",
-  fontPairing = "modern",
-  titleFont = "red-hat",
-  bodyFont = "red-hat",
+ slide: rawSlide,
+ slideIndex = 0,
+ totalSlides = 1,
+ isPresentation = false,
+ isThumbnail = false,
+ palette = COLOR_PALETTES[0],
+ bgStyle = "solid",
+ fontPairing = "modern",
+ titleFont = "red-hat",
+ bodyFont = "red-hat",
 }: {
-  slide: SlideData;
-  slideIndex?: number;
-  totalSlides?: number;
-  isPresentation?: boolean;
-  isThumbnail?: boolean;
-  palette?: ColorPalette;
-  bgStyle?: BgStyle;
-  fontPairing?: FontPairing;
-  titleFont?: TitleFont;
-  bodyFont?: BodyFont;
+ slide: SlideData;
+ slideIndex?: number;
+ totalSlides?: number;
+ isPresentation?: boolean;
+ isThumbnail?: boolean;
+ palette?: ColorPalette;
+ bgStyle?: BgStyle;
+ fontPairing?: FontPairing;
+ titleFont?: TitleFont;
+ bodyFont?: BodyFont;
 }) {
-  const slide = normalizeSlide(rawSlide, slideIndex, totalSlides);
-  const isGeneratingSlide = Boolean(slide.isGeneratingSlide);
+ const slide = normalizeSlide(rawSlide, slideIndex, totalSlides);
+ const isGeneratingSlide = Boolean(slide.isGeneratingSlide);
 
-  let bgImage = resolveSlideBackground(slide, slideIndex, totalSlides);
-  // ITB Rule §5: closing-deck is ONLY for the last slide
-  if (bgImage && bgImage.includes("closing-deck") && slideIndex < totalSlides - 1) {
-    bgImage = "/bg-deck/itb-deck/content-deck.webp";
+ let bgImage = resolveSlideBackground(slide, slideIndex, totalSlides);
+ const isITBDeck =
+   palette.id === "itb" ||
+   (slide as any).institution === "itb" ||
+   (slide as any).theme === "itb" ||
+   Boolean(bgImage && bgImage.includes("/itb-deck/")) ||
+   Boolean((slide as any).templateName && /itb|revo/i.test((slide as any).templateName)) ||
+   /institut teknologi bandung|itb × revou|\bitb\b/i.test(
+     `${slide.title || ""} ${slide.subtitle || ""} ${slide.category || ""} ${slide.badge || ""} ${slide.description || ""}`
+   );
+ const isUIDeck =
+   !isITBDeck &&
+   (palette.id === "ui" ||
+     (slide as any).institution === "ui" ||
+     (slide as any).theme === "ui" ||
+     Boolean(bgImage && bgImage.includes("/ui-deck/")) ||
+     Boolean((slide as any).templateName && /ui|universitas indonesia/i.test((slide as any).templateName)) ||
+     /universitas indonesia|ui × revou|\bui\b|makara/i.test(
+       `${slide.title || ""} ${slide.subtitle || ""} ${slide.category || ""} ${slide.badge || ""} ${slide.description || ""}`
+     ));
+ const isBinusDeck =
+   !isITBDeck &&
+   !isUIDeck &&
+   (palette.id === "binus" ||
+     (slide as any).institution === "binus" ||
+     (slide as any).theme === "binus" ||
+     Boolean(bgImage && bgImage.includes("/binus-deck/")) ||
+     Boolean((slide as any).templateName && /binus/i.test((slide as any).templateName)) ||
+     /binus|bina nusantara/i.test(
+       `${slide.title || ""} ${slide.subtitle || ""} ${slide.category || ""} ${slide.badge || ""} ${slide.description || ""}`
+     ));
+
+ // Strict guardrail: Keep the deck matched to its active institution!
+ if (isITBDeck && bgImage && (bgImage.includes("/binus-deck/") || bgImage.includes("/ui-deck/"))) {
+   bgImage = bgImage.replace(/\/(binus|ui)-deck\//, "/itb-deck/");
+   if (bgImage.includes("recap-deck") || bgImage.includes("tablecontent-deck") || bgImage.includes("learningoutcome-deck")) {
+     bgImage = "/bg-deck/itb-deck/content-deck.webp";
+   }
+ } else if (isUIDeck && bgImage && bgImage.includes("/itb-deck/")) {
+   bgImage = bgImage.replace("/itb-deck/", "/ui-deck/");
+ } else if (isBinusDeck && bgImage && bgImage.includes("/itb-deck/")) {
+   bgImage = bgImage.replace("/itb-deck/", "/binus-deck/");
+ }
+
+ const defaultContentBg = isBinusDeck
+   ? "/bg-deck/binus-deck/content-deck.webp"
+   : isUIDeck
+   ? "/bg-deck/ui-deck/content-deck.webp"
+   : "/bg-deck/itb-deck/content-deck.webp";
+ // Rule §5: closing-deck is ONLY for the last slide
+ if (bgImage && bgImage.includes("closing-deck") && slideIndex < totalSlides - 1) {
+   bgImage = defaultContentBg;
+ }
+ // Rule §5: cover-deck is ONLY for slide 1
+ if (bgImage && bgImage.includes("cover-deck") && slideIndex > 0) {
+   bgImage = defaultContentBg;
+ }
+ // User Rule: Sembunyikan background gambar saat proses generate! Kanvas harus warna putih polos.
+ // Baru setelah selesai generate, tampilkan hasil generate beserta background gambarnya.
+ const hasTemplateBg = !isGeneratingSlide && Boolean(bgImage);
+ const isCoverBg = hasTemplateBg && bgImage.includes("cover-deck");
+ const isPartBg = hasTemplateBg && bgImage.includes("part-deck");
+ const isClosingBg = hasTemplateBg && bgImage.includes("closing-deck");
+ const isTaskBg = hasTemplateBg && bgImage.includes("task-speaker-deck");
+ const isSpeakerBg = hasTemplateBg && bgImage.includes("speaker-deck");
+ const isTableContentBg = hasTemplateBg && bgImage.includes("tablecontent-deck");
+ const isLearningOutcomeBg = hasTemplateBg && bgImage.includes("learningoutcome-deck");
+ const isRecapBg = hasTemplateBg && bgImage.includes("recap-deck");
+ const isContentBg = hasTemplateBg && bgImage.includes("content-deck");
+
+ const baseFont = "text-xs sm:text-sm";
+ const titleSize = "text-2xl sm:text-3xl";
+ const subtitleSize = "text-sm sm:text-base";
+
+ const effectiveTitleFont: TitleFont = titleFont || (fontPairing === "creative" ? "bricolage" : "red-hat");
+ const effectiveBodyFont: BodyFont = bodyFont || "red-hat";
+
+ const headingFontClass = getTitleFontClass(effectiveTitleFont);
+ const bodyFontClass = getBodyFontClass(effectiveBodyFont);
+
+ // Dual-Tone & Color Contrast Calculations
+ const isDualTone = bgStyle === "dualtone";
+ const isGradient = bgStyle === "gradient";
+ const primaryTextColor = getContrastTextColor(palette.primary);
+ const primaryMutedColor = primaryTextColor === "#FFFFFF" ? "rgba(255,255,255,0.75)" : "rgba(17,17,17,0.7)";
+
+ // Dynamic Background classes & styles with slide.bgStyle override support
+ let bgClasses = "bg-white ";
+ const isBoldYellow = !isDualTone && !isGradient && (slide.bgStyle === "boldYellow" || slide.layout === "boldStatement" || slide.layout === "boldImpact");
+ const isYellowGradient = !isDualTone && (slide.bgStyle === "yellowGradient" || slide.layout === "imageSplitMetric");
+ const isDarkSlide = !isBoldYellow && !isYellowGradient && bgStyle === "dark";
+
+ // Dynamic 2-Tone Gradient Style (White + Chosen Primary Color)
+ let dynamicBgStyle: React.CSSProperties = {};
+ const effectiveGradientColor = palette.primary || "#FFDE3C";
+
+ if (hasTemplateBg) {
+  dynamicBgStyle = {};
+  if (isUIDeck) {
+   bgClasses = "bg-transparent text-black";
+  } else if (isPartBg || isClosingBg || (isBinusDeck && isRecapBg)) {
+   bgClasses = "bg-transparent text-white";
+  } else if (isCoverBg) {
+   bgClasses = isBinusDeck ? "bg-transparent text-[#174A7F]" : "bg-transparent text-[#005AAB]";
+  } else {
+   bgClasses = isBinusDeck ? "bg-transparent text-[#174A7F]" : "bg-transparent text-neutral-900";
   }
-  // ITB Rule §5: cover-deck is ONLY for slide 1
-  if (bgImage && bgImage.includes("cover-deck") && slideIndex > 0) {
-    bgImage = "/bg-deck/itb-deck/content-deck.webp";
-  }
-  // User Rule: Sembunyikan background gambar saat proses generate! Kanvas harus warna putih polos.
-  // Baru setelah selesai generate, tampilkan hasil generate beserta background gambarnya.
-  const hasTemplateBg = !isGeneratingSlide && Boolean(bgImage);
-  const isCoverBg = hasTemplateBg && bgImage.includes("cover-deck");
-  const isPartBg = hasTemplateBg && bgImage.includes("part-deck");
-  const isClosingBg = hasTemplateBg && bgImage.includes("closing-deck");
-  const isTaskBg = hasTemplateBg && bgImage.includes("task-speaker-deck");
-  const isContentBg = hasTemplateBg && bgImage.includes("content-deck");
+ } else if (isGradient) {
+ if (slide.layout === "boldStatement" || slide.layout === "boldImpact" || slide.layout === "cta") {
+ dynamicBgStyle = {
+ background: `linear-gradient(135deg, ${effectiveGradientColor} 0%, ${effectiveGradientColor}ee 40%, #FFF5A5 100%)`,
+ };
+ } else if (slide.layout === "hero" || slide.layout === "title") {
+ dynamicBgStyle = {
+ background: `radial-gradient(ellipse 90% 70% at 90% -10%, ${effectiveGradientColor}60 0%, transparent 65%), radial-gradient(ellipse 70% 60% at 10% 100%, ${effectiveGradientColor}40 0%, transparent 60%), linear-gradient(145deg, #FFFFFF 0%, #FFFDF5 45%, #FFF9D0 100%)`,
+ };
+ } else {
+ dynamicBgStyle = {
+ background: `radial-gradient(ellipse 85% 65% at 88% 0%, ${effectiveGradientColor}45 0%, transparent 60%), radial-gradient(ellipse 65% 55% at 5% 100%, ${effectiveGradientColor}30 0%, transparent 60%), linear-gradient(145deg, #FFFFFF 0%, #FFFDF5 45%, #FFF8D2 100%)`,
+ };
+ }
+ } else if (isYellowGradient) {
+ dynamicBgStyle = {
+ background: `radial-gradient(ellipse 85% 65% at 88% 0%, ${effectiveGradientColor}40 0%, transparent 60%), radial-gradient(ellipse 65% 55% at 5% 100%, ${effectiveGradientColor}25 0%, transparent 60%), linear-gradient(145deg, #FFFFFF 0%, #FFFDF7 50%, #FFF9D6 100%)`,
+ };
+ }
 
-  const baseFont = "text-xs sm:text-sm";
-  const titleSize = "text-2xl sm:text-3xl";
-  const subtitleSize = "text-sm sm:text-base";
+ if (!hasTemplateBg) {
+ if (isBoldYellow) {
+ bgClasses = "bg-[#FFE500] text-neutral-950";
+ } else if (isYellowGradient) {
+ bgClasses = "text-neutral-950 ";
+ } else if (slide.bgStyle === "white") {
+ bgClasses = "bg-white ";
+ } else if (isDualTone) {
+ bgClasses = "bg-white ";
+ } else if (isGradient) {
+ bgClasses = "text-neutral-950 ";
+ } else if (bgStyle === "dark") {
+ bgClasses = "bg-[#0d0d0d] text-white";
+ } else if (bgStyle === "warm") {
+ bgClasses = "bg-[#FDFBF7] ";
+ }
+ }
 
-  const effectiveTitleFont: TitleFont = titleFont || (fontPairing === "creative" ? "bricolage" : "red-hat");
-  const effectiveBodyFont: BodyFont = bodyFont || "red-hat";
+ // Slide is rendered immediately as one unified static component without individual element entrance animations
+ const anim = (_delay: number = 0) => ({});
 
-  const headingFontClass = getTitleFontClass(effectiveTitleFont);
-  const bodyFontClass = getBodyFontClass(effectiveBodyFont);
-
-  // Dual-Tone & Color Contrast Calculations
-  const isDualTone = bgStyle === "dualtone";
-  const isGradient = bgStyle === "gradient";
-  const primaryTextColor = getContrastTextColor(palette.primary);
-  const primaryMutedColor = primaryTextColor === "#FFFFFF" ? "rgba(255,255,255,0.75)" : "rgba(17,17,17,0.7)";
-
-  // Dynamic Background classes & styles with slide.bgStyle override support
-  let bgClasses = "bg-white dark:bg-neutral-950";
-  const isBoldYellow = !isDualTone && !isGradient && (slide.bgStyle === "boldYellow" || slide.layout === "boldStatement" || slide.layout === "boldImpact");
-  const isYellowGradient = !isDualTone && (slide.bgStyle === "yellowGradient" || slide.layout === "imageSplitMetric");
-  const isDarkSlide = !isBoldYellow && !isYellowGradient && bgStyle === "dark";
-
-  // Dynamic 2-Tone Gradient Style (White + Chosen Primary Color)
-  let dynamicBgStyle: React.CSSProperties = {};
-  const effectiveGradientColor = palette.primary || "#FFDE3C";
-
-  if (hasTemplateBg) {
-    dynamicBgStyle = {};
-    if (isPartBg || isClosingBg) {
-      bgClasses = "bg-transparent text-white";
-    } else if (isCoverBg) {
-      bgClasses = "bg-transparent text-[#174A7F]";
-    } else {
-      bgClasses = "bg-transparent text-neutral-900";
-    }
-  } else if (isGradient) {
-    if (slide.layout === "boldStatement" || slide.layout === "boldImpact" || slide.layout === "cta") {
-      dynamicBgStyle = {
-        background: `linear-gradient(135deg, ${effectiveGradientColor} 0%, ${effectiveGradientColor}ee 40%, #FFF5A5 100%)`,
-      };
-    } else if (slide.layout === "hero" || slide.layout === "title") {
-      dynamicBgStyle = {
-        background: `radial-gradient(ellipse 90% 70% at 90% -10%, ${effectiveGradientColor}60 0%, transparent 65%), radial-gradient(ellipse 70% 60% at 10% 100%, ${effectiveGradientColor}40 0%, transparent 60%), linear-gradient(145deg, #FFFFFF 0%, #FFFDF5 45%, #FFF9D0 100%)`,
-      };
-    } else {
-      dynamicBgStyle = {
-        background: `radial-gradient(ellipse 85% 65% at 88% 0%, ${effectiveGradientColor}45 0%, transparent 60%), radial-gradient(ellipse 65% 55% at 5% 100%, ${effectiveGradientColor}30 0%, transparent 60%), linear-gradient(145deg, #FFFFFF 0%, #FFFDF5 45%, #FFF8D2 100%)`,
-      };
-    }
-  } else if (isYellowGradient) {
-    dynamicBgStyle = {
-      background: `radial-gradient(ellipse 85% 65% at 88% 0%, ${effectiveGradientColor}40 0%, transparent 60%), radial-gradient(ellipse 65% 55% at 5% 100%, ${effectiveGradientColor}25 0%, transparent 60%), linear-gradient(145deg, #FFFFFF 0%, #FFFDF7 50%, #FFF9D6 100%)`,
-    };
-  }
-
-  if (!hasTemplateBg) {
-    if (isBoldYellow) {
-      bgClasses = "bg-[#FFE500] text-neutral-950";
-    } else if (isYellowGradient) {
-      bgClasses = "text-neutral-950 dark:text-neutral-900";
-    } else if (slide.bgStyle === "white") {
-      bgClasses = "bg-white dark:bg-neutral-950";
-    } else if (isDualTone) {
-      bgClasses = "bg-white dark:bg-[#111114]";
-    } else if (isGradient) {
-      bgClasses = "text-neutral-950 dark:text-neutral-900";
-    } else if (bgStyle === "dark") {
-      bgClasses = "bg-[#0d0d0d] text-white";
-    } else if (bgStyle === "warm") {
-      bgClasses = "bg-[#FDFBF7] dark:bg-[#12110F]";
-    }
-  }
-
-  // Slide is rendered immediately as one unified static component without individual element entrance animations
-  const anim = (_delay: number = 0) => ({});
-
+ // Helper for dual-tone split layout container (always maintains 16:9 landscape proportion)
+  // Helper for dual-tone split layout container (always maintains 16:9 landscape proportion)
   // Helper for dual-tone split layout container (always maintains 16:9 landscape proportion)
   const renderDualToneSplit = (
     leftContent: React.ReactNode,
@@ -2278,7 +3480,7 @@ function SlideRenderer({
       : "38%";
 
     return (
-      <div className="w-full h-full flex flex-row relative overflow-hidden bg-white dark:bg-[#111114]">
+      <div className="w-full h-full flex flex-row relative overflow-hidden bg-white ">
         {/* Left Color-Blocked Primary Panel */}
         <div
           className="h-full p-[6%] flex flex-col justify-between shrink-0 relative z-10 overflow-hidden"
@@ -2289,7 +3491,7 @@ function SlideRenderer({
           }}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded-sm bg-black/15 dark:bg-white/15">
+            <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded-sm bg-black/15 ">
               {slide.badge || "MODULE"}
             </span>
           </div>
@@ -2304,7 +3506,7 @@ function SlideRenderer({
         </div>
 
         {/* Right Clean White Canvas Panel */}
-        <div className="flex-1 h-full p-[6%] flex flex-col justify-between relative z-10 bg-white dark:bg-[#111114] overflow-hidden">
+        <div className="flex-1 h-full p-[6%] flex flex-col justify-between relative z-10 bg-white overflow-hidden">
           <div className="flex-1 flex flex-col justify-center">
             {rightContent}
           </div>
@@ -2314,3376 +3516,3555 @@ function SlideRenderer({
     );
   };
 
-  // Spacing & Safe Zone according to ITB RevoU Design System Section 1 & 4:
-  // Content safe area: x 108–1812 px, y 84–920 px. Nothing below y 930 px.
-  // Content slide padding: top 84–96px (~7.5-8%), sides 108px (5.6%), bottom 160px (15%) to protect bottom logo band.
+  // Note: In 16:9 widescreen, CSS percentage padding is based on container WIDTH (1920px).
+  // Top: 84px (~4.5% of width), Sides: 108px (5.6% of width), Bottom: 150px (~8% of width).
   const contentPadding = hasTemplateBg
-    ? "pt-[7.5%] sm:pt-[8%] px-[5.6%] pb-[15%] sm:pb-[16%]"
+    ? "pt-[4.5%] sm:pt-[5%] px-[5.6%] pb-[8%] sm:pb-[8.5%]"
     : "px-[5%] sm:px-[6%] py-3.5 sm:py-4.5";
+ const renderSlideHeader = (customTitleClass?: string) => {
+ const isHandsOn = (slide.badge || slide.highlight || "").toUpperCase().includes("HANDS-ON");
+ const isDarkBg = !isUIDeck && (isPartBg || isClosingBg || (isBinusDeck && isRecapBg) || isDarkSlide);
+ return (
+ <div className={`shrink-0 ${isPresentation ? "mb-3 sm:mb-4" : "mb-2 sm:mb-2.5"} max-w-[94%]`}>
+ <div className="flex items-center gap-2.5 flex-wrap">
+ <motion.h2
+ {...anim(0.06)}
+ className={customTitleClass || `${isPresentation ? "text-2xl sm:text-3xl lg:text-4xl" : "text-xl sm:text-2xl lg:text-[25px]"} font-bold ${headingFontClass} ${isBoldYellow ? "text-black" : isUIDeck ? "text-black" : isDarkBg ? "text-white" : isBinusDeck ? "text-[#174A7F]" : "text-[#005AAB] "} leading-tight tracking-tight line-clamp-2`}
+ >
+ {safeString(slide.title)}
+ </motion.h2>
+ {isHandsOn && (
+ <span className={`${isBinusDeck ? "bg-[#FFDE3D] text-[#174A7F]" : isUIDeck ? "bg-[#FEDE3B] text-black" : "bg-[#FFDD3C] text-[#272525]"} font-extrabold text-[9px] sm:text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs shrink-0`}>
+ HANDS-ON
+ </span>
+ )}
+ </div>
+ {slide.subtitle && (
+ <motion.p
+ {...anim(0.12)}
+ className={`${isPresentation ? "text-sm sm:text-base lg:text-lg mt-1.5" : "text-[11px] sm:text-xs mt-0.5"} ${isBoldYellow ? "text-neutral-800" : isUIDeck ? "text-neutral-700" : isDarkBg ? (isBinusDeck ? "text-[#FFDE3D]" : "text-[#FFDD3C]") : isBinusDeck ? "text-[#018ED5]" : "text-[#272525] "} font-medium leading-snug line-clamp-2 max-w-[90%]`}
+ >
+ {safeString(slide.subtitle)}
+ </motion.p>
+ )}
+ </div>
+ );
+ };
 
-  const renderSlideHeader = (customTitleClass?: string) => {
-    const isHandsOn = (slide.badge || slide.highlight || "").toUpperCase().includes("HANDS-ON");
-    const isDarkBg = isPartBg || isClosingBg;
-    return (
-      <div className={`shrink-0 ${isPresentation ? "mb-3 sm:mb-4" : "mb-2 sm:mb-2.5"} max-w-[94%]`}>
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <motion.h2
-            {...anim(0.06)}
-            className={customTitleClass || `${isPresentation ? "text-2xl sm:text-3xl lg:text-4xl" : "text-xl sm:text-2xl lg:text-[25px]"} font-bold ${headingFontClass} ${isDarkBg ? "text-white" : "text-[#005AAB] dark:text-[#005AAB]"} leading-tight tracking-tight line-clamp-2`}
-          >
-            {safeString(slide.title)}
-          </motion.h2>
-          {isHandsOn && (
-            <span className="bg-[#FFDD3C] text-[#272525] font-extrabold text-[9px] sm:text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs shrink-0">
-              HANDS-ON
-            </span>
-          )}
-        </div>
-        {slide.subtitle && (
-          <motion.p
-            {...anim(0.12)}
-            className={`${isPresentation ? "text-sm sm:text-base lg:text-lg mt-1.5" : "text-[11px] sm:text-xs mt-0.5"} ${isDarkBg ? "text-white/90" : "text-[#272525] dark:text-neutral-300"} font-medium leading-snug line-clamp-2 max-w-[90%]`}
-          >
-            {safeString(slide.subtitle)}
-          </motion.p>
-        )}
-      </div>
-    );
+ const renderSlideFooter = () => (
+ <SlideFrameFooter
+ footer={slide.footer}
+ slideNumber={slide.slideNumber}
+ isDark={isDarkSlide}
+ hasTemplateBg={hasTemplateBg}
+ />
+ );
+
+  const getCardTheme = (isYellow: boolean = true) => {
+    if (isBinusDeck) {
+      if (isYellow) {
+        return {
+          cardBgClass: "bg-[#FFFDEB] border-2 border-[#FFDE3D] rounded-lg shadow-2xs",
+          badgeBgClass: "bg-[#FFDE3D] text-[#174A7F] font-extrabold rounded-md",
+          titleClass: "text-[#174A7F] font-bold",
+          descClass: "text-[#1E293B]",
+          accentClass: "text-[#F2941B]",
+          numColor: "#174A7F",
+          iconColor: "#F2941B",
+        };
+      }
+      return {
+        cardBgClass: "bg-[#EAF5FC] border border-[#23A3E7]/40 rounded-lg",
+        badgeBgClass: "bg-[#23A3E7] text-white font-extrabold rounded-md",
+        titleClass: "text-[#174A7F] font-bold",
+        descClass: "text-[#1E293B]",
+        accentClass: "text-[#018ED5]",
+        numColor: "#23A3E7",
+        iconColor: "#23A3E7",
+      };
+    }
+    if (isUIDeck) {
+      if (isYellow) {
+        return {
+          cardBgClass: "bg-[#FFFDF0] border-2 border-[#FEDE3B] rounded-lg shadow-2xs",
+          badgeBgClass: "bg-[#FEDE3B] text-black font-extrabold rounded-md",
+          titleClass: "text-black font-bold",
+          descClass: "text-neutral-800",
+          accentClass: "text-[#AC9629]",
+          numColor: "#000000",
+          iconColor: "#AC9629",
+        };
+      }
+      return {
+        cardBgClass: "bg-[#FAFAF7] border border-[#E0E0E0] rounded-lg shadow-2xs",
+        badgeBgClass: "bg-black text-white font-extrabold rounded-md",
+        titleClass: "text-black font-bold",
+        descClass: "text-neutral-700",
+        accentClass: "text-neutral-600",
+        numColor: "#000000",
+        iconColor: "#000000",
+      };
+    }
+    if (isYellow) {
+      return {
+        cardBgClass: "bg-[#FFF9D6] border border-[#FFDD3C] rounded-lg",
+        badgeBgClass: "bg-[#FFDD3C] text-[#272525] font-extrabold rounded-md",
+        titleClass: "text-[#272525] font-bold",
+        descClass: "text-[#4A4545]",
+        accentClass: "text-[#854D0E]",
+        numColor: "#B45309",
+        iconColor: "#B45309",
+      };
+    }
+    return {
+      cardBgClass: "bg-[#EAF2FB] border border-[#005AAB]/30 rounded-lg",
+      badgeBgClass: "bg-[#005AAB] text-white font-extrabold rounded-md",
+      titleClass: "text-[#005AAB] font-bold",
+      descClass: "text-[#334155]",
+      accentClass: "text-[#005AAB]",
+      numColor: "#005AAB",
+      iconColor: "#005AAB",
+    };
   };
-
-  const renderSlideFooter = () => (
-    <SlideFrameFooter
-      footer={slide.footer}
-      slideNumber={slide.slideNumber}
-      isDark={isDarkSlide}
-      hasTemplateBg={hasTemplateBg}
-    />
-  );
 
   const renderSlideContent = () => {
-    // ──── SKELETON GENERATING STATE (PLAIN WHITE CANVAS) ────
-    // User Rule: Sembunyikan background gambar secara total selama proses generate!
-    // Canvas harus warna putih polos murni. Baru setelah selesai generate, tampilkan hasil beserta background.
-    if (slide.isGeneratingSlide) {
-      return (
-        <div className={`w-full h-full bg-white dark:bg-[#121212] flex flex-col justify-between p-[6%] sm:p-[7%] relative ${bodyFontClass} overflow-hidden select-none`}>
-          {/* Clean minimal slide title on plain white canvas */}
-          <div className="shrink-0 mb-3 max-w-[92%]">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-5 h-5 rounded-full bg-[#FFDD3C] text-neutral-950 font-bold text-[10px] flex items-center justify-center">
-                {String((slideIndex || 0) + 1).padStart(2, "0")}
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
-                Blueprint Outline
-              </span>
-            </div>
-            <h2 className={`text-xl sm:text-2xl font-bold ${headingFontClass} text-neutral-900 dark:text-white leading-tight line-clamp-2`}>
-              {safeString(slide.title)}
-            </h2>
-            {slide.subtitle && (
-              <p className="text-xs text-neutral-500 mt-1 line-clamp-1">
-                {safeString(slide.subtitle)}
-              </p>
-            )}
-          </div>
-
-          {/* Central AI Rendering Shimmer Box on clean white canvas */}
-          <div className="w-full flex-1 flex flex-col justify-center items-center my-auto p-6 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/40 text-center animate-pulse">
-            <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-[#FFDD3C] text-neutral-950 font-bold text-[10px] sm:text-xs uppercase tracking-wider mb-2.5 shadow-2xs">
-              <Sparkles className="w-3.5 h-3.5 animate-spin text-neutral-950" />
-              <span>Memproses Slide {(slideIndex || 0) + 1}</span>
-            </div>
-            <h3 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-neutral-100">
-              AI sedang menyusun konten & tata letak adaptif...
-            </h3>
-            <p className="text-[11px] text-neutral-500 mt-1 max-w-sm leading-relaxed">
-              Format visual dan isi slide sedang dirancang. Background gambar dan visual lengkap akan otomatis tampil setelah selesai.
-            </p>
-          </div>
-
-          <div className="w-full flex items-center justify-between text-[10px] text-neutral-400 pt-2 border-t border-neutral-100 dark:border-neutral-800/60 mt-auto">
-            <span>Launcher OS Dynamic Deck Generator</span>
-            <span className="font-mono">{String((slideIndex || 0) + 1).padStart(2, "0")} / {totalSlides}</span>
-          </div>
-        </div>
-      );
-    }
-
-    // ──── INSTITUTIONAL PART / SECTION DIVIDER (part-deck.png) ────
-    // Pure full-bleed section divider: Yellow accent bar (140x12px) + PART label + Large white title + Subtitle. Strictly NO CARDS!
-    if (hasTemplateBg && isPartBg) {
-      return (
-        <SectionDivider
-          partLabel={slide.badge || slide.category || "BAGIAN"}
-          title={safeString(slide.title)}
-          subtitle={safeString(slide.subtitle)}
-          primaryColor={palette.primary}
-          accentColor={palette.secondary || palette.accent || "#FFDD3C"}
-          isPresentation={isPresentation}
-          transparentBg={true}
-        />
-      );
-    }
-
-    // ──── INSTITUTIONAL SPLIT SLIDE (task-speaker-deck.png) ────
-    // Left blue panel (33%): Yellow accent bar + White Action Title + Golden Yellow Subtitle
-    // Right white panel (67%): Before AI Card → Arrow → After AI Card + Bottom Key Insight Strip (or Speaker Profile)
-    if (hasTemplateBg && isTaskBg) {
-      const isProfile =
-        slide.layout === "splitProfile" ||
-        Boolean(slide.profileData) ||
-        /speaker|fasilitator|profile|pembicara|narasumber/i.test(`${slide.title} ${slide.subtitle || ""} ${slide.badge || ""}`);
-
-      if (isProfile) {
-        return (
-          <SplitProfileSlide
-            title={safeString(slide.title)}
-            subtitle={safeString(slide.subtitle || "Facilitator")}
-            badge={slide.badge}
-            tag={slide.profileData?.tag || "SPEAKER PROFILE"}
-            roleOrg={slide.profileData?.role || slide.description}
-            bio={slide.profileData?.bio || slide.bullets?.join(". ")}
-            photoUrl={slide.profileData?.photoUrl || slide.imageUrl}
-            isPresentation={isPresentation}
-            fontTitleClass={headingFontClass}
-          />
-        );
-      }
-
-      const beforeTitle = slide.beforeCard?.title || "BEFORE AI";
-      const beforeItems =
-        slide.beforeCard?.bullets && slide.beforeCard.bullets.length > 0
-          ? slide.beforeCard.bullets
-          : slide.pairedRows && slide.pairedRows.length > 0
-          ? slide.pairedRows.map((r) => r.left)
-          : slide.bullets && slide.bullets.length >= 2
-          ? slide.bullets.slice(0, Math.ceil(slide.bullets.length / 2))
-          : undefined;
-      const beforeText = slide.beforeCard?.description || (slide.pairedRows?.[0]?.left ? undefined : slide.description);
-
-      const afterTitle = slide.afterCard?.title || "AFTER AI";
-      const afterItems =
-        slide.afterCard?.bullets && slide.afterCard.bullets.length > 0
-          ? slide.afterCard.bullets
-          : slide.pairedRows && slide.pairedRows.length > 0
-          ? slide.pairedRows.map((r) => r.right)
-          : slide.bullets && slide.bullets.length >= 2
-          ? slide.bullets.slice(Math.ceil(slide.bullets.length / 2))
-          : undefined;
-      const afterText = slide.afterCard?.description;
-
-      const insightText =
-        slide.insightBarText ||
-        slide.highlight ||
-        "Key insight: AI didn't replace the leader. It changed what the leader decides.";
-
-      return (
-        <SplitCaseComparison
-          title={safeString(slide.title)}
-          subtitle={safeString(slide.subtitle)}
-          badge={slide.badge}
-          beforeTitle={beforeTitle}
-          beforeItems={beforeItems}
-          beforeText={beforeText}
-          afterTitle={afterTitle}
-          afterItems={afterItems}
-          afterText={afterText}
-          insightText={insightText}
-          isPresentation={isPresentation}
-          fontTitleClass={headingFontClass}
-        />
-      );
-    }
-
-    switch (slide.layout) {
-    /* ──── TITLE / HERO SLIDE ──── */
-    case "title":
-    case "hero":
-      if (isCoverBg) {
-        return (
-          <div className="w-full h-full flex flex-col justify-between pt-[16%] sm:pt-[17%] px-[6.5%] pb-[6%] relative overflow-hidden bg-transparent select-none">
-            <div className="relative z-10 flex flex-col justify-start max-w-[70%]">
-              <motion.h1
-                {...anim(0.06)}
-                className={`text-xl sm:text-2xl lg:text-[28px] font-bold text-[#174A7F] dark:text-[#174A7F] ${headingFontClass} leading-[1.18] tracking-tight line-clamp-3`}
-              >
-                {safeString(slide.title)}
-              </motion.h1>
-              {slide.subtitle && (
-                <motion.p
-                  {...anim(0.12)}
-                  className="text-xs sm:text-sm lg:text-[15px] font-semibold text-[#005AAB] dark:text-[#005AAB] mt-2 sm:mt-2.5 leading-snug line-clamp-2"
-                >
-                  {safeString(slide.subtitle)}
-                </motion.p>
-              )}
-            </div>
-
-            {/* 3 meta lines at bottom-left per ITB rules (week · program · facilitator) */}
-            <div className="relative z-10 mt-auto max-w-[65%] text-[9.5px] sm:text-[11px] font-normal text-[#555555] dark:text-neutral-400 leading-snug space-y-0.5">
-              <p className="truncate">{slide.category || "Data-Driven & AI-Enabled Decision Making for Leaders"}</p>
-              <p className="truncate">{slide.highlight || "Executive Education Program"}</p>
-              <p className="truncate">{slide.quote?.author || slide.badge || "Direktorat Pendidikan Non Reguler ITB & RevoU"}</p>
-            </div>
-
-            <div className="absolute bottom-[4%] right-[6%] text-[11px] font-bold text-white/90 tabular-nums">
-              {slide.slideNumber ? String(slide.slideNumber).padStart(2, "0") : "01"}
-            </div>
-          </div>
-        );
-      }
-
-      if (isDualTone) {
-        return (
-          <div className="w-full h-full flex flex-col md:flex-row relative overflow-hidden bg-white dark:bg-[#111114]">
-            {/* Left 42% Primary Color Block */}
-            <div
-              className="w-full md:w-[42%] h-full p-[6%] flex flex-col justify-between shrink-0 relative z-10"
-              style={{ backgroundColor: palette.primary, color: primaryTextColor }}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md bg-black/15 dark:bg-white/15">
-                  {slide.badge || slide.highlight || "01"}
-                </span>
-                <span className="text-lg sm:text-xl font-mono font-bold opacity-45">
-                  {String(slide.slideNumber || 1).padStart(2, "0")}
-                </span>
-              </div>
-
-              <div className="my-auto py-4">
-                <motion.h1
-                  {...anim(0.06)}
-                  className={`text-xl sm:text-2xl lg:text-[28px] font-bold ${headingFontClass} leading-[1.15] tracking-tight line-clamp-3`}
-                >
-                  {safeString(slide.title)}
-                </motion.h1>
-              </div>
-
-              <div className="text-[10px] sm:text-[11px] font-mono tracking-wider opacity-60 uppercase">
-                {slide.category || "EXECUTIVE BRIEFING"}
-              </div>
-            </div>
-
-            {/* Right 58% Secondary/White Canvas Block */}
-            <div className="flex-1 h-full p-[6%] flex flex-col justify-between relative z-10 bg-neutral-50/50 dark:bg-[#151518]">
-              <div className="flex items-center justify-end">
-                {slide.highlight && (
-                  <span
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider"
-                    style={{
-                      backgroundColor: palette.primary,
-                      color: primaryTextColor,
-                    }}
-                  >
-                    {safeString(slide.highlight)}
-                  </span>
-                )}
-              </div>
-
-              <div className="my-auto max-w-[95%] space-y-3">
-                {slide.subtitle && (
-                  <motion.p
-                    {...anim(0.12)}
-                    className="text-sm sm:text-base font-semibold text-neutral-800 dark:text-neutral-200 leading-snug line-clamp-2"
-                  >
-                    {safeString(slide.subtitle)}
-                  </motion.p>
-                )}
-                {slide.description && (
-                  <motion.p
-                    {...anim(0.18)}
-                    className="text-xs sm:text-[13px] text-neutral-600 dark:text-neutral-400 leading-relaxed line-clamp-3"
-                  >
-                    {safeString(slide.description)}
-                  </motion.p>
-                )}
-              </div>
-
-              <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={false} />
-            </div>
-          </div>
-        );
-      }
-
-      return (
-        <div
-          className={`w-full h-full flex flex-col justify-between p-[6%] sm:p-[7%] relative overflow-hidden ${bgClasses}`}
-          style={dynamicBgStyle}
-        >
-          {/* Subtle Ambient Shapes */}
-          {!hasTemplateBg && (
-            <div
-              className="absolute -top-[20%] -right-[15%] w-[50%] h-[65%] rounded-full opacity-20 blur-3xl pointer-events-none"
-              style={{ backgroundColor: palette.primary }}
-            />
-          )}
-
-          <SlideFrameHeader
-            badge={slide.badge || slide.highlight || "PRESENTATION"}
-            category={slide.category}
-            isDark={isDarkSlide}
-            primaryColor={palette.primary}
-            hasTemplateBg={hasTemplateBg}
-          />
-
-          <div className="relative z-10 flex flex-col justify-center flex-1 max-w-[85%] my-auto">
-            {slide.highlight && (
-              <motion.span
-                {...anim(0)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wider w-fit mb-2.5"
-                style={{
-                  backgroundColor: palette.id === "launcher" ? "#FFE500" : palette.primary,
-                  color: "#111111",
-                }}
-              >
-                {safeString(slide.highlight)}
-              </motion.span>
-            )}
-            <motion.h1
-              {...anim(0.06)}
-              className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${isCoverBg ? "text-[#174A7F] dark:text-[#174A7F]" : "text-[#005AAB] dark:text-[#005AAB]"} leading-[1.15] tracking-tight line-clamp-3`}
-            >
-              {safeString(slide.title)}
-            </motion.h1>
-            {slide.subtitle && (
-              <motion.p
-                {...anim(0.12)}
-                className="text-xs sm:text-sm lg:text-base font-semibold text-[#005AAB] dark:text-[#005AAB] mt-2.5 leading-snug line-clamp-2"
-              >
-                {safeString(slide.subtitle)}
-              </motion.p>
-            )}
-            {slide.description && (
-              <motion.p
-                {...anim(0.18)}
-                className={`text-xs sm:text-[13px] ${isCoverBg ? "text-[#555555] dark:text-[#555555]" : "text-neutral-500 dark:text-neutral-400"} mt-3 leading-relaxed line-clamp-2`}
-              >
-                {safeString(slide.description)}
-              </motion.p>
-            )}
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} hasTemplateBg={hasTemplateBg} />
-        </div>
-      );
-
-    /* ──── STATS SLIDE ──── */
-    case "stats":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-
-          {/* Stats Grid */}
-          <div className={`grid ${(slide.stats?.length || 0) === 3 ? "grid-cols-3" : (slide.stats?.length || 0) === 1 ? "grid-cols-1 max-w-sm mx-auto" : "grid-cols-2"} gap-3 sm:gap-4 my-auto w-full`}>
-            {slide.stats?.map((stat, i) => {
-              const isYellow = i % 2 === 0;
-              return (
-                <motion.div
-                  key={i}
-                  {...anim(0.15 + i * 0.08)}
-                  className={`p-4 sm:p-5 rounded-md border flex flex-col justify-between ${
-                    isYellow
-                      ? "bg-[#FFF9D6] dark:bg-[#2A2408] border-[#FFDD3C] dark:border-[#FFDD3C]/50"
-                      : "bg-[#EAF2FB] dark:bg-[#0D233A] border-[#005AAB]/30 dark:border-[#005AAB]/50"
-                  }`}
-                >
-                  <span
-                    className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-none"
-                    style={{ color: isYellow ? "#B45309" : "#005AAB" }}
-                  >
-                    {safeString(stat?.value)}
-                  </span>
-                  <span className={`text-xs sm:text-sm mt-2 font-medium leading-snug ${isYellow ? "text-[#272525] dark:text-[#FFF9D6]" : "text-[#005AAB] dark:text-[#90CDF4]"}`}>
-                    {safeString(stat?.label)}
-                  </span>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── PROCESS / ROADMAP SLIDE (EXECUTIVE ROADMAP WITH CONNECTING RAIL & PHASE CHIPS) ──── */
-    case "process": {
-      const processItems = (slide.processSteps && slide.processSteps.length > 0)
-        ? slide.processSteps
-        : (slide.bullets && slide.bullets.length > 0)
-        ? slide.bullets.map((b, idx) => {
-            const parts = b.split(/:\s*|\s*-\s*/);
-            return {
-              title: parts[0] || `Pillar 0${idx + 1}`,
-              description: parts.length > 1 ? parts.slice(1).join(": ") : parts[0],
-            };
-          })
-        : [];
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between px-[5%] sm:px-[6%] py-3.5 sm:py-4.5 relative ${bodyFontClass}`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-
-          <div className="relative my-auto flex flex-col justify-center gap-2.5 sm:gap-3 pl-1 sm:pl-2">
-            {/* Elegant vertical connecting guide track */}
-            {processItems.length > 1 && (
-              <div
-                className="absolute left-[20px] sm:left-[24px] top-4 bottom-4 w-0.5 rounded-full z-0"
-                style={{
-                  background: `linear-gradient(to bottom, ${palette.primary} 0%, ${palette.primary}60 70%, transparent 100%)`,
-                }}
-              />
-            )}
-
-            {processItems.map((step, i) => {
-              const fullTitle = safeString(step?.title);
-              const colonIndex = fullTitle.indexOf(":");
-              const hasColon = colonIndex > 0 && colonIndex < 40;
-              const phaseTag = hasColon ? fullTitle.slice(0, colonIndex).trim() : null;
-              const mainHeading = hasColon ? fullTitle.slice(colonIndex + 1).trim() : fullTitle;
-              const isYellow = i % 2 === 0;
-
-              return (
-                <motion.div
-                  key={i}
-                  {...anim(0.08 + i * 0.05)}
-                  className={`group relative flex items-start gap-3 sm:gap-3.5 p-3 sm:p-3.5 rounded-md border hover:shadow-xs transition-all z-10 ${
-                    isYellow
-                      ? "bg-[#FFF9D6] dark:bg-[#2A2408] border-[#FFDD3C] dark:border-[#FFDD3C]/50"
-                      : "bg-[#EAF2FB] dark:bg-[#0D233A] border-[#005AAB]/30 dark:border-[#005AAB]/50"
-                  }`}
-                >
-                  <div
-                    className={`shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-sm text-xs font-bold flex items-center justify-center ${
-                      isYellow ? "bg-[#FFDD3C] text-[#272525]" : "bg-[#005AAB] text-white"
-                    }`}
-                  >
-                    {String(i + 1).padStart(2, "0")}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {phaseTag && (
-                        <span
-                          className="text-[10px] sm:text-[10.5px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded"
-                          style={{
-                            backgroundColor: `${palette.primary}18`,
-                            color: palette.primary,
-                          }}
-                        >
-                          {phaseTag}
-                        </span>
-                      )}
-                      <h4 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-white leading-snug">
-                        {mainHeading}
-                      </h4>
-                    </div>
-
-                    {step?.description && step.description !== fullTitle && (
-                      <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed mt-1">
-                        {safeString(step?.description)}
-                      </p>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-    }
-
-    /* ──── BULLETS SLIDE ──── */
-    case "bullets": {
-      // 1. Intelligent Content Extraction: If bulletsList is empty, attempt to parse structured items from description
-      let bulletsList = (slide.bullets || []).filter(Boolean);
-      let cleanDescription = slide.description;
-
-      if (bulletsList.length === 0 && cleanDescription) {
-        // Extract numbered/labeled items like "Decision 1: ... Decision 2: ...", "Step 1: ...", or numbered lists "1. ... 2. ..."
-        const labeledRegex = /(?:(?:Decision|Pilar|Pillar|Langkah|Step|Point|Poin|Fase|Phase)\s*\d+[:\.]?|(?:\d+[\.\)]))\s*([^]+?)(?=(?:(?:Decision|Pilar|Pillar|Langkah|Step|Point|Poin|Fase|Phase)\s*\d+[:\.]?|(?:\d+[\.\)]))|$)/gi;
-        const matches = [...cleanDescription.matchAll(labeledRegex)];
-        if (matches.length >= 2) {
-          bulletsList = matches.map((m) => m[0].trim());
-          cleanDescription = undefined; // Items extracted into cards
-        } else {
-          // Check for bullet points or semicolon-separated items
-          const lineItems = cleanDescription
-            .split(/\n|(?<=[.!?])\s+(?=[A-Z0-9])|;\s*/)
-            .map((s) => s.trim().replace(/^[-•*]\s*/, ""))
-            .filter((s) => s.length >= 15 && s.length <= 180);
-          if (lineItems.length >= 2 && lineItems.length <= 5) {
-            bulletsList = lineItems;
-            cleanDescription = undefined;
-          }
-        }
-      }
-
-      const hasBullets = bulletsList.length > 0;
-      const isDense = bulletsList.length >= 4;
-
-      // If no bullets exist and no list can be extracted, render as a wide, balanced executive narrative slide (NO empty right column!)
-      if (!hasBullets) {
-        return (
-          <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-            <div className="my-auto max-w-[92%] space-y-4">
-              <motion.h2
-                {...anim(0.06)}
-                className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}
-              >
-                {safeString(slide.title)}
-              </motion.h2>
-
-              {slide.subtitle && (
-                <motion.p {...anim(0.12)} className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400 font-medium leading-relaxed">
-                  {safeString(slide.subtitle)}
-                </motion.p>
-              )}
-
-              {slide.description && (
-                <motion.div
-                  {...anim(0.18)}
-                  className="p-5 sm:p-6 rounded-md bg-[#EAF2FB] dark:bg-[#0D233A] border border-[#005AAB]/30 max-w-4xl"
-                >
-                  <p className="text-sm sm:text-[15px] text-neutral-800 dark:text-neutral-200 leading-relaxed font-normal">
-                    {safeString(slide.description)}
-                  </p>
-                </motion.div>
-              )}
-            </div>
-
-            <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-          </div>
-        );
-      }
-
-      const count = bulletsList.length;
-      const gridCols = count === 3 ? "grid-cols-3" : count === 1 ? "grid-cols-1 max-w-2xl mx-auto" : "grid-cols-2";
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[4.5%] sm:p-[5.5%] relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-          {/* Executive Top Header */}
-          {renderSlideHeader()}
-
-          {/* Full-Width Structured Cards Area */}
-          <div className="flex-1 min-h-0 flex flex-col justify-center my-auto overflow-hidden">
-            <div className={`grid ${gridCols} gap-3 sm:gap-4 w-full`}>
-              {bulletsList.slice(0, 6).map((bullet, i) => {
-                const bulletStr = safeString(bullet);
-                const colonIdx = bulletStr.indexOf(":");
-                const hasLabel = colonIdx > 0 && colonIdx < 40;
-                const label = hasLabel ? bulletStr.slice(0, colonIdx).trim() : `Pillar 0${i + 1}`;
-                const content = hasLabel ? bulletStr.slice(colonIdx + 1).trim() : bulletStr;
-                const isYellow = i % 2 === 0;
-
-                return (
-                  <motion.div
-                    key={i}
-                    {...anim(0.12 + i * 0.05)}
-                    className={`p-3.5 sm:p-4 rounded-md border flex flex-col justify-start gap-1.5 overflow-hidden ${
-                      isYellow
-                        ? "bg-[#FFF9D6] dark:bg-[#2A2408] border-[#FFDD3C] dark:border-[#FFDD3C]/50"
-                        : "bg-[#EAF2FB] dark:bg-[#0D233A] border-[#005AAB]/30 dark:border-[#005AAB]/50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2 shrink-0">
-                      <span className={`text-xs sm:text-sm font-bold line-clamp-1 ${
-                        isYellow ? "text-[#272525] dark:text-[#FFF9D6]" : "text-[#005AAB] dark:text-[#90CDF4]"
-                      }`}>
-                        {label}
-                      </span>
-                      <span
-                        className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-sm shrink-0 ${
-                          isYellow ? "bg-[#FFDD3C] text-[#272525]" : "bg-[#005AAB] text-white"
-                        }`}
-                      >
-                        0{i + 1}
-                      </span>
-                    </div>
-                    <p className={`text-xs leading-relaxed line-clamp-4 ${
-                      isYellow ? "text-[#4A4545] dark:text-neutral-300" : "text-[#334155] dark:text-neutral-300"
-                    }`}>
-                      {content}
-                    </p>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* Optional Insight Bar / Bottom Narrative */}
-            {(slide.insightBarText || cleanDescription) && (
-              <motion.div
-                {...anim(0.24)}
-                className="mt-3 p-2.5 sm:p-3 rounded-lg flex items-center gap-2.5 shrink-0"
-                style={{
-                  backgroundColor: `${palette.primary}15`,
-                  borderLeft: `4px solid ${palette.primary}`,
-                }}
-              >
-                <Lightbulb className="w-4 h-4 shrink-0" style={{ color: palette.primary }} />
-                <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-snug line-clamp-2">
-                  <span className="font-bold">Insight: </span>
-                  {safeString(slide.insightBarText || cleanDescription)}
-                </p>
-              </motion.div>
-            )}
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-    }
-
-    /* ──── TWO COLUMN SLIDE ──── */
-    case "twoColumn":
-      if (isDualTone) {
-        return renderDualToneSplit(
-          <div>
-            <h2 className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} leading-tight`}>
-              {safeString(slide.title)}
-            </h2>
-            {slide.subtitle && (
-              <p className="text-xs sm:text-sm mt-3 opacity-80 leading-relaxed">
-                {safeString(slide.subtitle)}
-              </p>
-            )}
-          </div>,
-          <div className="my-auto space-y-4">
-            {slide.stats && slide.stats.length > 0 ? (
-              <div className="grid grid-cols-2 gap-4">
-                {slide.stats.map((stat, i) => (
-                  <motion.div
-                    key={i}
-                    {...anim(0.1 + i * 0.1)}
-                    className={`relative p-4 sm:p-5 rounded-lg border ${
-                      i === 0
-                        ? "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
-                        : "bg-amber-50/50 dark:bg-neutral-900/90 border-amber-200/60 dark:border-neutral-700"
-                    }`}
-                  >
-                    <TrendingUp className="w-4 h-4 text-neutral-400 mb-2" />
-                    <div
-                      className="text-2xl sm:text-3xl font-black tracking-tight"
-                      style={{ color: i === 0 ? undefined : palette.primary }}
-                    >
-                      {safeString(stat?.value)}
-                    </div>
-                    <span className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 mt-1 block">
-                      {safeString(stat?.label)}
-                    </span>
-                  </motion.div>
-                ))}
-              </div>
-            ) : slide.bullets && slide.bullets.length > 0 ? (
-              (() => {
-                const items = slide.bullets.slice(0, 4);
-                const count = items.length;
-                const gridColsClass = count === 3 ? "grid-cols-3" : count === 1 ? "grid-cols-1" : "grid-cols-2";
-                const cardPadding = count >= 4 ? "p-2.5 sm:p-3" : count === 3 ? "p-3 sm:p-3.5" : "p-3.5 sm:p-4";
-                const gapClass = count >= 4 ? "gap-2 sm:gap-2.5" : "gap-3 sm:gap-3.5";
-
-                return (
-                  <div className={`grid ${gridColsClass} ${gapClass}`}>
-                    {items.map((bullet, i) => {
-                      const parts = bullet.split(/:\s*|\s*-\s*/);
-                      const bTitle = parts.length > 1 ? parts[0] : `Pillar 0${i + 1}`;
-                      const bDesc = parts.length > 1 ? parts.slice(1).join(": ") : parts[0];
-                      return (
-                        <motion.div
-                          key={i}
-                          {...anim(0.1 + i * 0.08)}
-                          className={`${cardPadding} rounded-lg border border-neutral-200/90 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex flex-col justify-start gap-1 sm:gap-1.5 overflow-hidden`}
-                        >
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span
-                              className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-neutral-950 shrink-0"
-                              style={{ backgroundColor: palette.primary }}
-                            >
-                              0{i + 1}
-                            </span>
-                            <span className="text-xs font-bold text-neutral-900 dark:text-white line-clamp-1">
-                              {bTitle}
-                            </span>
-                          </div>
-                          <p className="text-[11px] sm:text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed line-clamp-4">
-                            {bDesc}
-                          </p>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                );
-              })()
-            ) : null}
-            {slide.description && (
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                {safeString(slide.description)}
-              </p>
-            )}
-          </div>,
-          "36%"
-        );
-      }
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[4.5%] sm:p-[5%] relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-          {/* Header Bar */}
-          {renderSlideHeader()}
-
-          {/* Cards & Content Area */}
-          <div className="flex-1 min-h-0 flex flex-col justify-center my-auto overflow-hidden">
-            {slide.stats && slide.stats.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
-                {slide.stats.map((stat, i) => {
-                  const isYellow = i % 2 === 0;
-                  return (
-                    <motion.div
-                      key={i}
-                      {...anim(0.1 + i * 0.1)}
-                      className={`relative p-3.5 sm:p-4 rounded-md border ${
-                        isYellow
-                          ? "bg-[#FFF9D6] dark:bg-[#2A2408] border-[#FFDD3C] dark:border-[#FFDD3C]/50"
-                          : "bg-[#EAF2FB] dark:bg-[#0D233A] border-[#005AAB]/30 dark:border-[#005AAB]/50"
-                      }`}
-                    >
-                      <TrendingUp className={`w-4 h-4 mb-1.5 ${isYellow ? "text-[#B45309]" : "text-[#005AAB]"}`} />
-                      <div
-                        className="text-2xl sm:text-3xl font-bold tracking-tight"
-                        style={{ color: isYellow ? "#B45309" : "#005AAB" }}
-                      >
-                        {safeString(stat?.value)}
-                      </div>
-                      <span className={`text-xs sm:text-sm mt-1 block font-medium ${isYellow ? "text-[#272525] dark:text-[#FFF9D6]" : "text-[#005AAB] dark:text-[#90CDF4]"}`}>
-                        {safeString(stat?.label)}
-                      </span>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            ) : slide.bullets && slide.bullets.length > 0 ? (
-              (() => {
-                const items = slide.bullets.slice(0, 4);
-                const count = items.length;
-                // Responsive Columns: 3 items = 3 cols (1 row), 2 items = 2 cols (1 row), 4 items = 2x2 compact
-                const gridColsClass = count === 3 ? "grid-cols-3" : count === 1 ? "grid-cols-1 max-w-xl mx-auto" : "grid-cols-2";
-                const cardPadding = count >= 4 ? "p-2.5 sm:p-3" : count === 3 ? "p-3 sm:p-3.5" : "p-3.5 sm:p-4";
-                const gapClass = count >= 4 ? "gap-2 sm:gap-2.5" : "gap-3 sm:gap-3.5";
-
-                return (
-                  <div className={`grid ${gridColsClass} ${gapClass} w-full`}>
-                    {items.map((bullet, i) => {
-                      const parts = bullet.split(/:\s*|\s*-\s*/);
-                      const bTitle = parts.length > 1 ? parts[0] : `Pillar 0${i + 1}`;
-                      const bDesc = parts.length > 1 ? parts.slice(1).join(": ") : parts[0];
-                      const isYellow = i % 2 === 0;
-
-                      return (
-                        <motion.div
-                          key={i}
-                          {...anim(0.1 + i * 0.08)}
-                          className={`${cardPadding} rounded-md border flex flex-col justify-start gap-1 sm:gap-1.5 overflow-hidden ${
-                            isYellow
-                              ? "bg-[#FFF9D6] dark:bg-[#2A2408] border-[#FFDD3C] dark:border-[#FFDD3C]/50"
-                              : "bg-[#EAF2FB] dark:bg-[#0D233A] border-[#005AAB]/30 dark:border-[#005AAB]/50"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span
-                              className={`w-5 h-5 rounded-sm flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                                isYellow ? "bg-[#FFDD3C] text-[#272525]" : "bg-[#005AAB] text-white"
-                              }`}
-                            >
-                              0{i + 1}
-                            </span>
-                            <h4 className={`text-xs sm:text-sm font-bold leading-snug line-clamp-1 ${
-                              isYellow ? "text-[#272525] dark:text-[#FFF9D6]" : "text-[#005AAB] dark:text-[#90CDF4]"
-                            }`}>
-                              {bTitle}
-                            </h4>
-                          </div>
-                          <p className={`text-[11px] sm:text-xs leading-relaxed line-clamp-4 ${
-                            isYellow ? "text-[#4A4545] dark:text-neutral-300" : "text-[#334155] dark:text-neutral-300"
-                          }`}>
-                            {bDesc}
-                          </p>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                );
-              })()
-            ) : slide.description ? (
-              <motion.div {...anim(0.15)} className="w-full p-4 sm:p-5 rounded-md border border-[#005AAB]/30 bg-[#EAF2FB] dark:bg-[#0D233A] text-neutral-800 dark:text-neutral-200">
-                <p className="text-xs sm:text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                  {safeString(slide.description)}
-                </p>
-              </motion.div>
-            ) : null}
-          </div>
-
-          {/* Footer Bar */}
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── BIG NUMBER SLIDE ──── */
-    case "bigNumber":
-      if (isDualTone) {
-        return renderDualToneSplit(
-          <div>
-            <h2 className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} leading-tight`}>
-              {safeString(slide.title)}
-            </h2>
-          </div>,
-          <div className="my-auto">
-            {slide.highlight && (
-              <motion.div
-                {...anim(0.08)}
-                className="text-5xl sm:text-7xl font-black tracking-tighter my-3 leading-none"
-                style={{ color: palette.primary }}
-              >
-                {safeString(slide.highlight)}
-              </motion.div>
-            )}
-            {slide.description && (
-              <motion.p {...anim(0.16)} className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 max-w-[85%] leading-relaxed">
-                {safeString(slide.description)}
-              </motion.p>
-            )}
-          </div>,
-          "w-[38%]"
-        );
-      }
-
-      return (
-        <div
-          className={`w-full h-full flex flex-col justify-center p-[8%] relative overflow-hidden ${bodyFontClass}`}
-          style={{ backgroundColor: palette.primary }}
-        >
-          <div className="absolute -bottom-[20%] -right-[15%] w-[50%] h-[65%] rounded-full bg-white/20" />
-
-          <div className="relative z-10">
-            <motion.h2
-              {...anim(0)}
-              className="text-base sm:text-lg font-semibold text-neutral-900 leading-tight"
-            >
-              {safeString(slide.title)}
-            </motion.h2>
-            {slide.highlight && (
-              <motion.div
-                {...anim(0.08)}
-                className="text-5xl sm:text-7xl font-black text-neutral-950 tracking-tighter my-4 sm:my-6 leading-none"
-              >
-                {safeString(slide.highlight)}
-              </motion.div>
-            )}
-            {slide.description && (
-              <motion.p {...anim(0.16)} className="text-xs sm:text-sm text-neutral-900/80 max-w-[80%] leading-relaxed">
-                {safeString(slide.description)}
-              </motion.p>
-            )}
-
-            {slide.stats && slide.stats.length > 0 && (
-              <div className="flex gap-6 mt-6">
-                {slide.stats.map((stat, i) => (
-                  <motion.div key={i} {...anim(0.2 + i * 0.08)}>
-                    <div className="text-2xl sm:text-3xl font-bold text-neutral-950">
-                      {safeString(stat?.value)}
-                    </div>
-                    <div className="text-xs text-neutral-900/70">{safeString(stat?.label)}</div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      );
-
-    /* ──── BAR CHART SLIDE ──── */
-    /* ──── BAR CHART SLIDE ──── */
-    case "chartBar": {
-      const hasNarrative = Boolean(slide.description || (slide.bullets && slide.bullets.length > 0) || (slide.stats && slide.stats.length > 0));
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
-          {hasNarrative ? (
-            <div className="flex flex-col lg:flex-row gap-6 w-full h-full min-h-0 items-center">
-              {/* Left Column: Context, Narrative & Key Highlights */}
-              <div className="w-full lg:w-[45%] flex flex-col justify-center min-w-0">
-                {slide.badge && (
-                  <span
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider w-fit mb-2"
-                    style={{ backgroundColor: palette.primary, color: "#111111" }}
-                  >
-                    {slide.badge}
-                  </span>
-                )}
-                <motion.h2
-                  {...anim(0)}
-                  className={`${isPresentation ? "text-2xl sm:text-3xl" : "text-base sm:text-xl"} font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}
-                >
-                  {slide.title}
-                </motion.h2>
-                {slide.subtitle && (
-                  <motion.p {...anim(0.06)} className={`${baseFont} text-neutral-500 text-xs sm:text-sm mt-1 leading-snug`}>
-                    {slide.subtitle}
-                  </motion.p>
-                )}
-                {slide.description && (
-                  <motion.div
-                    {...anim(0.12)}
-                    className="mt-3 p-3 rounded-md bg-[#EAF2FB] dark:bg-[#0D233A] border border-[#005AAB]/30"
-                  >
-                    <p className={`${baseFont} text-neutral-700 dark:text-neutral-300 text-xs sm:text-sm leading-relaxed`}>
-                      {slide.description}
-                    </p>
-                  </motion.div>
-                )}
-                {slide.bullets && slide.bullets.length > 0 && (
-                  <div className="mt-3 space-y-1.5">
-                    {slide.bullets.slice(0, 3).map((b, i) => (
-                      <motion.div key={i} {...anim(0.16 + i * 0.05)} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: palette.primary }} />
-                        <span className="text-xs text-neutral-700 dark:text-neutral-300 leading-snug">{b}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Right Column: Clean Chart Container */}
-              <div className="w-full lg:w-[55%] h-full min-h-0 flex items-center justify-center p-3 sm:p-4 rounded-md bg-neutral-50/80 dark:bg-neutral-900/40 border border-neutral-200/60 dark:border-neutral-800">
-                <SlideChart type="bar" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="mb-2 sm:mb-4">
-                <motion.h2
-                  {...anim(0)}
-                  className={`${isPresentation ? "text-3xl" : "text-base sm:text-xl"} font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}
-                >
-                  {slide.title}
-                </motion.h2>
-                {slide.subtitle && <motion.p {...anim(0.06)} className={`${baseFont} text-neutral-500 mt-0.5`}>{slide.subtitle}</motion.p>}
-              </div>
-              <div className="flex-1 flex items-center justify-center min-h-0">
-                <SlideChart type="bar" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
-              </div>
-            </>
-          )}
-        </div>
-      );
-    }
-
-    /* ──── AREA CHART SLIDE ──── */
-    case "chartArea": {
-      const hasNarrative = Boolean(slide.description || (slide.bullets && slide.bullets.length > 0) || (slide.stats && slide.stats.length > 0));
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
-          {hasNarrative ? (
-            <div className="flex flex-col lg:flex-row gap-6 w-full h-full min-h-0 items-center">
-              <div className="w-full lg:w-[45%] flex flex-col justify-center min-w-0">
-                {slide.badge && (
-                  <span
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider w-fit mb-2"
-                    style={{ backgroundColor: palette.primary, color: "#111111" }}
-                  >
-                    {slide.badge}
-                  </span>
-                )}
-                <motion.h2
-                  {...anim(0)}
-                  className={`${isPresentation ? "text-2xl sm:text-3xl" : "text-base sm:text-xl"} font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}
-                >
-                  {slide.title}
-                </motion.h2>
-                {slide.subtitle && (
-                  <motion.p {...anim(0.06)} className={`${baseFont} text-neutral-500 text-xs sm:text-sm mt-1 leading-snug`}>
-                    {slide.subtitle}
-                  </motion.p>
-                )}
-                {slide.description && (
-                  <motion.div
-                    {...anim(0.12)}
-                    className="mt-3 p-3 rounded-md bg-[#EAF2FB] dark:bg-[#0D233A] border border-[#005AAB]/30"
-                  >
-                    <p className={`${baseFont} text-neutral-700 dark:text-neutral-300 text-xs sm:text-sm leading-relaxed`}>
-                      {slide.description}
-                    </p>
-                  </motion.div>
-                )}
-                {slide.bullets && slide.bullets.length > 0 && (
-                  <div className="mt-3 space-y-1.5">
-                    {slide.bullets.slice(0, 3).map((b, i) => (
-                      <motion.div key={i} {...anim(0.16 + i * 0.05)} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: palette.primary }} />
-                        <span className="text-xs text-neutral-700 dark:text-neutral-300 leading-snug">{b}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="w-full lg:w-[55%] h-full min-h-0 flex items-center justify-center p-3 sm:p-4 rounded-md bg-neutral-50/80 dark:bg-neutral-900/40 border border-neutral-200/60 dark:border-neutral-800">
-                <SlideChart type="area" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="mb-2 sm:mb-4">
-                <motion.h2
-                  {...anim(0)}
-                  className={`${isPresentation ? "text-3xl" : "text-base sm:text-xl"} font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}
-                >
-                  {slide.title}
-                </motion.h2>
-                {slide.subtitle && <motion.p {...anim(0.06)} className={`${baseFont} text-neutral-500 mt-0.5`}>{slide.subtitle}</motion.p>}
-              </div>
-              <div className="flex-1 flex items-center justify-center min-h-0">
-                <SlideChart type="area" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
-              </div>
-            </>
-          )}
-        </div>
-      );
-    }
-
-    /* ──── DONUT CHART SLIDE ──── */
-    case "chartDonut": {
-      const hasNarrative = Boolean(slide.description || (slide.bullets && slide.bullets.length > 0) || (slide.stats && slide.stats.length > 0));
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
-          {hasNarrative ? (
-            <div className="flex flex-col lg:flex-row gap-6 w-full h-full min-h-0 items-center">
-              <div className="w-full lg:w-[45%] flex flex-col justify-center min-w-0">
-                {slide.badge && (
-                  <span
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider w-fit mb-2"
-                    style={{ backgroundColor: palette.primary, color: "#111111" }}
-                  >
-                    {slide.badge}
-                  </span>
-                )}
-                <motion.h2
-                  {...anim(0)}
-                  className={`${isPresentation ? "text-2xl sm:text-3xl" : "text-base sm:text-xl"} font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}
-                >
-                  {slide.title}
-                </motion.h2>
-                {slide.subtitle && (
-                  <motion.p {...anim(0.06)} className={`${baseFont} text-neutral-500 text-xs sm:text-sm mt-1 leading-snug`}>
-                    {slide.subtitle}
-                  </motion.p>
-                )}
-                {slide.description && (
-                  <motion.div
-                    {...anim(0.12)}
-                    className="mt-3 p-3 rounded-md bg-[#EAF2FB] dark:bg-[#0D233A] border border-[#005AAB]/30"
-                  >
-                    <p className={`${baseFont} text-neutral-700 dark:text-neutral-300 text-xs sm:text-sm leading-relaxed`}>
-                      {slide.description}
-                    </p>
-                  </motion.div>
-                )}
-                {slide.bullets && slide.bullets.length > 0 && (
-                  <div className="mt-3 space-y-1.5">
-                    {slide.bullets.slice(0, 3).map((b, i) => (
-                      <motion.div key={i} {...anim(0.16 + i * 0.05)} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: palette.primary }} />
-                        <span className="text-xs text-neutral-700 dark:text-neutral-300 leading-snug">{b}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="w-full lg:w-[55%] h-full min-h-0 flex items-center justify-center p-3 sm:p-4 rounded-md bg-neutral-50/80 dark:bg-neutral-900/40 border border-neutral-200/60 dark:border-neutral-800">
-                <SlideChart type="donut" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="mb-2 sm:mb-4">
-                <motion.h2
-                  {...anim(0)}
-                  className={`${isPresentation ? "text-3xl" : "text-base sm:text-xl"} font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}
-                >
-                  {slide.title}
-                </motion.h2>
-                {slide.subtitle && <motion.p {...anim(0.06)} className={`${baseFont} text-neutral-500 mt-0.5`}>{slide.subtitle}</motion.p>}
-              </div>
-              <div className="flex-1 flex items-center justify-center min-h-0">
-                <SlideChart type="donut" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
-              </div>
-            </>
-          )}
-        </div>
-      );
-    }
-
-    /* ──── FLOW DIAGRAM SLIDE ──── */
-    case "flowDiagram":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[7%] relative ${bodyFontClass} justify-between`} style={dynamicBgStyle}>
-          <div className="mb-2">
-            <motion.h2
-              {...anim(0)}
-              className={`${isPresentation ? "text-3xl" : "text-base sm:text-xl"} font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}
-            >
-              {slide.title}
-            </motion.h2>
-            {slide.subtitle && <motion.p {...anim(0.06)} className={`${baseFont} text-neutral-500 mt-0.5`}>{slide.subtitle}</motion.p>}
-          </div>
-          <div className="flex-1 flex items-center justify-center my-auto">
-            <FlowDiagram nodes={slide.flowNodes} primaryColor={palette.primary} isPresentation={isPresentation} />
-          </div>
-          {slide.description && (
-            <motion.p {...anim(0.2)} className={`${baseFont} text-neutral-500 text-center max-w-xl mx-auto mt-2 leading-relaxed`}>
-              {slide.description}
-            </motion.p>
-          )}
-        </div>
-      );
-
-    /* ──── COMPARISON TABLE MATRIX SLIDE ──── */
-    case "tableComparison": {
-      const hasRealTableRows = slide.tableRows && slide.tableRows.length > 0;
-      const titleLen = safeString(slide.title).length;
-      const titleClass = titleLen > 70
-        ? "text-base sm:text-xl font-extrabold leading-snug line-clamp-2"
-        : titleLen > 45
-        ? "text-lg sm:text-2xl font-extrabold leading-tight line-clamp-2"
-        : `text-2xl sm:text-3xl font-bold ${headingFontClass} leading-tight`;
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative overflow-hidden`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-
-          <div className="flex-1 flex flex-col justify-center my-auto w-full min-h-0 overflow-hidden">
-            {hasRealTableRows ? (
-              <ComparisonTable headers={slide.tableHeaders} rows={slide.tableRows} primaryColor={palette.primary} isPresentation={isPresentation} />
-            ) : slide.bullets && slide.bullets.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3 my-auto">
-                {slide.bullets.slice(0, 6).map((b, bIdx) => {
-                  const parts = b.split(/:\s*|\s*-\s*|\s*\|\s*/);
-                  const cardTitle = parts[0] || `Dimension 0${bIdx + 1}`;
-                  const cardDesc = parts.length > 1 ? parts.slice(1).join(": ") : parts[0];
-                  const isYellow = bIdx % 2 === 0;
-
-                  return (
-                    <motion.div
-                      key={bIdx}
-                      {...anim(0.1 + bIdx * 0.05)}
-                      className={`p-3 rounded-md border flex flex-col justify-between ${
-                        isYellow
-                          ? "bg-[#FFF9D6] dark:bg-[#2A2408] border-[#FFDD3C] dark:border-[#FFDD3C]/50"
-                          : "bg-[#EAF2FB] dark:bg-[#0D233A] border-[#005AAB]/30 dark:border-[#005AAB]/50"
-                      }`}
-                    >
-                      <span className={`font-extrabold text-xs sm:text-sm leading-tight ${
-                        isYellow ? "text-[#272525] dark:text-[#FFF9D6]" : "text-[#005AAB] dark:text-[#90CDF4]"
-                      }`}>
-                        {cardTitle}
-                      </span>
-                      {parts.length > 1 && (
-                        <p className={`text-[11px] sm:text-xs mt-1.5 leading-snug ${
-                          isYellow ? "text-[#4A4545] dark:text-neutral-300" : "text-[#334155] dark:text-neutral-300"
-                        }`}>
-                          {cardDesc}
-                        </p>
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </div>
-            ) : slide.description ? (
-              <div className="p-4 rounded-md border border-[#005AAB]/30 bg-[#EAF2FB] dark:bg-[#0D233A] text-xs sm:text-sm text-neutral-800 dark:text-neutral-200">
-                {safeString(slide.description)}
-              </div>
-            ) : null}
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-    }
-
-    /* ──── MILESTONE TIMELINE SLIDE ──── */
-    case "timeline": {
-      const milestonesToUse = (slide.timelineMilestones && slide.timelineMilestones.length > 0)
-        ? slide.timelineMilestones
-        : (slide.bullets && slide.bullets.length > 0)
-        ? slide.bullets.map((b, idx) => {
-            const parts = b.split(/:\s*|\s*-\s*/);
-            return {
-              quarter: `Phase 0${idx + 1}`,
-              title: parts[0] || `Phase 0${idx + 1}`,
-              description: parts.length > 1 ? parts.slice(1).join(": ") : parts[0],
-              status: (idx === 0 ? "done" : idx === 1 ? "active" : "planned") as "done" | "active" | "planned",
-            };
-          })
-        : [
-            { quarter: "Phase 01", title: "Assessment & Discovery", description: "Comprehensive audit, vulnerability mapping & baseline setup.", status: "done" as const },
-            { quarter: "Phase 02", title: "Architecture & Controls", description: "Design resilient policy frameworks & automated monitoring.", status: "active" as const },
-            { quarter: "Phase 03", title: "Multi-Tier Rollout", description: "Enterprise-wide deployment and team operational enablement.", status: "planned" as const },
-            { quarter: "Phase 04", title: "Continuous Optimization", description: "Proactive threat intelligence & executive review reporting.", status: "planned" as const },
-          ];
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-
-          <div className="flex-1 flex items-center justify-center my-auto w-full">
-            <MilestoneTimeline milestones={milestonesToUse} primaryColor={palette.primary} isPresentation={isPresentation} />
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-    }
-
-    /* ──── RADAR CHART SLIDE ──── */
-    case "chartRadar": {
-      const hasNarrative = Boolean(slide.description || (slide.bullets && slide.bullets.length > 0));
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass} justify-between`} style={dynamicBgStyle}>
-          {hasNarrative ? (
-            <div className="flex flex-col lg:flex-row gap-6 w-full h-full min-h-0 items-center">
-              <div className="w-full lg:w-[45%] flex flex-col justify-center min-w-0">
-                <motion.h2
-                  {...anim(0)}
-                  className={`text-2xl sm:text-3xl font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}
-                >
-                  {slide.title}
-                </motion.h2>
-                {slide.subtitle && <motion.p {...anim(0.06)} className="text-sm sm:text-base text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
-                {slide.description && (
-                  <motion.div {...anim(0.12)} className="mt-3 p-3 rounded-md bg-[#EAF2FB] dark:bg-[#0D233A] border border-[#005AAB]/30">
-                    <p className={`${baseFont} text-neutral-700 dark:text-neutral-300 text-xs sm:text-sm leading-relaxed`}>
-                      {slide.description}
-                    </p>
-                  </motion.div>
-                )}
-              </div>
-              <div className="w-full lg:w-[55%] h-full min-h-0 flex items-center justify-center p-3 sm:p-4 rounded-md bg-neutral-50/80 dark:bg-neutral-900/40 border border-neutral-200/60 dark:border-neutral-800">
-                <SlideChart type="radar" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="mb-2">
-                <motion.h2
-                  {...anim(0)}
-                  className={`text-2xl sm:text-3xl font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}
-                >
-                  {slide.title}
-                </motion.h2>
-                {slide.subtitle && <motion.p {...anim(0.06)} className="text-sm sm:text-base text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
-              </div>
-              <div className="flex-1 flex items-center justify-center min-h-0">
-                <SlideChart type="radar" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
-              </div>
-            </>
-          )}
-        </div>
-      );
-    }
-
-    /* ──── QUADRANT MATRIX SLIDE ──── */
-    case "quadrantMatrix":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass} justify-between`} style={dynamicBgStyle}>
-          <div className="mb-2">
-            <motion.h2
-              {...anim(0)}
-              className={`text-2xl sm:text-3xl font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}
-            >
-              {slide.title}
-            </motion.h2>
-            {slide.subtitle && <motion.p {...anim(0.06)} className="text-sm sm:text-base text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
-          </div>
-          <div className="flex-1 flex items-center justify-center">
-            <QuadrantMatrix data={slide.quadrantData} primaryColor={palette.primary} isPresentation={isPresentation} />
-          </div>
-        </div>
-      );
-
-    /* ──── FUNNEL DIAGRAM SLIDE ──── */
-    case "funnel":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass} justify-between`} style={dynamicBgStyle}>
-          <div className="mb-2">
-            <motion.h2
-              {...anim(0)}
-              className={`text-2xl sm:text-3xl font-bold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}
-            >
-              {slide.title}
-            </motion.h2>
-            {slide.subtitle && <motion.p {...anim(0.06)} className="text-sm sm:text-base text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
-          </div>
-          <div className="flex-1 flex items-center justify-center">
-            <FunnelDiagram stages={slide.funnelStages} primaryColor={palette.primary} isPresentation={isPresentation} />
-          </div>
-        </div>
-      );
-
-    /* ──── 12. CIRCULAR CYCLE LOOP WITH CURVED ARROWS ──── */
-    case "cycleLoop":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
-          <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
-          
-          <div className="flex-1 flex items-center gap-6 my-auto">
-            {/* Left Column: Title & Big Stat */}
-            <div className="w-[36%] flex flex-col justify-between">
-              <div>
-                <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}>
-                  {slide.title}
-                </motion.h2>
-                {slide.subtitle && (
-                  <h6 className="text-xs font-bold text-neutral-900 dark:text-white mt-2">
-                    {slide.subtitle}
-                  </h6>
-                )}
-                {slide.description && (
-                  <p className="text-[10px] sm:text-xs text-neutral-500 mt-1 leading-relaxed">
-                    {slide.description}
-                  </p>
-                )}
-              </div>
-              {slide.stats?.[0]?.value && (
-                <div className="mt-4">
-                  <span className={`${isPresentation ? "text-3xl sm:text-4xl" : "text-2xl sm:text-3xl"} font-black text-neutral-950 dark:text-white block leading-none`}>
-                    {slide.stats[0].value}
-                  </span>
-                  {slide.stats[0].label && (
-                    <p className="text-[9px] text-neutral-400 mt-1">
-                      {slide.stats[0].label}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Right Column: Triangular Cycle Loop with Curved Arcs or Step Cards */}
-            <div className="flex-1 flex items-center justify-center">
-              {slide.cycleNodes && slide.cycleNodes.length >= 3 ? (
-                <CurvedCycleLoop nodes={slide.cycleNodes} primaryColor={palette.primary} isPresentation={isPresentation} />
-              ) : (
-                <div className="w-full flex flex-col gap-2 overflow-hidden">
-                  {(slide.bullets || []).slice(0, 3).map((b, bIdx) => {
-                    const isYellow = bIdx % 2 === 0;
-                    return (
-                      <div
-                        key={bIdx}
-                        className={`p-2.5 sm:p-3 rounded-md border flex items-start gap-2.5 ${
-                          isYellow
-                            ? "bg-[#FFF9D6] dark:bg-[#2A2408] border-[#FFDD3C] dark:border-[#FFDD3C]/50"
-                            : "bg-[#EAF2FB] dark:bg-[#0D233A] border-[#005AAB]/30 dark:border-[#005AAB]/50"
-                        }`}
-                      >
-                        <span
-                          className={`w-5 h-5 rounded-sm flex items-center justify-center font-bold text-[10px] shrink-0 ${
-                            isYellow ? "bg-[#FFDD3C] text-[#272525]" : "bg-[#005AAB] text-white"
-                          }`}
-                        >
-                          0{bIdx + 1}
-                        </span>
-                        <p className={`text-xs sm:text-[13px] leading-snug ${
-                          isYellow ? "text-[#272525] dark:text-[#FFF9D6]" : "text-[#005AAB] dark:text-[#90CDF4]"
-                        }`}>
-                          {safeString(b)}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── ARCHITECTURE STACK SLIDE ──── */
-    case "architecture":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
-          <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
-          <div className="mb-2">
-            <motion.h2
-              {...anim(0)}
-              className={`text-2xl sm:text-3xl font-bold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
-              {slide.title}
-            </motion.h2>
-            {slide.subtitle && <motion.p {...anim(0.06)} className="text-sm sm:text-base text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
-          </div>
-          <div className="flex-1 flex items-center justify-center">
-            <ArchitectureStack primaryColor={palette.primary} isPresentation={isPresentation} />
-          </div>
-          {slide.description && (
-            <motion.p {...anim(0.2)} className="text-xs sm:text-sm text-neutral-500 text-center max-w-xl mx-auto mt-2 leading-relaxed">
-              {slide.description}
-            </motion.p>
-          )}
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── 8. CHEVRON PROCESS ARROW BAR SLIDE ──── */
-    case "chevronProcess": {
-      const chevronSteps = slide.chevronSteps && slide.chevronSteps.length > 0
-        ? slide.chevronSteps
-        : (slide.bullets && slide.bullets.length > 0
-          ? slide.bullets.slice(0, 5).map((b, i) => {
-              const parts = b.split(/:\s*|—\s*|-\s*/);
-              return {
-                title: `${i + 1} · ${parts[0]?.trim() || `Step ${i + 1}`}`,
-                description: parts[1]?.trim() || b,
-              };
-            })
-          : [
-              { title: "1 · Frame", description: "Define the problem, the goal and constraints", pill: "Fails here: wrong question", pillType: "blue" as const },
-              { title: "2 · Gather", description: "Collect facts, evidence and options" },
-              { title: "3 · Evaluate", description: "Weigh options against criteria and risk", pill: "Rarely where it fails", pillType: "neutral" as const },
-              { title: "4 · Decide", description: "Commit to one option and own it" },
-              { title: "5 · Act & Learn", description: "Execute, measure the result, adjust", pill: "Fails here: no learning", pillType: "blue" as const },
-            ]);
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-          <div className="flex-1 flex items-center justify-center my-auto w-full">
-            <ChevronProcessBar
-              steps={chevronSteps}
-              primaryColor={palette.primary}
-              accentColor={palette.secondary || palette.accent || "#FFDD3C"}
-              keyInsight={slide.insightBarText || slide.highlight || "Key insight: Most bad decisions fail at step 1 (wrong question) or step 5 (no learning), not at step 3."}
-              isPresentation={isPresentation}
-            />
-          </div>
-          {renderSlideFooter()}
-        </div>
-      );
-    }
-
-    /* ──── 9. DUAL GAUGE RINGS WITH SPLIT CARDS ──── */
-    case "gaugeRings":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between overflow-hidden`} style={dynamicBgStyle}>
-          <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
-          <div className="flex-1 flex items-center gap-6 my-auto">
-            {/* Left Column: Title, Subtitle, & Optional Cards */}
-            <div className="w-[36%] flex flex-col justify-between py-1">
-              <div>
-                <motion.h2
-                  {...anim(0)}
-                  className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}
-                >
-                  {slide.title}
-                </motion.h2>
-                {slide.subtitle && (
-                  <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-2 leading-relaxed">
-                    {slide.subtitle}
-                  </p>
-                )}
-              </div>
-
-              {slide.cards && slide.cards.length > 0 && (
-                <div className="mt-3 flex flex-col gap-2">
-                  {slide.cards.slice(0, 2).map((c, cIdx) => (
-                    <div
-                      key={cIdx}
-                      className="rounded-md p-2.5 text-[10px] sm:text-xs font-semibold text-neutral-950 leading-snug flex items-start gap-2"
-                      style={{ backgroundColor: palette.primary }}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-950 mt-1.5 shrink-0" />
-                      <span className="line-clamp-2">{c.title}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Thin Divider */}
-            <div className="w-[1.5px] self-stretch bg-neutral-200 dark:bg-neutral-800" />
-
-            {/* Right Column: Gauges */}
-            <div className="flex-1 flex items-center justify-center">
-              <GaugeRings gauges={slide.gaugeItems} primaryColor={palette.primary} isPresentation={isPresentation} />
-            </div>
-          </div>
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── 4. ASCENDING TRAJECTORY SLIDE ──── */
-    case "ascendingTrajectory":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
-          <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
-          <div className="mb-2">
-            <motion.h2
-              {...anim(0)}
-              className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}>
-              {slide.title}
-            </motion.h2>
-            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
-          </div>
-          <div className="flex-1 flex items-center justify-center my-auto">
-            <AscendingTrajectory nodes={slide.trajectoryNodes} primaryColor={palette.primary} isPresentation={isPresentation} />
-          </div>
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── VERTICAL PROGRESS STACK SLIDE ──── */
-    case "verticalProgress":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
-          <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
-          <div className="mb-2">
-            <motion.h2
-              {...anim(0)}
-              className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}>
-              {slide.title}
-            </motion.h2>
-            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
-          </div>
-          <div className="flex-1 flex items-center justify-center my-auto">
-            <VerticalProgressStack items={slide.verticalProgressItems} primaryColor={palette.primary} isPresentation={isPresentation} />
-          </div>
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── 1. SPLIT METRIC HERO (LEFT GLOWING CARD + RIGHT NUMBERED ROWS) ──── */
-    case "splitMetric":
-      if (isDualTone) {
-        return renderDualToneSplit(
-          <div>
-            <h2 className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} leading-tight`}>
-              {slide.title}
-            </h2>
-            {slide.subtitle && (
-              <p className="text-xs sm:text-sm mt-3 opacity-80 leading-relaxed">
-                {slide.subtitle}
-              </p>
-            )}
-          </div>,
-          <div className="flex-1 flex items-center my-auto">
-            <SplitMetricHero metricBox={slide.metricBox} items={slide.verticalProgressItems} primaryColor={palette.primary} isPresentation={isPresentation} />
-          </div>,
-          "35%"
-        );
-      }
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
-          <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
-          
-          <div className="mb-2">
-            <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}>
-              {slide.title}
-            </motion.h2>
-            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
-          </div>
-
-          <div className="flex-1 flex items-center my-auto">
-            <SplitMetricHero metricBox={slide.metricBox} items={slide.verticalProgressItems} primaryColor={palette.primary} isPresentation={isPresentation} />
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── 2. HORIZONTAL MILESTONES BAR ──── */
-    case "horizontalMilestones":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
-          <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
-          
-          <div className="flex items-start justify-between gap-4 mb-2">
-            <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-[#005AAB] dark:text-[#005AAB] leading-tight`}>
-              {slide.title}
-            </motion.h2>
-            {slide.subtitle && (
-              <motion.p {...anim(0.06)} className="text-xs text-neutral-500 max-w-xs text-right leading-relaxed">
-                {slide.subtitle}
-              </motion.p>
-            )}
-          </div>
-
-          <div className="flex-1 flex items-center my-auto">
-            <HorizontalMilestonesBar milestones={slide.horizontalMilestones} primaryColor={palette.primary} isPresentation={isPresentation} />
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── 3. BOLD STATEMENT / GET IN TOUCH ──── */
-    case "boldStatement":
-      if (isDualTone) {
-        return renderDualToneSplit(
-          <div>
-            <h1 className={`text-2xl sm:text-3xl lg:text-4xl font-black ${headingFontClass} leading-[1.1] tracking-tight`}>
-              {slide.title}
-            </h1>
-          </div>,
-          <div className="my-auto max-w-xl space-y-4">
-            {slide.subtitle && (
-              <p className="text-sm sm:text-base md:text-lg font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed">
-                {slide.subtitle}
-              </p>
-            )}
-            {slide.ctaText && (
-              <div className="pt-2">
-                <span
-                  className="px-6 py-2.5 rounded-full font-bold text-xs sm:text-sm inline-flex items-center gap-2 cursor-pointer"
-                  style={{ backgroundColor: palette.primary, color: primaryTextColor }}
-                >
-                  {slide.ctaText}
-                </span>
-              </div>
-            )}
-          </div>,
-          "45%"
-        );
-      }
-
-      if (isGradient) {
-        return (
-          <div
-            className="w-full h-full flex flex-col p-[7%] relative justify-between"
-            style={{
-              background: `linear-gradient(135deg, ${palette.primary} 0%, ${palette.primary}CC 35%, #FFFFFF 90%)`,
-              color: "#111111",
-            }}
-          >
-            <SlideFrameHeader
-              badge={slide.badge || "Process Infographic"}
-              category={slide.category || "Impactful Business"}
-              primaryColor="#111111"
-            />
-            
-            <div className="flex-1 flex flex-col justify-center max-w-[85%]">
-              <motion.h1
-                {...anim(0.06)}
-                className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05] text-neutral-950"
-              >
-                {slide.title}
-              </motion.h1>
-              {slide.subtitle && (
-                <motion.p
-                  {...anim(0.12)}
-                  className="text-sm sm:text-base font-medium mt-4 leading-relaxed max-w-lg text-neutral-800"
-                >
-                  {slide.subtitle}
-                </motion.p>
-              )}
-              {slide.ctaText && (
-                <motion.div {...anim(0.18)} className="mt-8">
-                  <span
-                    className="px-6 py-3 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2.5 w-fit transition-all cursor-pointer bg-neutral-950 text-white hover:bg-neutral-800"
-                  >
-                    {slide.ctaText} →
-                  </span>
-                </motion.div>
-              )}
-            </div>
-
-            <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={false} />
-          </div>
-        );
-      }
-
-      return (
-        <div
-          className="w-full h-full flex flex-col p-[7%] relative justify-between overflow-hidden"
-          style={{ backgroundColor: palette.primary, color: primaryTextColor }}
-        >
-          <SlideFrameHeader
-            badge={slide.badge || "Process Infographic"}
-            category={slide.category || "Impactful Business"}
-            primaryColor={primaryTextColor}
-          />
-          
-          <div className="flex-1 flex flex-col justify-center max-w-[85%]">
-            <motion.h1
-              {...anim(0.06)}
-              className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05]"
-              style={{ color: primaryTextColor }}
-            >
-              {slide.title}
-            </motion.h1>
-            {slide.subtitle && (
-              <motion.p
-                {...anim(0.12)}
-                className="text-sm sm:text-base font-medium mt-4 leading-relaxed max-w-lg"
-                style={{ color: primaryTextColor === "#111111" ? "rgba(17,17,17,0.8)" : "rgba(255,255,255,0.8)" }}
-              >
-                {slide.subtitle}
-              </motion.p>
-            )}
-            {slide.ctaText && (
-              <motion.div {...anim(0.18)} className="mt-8">
-                <span
-                  className="px-6 py-3 rounded-full font-bold text-xs sm:text-sm inline-flex items-center gap-2.5 w-fit transition-all cursor-pointer"
-                  style={{
-                    backgroundColor: primaryTextColor === "#111111" ? "#111111" : "#FFFFFF",
-                    color: primaryTextColor === "#111111" ? "#FFFFFF" : "#111111",
-                  }}
-                >
-                  {slide.ctaText} →
-                </span>
-              </motion.div>
-            )}
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={primaryTextColor === "#FFFFFF"} />
-        </div>
-      );
-
-    /* ──── 5. BUBBLE CLUSTER (3 INTERSECTING CIRCLES) ──── */
-    case "bubbleCluster":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
-          <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
-          
-          <div className="mb-2">
-            <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
-              {slide.title}
-            </motion.h2>
-            {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
-          </div>
-
-          <div className="flex-1 flex items-center justify-center my-auto">
-            <BubbleClusterDiagram nodes={slide.bubbleNodes} primaryColor={palette.primary} isPresentation={isPresentation} />
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── 6. IMAGE SPLIT WITH YELLOW ACCENTS & METRICS ──── */
-    case "imageSplitMetric":
-      return (
-        <div className="w-full h-full bg-white dark:bg-neutral-950 flex flex-col p-[6%] relative justify-between" style={dynamicBgStyle}>
-          <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
-          
-          <div className="flex-1 flex items-center gap-6 my-auto">
-            {/* Left Card: Visual & Floating Box */}
-            <div className="w-[38%] flex flex-col gap-3">
-              <div className="relative w-full h-32 sm:h-40 rounded-lg overflow-hidden bg-neutral-200 dark:bg-neutral-800 border border-neutral-300/40">
-                <Image
-                  src={slide.imageUrl || "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&auto=format&fit=crop&q=80"}
-                  alt="Presentation Visual"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="rounded-lg p-3 text-[10px] sm:text-xs text-neutral-900 font-medium leading-snug" style={{ backgroundColor: palette.primary }}>
-                {slide.description || "Visualize Every Process Clearly With Structured Steps And Engaging"}
-              </div>
-            </div>
-
-            {/* Right Card: Headline & Stat */}
-            <div className="flex-1 flex flex-col justify-between">
-              <div>
-                <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
-                  {slide.title}
-                </motion.h2>
-                {slide.highlight && (
-                  <div className="mt-3 rounded-lg p-3 text-[10px] sm:text-xs text-neutral-900 font-medium leading-snug" style={{ backgroundColor: `${palette.primary}40` }}>
-                    {slide.highlight}
-                  </div>
-                )}
-              </div>
-
-              {slide.stats && slide.stats[0] && (
-                <div className="mt-4 flex items-baseline gap-3">
-                  <span className={`${isPresentation ? "text-4xl sm:text-5xl" : "text-3xl sm:text-4xl"} font-black text-neutral-950 dark:text-white`}>
-                    {slide.stats[0].value}
-                  </span>
-                  <span className="text-[10px] sm:text-xs text-neutral-500 max-w-[200px] leading-tight">
-                    {slide.stats[0].label}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── 7. BOLD IMPACT WITH MASSIVE STAT ──── */
-    case "boldImpact":
-      if (isDualTone) {
-        return renderDualToneSplit(
-          <div>
-            <h2 className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} leading-tight`}>
-              {slide.title}
-            </h2>
-            {slide.subtitle && (
-              <p className="text-xs sm:text-sm mt-3 opacity-80 leading-relaxed">
-                {slide.subtitle}
-              </p>
-            )}
-          </div>,
-          <div className="flex-1 flex items-center justify-between gap-6 my-auto">
-            <div className="flex-1">
-              <span
-                className="text-4xl sm:text-6xl font-black leading-none block"
-                style={{ color: palette.primary }}
-              >
-                {slide.stats?.[0]?.value || "+85%"}
-              </span>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-2">
-                {slide.stats?.[0]?.label || "Compounding acceleration across key execution metrics"}
-              </p>
-            </div>
-            {slide.description && (
-              <div className="w-[45%] rounded-lg p-4 bg-white dark:bg-[#18181c] border border-neutral-200/80 dark:border-neutral-800">
-                <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 leading-snug">
-                  {slide.description}
-                </p>
-              </div>
-            )}
-          </div>,
-          "38%"
-        );
-      }
-
-      if (isGradient) {
-        return (
-          <div
-            className="w-full h-full flex flex-col p-[6%] relative justify-between"
-            style={{
-              background: `linear-gradient(135deg, ${palette.primary} 0%, ${palette.primary}B3 30%, #FFFFFF 85%)`,
-              color: "#111111",
-            }}
-          >
-            <SlideFrameHeader
-              badge={slide.badge || "Process Infographic"}
-              category={slide.category || "Impactful Business"}
-              primaryColor="#111111"
-            />
-            
-            <div className="flex items-start justify-between gap-6 mb-4">
-              <motion.h2
-                {...anim(0)}
-                className="text-2xl sm:text-4xl font-extrabold leading-tight flex-1 text-neutral-950"
-              >
-                {slide.title}
-              </motion.h2>
-              {slide.subtitle && (
-                <p
-                  className="text-xs max-w-xs leading-relaxed text-neutral-800"
-                >
-                  {slide.subtitle}
-                </p>
-              )}
-            </div>
-
-            <div className="flex-1 flex items-center justify-between gap-6 my-auto">
-              {/* Left Big Stat */}
-              <div className="flex-1">
-                {slide.highlight && (
-                  <p
-                    className="text-xs font-semibold mb-1 text-neutral-800"
-                  >
-                    {slide.highlight}
-                  </p>
-                )}
-                <span
-                  className={`${isPresentation ? "text-5xl sm:text-6xl" : "text-4xl sm:text-5xl"} font-black leading-none block text-neutral-950`}
-                >
-                  {slide.stats?.[0]?.value || "+85%"}
-                </span>
-                <p
-                  className="text-xs mt-1 text-neutral-700"
-                >
-                  {slide.stats?.[0]?.label || "Compounding acceleration across key execution metrics"}
-                </p>
-              </div>
-
-              {/* Right Secondary/White Card */}
-              <div
-                className="w-[42%] rounded-lg p-3.5 sm:p-4 bg-white/90 border border-neutral-200/80"
-              >
-                <div
-                  className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold mb-2 bg-neutral-950 text-white"
-                >
-                  <Sparkles className="w-3 h-3" />
-                </div>
-                <p className="text-xs font-semibold leading-snug text-neutral-800">
-                  {slide.description || "Visualize Every Process Clearly With Structured Steps And Engaging"}
-                </p>
-              </div>
-            </div>
-
-            <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={false} />
-          </div>
-        );
-      }
-
-      return (
-        <div
-          className="w-full h-full flex flex-col p-[6%] relative justify-between overflow-hidden"
-          style={{ backgroundColor: palette.primary, color: primaryTextColor }}
-        >
-          <SlideFrameHeader
-            badge={slide.badge || "Process Infographic"}
-            category={slide.category || "Impactful Business"}
-            primaryColor={primaryTextColor}
-          />
-          
-          <div className="flex items-start justify-between gap-6 mb-4">
-            <motion.h2
-              {...anim(0)}
-              className="text-2xl sm:text-4xl font-extrabold leading-tight flex-1"
-              style={{ color: primaryTextColor }}
-            >
-              {slide.title}
-            </motion.h2>
-            {slide.subtitle && (
-              <p
-                className="text-xs max-w-xs leading-relaxed"
-                style={{ color: primaryTextColor === "#111111" ? "rgba(17,17,17,0.75)" : "rgba(255,255,255,0.75)" }}
-              >
-                {slide.subtitle}
-              </p>
-            )}
-          </div>
-
-          <div className="flex-1 flex items-center justify-between gap-6 my-auto">
-            {/* Left Big Stat */}
-            <div className="flex-1">
-              {slide.highlight && (
-                <p
-                  className="text-xs font-semibold mb-1"
-                  style={{ color: primaryTextColor === "#111111" ? "rgba(17,17,17,0.85)" : "rgba(255,255,255,0.85)" }}
-                >
-                  {slide.highlight}
-                </p>
-              )}
-              <span
-                className={`${isPresentation ? "text-5xl sm:text-6xl" : "text-4xl sm:text-5xl"} font-black leading-none block`}
-                style={{ color: primaryTextColor }}
-              >
-                {slide.stats?.[0]?.value || "+85%"}
-              </span>
-              <p
-                className="text-xs mt-1"
-                style={{ color: primaryTextColor === "#111111" ? "rgba(17,17,17,0.7)" : "rgba(255,255,255,0.7)" }}
-              >
-                {slide.stats?.[0]?.label || "Compounding acceleration across key execution metrics"}
-              </p>
-            </div>
-
-            {/* Right Secondary/White Card */}
-            <div
-              className="w-[42%] rounded-lg p-3.5 sm:p-4 bg-white/95 text-neutral-950 border border-neutral-200/80"
-            >
-              <div
-                className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold mb-2 bg-neutral-950 text-white"
-              >
-                <Sparkles className="w-3 h-3" />
-              </div>
-              <p className="text-xs font-semibold leading-snug text-neutral-800">
-                {slide.description || "Visualize Every Process Clearly With Structured Steps And Engaging"}
-              </p>
-            </div>
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={primaryTextColor === "#FFFFFF"} />
-        </div>
-      );
-
-    /* ──── 10. ASYMMETRIC STAT MATRIX ──── */
-    case "asymmetricMatrix":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
-          <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
-          
-          <div className="flex-1 flex items-center gap-6 my-auto">
-            {/* Left Matrix */}
-            <div className="w-[62%]">
-              <AsymmetricMatrixGrid items={slide.asymmetricCards} primaryColor={palette.primary} isPresentation={isPresentation} />
-            </div>
-
-            {/* Right Headline */}
-            <div className="flex-1">
-              <motion.h2 {...anim(0)} className={`text-2xl sm:text-4xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
-                {slide.title}
-              </motion.h2>
-              {slide.subtitle && (
-                <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-2 leading-relaxed">
-                  {slide.subtitle}
-                </motion.p>
-              )}
-            </div>
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── 11. VERTICAL CONNECTED RINGS CHAIN ──── */
-    case "connectedRings":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
-          <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
-          
-          <div className="flex-1 flex items-center gap-6 my-auto">
-            {/* Left Column: Title & Big Stat */}
-            <div className="w-[38%] flex flex-col justify-between">
-              <div>
-                <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}>
-                  {slide.title}
-                </motion.h2>
-                {slide.subtitle && (
-                  <p className="text-xs text-neutral-500 mt-1">
-                    {slide.subtitle}
-                  </p>
-                )}
-              </div>
-              <div className="mt-6">
-                <span className={`${isPresentation ? "text-4xl sm:text-5xl" : "text-3xl sm:text-4xl"} font-black text-neutral-950 dark:text-white block leading-none`}>
-                  {slide.stats?.[0]?.value || "5729+"}
-                </span>
-                <p className="text-[10px] sm:text-xs text-neutral-500 mt-2 leading-tight">
-                  {slide.stats?.[0]?.label || "Highlight Every Milestone Using Connected Readability"}
-                </p>
-              </div>
-            </div>
-
-            {/* Right Column: Connected Rings */}
-            <div className="flex-1">
-              <ConnectedVerticalRings rings={slide.connectedRings} primaryColor={palette.primary} isPresentation={isPresentation} />
-            </div>
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── CTA SLIDE ──── */
-    case "cta":
-      if (isDualTone) {
-        return renderDualToneSplit(
-          <div>
-            <h2 className={`text-2xl sm:text-4xl font-extrabold ${headingFontClass} leading-tight`}>
-              {slide.title}
-            </h2>
-          </div>,
-          <div className="my-auto max-w-xl space-y-4">
-            {slide.subtitle && (
-              <p className="text-base sm:text-lg text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                {slide.subtitle}
-              </p>
-            )}
-            {slide.description && (
-              <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">
-                {slide.description}
-              </p>
-            )}
-            {slide.ctaText && (
-              <div className="pt-2">
-                <span
-                  className="px-6 py-2.5 rounded-full font-bold text-xs sm:text-sm inline-flex items-center gap-2 cursor-pointer"
-                  style={{ backgroundColor: palette.primary, color: primaryTextColor }}
-                >
-                  {slide.ctaText}
-                </span>
-              </div>
-            )}
-          </div>,
-          "45%"
-        );
-      }
-
-      return (
-        <div className={`w-full h-full bg-neutral-950 flex flex-col justify-center items-center text-center p-[10%] relative overflow-hidden ${bodyFontClass} text-white`}>
-          <div
-            className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[60%] h-[40%] rounded-full blur-3xl opacity-20"
-            style={{ backgroundColor: palette.primary }}
-          />
-
-          <div className="relative z-10 flex flex-col items-center">
-            <motion.h2
-              {...anim(0)}
-              className={`text-3xl sm:text-4xl font-bold ${headingFontClass} text-white leading-tight`}
-            >
-              {slide.title}
-            </motion.h2>
-            {slide.subtitle && (
-              <motion.p {...anim(0.08)} className="text-sm sm:text-base text-neutral-400 mt-3 max-w-md">
-                {slide.subtitle}
-              </motion.p>
-            )}
-            {slide.description && (
-              <motion.p {...anim(0.16)} className="text-xs sm:text-sm text-neutral-500 mt-3 max-w-sm leading-relaxed">
-                {slide.description}
-              </motion.p>
-            )}
-            {slide.ctaText && (
-              <motion.div
-                {...anim(0.24)}
-                className="mt-6 px-6 py-2.5 sm:py-3 rounded-md text-neutral-950 font-bold text-sm sm:text-base flex items-center gap-2"
-                style={{ backgroundColor: palette.primary }}
-              >
-                {safeString(slide.ctaText)}
-              </motion.div>
-            )}
-          </div>
-
-          <motion.div {...anim(0.3)} className="absolute bottom-[8%] flex items-center gap-2 z-10">
-            <div
-              className="w-6 h-6 rounded-full flex items-center justify-center text-neutral-950"
-              style={{ backgroundColor: palette.primary }}
-            >
-              <Layers className="w-3.5 h-3.5" />
-            </div>
-            <span className="text-xs text-neutral-500">{slide.footer || ""}</span>
-          </motion.div>
-        </div>
-      );
-
-    /* ──── ACTION LIST / LEARNING OBJECTIVES SLIDE ──── */
-    case "actionList":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-
-          <div className="flex-1 flex flex-col justify-center gap-2.5 sm:gap-3.5 my-auto pl-4 border-l-2 sm:border-l-4 border-[#005AAB]">
-            {(slide.actionItems && slide.actionItems.length > 0
-              ? slide.actionItems
-              : (slide.bullets || []).map((b, idx) => {
-                  const parts = b.split(/:\s*|\s*-\s*/);
-                  return { verb: parts[0], text: parts.slice(1).join(": ") || parts[0], tag: idx === 3 ? "Built today · reused through the Capstone" : undefined };
-                })
-            ).map((item, idx) => {
-              const isYellow = idx % 2 === 0;
-              return (
-                <motion.div
-                  key={idx}
-                  {...anim(0.12 + idx * 0.05)}
-                  className={`flex items-center justify-between gap-3 p-2.5 sm:p-3 rounded-md border transition-colors ${
-                    isYellow
-                      ? "bg-[#FFF9D6] dark:bg-[#2A2408] border-[#FFDD3C] dark:border-[#FFDD3C]/50"
-                      : "bg-[#EAF2FB] dark:bg-[#0D233A] border-[#005AAB]/30 dark:border-[#005AAB]/50"
-                  }`}
-                >
-                  <div className="flex items-start gap-2.5 sm:gap-3.5">
-                    <span className={`font-mono font-bold text-sm sm:text-base shrink-0 ${isYellow ? "text-[#854D0E] dark:text-[#FACC15]" : "text-[#005AAB] dark:text-[#90CDF4]"}`}>
-                      {idx + 1}.
-                    </span>
-                    <div className="text-xs sm:text-sm text-neutral-900 dark:text-neutral-100 leading-snug">
-                      {item.verb && (
-                        <strong className={`font-extrabold mr-1.5 uppercase tracking-wide ${isYellow ? "text-[#854D0E] dark:text-[#FACC15]" : "text-[#005AAB] dark:text-[#90CDF4]"}`}>
-                          {item.verb}
-                        </strong>
-                      )}
-                      {item.text}
-                    </div>
-                  </div>
-                  {item.tag && (
-                    <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-[#FFDD3C]/25 text-[#854D0E] dark:text-[#FACC15] border border-[#FFDD3C]/40">
-                      {item.tag}
-                    </span>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── 3-COLUMN CARD GRID (INSTRUMENT COMPARISON) ──── */
-    case "cardGrid":
-      const displayCards: Array<{
-        title: string;
-        tag?: string;
-        bullets?: string[];
-        description?: string;
-        footer?: string;
-      }> = slide.cards && slide.cards.length > 0
-        ? slide.cards
-        : (slide.bullets && slide.bullets.length > 0
-            ? slide.bullets.map((b, i) => {
-                const bulletStr = safeString(b);
-                const colonIdx = bulletStr.indexOf(":");
-                const title = colonIdx > 0 && colonIdx < 40 ? bulletStr.slice(0, colonIdx) : `Point ${i + 1}`;
-                const body = colonIdx > 0 && colonIdx < 40 ? bulletStr.slice(colonIdx + 1).trim() : bulletStr;
-                return { title, bullets: [body] };
-              })
-            : (slide.description ? [{ title: "Overview", bullets: [slide.description] }] : []));
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between px-[5%] sm:px-[6%] py-3.5 sm:py-4.5 relative`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 my-auto items-stretch">
-            {displayCards.map((card, cIdx) => {
-              const isYellow = cIdx % 2 === 0;
-              return (
-                <motion.div
-                  key={cIdx}
-                  {...anim(0.1 + cIdx * 0.06)}
-                  className={`flex flex-col justify-between rounded-md overflow-hidden border ${
-                    isYellow
-                      ? "border-[#FFDD3C] dark:border-[#FFDD3C]/40 bg-[#FFFDF5] dark:bg-[#1A1810]"
-                      : "border-[#005AAB]/30 dark:border-[#005AAB]/40 bg-[#F5F9FE] dark:bg-[#0D1B2A]"
-                  }`}
-                >
-                  <div
-                    className="px-3.5 py-2 font-extrabold text-xs sm:text-sm tracking-wide flex items-center justify-between"
-                    style={{
-                      backgroundColor: isYellow ? "#FFDD3C" : "#005AAB",
-                      color: isYellow ? "#272525" : "#FFFFFF",
-                    }}
-                  >
-                    <span>{card.title}</span>
-                    {card.tag && <span className="text-[10px] font-mono opacity-85">{card.tag}</span>}
-                  </div>
-
-                  <div className="p-3 sm:p-4 flex-1 space-y-2 text-xs sm:text-[13px] text-neutral-800 dark:text-neutral-200">
-                    {card.bullets && card.bullets.map((b, bIdx) => (
-                      <div key={bIdx} className="flex items-start gap-2">
-                        <span className={`shrink-0 mt-0.5 ${isYellow ? "text-[#854D0E] dark:text-[#FACC15]" : "text-[#005AAB] dark:text-[#90CDF4]"}`}>•</span>
-                        <span className="leading-snug">{b}</span>
-                      </div>
-                    ))}
-                    {card.description && <p className="leading-snug text-neutral-600 dark:text-neutral-400">{card.description}</p>}
-                  </div>
-
-                  {card.footer && (
-                    <div className="p-2 sm:p-2.5 bg-amber-500/10 dark:bg-amber-500/20 border-t border-amber-500/30 text-amber-900 dark:text-amber-200 text-[11px] font-semibold">
-                      {card.footer}
-                    </div>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
-
-          {slide.calloutBox && (
-            <div className="p-2.5 rounded-lg bg-neutral-900 text-white text-xs flex items-center gap-2">
-              <span className="text-[#FFE500] font-bold shrink-0">{slide.calloutBox.title || "Note"}:</span>
-              <span>{slide.calloutBox.text}</span>
-            </div>
-          )}
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── CASE STUDY (HORIZONTAL TIMELINE & CALLOUT) ──── */
-    case "caseStudy":
-      const studyCards = slide.cards && slide.cards.length >= 2
-        ? slide.cards
-        : (slide.bullets && slide.bullets.length >= 2
-            ? [
-                {
-                  title: "Stage 01",
-                  tag: "Initial Context",
-                  bullets: slide.bullets.slice(0, Math.ceil(slide.bullets.length / 2)),
-                },
-                {
-                  title: "Stage 02",
-                  tag: "Key Outcome",
-                  bullets: slide.bullets.slice(Math.ceil(slide.bullets.length / 2)),
-                }
-              ]
-            : (slide.bullets?.length === 1
-                ? [{ title: "Scenario Overview", bullets: slide.bullets }]
-                : (slide.description ? [{ title: "Scenario Overview", bullets: [slide.description] }] : [])));
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between px-[5%] sm:px-[6%] py-3.5 sm:py-4.5 relative`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-
-          <div className="flex flex-col md:flex-row items-center gap-3 sm:gap-4 my-auto">
-            {studyCards.map((sc, scIdx) => {
-              const isYellow = scIdx % 2 === 0;
-              return (
-                <React.Fragment key={scIdx}>
-                  <motion.div
-                    {...anim(0.1 + scIdx * 0.08)}
-                    className={`flex-1 w-full rounded-md border p-4 flex flex-col justify-between ${
-                      isYellow
-                        ? "bg-[#FFF9D6] dark:bg-[#2A2408] border-[#FFDD3C] dark:border-[#FFDD3C]/50"
-                        : "bg-[#EAF2FB] dark:bg-[#0D233A] border-[#005AAB]/30 dark:border-[#005AAB]/50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={`font-extrabold text-sm sm:text-base ${isYellow ? "text-[#272525] dark:text-[#FFF9D6]" : "text-[#005AAB] dark:text-[#90CDF4]"}`}>
-                        {sc.title}
-                      </span>
-                      {sc.tag && (
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          isYellow ? "bg-[#FFDD3C] text-[#272525]" : "bg-[#005AAB] text-white"
-                        }`}>
-                          {sc.tag}
-                        </span>
-                      )}
-                    </div>
-                    <div className="space-y-1.5 text-xs sm:text-[13px] text-neutral-800 dark:text-neutral-200">
-                      {sc.bullets && sc.bullets.map((b, bIdx) => (
-                        <div key={bIdx} className="flex items-start gap-2">
-                          <span className={`shrink-0 ${isYellow ? "text-[#854D0E] dark:text-[#FACC15]" : "text-[#005AAB] dark:text-[#90CDF4]"}`}>•</span>
-                          <span>{b}</span>
-                        </div>
-                      ))}
-                      {sc.description && <p>{sc.description}</p>}
-                    </div>
-                    {sc.footer && (
-                      <div className="mt-3 pt-2 border-t border-neutral-200/60 dark:border-neutral-800 text-[11px] font-semibold text-neutral-500">
-                        {sc.footer}
-                      </div>
-                    )}
-                  </motion.div>
-
-                  {scIdx < studyCards.length - 1 && (
-                    <div className="text-neutral-400 dark:text-neutral-600 font-black text-xl shrink-0">
-                      →
-                    </div>
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </div>
-
-          {slide.calloutBox ? (
-            <motion.div
-              {...anim(0.24)}
-              className="p-3.5 sm:p-4 rounded-md bg-neutral-950 text-white dark:bg-neutral-900 border border-neutral-800 flex items-center justify-between gap-3"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-xl">❓</span>
-                <div>
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#FFDD3C]">
-                    {slide.calloutBox.title || "The Question for the Room"}
-                  </div>
-                  <div className="text-xs sm:text-sm font-semibold text-neutral-100">
-                    {slide.calloutBox.text}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ) : slide.description ? (
-            <div className="p-3 rounded-md bg-neutral-950 text-white text-xs font-semibold flex items-center gap-2">
-              <span className="text-[#FFDD3C]">Key Dilemma:</span>
-              <span>{slide.description}</span>
-            </div>
-          ) : null}
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── SPLIT POLL / DILEMMA ──── */
-    case "splitPoll":
-      const taxCard = slide.cards?.[0] || {
-        title: slide.bullets?.[0]?.split(/[:—–-]/)[0]?.trim() || "Perspective A",
-        description: slide.bullets?.[0]?.split(/[:—–-]/).slice(1).join("—").trim() || slide.bullets?.[0] || slide.description || "Primary Consideration",
-      };
-      const legalCard = slide.cards?.[1] || {
-        title: slide.bullets?.[1]?.split(/[:—–-]/)[0]?.trim() || "Perspective B",
-        description: slide.bullets?.[1]?.split(/[:—–-]/).slice(1).join("—").trim() || slide.bullets?.[1] || "Alternative Consideration",
-      };
-      const pollOpts = slide.pollOptions && slide.pollOptions.length > 0
-        ? slide.pollOptions
-        : (slide.bullets && slide.bullets.length > 2
-            ? slide.bullets.slice(2, 5).map((b, bIdx) => ({
-                label: String.fromCharCode(65 + bIdx),
-                text: safeString(b),
-              }))
-            : []);
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between px-[5%] sm:px-[6%] py-3.5 sm:py-4.5 relative`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 my-2">
-            <motion.div {...anim(0.1)} className="rounded-md overflow-hidden border border-[#FFDD3C] dark:border-[#FFDD3C]/50 bg-[#FFFDF5] dark:bg-[#1A1810]">
-              <div className="bg-[#FFDD3C] text-[#272525] font-extrabold px-3.5 py-1.5 uppercase tracking-wider text-xs flex items-center justify-between">
-                <span>{taxCard.title}</span>
-                <span className="text-[10px] font-bold opacity-80">PERSPECTIVE 01</span>
-              </div>
-              <div className="p-3 sm:p-4 text-xs sm:text-sm text-neutral-800 dark:text-neutral-200 font-semibold leading-relaxed">
-                {taxCard.description || taxCard.bullets?.join(" ")}
-              </div>
-            </motion.div>
-
-            <motion.div {...anim(0.14)} className="rounded-md overflow-hidden border border-[#005AAB]/30 dark:border-[#005AAB]/50 bg-[#F5F9FE] dark:bg-[#0D1B2A]">
-              <div className="bg-[#005AAB] text-white font-extrabold px-3.5 py-1.5 uppercase tracking-wider text-xs flex items-center justify-between">
-                <span>{legalCard.title}</span>
-                <span className="text-[10px] font-bold opacity-80">PERSPECTIVE 02</span>
-              </div>
-              <div className="p-3 sm:p-4 text-xs sm:text-sm text-neutral-800 dark:text-neutral-200 font-semibold leading-relaxed">
-                {legalCard.description || legalCard.bullets?.join(" ")}
-              </div>
-            </motion.div>
-          </div>
-
-          {pollOpts.length > 0 && (
-            <div className="p-3.5 rounded-md bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 space-y-2">
-              <div className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                <span>Decision Poll</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                {pollOpts.map((opt, oIdx) => (
-                  <div
-                    key={oIdx}
-                    className="flex items-center gap-2.5 p-2 rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-800 hover:border-amber-400 cursor-pointer transition-colors text-xs"
-                  >
-                    <span className="w-5 h-5 rounded-full bg-[#005AAB] text-white text-[11px] font-bold flex items-center justify-center shrink-0">
-                      {opt.label}
-                    </span>
-                    <span className="text-neutral-800 dark:text-neutral-200 font-medium leading-tight">
-                      {opt.text}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── INTERACTIVE CASE CARD & PROMPT TEST ──── */
-    case "interactiveCase":
-      const caseCardObj = slide.cards?.[0] || {
-        title: slide.bullets?.[0]?.split(/[:—–-]/)[0]?.trim() || "Brief / Input",
-        bullets: slide.bullets && slide.bullets.length > 0 ? slide.bullets.slice(0, 3) : (slide.description ? [slide.description] : ["Primary details."]),
-      };
-      const templateCardObj = slide.cards?.[1] || {
-        title: "Key Framework",
-        bullets: slide.bullets && slide.bullets.length > 3 ? slide.bullets.slice(3) : ["Scope & Requirements", "Risk Analysis & Assessment", "Execution Strategy & Next Steps"],
-      };
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between px-[5%] sm:px-[6%] py-3.5 sm:py-4.5 relative`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 my-2">
-            <motion.div {...anim(0.1)} className="rounded-md border border-[#FFDD3C] dark:border-[#FFDD3C]/50 bg-[#FFFDF5] dark:bg-[#1A1810] p-3.5 flex flex-col justify-between">
-              <div className="bg-[#FFDD3C] text-[#272525] font-extrabold px-3 py-1 rounded-sm text-xs w-fit mb-2 uppercase tracking-wider">
-                {caseCardObj.title || "Case Card"}
-              </div>
-              <div className="space-y-1.5 text-xs sm:text-[13px] text-neutral-800 dark:text-neutral-200">
-                {caseCardObj.bullets && caseCardObj.bullets.map((b, bIdx) => (
-                  <div key={bIdx} className="flex items-start gap-2">
-                    <span className="text-[#854D0E] dark:text-[#FACC15] shrink-0">•</span>
-                    <span>{b}</span>
-                  </div>
-                ))}
-              </div>
-              {slide.promptBox && (
-                <div className="mt-3 p-2.5 rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-[11px] font-mono text-neutral-700 dark:text-neutral-300">
-                  <span className="font-bold text-neutral-900 dark:text-white block mb-0.5">{slide.promptBox.label}:</span>
-                  &ldquo;{slide.promptBox.prompt}&rdquo;
-                </div>
-              )}
-            </motion.div>
-
-            <motion.div {...anim(0.14)} className="rounded-md border border-[#005AAB]/30 dark:border-[#005AAB]/50 bg-[#F5F9FE] dark:bg-[#0D1B2A] p-3.5 flex flex-col justify-between">
-              <div className="bg-[#005AAB] text-white font-extrabold px-3 py-1 rounded-sm text-xs w-fit mb-2 uppercase tracking-wider">
-                {templateCardObj.title || "Output Template"}
-              </div>
-              <div className="space-y-1.5 text-xs sm:text-[13px] text-neutral-800 dark:text-neutral-200">
-                {templateCardObj.bullets && templateCardObj.bullets.map((b, bIdx) => (
-                  <div key={bIdx} className="p-1.5 rounded-sm bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-                    <span className="font-medium">{b}</span>
-                    <span className="text-[10px] text-neutral-400 font-mono">Fill in</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-
-          {slide.bottomBanners && slide.bottomBanners.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-              {slide.bottomBanners.map((bn, bnIdx) => (
-                <div
-                  key={bnIdx}
-                  className={`p-2.5 rounded-md font-medium ${
-                    bn.variant === "yellow"
-                      ? "bg-[#FFDD3C]/20 text-[#854D0E] border border-[#FFDD3C]/50"
-                      : "bg-[#005AAB]/15 text-[#005AAB] dark:text-[#90CDF4] border border-[#005AAB]/30"
-                  }`}
-                >
-                  <span className="font-bold mr-1.5">{bn.title}:</span>
-                  <span>{bn.text}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── FULL-BLEED BREAK SCREEN ──── */
-    case "breakSlide":
-      return (
-        <div className="w-full h-full bg-[#FFE500] text-black flex flex-col justify-between p-[8%] relative overflow-hidden select-none">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-black/15">
-              {slide.badge || "SESSION PAUSE"}
-            </span>
-            <span className="text-xl font-mono font-black opacity-50">
-              {String(slide.slideNumber || "20").padStart(2, "0")}
-            </span>
-          </div>
-
-          <div className="my-auto flex flex-col items-center text-center max-w-2xl mx-auto space-y-4">
-            <div className="w-16 h-16 rounded-full bg-black text-[#FFE500] flex items-center justify-center text-2xl">
-              ☕
-            </div>
-            <motion.h1 {...anim(0.06)} className="text-3xl sm:text-5xl font-black tracking-tight leading-none text-black">
-              {safeString(slide.title)}
-            </motion.h1>
-            {slide.subtitle && (
-              <motion.p {...anim(0.12)} className="text-sm sm:text-base font-semibold text-black/85 max-w-lg leading-relaxed">
-                {safeString(slide.subtitle)}
-              </motion.p>
-            )}
-            <motion.div
-              {...anim(0.18)}
-              className="px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-sm sm:text-base inline-flex items-center gap-2 border border-black/10"
-            >
-              <span>🕒</span>
-              <span>{slide.ctaText || "We resume at [insert return time]"}</span>
-            </motion.div>
-          </div>
-
-          <div className="flex items-center justify-between text-xs font-mono tracking-wider opacity-60 uppercase">
-            <span>{slide.footer || ""}</span>
-            <span>SESSION BREAK</span>
-          </div>
-        </div>
-      );
-
-    /* ──── KEY INSIGHT / SYNTHESIS SLIDE ──── */
-    case "keyInsight":
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-
-          <div className="my-auto space-y-3">
-            {slide.tableRows && slide.tableRows.length > 0 && (
-              <div className="rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 max-w-2xl">
-                <table className="w-full text-left text-xs sm:text-sm">
-                  <thead>
-                    <tr className="bg-neutral-100 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
-                      {(slide.tableHeaders || ["Instrument", "Wins on", "Loses on"]).map((h, hIdx) => (
-                        <th key={hIdx} className="p-2.5 font-bold">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {slide.tableRows.map((r, rIdx) => (
-                      <tr key={rIdx} className="border-b border-neutral-100 dark:border-neutral-800 last:border-b-0">
-                        <td className="p-2.5 font-extrabold">{r.feature || r.cells?.[0]}</td>
-                        <td className="p-2.5 font-semibold text-neutral-900 dark:text-neutral-100">{r.current || r.cells?.[1]}</td>
-                        <td className="p-2.5 font-semibold text-[#854D0E] dark:text-[#FACC15]">{r.proposed || r.cells?.[2]}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {slide.actionItems && slide.actionItems.length > 0 && (
-              <div className="space-y-2">
-                {slide.actionItems.map((ai, aiIdx) => {
-                  const isYellow = aiIdx % 2 === 0;
-                  return (
-                    <div
-                      key={aiIdx}
-                      className={`flex items-start gap-3 p-2.5 rounded-md border ${
-                        isYellow
-                          ? "bg-[#FFF9D6] dark:bg-[#2A2408] border-[#FFDD3C] dark:border-[#FFDD3C]/50"
-                          : "bg-[#EAF2FB] dark:bg-[#0D233A] border-[#005AAB]/30 dark:border-[#005AAB]/50"
-                      }`}
-                    >
-                      <span
-                        className={`w-5 h-5 rounded-sm font-bold text-xs flex items-center justify-center shrink-0 ${
-                          isYellow ? "bg-[#FFDD3C] text-[#272525]" : "bg-[#005AAB] text-white"
-                        }`}
-                      >
-                        {aiIdx + 1}
-                      </span>
-                      <div className="text-xs sm:text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                        {ai.verb && <strong className={`mr-1.5 ${isYellow ? "text-[#854D0E] dark:text-[#FACC15]" : "text-[#005AAB] dark:text-[#90CDF4]"}`}>{ai.verb}</strong>}
-                        {ai.text}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {slide.quote && (
-              <div className="p-3.5 sm:p-4 rounded-md border-l-4 border-[#005AAB] bg-[#EAF2FB] dark:bg-[#0D233A]">
-                <p className="text-xs sm:text-sm italic font-semibold text-neutral-800 dark:text-neutral-200 leading-relaxed">
-                  &ldquo;{slide.quote.text}&rdquo;
-                </p>
-                {slide.quote.author && (
-                  <span className="block mt-1 text-[11px] font-mono text-[#005AAB] dark:text-[#90CDF4]">— {slide.quote.author}</span>
-                )}
-              </div>
-            )}
-
-            {slide.bullets && slide.bullets.length > 0 && !slide.actionItems && (
-              <div className="space-y-1.5 text-xs sm:text-sm text-neutral-700 dark:text-neutral-300">
-                {slide.bullets.map((b, bIdx) => (
-                  <div key={bIdx} className="flex items-start gap-2">
-                    <span className="text-[#FFE500] font-bold">✔</span>
-                    <span>{b}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
-        </div>
-      );
-
-    /* ──── SECTION DIVIDER SLIDE ──── */
-    case "sectionDivider":
-      return (
-        <SectionDivider
-          partLabel={slide.badge || slide.category || "BAGIAN"}
-          title={safeString(slide.title)}
-          subtitle={safeString(slide.subtitle)}
-          primaryColor={palette.primary}
-          accentColor={palette.secondary || palette.accent || "#FFDD3C"}
-          isPresentation={isPresentation}
-          transparentBg={hasTemplateBg && isPartBg}
-        />
-      );
-
-    /* ──── PAIRED ROWS SLIDE (MASALAH → PERBAIKAN) ──── */
-    case "pairedRows": {
-      const pairedItems = slide.pairedRows && slide.pairedRows.length > 0
-        ? slide.pairedRows
-        : (slide.bullets && slide.bullets.length > 0
-          ? slide.bullets.map((b) => {
-              const arrowParts = b.split(/\s*→\s*|\s*->\s*|\s*:\s*|\s*vs\.?\s*/i);
-              return {
-                left: arrowParts[0] || b,
-                right: arrowParts[1] || "Solusi dan langkah pencegahan operasional",
-              };
-            })
-          : [
-              { left: "Perangkat dan aplikasi tidak pernah diperbarui", right: "Aktifkan pembaruan otomatis berkala" },
-              { left: "Akun mantan karyawan masih aktif di sistem", right: "Cabut hak akses seketika saat peran berubah" },
-              { left: "Backup tidak pernah diuji coba pemulihan", right: "Jadwalkan uji pemulihan rutin berkala" },
-            ]);
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-
-          <div className="my-auto w-full flex-1 flex flex-col justify-center min-h-0">
-            <PairedRows
-              items={pairedItems}
-              primaryColor={palette.primary}
-              isPresentation={isPresentation}
-            />
-          </div>
-
-          {slide.insightBarText && (
-            <div className="mt-2 shrink-0">
-              <InsightBar
-                text={slide.insightBarText}
-                primaryColor={palette.primary}
-                accentColor={palette.secondary || palette.accent || "#FFDD3C"}
-                isPresentation={isPresentation}
-              />
-            </div>
-          )}
-
-          {renderSlideFooter()}
-        </div>
-      );
-    }
-
-    /* ──── HORIZONTAL STACK CARDS (ALTERNATING ROLES) ──── */
-    case "horizontalStack": {
-      const stackItems = slide.stackCards && slide.stackCards.length > 0
-        ? slide.stackCards
-        : (slide.bullets && slide.bullets.length > 0
-          ? slide.bullets.map((b, idx) => {
-              const colonIdx = b.indexOf(":");
-              return {
-                title: colonIdx > 0 ? b.slice(0, colonIdx).trim() : `Pilar 0${idx + 1}`,
-                tag: `Pillar 0${idx + 1}`,
-                description: colonIdx > 0 ? b.slice(colonIdx + 1).trim() : b,
-              };
-            })
-          : [
-              { title: "Kerahasiaan", tag: "CONFIDENTIALITY", description: "Hanya pihak berwenang yang dapat mengakses data sensitif organisasi." },
-              { title: "Integritas", tag: "INTEGRITY", description: "Data tetap akurat, konsisten, dan tidak diubah tanpa otorisasi sah." },
-              { title: "Ketersediaan", tag: "AVAILABILITY", description: "Sistem dan data selalu dapat diakses saat dibutuhkan oleh bisnis." },
-            ]);
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-
-          <div className="my-auto w-full flex-1 flex flex-col justify-center min-h-0 py-1">
-            <HorizontalStackCards
-              cards={stackItems}
-              primaryColor={palette.primary}
-              secondaryColor={palette.secondary || palette.accent || "#FFDD3C"}
-              isPresentation={isPresentation}
-            />
-          </div>
-
-          {slide.noteBoxText && (
-            <div className="mt-2 shrink-0">
-              <NoteBox text={slide.noteBoxText} isPresentation={isPresentation} />
-            </div>
-          )}
-
-          {renderSlideFooter()}
-        </div>
-      );
-    }
-
-    /* ──── CONNECTED RAIL STEPPER SLIDE ──── */
-    case "connectedRailStepper": {
-      const railSteps = slide.railSteps && slide.railSteps.length > 0
-        ? slide.railSteps
-        : (slide.processSteps && slide.processSteps.length > 0
-          ? slide.processSteps.map((s, idx) => ({ stepNumber: idx + 1, title: s.title, description: s.description }))
-          : (slide.bullets && slide.bullets.length > 0
-            ? slide.bullets.map((b, idx) => {
-                const colon = b.indexOf(":");
-                return {
-                  stepNumber: idx + 1,
-                  title: colon > 0 ? b.slice(0, colon).trim() : `Langkah ${idx + 1}`,
-                  description: colon > 0 ? b.slice(colon + 1).trim() : b,
-                };
-              })
-            : [
-                { stepNumber: 1, title: "Deteksi", description: "Kenali sinyal awal serangan secara proaktif." },
-                { stepNumber: 2, title: "Isolasi", description: "Batasi penyebaran dan putus jalur koneksi yang terdampak." },
-                { stepNumber: 3, title: "Investigasi", description: "Cari akar penyebab dan analisa cakupan sistem." },
-                { stepNumber: 4, title: "Pulihkan", description: "Kembalikan operasional dari cadangan terverifikasi." },
-                { stepNumber: 5, title: "Evaluasi", description: "Sempurnakan tata kelola dan komunikasikan ke pihak terkait." },
-              ]));
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-
-          <div className="my-auto w-full flex-1 flex flex-col justify-between min-h-0 py-1 gap-2 overflow-hidden">
-            <div className="my-auto w-full">
-              <ConnectedRailStepper
-                steps={railSteps}
-                primaryColor={palette.primary}
-                secondaryColor={palette.secondary || palette.accent || "#FFDD3C"}
-                isPresentation={isPresentation}
-              />
-            </div>
-
-            {(slide.insightBarText || slide.description) && (
-              <div className="shrink-0 mt-auto">
-                <InsightBar
-                  text={slide.insightBarText || slide.description || "Siapa memutuskan apa harus jelas sebelum insiden terjadi."}
-                  primaryColor={palette.primary}
-                  accentColor={palette.secondary || palette.accent || "#FFDD3C"}
-                  isPresentation={isPresentation}
-                />
-              </div>
-            )}
-          </div>
-
-          {renderSlideFooter()}
-        </div>
-      );
-    }
-
-    /* ──── ASCENDING COLUMNS SLIDE ──── */
-    case "ascendingColumns": {
-      const levels = slide.ascendingLevels && slide.ascendingLevels.length > 0
-        ? slide.ascendingLevels
-        : (slide.bullets && slide.bullets.length > 0
-          ? slide.bullets.map((b, idx) => {
-              const colon = b.indexOf(":");
-              return {
-                levelNumber: idx + 1,
-                tag: `LEVEL ${idx + 1}`,
-                title: colon > 0 ? b.slice(0, colon).trim() : `Tahap ${idx + 1}`,
-                description: colon > 0 ? b.slice(colon + 1).trim() : b,
-              };
-            })
-          : [
-              { tag: "LEVEL 1", title: "Dasar", description: "Reaktif: bertindak setelah insiden terjadi." },
-              { tag: "LEVEL 2", title: "Terkelola", description: "Kebijakan dan kontrol operasional dasar berjalan." },
-              { tag: "LEVEL 3", title: "Terukur", description: "Risiko dipantau dengan metrik dan indikator berkala." },
-              { tag: "LEVEL 4", title: "Adaptif", description: "Belajar dari insiden dan terus menyesuaikan sistem secara proaktif." },
-            ]);
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-
-          <div className="my-auto w-full flex-1 flex flex-col justify-end min-h-0 pt-2 pb-1">
-            <AscendingColumns
-              levels={levels}
-              primaryColor={palette.primary}
-              secondaryColor={palette.secondary || palette.accent || "#FFDD3C"}
-              isPresentation={isPresentation}
-            />
-          </div>
-
-          {renderSlideFooter()}
-        </div>
-      );
-    }
-
-    /* ──── EXECUTIVE CHECKLIST SLIDE ──── */
-    case "checklist": {
-      const checkItems = slide.checklistItems && slide.checklistItems.length > 0
-        ? slide.checklistItems
-        : (slide.bullets && slide.bullets.length > 0
-          ? slide.bullets
-          : [
-              "MFA aktif pada email dan seluruh dokumen kerja penting",
-              "Backup sistem diuji pemulihannya secara berkala",
-              "Perangkat dan aplikasi selalu diperbarui otomatis",
-              "Hak akses dan otorisasi ditinjau secara berkala",
-              "Aturan penggunaan AI dan batasan data telah disepakati",
-              "Seluruh tim memahami rencana respons insiden darurat",
-            ]);
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-          <div className="shrink-0 mb-2 flex items-start justify-between gap-4">
-            <div className="flex-1">
-              {renderSlideHeader()}
-            </div>
-
-            <div
-              className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shrink-0 mt-1"
-              style={{ backgroundColor: palette.secondary || palette.accent || "#FFDD3C", color: "#272525" }}
-            >
-              {checkItems.length} BUTIR
-            </div>
-          </div>
-
-          <div className="my-auto w-full flex-1 flex flex-col justify-center min-h-0">
-            <ExecutiveChecklist
-              items={checkItems}
-              primaryColor={palette.primary}
-              isPresentation={isPresentation}
-            />
-          </div>
-
-          {renderSlideFooter()}
-        </div>
-      );
-    }
-
-    /* ──── CLOSING ACTION SLIDE ──── */
-    case "closingAction": {
-      const actions = slide.bullets && slide.bullets.length > 0
-        ? slide.bullets
-        : [
-            "Aktifkan MFA pada akun email dan dokumen kerja Anda",
-            "Tanyakan ke tim: kapan terakhir backup diuji pulih?",
-            "Sepakati data apa yang boleh masuk ke tool AI publik",
-          ];
-
-      return (
-        <ClosingAction
-          tag={slide.badge || "LANGKAH BERIKUTNYA"}
-          title={safeString(slide.title)}
-          subtitle={safeString(slide.subtitle)}
-          actions={actions}
-          contactText={slide.contactFooterText}
-          primaryColor={palette.primary}
-          accentColor={palette.secondary || palette.accent || "#FFDD3C"}
-          isPresentation={isPresentation}
-          transparentBg={hasTemplateBg && isClosingBg}
-        />
-      );
-    }
-
-    /* ──── FORMULA HERO WITH SPLIT FACTORS & STAT CARD (SLIDE 2) ──── */
-    case "formulaHero": {
-      const getStatVal = (st: any): string => {
-        if (!st) return "";
-        if (typeof st === "string") return st;
-        return String(st.value || "");
-      };
-      const getStatDesc = (st: any): string => {
-        if (!st) return "";
-        if (typeof st === "string") return "";
-        return String(st.label || st.description || "");
-      };
-
-      const formulaText = slide.formulaData?.formula || slide.title || slide.description || "Decision Impact = Speed × Scale × Confidence";
-      const formulaLabel = slide.formulaData?.formulaLabel || "THE FORMULA";
-      const formulaSub = slide.formulaData?.formulaSubtext || slide.subtitle || "AI raises all three at once, for opportunity and risk alike.";
-      
-      const rawFactors = slide.formulaData?.factors && slide.formulaData.factors.length > 0
-        ? slide.formulaData.factors
-        : (slide.cards && slide.cards.length > 0
-          ? slide.cards.map((c) => ({ title: c.title, description: c.description || c.subtitle || "" }))
-          : (slide.bullets && slide.bullets.length > 0
-            ? slide.bullets.slice(0, 3).map((b, i) => {
-                const parts = b.split(/:\s*|—\s*|-\s*/);
-                return {
-                  title: parts[0]?.trim() || `Factor 0${i + 1}`,
-                  description: parts[1]?.trim() || b,
-                };
-              })
-            : [
-                { title: "Speed", description: "From periodic review to continuous decisions" },
-                { title: "Cost", description: "One more analysis costs almost nothing; one wrong decision costs a lot" },
-                { title: "Risk", description: "Low-stakes move to AI; high-stakes decisions carry more weight than ever" },
-              ]));
-
-      const rawStatBox = slide.formulaData?.statBox || (slide.stats && slide.stats.length > 0 ? {
-        value: getStatVal(slide.stats[0]) || "61%",
-        description: getStatDesc(slide.stats[0]) || getStatVal(slide.stats[1]) || "of managers say at least half their decision-making time is ineffective",
-        source: "McKinsey Quarterly",
-      } : {
-        value: "61%",
-        description: "of leaders say decision-making speed & confidence directly determines ROI",
-        source: "McKinsey Quarterly, 1,200+ managers",
-      });
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-          <FormulaHeroSplit
-            formulaLabel={formulaLabel}
-            formula={formulaText}
-            formulaSubtext={formulaSub}
-            factors={rawFactors}
-            statBox={rawStatBox}
-            primaryColor={palette.primary}
-            accentColor={palette.secondary || palette.accent || "#FFDD3C"}
-            isPresentation={isPresentation}
-          />
-          {renderSlideFooter()}
-        </div>
-      );
-    }
-
-    /* ──── TREE COMPARISON CARDS & TAKEAWAY (SLIDE 4) ──── */
-    case "treeComparison": {
-      const getStatVal = (st: any): string => {
-        if (!st) return "";
-        if (typeof st === "string") return st;
-        return String(st.value || "");
-      };
-      const getStatDesc = (st: any): string => {
-        if (!st) return "";
-        if (typeof st === "string") return "";
-        return String(st.label || st.description || "");
-      };
-
-      const topCallout = slide.treeData?.topCallout || (slide.stats && slide.stats.length > 0 ? {
-        stat: getStatVal(slide.stats[0]) || "3.2×",
-        label: getStatDesc(slide.stats[0]) || "higher metric",
-        note: slide.description || "Push everyone to the app? No: engagement drives both.",
-      } : {
-        stat: "3.2×",
-        label: "higher LTV for app users",
-        note: slide.description || "Push everyone to the app? No: underlying engagement drives both.",
-      });
-
-      const cards = slide.treeData?.cards && slide.treeData.cards.length > 0
-        ? slide.treeData.cards
-        : (slide.cards && slide.cards.length > 0
-          ? slide.cards.slice(0, 3).map((c, i) => ({
-              title: c.title,
-              description: c.description || c.subtitle || "",
-              rootNode: (c.bullets && c.bullets[0]) || "Root Cause",
-              childNodes: [(c.bullets && c.bullets[1]) || "Driver A", (c.bullets && c.bullets[2]) || "Driver B"] as [string, string],
-            }))
-          : [
-              {
-                title: "Selection bias",
-                rootNode: "Motivation",
-                childNodes: ["Joins training", "Better results"] as [string, string],
-                description: "Volunteers for a training program were already more motivated",
-              },
-              {
-                title: "Reverse causation",
-                rootNode: "Revenue growth",
-                childNodes: ["Enables hiring", "Expands footprint"] as [string, string],
-                description: "Revenue growth enables hiring, not the other way round",
-              },
-              {
-                title: "Spurious correlation",
-                rootNode: "Third factor",
-                childNodes: ["Metric A", "Metric B"] as [string, string],
-                description: "Two metrics rise together because of a third factor, e.g. economic expansion",
-              },
-            ]);
-
-      const bottomTakeaway = slide.treeData?.bottomTakeaway || slide.insightBarText || slide.highlight || (
-        "Ask before acting on any correlation: \"Is there a plausible story where something else causes both X and Y?\""
-      );
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-          <TreeComparisonCards
-            topCallout={topCallout}
-            cards={cards}
-            bottomTakeaway={bottomTakeaway}
-            primaryColor={palette.primary}
-            accentColor={palette.secondary || palette.accent || "#FFDD3C"}
-            isPresentation={isPresentation}
-          />
-          {renderSlideFooter()}
-        </div>
-      );
-    }
-
-    /* ──── CASE STUDY & 3-LINE EXERCISE (SLIDE 5) ──── */
-    case "caseExercise": {
-      const getStatVal = (st: any): string => {
-        if (!st) return "";
-        if (typeof st === "string") return st;
-        return String(st.value || "");
-      };
-      const getStatDesc = (st: any): string => {
-        if (!st) return "";
-        if (typeof st === "string") return "";
-        return String(st.label || st.description || "");
-      };
-
-      const situationText = slide.exerciseData?.situationText || slide.description || (
-        "PT Cahaya Energi Nusantara replaces about 200 smart meters a month. Today the queue is set by meter age. A vendor offers an AI model that ranks meters by failure risk using 3 years of outage logs. Dian Pratama, Head of Network Operations, must decide how to use it."
-      );
-
-      const metrics = slide.exerciseData?.dataMetrics && slide.exerciseData.dataMetrics.length > 0
-        ? slide.exerciseData.dataMetrics
-        : (slide.stats && slide.stats.length > 0
-          ? slide.stats.slice(0, 3).map((st: any, i) => ({
-              value: getStatVal(st) || `Metric 0${i + 1}`,
-              label: getStatDesc(st) || `Key Metric 0${i + 1}`,
-            }))
-          : [
-              { value: "18,400", label: "meters in service" },
-              { value: "2023–2025", label: "outage logs coverage" },
-              { value: "6%", label: "unrecorded installation date" },
-            ]);
-
-      const twist = slide.exerciseData?.twistBox || slide.calloutBox?.text || (
-        "two hospitals and a water-treatment plant are on feeders served by the oldest meters."
-      );
-
-      const lines = slide.exerciseData?.exerciseLines && slide.exerciseData.exerciseLines.length > 0
-        ? slide.exerciseData.exerciseLines
-        : (slide.bullets && slide.bullets.length > 0
-          ? slide.bullets.slice(0, 3)
-          : [
-              "Which AIDM mode fits the monthly replacement queue? Why?",
-              "Which part of the decision must stay Override, and why?",
-              "One escalation rule the AI must follow.",
-            ]);
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-          <CaseStudyExercise
-            situationTitle={slide.exerciseData?.situationTitle || "SITUATION"}
-            situationText={situationText}
-            dataMetrics={metrics}
-            twistBox={twist}
-            exerciseTitle={slide.exerciseData?.exerciseTitle || "WHAT TO WRITE · 3 LINES"}
-            exerciseLines={lines}
-            primaryColor={palette.primary}
-            accentColor={palette.secondary || palette.accent || "#FFDD3C"}
-            isPresentation={isPresentation}
-          />
-          {renderSlideFooter()}
-        </div>
-      );
-    }
-
-    /* ──── PYRAMID HIERARCHY (3-TIER APEX STRATEGY) ──── */
-    case "pyramidHierarchy": {
-      const tiers = slide.cards && slide.cards.length >= 3
-        ? slide.cards.slice(0, 3).map((c, i) => ({
-            level: i === 0 ? "Apex · Vision" : i === 1 ? "Pillars · Strategy" : "Foundation · Enablers",
-            title: c.title,
-            description: c.description || c.subtitle,
-            items: c.bullets,
-            tag: c.tag,
-          }))
-        : (slide.bullets && slide.bullets.length >= 3
-          ? [
-              { level: "Apex · Core Objective", title: slide.bullets[0], description: "Unified organizational priority", tag: "APEX" },
-              { level: "Pillars · Strategic Execution", title: slide.bullets[1], description: "Operational core thrusts", tag: "STRATEGY" },
-              { level: "Foundation · Enabling Capabilities", title: slide.bullets[2], description: "Infrastructure and cross-functional support", tag: "FOUNDATION" },
-            ]
-          : undefined);
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-          <div className="my-auto w-full flex-1 flex flex-col justify-center min-h-0 overflow-hidden py-1">
-            <PyramidHierarchy
-              tiers={tiers}
-              primaryColor={palette.primary}
-              accentColor={palette.secondary || palette.accent || "#FFDD3C"}
-              isPresentation={isPresentation}
-            />
-          </div>
-          {renderSlideFooter()}
-        </div>
-      );
-    }
-
-    /* ──── TRANSFORMATION DELTA BRIDGE (AS-IS → CATALYST → TO-BE) ──── */
-    case "transformationBridge": {
-      const asIsData = slide.pairedRows && slide.pairedRows.length > 0
-        ? {
-            title: "Kondisi Saat Ini (As-Is)",
-            tag: "CURRENT FRICTION (AS-IS)",
-            points: slide.pairedRows.map((p) => p.left),
-          }
-        : {
-            title: "Legacy Operating Model",
-            tag: "CURRENT FRICTION (AS-IS)",
-            points: slide.bullets?.slice(0, 3) || [
-              "Fragmented data silos across divisions",
-              "Manual approval bottlenecks and latency",
-              "Reactive risk management post-incident",
-            ],
-          };
-
-      const toBeData = slide.pairedRows && slide.pairedRows.length > 0
-        ? {
-            title: "Target Transformasi (To-Be)",
-            tag: "TARGET OUTCOME (TO-BE)",
-            points: slide.pairedRows.map((p) => p.right),
-          }
-        : {
-            title: "Modern Autonomous Enterprise",
-            tag: "TARGET OUTCOME (TO-BE)",
-            points: [
-              "Unified telemetry and real-time visibility",
-              "Automated compliance with human-in-the-loop",
-              "Proactive error prevention and 99.9% reliability",
-            ],
-          };
-
-      const catalystData = {
-        title: slide.highlight || "Transformation Engine",
-        description: slide.description || "Centralized digital capability standardizing execution across squads",
-        metricChange: (slide.stats && (slide.stats[0] as any)?.value) || "3x Velocity",
-      };
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-          <TransformationBridge
-            asIs={asIsData}
-            catalyst={catalystData}
-            toBe={toBeData}
-            primaryColor={palette.primary}
-            accentColor={palette.secondary || palette.accent || "#FFDD3C"}
-            isPresentation={isPresentation}
-          />
-          {renderSlideFooter()}
-        </div>
-      );
-    }
-
-    /* ──── RADIAL HUB & ECOSYSTEM (CORE MANDATE + SATELLITES) ──── */
-    case "radialHub": {
-      const satellites = slide.cards && slide.cards.length >= 4
-        ? slide.cards.slice(0, 4).map((c, i) => ({
-            title: c.title,
-            description: c.description || c.subtitle || "Operational governance sphere",
-            metric: (slide.stats && (slide.stats[i] as any)?.value) || undefined,
-            tag: c.tag || `DOMAIN 0${i + 1}`,
-          }))
-        : (slide.bullets && slide.bullets.length >= 4
-          ? slide.bullets.slice(0, 4).map((b, i) => {
-              const parts = b.split(/:\s*|—\s*|-\s*/);
-              return {
-                title: parts[0]?.trim() || `Domain 0${i + 1}`,
-                description: parts[1]?.trim() || b,
-                tag: `PILLAR 0${i + 1}`,
-              };
-            })
-          : undefined);
-
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
-          {renderSlideHeader()}
-          <RadialHubEcosystem
-            coreHubTitle={slide.highlight || slide.title || "Core Orchestration Hub"}
-            coreHubSub="Single Operational Spine"
-            satellites={satellites}
-            primaryColor={palette.primary}
-            accentColor={palette.secondary || palette.accent || "#FFDD3C"}
-            isPresentation={isPresentation}
-          />
-          {renderSlideFooter()}
-        </div>
-      );
-    }
-
-    /* ──── SPLIT CASE COMPARISON (BEFORE VS AFTER ON SPLIT BACKGROUND) ──── */
-    case "splitComparison": {
-      const beforeTitle = slide.beforeCard?.title || "BEFORE AI";
-      const beforeItems =
-        slide.beforeCard?.bullets && slide.beforeCard.bullets.length > 0
-          ? slide.beforeCard.bullets
-          : slide.pairedRows && slide.pairedRows.length > 0
-          ? slide.pairedRows.map((r) => r.left)
-          : slide.bullets && slide.bullets.length >= 2
-          ? slide.bullets.slice(0, Math.ceil(slide.bullets.length / 2))
-          : undefined;
-      const beforeText = slide.beforeCard?.description || (slide.pairedRows?.[0]?.left ? undefined : slide.description);
-
-      const afterTitle = slide.afterCard?.title || "AFTER AI";
-      const afterItems =
-        slide.afterCard?.bullets && slide.afterCard.bullets.length > 0
-          ? slide.afterCard.bullets
-          : slide.pairedRows && slide.pairedRows.length > 0
-          ? slide.pairedRows.map((r) => r.right)
-          : slide.bullets && slide.bullets.length >= 2
-          ? slide.bullets.slice(Math.ceil(slide.bullets.length / 2))
-          : undefined;
-      const afterText = slide.afterCard?.description;
-
-      const insightText =
-        slide.insightBarText ||
-        slide.highlight ||
-        "Key insight: AI didn't replace the leader. It changed what the leader decides.";
-
-      return (
-        <SplitCaseComparison
-          title={safeString(slide.title)}
-          subtitle={safeString(slide.subtitle)}
-          badge={slide.badge}
-          beforeTitle={beforeTitle}
-          beforeItems={beforeItems}
-          beforeText={beforeText}
-          afterTitle={afterTitle}
-          afterItems={afterItems}
-          afterText={afterText}
-          insightText={insightText}
-          isPresentation={isPresentation}
-          fontTitleClass={headingFontClass}
-        />
-      );
-    }
-
-    /* ──── SPLIT SPEAKER PROFILE (FACILITATOR / SPEAKER BIO) ──── */
-    case "splitProfile":
-      return (
-        <SplitProfileSlide
-          title={safeString(slide.title)}
-          subtitle={safeString(slide.subtitle || "Facilitator")}
-          badge={slide.badge}
-          tag={slide.profileData?.tag || "SPEAKER PROFILE"}
-          roleOrg={slide.profileData?.role || slide.description}
-          bio={slide.profileData?.bio || slide.bullets?.join(". ")}
-          photoUrl={slide.profileData?.photoUrl || slide.imageUrl}
-          isPresentation={isPresentation}
-          fontTitleClass={headingFontClass}
-        />
-      );
-
-    default:
-      // Safe fallback layout: Clean elegant bullets/overview
-      return (
-        <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[8%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
-          <div className="mb-2">
-            <motion.h2
-              {...anim(0)}
-              className={`text-2xl sm:text-3xl font-bold ${headingFontClass} text-neutral-950 dark:text-white leading-tight`}
-            >
-              {safeString(slide.title || "Slide Overview")}
-            </motion.h2>
-            {slide.subtitle && (
-              <motion.p {...anim(0.06)} className="text-sm sm:text-base text-neutral-500 mt-1">
-                {safeString(slide.subtitle)}
-              </motion.p>
-            )}
-          </div>
-
-          <div className="flex-1 flex flex-col justify-center gap-2.5 my-auto">
-            {slide.bullets && slide.bullets.length > 0 ? (
-              slide.bullets.map((b, i) => (
-                <motion.div key={i} {...anim(0.1 + i * 0.08)} className="flex items-start gap-2.5">
-                  <CheckCircle2
-                    className="w-4 h-4 mt-0.5 shrink-0"
-                    style={{ color: palette.primary }}
-                  />
-                  <span className="text-xs sm:text-sm text-neutral-700 dark:text-neutral-300">
-                    {safeString(b)}
-                  </span>
-                </motion.div>
-              ))
-            ) : slide.description ? (
-              <motion.p {...anim(0.12)} className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed max-w-xl">
-                {safeString(slide.description)}
-              </motion.p>
-            ) : null}
-          </div>
-
-          <div className="relative z-10 flex items-center gap-2 mt-auto">
-            <div
-              className="w-5 h-5 rounded-sm flex items-center justify-center"
-              style={{ backgroundColor: palette.primary, color: palette.id === "launcher" ? "#111" : "#fff" }}
-            >
-              <Layers className="w-3 h-3" />
-            </div>
-            <span className="text-xs font-semibold text-neutral-400">{slide.footer || ""}</span>
-          </div>
-        </div>
-      );
-    }
-  };
-
-  return (
-    <div
-      className={`w-full h-full ${bodyFontClass} select-text overflow-hidden relative slide-canvas`}
-      data-slide-canvas="true"
-      style={
-        hasTemplateBg
-          ? {
-              backgroundImage: `url(${bgImage})`,
-              backgroundSize: "100% 100%",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-            }
-          : undefined
-      }
-    >
-      {renderSlideContent()}
-    </div>
-  );
+ // ──── SKELETON GENERATING STATE (PLAIN WHITE CANVAS) ────
+ // User Rule: Sembunyikan background gambar secara total selama proses generate!
+ // Canvas harus warna putih polos murni. Baru setelah selesai generate, tampilkan hasil beserta background.
+ if (slide.isGeneratingSlide) {
+ return (
+ <div className={`w-full h-full bg-white flex flex-col justify-between p-[6%] sm:p-[7%] relative ${bodyFontClass} overflow-hidden select-none`}>
+ {/* Clean minimal slide title on plain white canvas */}
+ <div className="shrink-0 mb-3 max-w-[92%]">
+ <div className="flex items-center gap-2 mb-2">
+ <span className="w-5 h-5 rounded-full bg-[#FFDD3C] text-neutral-950 font-bold text-[10px] flex items-center justify-center">
+ {String((slideIndex || 0) + 1).padStart(2, "0")}
+ </span>
+ <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+ Blueprint Outline
+ </span>
+ </div>
+ <h2 className={`text-xl sm:text-2xl font-bold ${headingFontClass} text-neutral-900 leading-tight line-clamp-2`}>
+ {safeString(slide.title)}
+ </h2>
+ {slide.subtitle && (
+ <p className="text-xs text-neutral-500 mt-1 line-clamp-1">
+ {safeString(slide.subtitle)}
+ </p>
+ )}
+ </div>
+
+ {/* Central AI Rendering Shimmer Box on clean white canvas */}
+ <div className="w-full flex-1 flex flex-col justify-center items-center my-auto p-6 rounded-lg border border-dashed border-neutral-300 bg-neutral-50/80 text-center animate-pulse">
+ <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-[#FFDD3C] text-neutral-950 font-bold text-[10px] sm:text-xs uppercase tracking-wider mb-2.5 shadow-2xs">
+ <Sparkles className="w-3.5 h-3.5 animate-spin text-neutral-950" />
+ <span>Memproses Slide {(slideIndex || 0) + 1}</span>
+ </div>
+ <h3 className="text-xs sm:text-sm font-bold text-neutral-900 ">
+ AI sedang menyusun konten & tata letak adaptif...
+ </h3>
+ <p className="text-[11px] text-neutral-500 mt-1 max-w-sm leading-relaxed">
+ Format visual dan isi slide sedang dirancang. Background gambar dan visual lengkap akan otomatis tampil setelah selesai.
+ </p>
+ </div>
+
+ <div className="w-full flex items-center justify-between text-[10px] text-neutral-400 pt-2 border-t border-neutral-100 mt-auto">
+ <span>Launcher OS Dynamic Deck Generator</span>
+ <span className="font-mono">{String((slideIndex || 0) + 1).padStart(2, "0")} / {totalSlides}</span>
+ </div>
+ </div>
+ );
+ }
+
+ // ──── INSTITUTIONAL PART / SECTION DIVIDER (part-deck.png) ────
+ // Pure full-bleed section divider: Yellow accent bar (140x12px) + PART label + Large white title + Subtitle. Strictly NO CARDS!
+ if (hasTemplateBg && isPartBg) {
+ return (
+ <SectionDivider
+ partLabel={slide.badge || slide.category || "BAGIAN"}
+ title={safeString(slide.title)}
+ subtitle={safeString(slide.subtitle)}
+ primaryColor={palette.primary}
+ accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ transparentBg={true}
+ isDarkBg={!isUIDeck}
+ />
+ );
+ }
+
+ // ──── INSTITUTIONAL SPLIT SLIDE (task-speaker-deck.png / speaker-deck.png) ────
+ // Left blue panel (33%): Yellow accent bar + White Action Title + Golden Yellow Subtitle
+ // Right white panel (67%): Before AI Card → Arrow → After AI Card + Bottom Key Insight Strip (or Speaker Profile)
+ if (hasTemplateBg && (isTaskBg || isSpeakerBg)) {
+ const isProfile =
+ slide.layout === "splitProfile" ||
+ isSpeakerBg ||
+ Boolean(slide.profileData) ||
+ /speaker|fasilitator|profile|pembicara|narasumber/i.test(`${slide.title} ${slide.subtitle || ""} ${slide.badge || ""}`);
+
+ if (isProfile) {
+ return (
+ <SplitProfileSlide
+ title={safeString(slide.title)}
+ subtitle={safeString(slide.subtitle || "Facilitator")}
+ badge={slide.badge}
+ tag={slide.profileData?.tag || "SPEAKER PROFILE"}
+ roleOrg={slide.profileData?.role || slide.description}
+ bio={slide.profileData?.bio || slide.bullets?.join(". ")}
+ photoUrl={slide.profileData?.photoUrl || slide.imageUrl}
+ isPresentation={isPresentation}
+ fontTitleClass={headingFontClass}
+ isUIDeck={isUIDeck}
+ isBinusDeck={isBinusDeck}
+ transparentBg={hasTemplateBg}
+ />
+ );
+ }
+
+ const beforeTitle = slide.beforeCard?.title || "BEFORE AI";
+ const beforeItems =
+ slide.beforeCard?.bullets && slide.beforeCard.bullets.length > 0
+ ? slide.beforeCard.bullets
+ : slide.pairedRows && slide.pairedRows.length > 0
+ ? slide.pairedRows.map((r) => r.left)
+ : slide.bullets && slide.bullets.length >= 2
+ ? slide.bullets.slice(0, Math.ceil(slide.bullets.length / 2))
+ : undefined;
+ const beforeText = slide.beforeCard?.description || (slide.pairedRows?.[0]?.left ? undefined : slide.description);
+
+ const afterTitle = slide.afterCard?.title || "AFTER AI";
+ const afterItems =
+ slide.afterCard?.bullets && slide.afterCard.bullets.length > 0
+ ? slide.afterCard.bullets
+ : slide.pairedRows && slide.pairedRows.length > 0
+ ? slide.pairedRows.map((r) => r.right)
+ : slide.bullets && slide.bullets.length >= 2
+ ? slide.bullets.slice(Math.ceil(slide.bullets.length / 2))
+ : undefined;
+ const afterText = slide.afterCard?.description;
+
+ const insightText =
+ slide.insightBarText ||
+ slide.highlight ||
+ "Key insight: AI didn't replace the leader. It changed what the leader decides.";
+
+ return (
+ <SplitCaseComparison
+ title={safeString(slide.title)}
+ subtitle={safeString(slide.subtitle)}
+ badge={slide.badge}
+ beforeTitle={beforeTitle}
+ beforeItems={beforeItems}
+ beforeText={beforeText}
+ afterTitle={afterTitle}
+ afterItems={afterItems}
+ afterText={afterText}
+ insightText={insightText}
+ isPresentation={isPresentation}
+ fontTitleClass={headingFontClass}
+ isUIDeck={isUIDeck}
+ isBinusDeck={isBinusDeck}
+ />
+ );
+ }
+
+ switch (slide.layout) {
+ /* ──── TITLE / HERO SLIDE ──── */
+ case "title":
+ case "hero":
+ if (isCoverBg) {
+ return (
+ <div className="w-full h-full flex flex-col justify-between pt-[16%] sm:pt-[17%] px-[6.5%] pb-[6%] relative overflow-hidden bg-transparent select-none">
+ <div className="relative z-10 flex flex-col justify-start max-w-[70%]">
+ <motion.h1
+ {...anim(0.06)}
+ className={`text-xl sm:text-2xl lg:text-[28px] font-bold ${isUIDeck ? "text-black" : "text-[#174A7F]"} ${headingFontClass} leading-[1.18] tracking-tight line-clamp-3`}
+ >
+ {safeString(slide.title)}
+ </motion.h1>
+ {slide.subtitle && (
+ <motion.p
+ {...anim(0.12)}
+ className={`text-xs sm:text-sm lg:text-[15px] font-semibold ${isUIDeck ? "text-[#AC9629]" : isBinusDeck ? "text-[#018ED5]" : "text-[#005AAB]"} mt-2 sm:mt-2.5 leading-snug line-clamp-2`}
+ >
+ {safeString(slide.subtitle)}
+ </motion.p>
+ )}
+ </div>
+
+ {/* 3 meta lines at bottom-left per ITB rules (week · program · facilitator) */}
+ <div className="relative z-10 mt-auto max-w-[65%] text-[9.5px] sm:text-[11px] font-normal text-[#555555] leading-snug space-y-0.5">
+ <p className="truncate">{slide.category || "[Program Name]"}</p>
+ <p className="truncate">{slide.highlight || "Executive Education Program"}</p>
+ <p className="truncate">{slide.quote?.author || slide.badge || (isBinusDeck ? "BINUS University & RevoU" : isUIDeck ? "Universitas Indonesia & RevoU" : "Direktorat Pendidikan Non Reguler ITB & RevoU")}</p>
+ </div>
+
+ <div className="absolute bottom-[4%] right-[6%] text-[11px] font-bold text-white/90 tabular-nums">
+ {slide.slideNumber ? String(slide.slideNumber).padStart(2, "0") : "01"}
+ </div>
+ </div>
+ );
+ }
+
+ if (isDualTone) {
+ return (
+ <div className="w-full h-full flex flex-col md:flex-row relative overflow-hidden bg-white ">
+ {/* Left 42% Primary Color Block */}
+ <div
+ className="w-full md:w-[42%] h-full p-[6%] flex flex-col justify-between shrink-0 relative z-10"
+ style={{ backgroundColor: palette.primary, color: primaryTextColor }}
+ >
+ <div className="flex items-center justify-between">
+ <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md bg-black/15 ">
+ {slide.badge || slide.highlight || "01"}
+ </span>
+ <span className="text-lg sm:text-xl font-mono font-bold opacity-45">
+ {String(slide.slideNumber || 1).padStart(2, "0")}
+ </span>
+ </div>
+
+ <div className="my-auto py-4">
+ <motion.h1
+ {...anim(0.06)}
+ className={`text-xl sm:text-2xl lg:text-[28px] font-bold ${headingFontClass} leading-[1.15] tracking-tight line-clamp-3`}
+ >
+ {safeString(slide.title)}
+ </motion.h1>
+ </div>
+
+ <div className="text-[10px] sm:text-[11px] font-mono tracking-wider opacity-60 uppercase">
+ {slide.category || "EXECUTIVE BRIEFING"}
+ </div>
+ </div>
+
+ {/* Right 58% Secondary/White Canvas Block */}
+ <div className="flex-1 h-full p-[6%] flex flex-col justify-between relative z-10 bg-neutral-50/50 ">
+ <div className="flex items-center justify-end">
+ {slide.highlight && (
+ <span
+ className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wider"
+ style={{
+ backgroundColor: palette.primary,
+ color: primaryTextColor,
+ }}
+ >
+ {safeString(slide.highlight)}
+ </span>
+ )}
+ </div>
+
+ <div className="my-auto max-w-[95%] space-y-3">
+ {slide.subtitle && (
+ <motion.p
+ {...anim(0.12)}
+ className="text-sm sm:text-base font-semibold text-neutral-800 leading-snug line-clamp-2"
+ >
+ {safeString(slide.subtitle)}
+ </motion.p>
+ )}
+ {slide.description && (
+ <motion.p
+ {...anim(0.18)}
+ className="text-xs sm:text-[13px] text-neutral-600 leading-relaxed line-clamp-3"
+ >
+ {safeString(slide.description)}
+ </motion.p>
+ )}
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={false} />
+ </div>
+ </div>
+ );
+ }
+
+ return (
+ <div
+ className={`w-full h-full flex flex-col justify-between p-[6%] sm:p-[7%] relative overflow-hidden ${bgClasses}`}
+ style={dynamicBgStyle}
+ >
+ {/* Subtle Ambient Shapes */}
+ {!hasTemplateBg && (
+ <div
+ className="absolute -top-[20%] -right-[15%] w-[50%] h-[65%] rounded-full opacity-20 blur-3xl pointer-events-none"
+ style={{ backgroundColor: palette.primary }}
+ />
+ )}
+
+ <SlideFrameHeader
+ badge={slide.badge || slide.highlight || "PRESENTATION"}
+ category={slide.category}
+ isDark={isDarkSlide}
+ primaryColor={palette.primary}
+ hasTemplateBg={hasTemplateBg}
+ />
+
+ <div className="relative z-10 flex flex-col justify-center flex-1 max-w-[85%] my-auto">
+ {slide.highlight && (
+ <motion.span
+ {...anim(0)}
+ className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wider w-fit mb-2.5"
+ style={{
+ backgroundColor: palette.id === "launcher" ? "#FFE500" : palette.primary,
+ color: "#111111",
+ }}
+ >
+ {safeString(slide.highlight)}
+ </motion.span>
+ )}
+ <motion.h1
+ {...anim(0.06)}
+ className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${isCoverBg ? (isUIDeck ? "text-black " : "text-[#174A7F] ") : (isUIDeck ? "text-black " : "text-[#005AAB] ")} leading-[1.15] tracking-tight line-clamp-3`}
+ >
+ {safeString(slide.title)}
+ </motion.h1>
+ {slide.subtitle && (
+ <motion.p
+ {...anim(0.12)}
+ className={`text-xs sm:text-sm lg:text-base font-semibold ${isUIDeck ? "text-neutral-700" : "text-[#005AAB]"} mt-2.5 leading-snug line-clamp-2`}
+ >
+ {safeString(slide.subtitle)}
+ </motion.p>
+ )}
+ {slide.description && (
+ <motion.p
+ {...anim(0.18)}
+ className={`text-xs sm:text-[13px] ${isCoverBg ? "text-[#555555] " : "text-neutral-500 "} mt-3 leading-relaxed line-clamp-2`}
+ >
+ {safeString(slide.description)}
+ </motion.p>
+ )}
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} hasTemplateBg={hasTemplateBg} />
+ </div>
+ );
+
+ /* ──── STATS SLIDE ──── */
+ case "stats":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+
+ {/* Stats Grid */}
+ <div className={`grid ${(slide.stats?.length || 0) === 3 ? "grid-cols-3" : (slide.stats?.length || 0) === 1 ? "grid-cols-1 max-w-sm mx-auto" : "grid-cols-2"} gap-3 sm:gap-4 my-auto w-full`}>
+ {slide.stats?.map((stat, i) => {
+ const isYellow = i % 2 === 0;
+ return (
+ <motion.div
+ key={i}
+ {...anim(0.15 + i * 0.08)}
+ className={`p-4 sm:p-5 rounded-md border flex flex-col justify-between ${
+ getCardTheme(isYellow).cardBgClass
+ }`}
+ >
+ <span
+ className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-none"
+ style={{ color: getCardTheme(isYellow).numColor }}
+ >
+ {safeString(stat?.value)}
+ </span>
+ <span className={`text-xs sm:text-sm mt-2 font-medium leading-snug ${getCardTheme(isYellow).titleClass + " "}`}>
+ {safeString(stat?.label)}
+ </span>
+ </motion.div>
+ );
+ })}
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── PROCESS / ROADMAP SLIDE (EXECUTIVE ROADMAP WITH CONNECTING RAIL & PHASE CHIPS) ──── */
+ case "process": {
+ const processItems = (slide.processSteps && slide.processSteps.length > 0)
+ ? slide.processSteps
+ : (slide.bullets && slide.bullets.length > 0)
+ ? slide.bullets.map((b, idx) => {
+ const parts = b.split(/:\s*|\s*-\s*/);
+ return {
+ title: parts[0] || `Pillar 0${idx + 1}`,
+ description: parts.length > 1 ? parts.slice(1).join(": ") : parts[0],
+ };
+ })
+ : [];
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between px-[5%] sm:px-[6%] py-3.5 sm:py-4.5 relative ${bodyFontClass}`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+
+ <div className="relative my-auto flex flex-col justify-center gap-2.5 sm:gap-3 pl-1 sm:pl-2">
+ {/* Elegant vertical connecting guide track */}
+ {processItems.length > 1 && (
+ <div
+ className="absolute left-[20px] sm:left-[24px] top-4 bottom-4 w-0.5 rounded-full z-0"
+ style={{
+ background: `linear-gradient(to bottom, ${palette.primary} 0%, ${palette.primary}60 70%, transparent 100%)`,
+ }}
+ />
+ )}
+
+ {processItems.map((step, i) => {
+ const fullTitle = safeString(step?.title);
+ const colonIndex = fullTitle.indexOf(":");
+ const hasColon = colonIndex > 0 && colonIndex < 40;
+ const phaseTag = hasColon ? fullTitle.slice(0, colonIndex).trim() : null;
+ const mainHeading = hasColon ? fullTitle.slice(colonIndex + 1).trim() : fullTitle;
+ const isYellow = i % 2 === 0;
+
+ return (
+ <motion.div
+ key={i}
+ {...anim(0.08 + i * 0.05)}
+ className={`group relative flex items-start gap-3 sm:gap-3.5 p-3 sm:p-3.5 rounded-md border hover:shadow-xs transition-all z-10 ${
+ getCardTheme(isYellow).cardBgClass
+ }`}
+ >
+ <div
+ className={`shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-sm text-xs font-bold flex items-center justify-center ${
+ getCardTheme(isYellow).badgeBgClass
+ }`}
+ >
+ {String(i + 1).padStart(2, "0")}
+ </div>
+
+ <div className="min-w-0 flex-1">
+ <div className="flex flex-wrap items-center gap-2">
+ {phaseTag && (
+ <span
+ className="text-[10px] sm:text-[10.5px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded"
+ style={{
+ backgroundColor: `${palette.primary}18`,
+ color: palette.primary,
+ }}
+ >
+ {phaseTag}
+ </span>
+ )}
+ <h4 className="text-xs sm:text-sm font-bold text-neutral-900 leading-snug">
+ {mainHeading}
+ </h4>
+ </div>
+
+ {step?.description && step.description !== fullTitle && (
+ <p className="text-xs text-neutral-600 leading-relaxed mt-1">
+ {safeString(step?.description)}
+ </p>
+ )}
+ </div>
+ </motion.div>
+ );
+ })}
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+ }
+
+ /* ──── BULLETS SLIDE ──── */
+ case "bullets": {
+ // 1. Intelligent Content Extraction: If bulletsList is empty, attempt to parse structured items from description
+ let bulletsList = (slide.bullets || []).filter(Boolean);
+ let cleanDescription = slide.description;
+
+ if (bulletsList.length === 0 && cleanDescription) {
+ // Extract numbered/labeled items like "Decision 1: ... Decision 2: ...", "Step 1: ...", or numbered lists "1. ... 2. ..."
+ const labeledRegex = /(?:(?:Decision|Pilar|Pillar|Langkah|Step|Point|Poin|Fase|Phase)\s*\d+[:\.]?|(?:\d+[\.\)]))\s*([^]+?)(?=(?:(?:Decision|Pilar|Pillar|Langkah|Step|Point|Poin|Fase|Phase)\s*\d+[:\.]?|(?:\d+[\.\)]))|$)/gi;
+ const matches = [...cleanDescription.matchAll(labeledRegex)];
+ if (matches.length >= 2) {
+ bulletsList = matches.map((m) => m[0].trim());
+ cleanDescription = undefined; // Items extracted into cards
+ } else {
+ // Check for bullet points or semicolon-separated items
+ const lineItems = cleanDescription
+ .split(/\n|(?<=[.!?])\s+(?=[A-Z0-9])|;\s*/)
+ .map((s) => s.trim().replace(/^[-•*]\s*/, ""))
+ .filter((s) => s.length >= 15 && s.length <= 180);
+ if (lineItems.length >= 2 && lineItems.length <= 5) {
+ bulletsList = lineItems;
+ cleanDescription = undefined;
+ }
+ }
+ }
+
+ const hasBullets = bulletsList.length > 0;
+ const isDense = bulletsList.length >= 4;
+
+ // If no bullets exist and no list can be extracted, render as a wide, balanced executive narrative slide (NO empty right column!)
+ if (!hasBullets) {
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ <div className="my-auto max-w-[92%] space-y-4">
+ <motion.h2
+ {...anim(0.06)}
+ className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}
+ >
+ {safeString(slide.title)}
+ </motion.h2>
+
+ {slide.subtitle && (
+ <motion.p {...anim(0.12)} className="text-sm sm:text-base text-neutral-600 font-medium leading-relaxed">
+ {safeString(slide.subtitle)}
+ </motion.p>
+ )}
+
+ {slide.description && (
+ <motion.div
+ {...anim(0.18)}
+ className={`p-5 sm:p-6 rounded-md ${isUIDeck ? "bg-[#FFFDF5] border-2 border-[#FEDE3B]" : "bg-[#EAF2FB] border border-[#005AAB]/30"} max-w-4xl`}
+ >
+ <p className="text-sm sm:text-[15px] text-neutral-800 leading-relaxed font-normal">
+ {safeString(slide.description)}
+ </p>
+ </motion.div>
+ )}
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+ }
+
+ const count = bulletsList.length;
+ const gridCols = count === 3 ? "grid-cols-3" : count === 1 ? "grid-cols-1 max-w-2xl mx-auto" : "grid-cols-2";
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[4.5%] sm:p-[5.5%] relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ {/* Executive Top Header */}
+ {renderSlideHeader()}
+
+ {/* Full-Width Structured Cards Area */}
+ <div className="flex-1 min-h-0 flex flex-col justify-center my-auto overflow-hidden">
+ <div className={`grid ${gridCols} gap-3 sm:gap-4 w-full`}>
+ {bulletsList.slice(0, 6).map((bullet, i) => {
+ const bulletStr = safeString(bullet);
+ const colonIdx = bulletStr.indexOf(":");
+ const hasLabel = colonIdx > 0 && colonIdx < 40;
+ const label = hasLabel ? bulletStr.slice(0, colonIdx).trim() : `Pillar 0${i + 1}`;
+ const content = hasLabel ? bulletStr.slice(colonIdx + 1).trim() : bulletStr;
+ const isYellow = i % 2 === 0;
+
+ return (
+ <motion.div
+ key={i}
+ {...anim(0.12 + i * 0.05)}
+ className={`p-3.5 sm:p-4 rounded-md border flex flex-col justify-start gap-1.5 overflow-hidden ${
+ getCardTheme(isYellow).cardBgClass
+ }`}
+ >
+ <div className="flex items-center justify-between gap-2 shrink-0">
+ <span className={`text-xs sm:text-sm font-bold line-clamp-1 ${
+ getCardTheme(isYellow).titleClass + " "
+ }`}>
+ {label}
+ </span>
+ <span
+ className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-sm shrink-0 ${
+ getCardTheme(isYellow).badgeBgClass
+ }`}
+ >
+ 0{i + 1}
+ </span>
+ </div>
+ <p className={`text-xs leading-relaxed line-clamp-4 ${
+ getCardTheme(isYellow).descClass + " "
+ }`}>
+ {content}
+ </p>
+ </motion.div>
+ );
+ })}
+ </div>
+
+ {/* Optional Insight Bar / Bottom Narrative */}
+ {(slide.insightBarText || cleanDescription) && (
+ <motion.div
+ {...anim(0.24)}
+ className="mt-3 p-2.5 sm:p-3 rounded-lg flex items-center gap-2.5 shrink-0"
+ style={{
+ backgroundColor: `${palette.primary}15`,
+ borderLeft: `4px solid ${palette.primary}`,
+ }}
+ >
+ <Lightbulb className="w-4 h-4 shrink-0" style={{ color: palette.primary }} />
+ <p className="text-xs font-medium text-neutral-800 leading-snug line-clamp-2">
+ <span className="font-bold">Insight: </span>
+ {safeString(slide.insightBarText || cleanDescription)}
+ </p>
+ </motion.div>
+ )}
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+ }
+
+ /* ──── TWO COLUMN SLIDE ──── */
+ case "twoColumn":
+ if (isDualTone) {
+ return renderDualToneSplit(
+ <div>
+ <h2 className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} leading-tight`}>
+ {safeString(slide.title)}
+ </h2>
+ {slide.subtitle && (
+ <p className="text-xs sm:text-sm mt-3 opacity-80 leading-relaxed">
+ {safeString(slide.subtitle)}
+ </p>
+ )}
+ </div>,
+ <div className="my-auto space-y-4">
+ {slide.stats && slide.stats.length > 0 ? (
+ <div className="grid grid-cols-2 gap-4">
+ {slide.stats.map((stat, i) => (
+ <motion.div
+ key={i}
+ {...anim(0.1 + i * 0.1)}
+ className={`relative p-4 sm:p-5 rounded-lg border ${
+ i === 0
+ ? "bg-white border-neutral-200 "
+ : "bg-amber-50/50 border-amber-200/60 "
+ }`}
+ >
+ <TrendingUp className="w-4 h-4 text-neutral-400 mb-2" />
+ <div
+ className="text-2xl sm:text-3xl font-black tracking-tight"
+ style={{ color: i === 0 ? undefined : palette.primary }}
+ >
+ {safeString(stat?.value)}
+ </div>
+ <span className="text-xs sm:text-sm text-neutral-600 mt-1 block">
+ {safeString(stat?.label)}
+ </span>
+ </motion.div>
+ ))}
+ </div>
+ ) : slide.bullets && slide.bullets.length > 0 ? (
+ (() => {
+ const items = slide.bullets.slice(0, 4);
+ const count = items.length;
+ const gridColsClass = count === 3 ? "grid-cols-3" : count === 1 ? "grid-cols-1" : "grid-cols-2";
+ const cardPadding = count >= 4 ? "p-2.5 sm:p-3" : count === 3 ? "p-3 sm:p-3.5" : "p-3.5 sm:p-4";
+ const gapClass = count >= 4 ? "gap-2 sm:gap-2.5" : "gap-3 sm:gap-3.5";
+
+ return (
+ <div className={`grid ${gridColsClass} ${gapClass}`}>
+ {items.map((bullet, i) => {
+ const parts = bullet.split(/:\s*|\s*-\s*/);
+ const bTitle = parts.length > 1 ? parts[0] : `Pillar 0${i + 1}`;
+ const bDesc = parts.length > 1 ? parts.slice(1).join(": ") : parts[0];
+ return (
+ <motion.div
+ key={i}
+ {...anim(0.1 + i * 0.08)}
+ className={`${cardPadding} rounded-lg border border-neutral-200/90 bg-white flex flex-col justify-start gap-1 sm:gap-1.5 overflow-hidden`}
+ >
+ <div className="flex items-center gap-2 shrink-0">
+ <span
+ className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-neutral-950 shrink-0"
+ style={{ backgroundColor: palette.primary }}
+ >
+ 0{i + 1}
+ </span>
+ <span className="text-xs font-bold text-neutral-900 line-clamp-1">
+ {bTitle}
+ </span>
+ </div>
+ <p className="text-[11px] sm:text-xs text-neutral-600 leading-relaxed line-clamp-4">
+ {bDesc}
+ </p>
+ </motion.div>
+ );
+ })}
+ </div>
+ );
+ })()
+ ) : null}
+ {slide.description && (
+ <p className="text-xs text-neutral-500 leading-relaxed">
+ {safeString(slide.description)}
+ </p>
+ )}
+ </div>,
+ "36%"
+ );
+ }
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[4.5%] sm:p-[5%] relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ {/* Header Bar */}
+ {renderSlideHeader()}
+
+ {/* Cards & Content Area */}
+ <div className="flex-1 min-h-0 flex flex-col justify-center my-auto overflow-hidden">
+ {slide.stats && slide.stats.length > 0 ? (
+ <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
+ {slide.stats.map((stat, i) => {
+ const isYellow = i % 2 === 0;
+ return (
+ <motion.div
+ key={i}
+ {...anim(0.1 + i * 0.1)}
+ className={`relative p-3.5 sm:p-4 rounded-md border ${
+ getCardTheme(isYellow).cardBgClass
+ }`}
+ >
+ <TrendingUp className={`w-4 h-4 mb-1.5 ${getCardTheme(isYellow).iconColor}`} />
+ <div
+ className="text-2xl sm:text-3xl font-bold tracking-tight"
+ style={{ color: getCardTheme(isYellow).numColor }}
+ >
+ {safeString(stat?.value)}
+ </div>
+ <span className={`text-xs sm:text-sm mt-1 block font-medium ${getCardTheme(isYellow).titleClass + " "}`}>
+ {safeString(stat?.label)}
+ </span>
+ </motion.div>
+ );
+ })}
+ </div>
+ ) : slide.bullets && slide.bullets.length > 0 ? (
+ (() => {
+ const items = slide.bullets.slice(0, 4);
+ const count = items.length;
+ // Responsive Columns: 3 items = 3 cols (1 row), 2 items = 2 cols (1 row), 4 items = 2x2 compact
+ const gridColsClass = count === 3 ? "grid-cols-3" : count === 1 ? "grid-cols-1 max-w-xl mx-auto" : "grid-cols-2";
+ const cardPadding = count >= 4 ? "p-2.5 sm:p-3" : count === 3 ? "p-3 sm:p-3.5" : "p-3.5 sm:p-4";
+ const gapClass = count >= 4 ? "gap-2 sm:gap-2.5" : "gap-3 sm:gap-3.5";
+
+ return (
+ <div className={`grid ${gridColsClass} ${gapClass} w-full`}>
+ {items.map((bullet, i) => {
+ const parts = bullet.split(/:\s*|\s*-\s*/);
+ const bTitle = parts.length > 1 ? parts[0] : `Pillar 0${i + 1}`;
+ const bDesc = parts.length > 1 ? parts.slice(1).join(": ") : parts[0];
+ const isYellow = i % 2 === 0;
+
+ return (
+ <motion.div
+ key={i}
+ {...anim(0.1 + i * 0.08)}
+ className={`${cardPadding} rounded-md border flex flex-col justify-start gap-1 sm:gap-1.5 overflow-hidden ${
+ getCardTheme(isYellow).cardBgClass
+ }`}
+ >
+ <div className="flex items-center gap-2 shrink-0">
+ <span
+ className={`w-5 h-5 rounded-sm flex items-center justify-center text-[10px] font-bold shrink-0 ${
+ getCardTheme(isYellow).badgeBgClass
+ }`}
+ >
+ 0{i + 1}
+ </span>
+ <h4 className={`text-xs sm:text-sm font-bold leading-snug line-clamp-1 ${
+ getCardTheme(isYellow).titleClass + " "
+ }`}>
+ {bTitle}
+ </h4>
+ </div>
+ <p className={`text-[11px] sm:text-xs leading-relaxed line-clamp-4 ${
+ getCardTheme(isYellow).descClass + " "
+ }`}>
+ {bDesc}
+ </p>
+ </motion.div>
+ );
+ })}
+ </div>
+ );
+ })()
+ ) : slide.description ? (
+ <motion.div {...anim(0.15)} className={`w-full p-4 sm:p-5 rounded-md ${isUIDeck ? "bg-[#FFFDF5] border-2 border-[#FEDE3B]" : "border border-[#005AAB]/30 bg-[#EAF2FB]"} text-neutral-800 `}>
+ <p className="text-xs sm:text-sm text-neutral-700 leading-relaxed">
+ {safeString(slide.description)}
+ </p>
+ </motion.div>
+ ) : null}
+ </div>
+
+ {/* Footer Bar */}
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── BIG NUMBER SLIDE ──── */
+ case "bigNumber":
+ if (isDualTone) {
+ return renderDualToneSplit(
+ <div>
+ <h2 className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} leading-tight`}>
+ {safeString(slide.title)}
+ </h2>
+ </div>,
+ <div className="my-auto">
+ {slide.highlight && (
+ <motion.div
+ {...anim(0.08)}
+ className="text-5xl sm:text-7xl font-black tracking-tighter my-3 leading-none"
+ style={{ color: palette.primary }}
+ >
+ {safeString(slide.highlight)}
+ </motion.div>
+ )}
+ {slide.description && (
+ <motion.p {...anim(0.16)} className="text-xs sm:text-sm text-neutral-600 max-w-[85%] leading-relaxed">
+ {safeString(slide.description)}
+ </motion.p>
+ )}
+ </div>,
+ "w-[38%]"
+ );
+ }
+
+ return (
+ <div
+ className={`w-full h-full flex flex-col justify-center p-[8%] relative overflow-hidden ${bodyFontClass}`}
+ style={{ backgroundColor: palette.primary }}
+ >
+ <div className="absolute -bottom-[20%] -right-[15%] w-[50%] h-[65%] rounded-full bg-white/20" />
+
+ <div className="relative z-10">
+ <motion.h2
+ {...anim(0)}
+ className="text-base sm:text-lg font-semibold text-neutral-900 leading-tight"
+ >
+ {safeString(slide.title)}
+ </motion.h2>
+ {slide.highlight && (
+ <motion.div
+ {...anim(0.08)}
+ className="text-5xl sm:text-7xl font-black text-neutral-950 tracking-tighter my-4 sm:my-6 leading-none"
+ >
+ {safeString(slide.highlight)}
+ </motion.div>
+ )}
+ {slide.description && (
+ <motion.p {...anim(0.16)} className="text-xs sm:text-sm text-neutral-900/80 max-w-[80%] leading-relaxed">
+ {safeString(slide.description)}
+ </motion.p>
+ )}
+
+ {slide.stats && slide.stats.length > 0 && (
+ <div className="flex gap-6 mt-6">
+ {slide.stats.map((stat, i) => (
+ <motion.div key={i} {...anim(0.2 + i * 0.08)}>
+ <div className="text-2xl sm:text-3xl font-bold text-neutral-950">
+ {safeString(stat?.value)}
+ </div>
+ <div className="text-xs text-neutral-900/70">{safeString(stat?.label)}</div>
+ </motion.div>
+ ))}
+ </div>
+ )}
+ </div>
+ </div>
+ );
+
+ /* ──── BAR CHART SLIDE ──── */
+ /* ──── BAR CHART SLIDE ──── */
+ case "chartBar": {
+ const hasNarrative = Boolean(slide.description || (slide.bullets && slide.bullets.length > 0) || (slide.stats && slide.stats.length > 0));
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
+ {hasNarrative ? (
+ <div className="flex flex-col lg:flex-row gap-6 w-full h-full min-h-0 items-center">
+ {/* Left Column: Context, Narrative & Key Highlights */}
+ <div className="w-full lg:w-[45%] flex flex-col justify-center min-w-0">
+ {slide.badge && (
+ <span
+ className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider w-fit mb-2"
+ style={{ backgroundColor: palette.primary, color: "#111111" }}
+ >
+ {slide.badge}
+ </span>
+ )}
+ <motion.h2
+ {...anim(0)}
+ className={`${isPresentation ? "text-2xl sm:text-3xl" : "text-base sm:text-xl"} font-bold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && (
+ <motion.p {...anim(0.06)} className={`${baseFont} text-neutral-500 text-xs sm:text-sm mt-1 leading-snug`}>
+ {slide.subtitle}
+ </motion.p>
+ )}
+ {slide.description && (
+ <motion.div
+ {...anim(0.12)}
+ className={`mt-3 p-3 rounded-md ${isUIDeck ? "bg-[#FFFDF5] border-2 border-[#FEDE3B]" : "bg-[#EAF2FB] border border-[#005AAB]/30"}`}
+ >
+ <p className={`${baseFont} text-neutral-700 text-xs sm:text-sm leading-relaxed`}>
+ {slide.description}
+ </p>
+ </motion.div>
+ )}
+ {slide.bullets && slide.bullets.length > 0 && (
+ <div className="mt-3 space-y-1.5">
+ {slide.bullets.slice(0, 3).map((b, i) => (
+ <motion.div key={i} {...anim(0.16 + i * 0.05)} className="flex items-start gap-2">
+ <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: palette.primary }} />
+ <span className="text-xs text-neutral-700 leading-snug">{b}</span>
+ </motion.div>
+ ))}
+ </div>
+ )}
+ </div>
+
+ {/* Right Column: Clean Chart Container */}
+ <div className="w-full lg:w-[55%] h-full min-h-0 flex items-center justify-center p-3 sm:p-4 rounded-md bg-neutral-50/80 border border-neutral-200/60 ">
+ <SlideChart type="bar" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
+ </div>
+ </div>
+ ) : (
+ <>
+ <div className="mb-2 sm:mb-4">
+ <motion.h2
+ {...anim(0)}
+ className={`${isPresentation ? "text-3xl" : "text-base sm:text-xl"} font-bold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && <motion.p {...anim(0.06)} className={`${baseFont} text-neutral-500 mt-0.5`}>{slide.subtitle}</motion.p>}
+ </div>
+ <div className="flex-1 flex items-center justify-center min-h-0">
+ <SlideChart type="bar" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
+ </div>
+ </>
+ )}
+ </div>
+ );
+ }
+
+ /* ──── AREA CHART SLIDE ──── */
+ case "chartArea": {
+ const hasNarrative = Boolean(slide.description || (slide.bullets && slide.bullets.length > 0) || (slide.stats && slide.stats.length > 0));
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
+ {hasNarrative ? (
+ <div className="flex flex-col lg:flex-row gap-6 w-full h-full min-h-0 items-center">
+ <div className="w-full lg:w-[45%] flex flex-col justify-center min-w-0">
+ {slide.badge && (
+ <span
+ className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider w-fit mb-2"
+ style={{ backgroundColor: palette.primary, color: "#111111" }}
+ >
+ {slide.badge}
+ </span>
+ )}
+ <motion.h2
+ {...anim(0)}
+ className={`${isPresentation ? "text-2xl sm:text-3xl" : "text-base sm:text-xl"} font-bold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && (
+ <motion.p {...anim(0.06)} className={`${baseFont} text-neutral-500 text-xs sm:text-sm mt-1 leading-snug`}>
+ {slide.subtitle}
+ </motion.p>
+ )}
+ {slide.description && (
+ <motion.div
+ {...anim(0.12)}
+ className={`mt-3 p-3 rounded-md ${isUIDeck ? "bg-[#FFFDF5] border-2 border-[#FEDE3B]" : "bg-[#EAF2FB] border border-[#005AAB]/30"}`}
+ >
+ <p className={`${baseFont} text-neutral-700 text-xs sm:text-sm leading-relaxed`}>
+ {slide.description}
+ </p>
+ </motion.div>
+ )}
+ {slide.bullets && slide.bullets.length > 0 && (
+ <div className="mt-3 space-y-1.5">
+ {slide.bullets.slice(0, 3).map((b, i) => (
+ <motion.div key={i} {...anim(0.16 + i * 0.05)} className="flex items-start gap-2">
+ <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: palette.primary }} />
+ <span className="text-xs text-neutral-700 leading-snug">{b}</span>
+ </motion.div>
+ ))}
+ </div>
+ )}
+ </div>
+
+ <div className="w-full lg:w-[55%] h-full min-h-0 flex items-center justify-center p-3 sm:p-4 rounded-md bg-neutral-50/80 border border-neutral-200/60 ">
+ <SlideChart type="area" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
+ </div>
+ </div>
+ ) : (
+ <>
+ <div className="mb-2 sm:mb-4">
+ <motion.h2
+ {...anim(0)}
+ className={`${isPresentation ? "text-3xl" : "text-base sm:text-xl"} font-bold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && <motion.p {...anim(0.06)} className={`${baseFont} text-neutral-500 mt-0.5`}>{slide.subtitle}</motion.p>}
+ </div>
+ <div className="flex-1 flex items-center justify-center min-h-0">
+ <SlideChart type="area" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
+ </div>
+ </>
+ )}
+ </div>
+ );
+ }
+
+ /* ──── DONUT CHART SLIDE ──── */
+ case "chartDonut": {
+ const hasNarrative = Boolean(slide.description || (slide.bullets && slide.bullets.length > 0) || (slide.stats && slide.stats.length > 0));
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
+ {hasNarrative ? (
+ <div className="flex flex-col lg:flex-row gap-6 w-full h-full min-h-0 items-center">
+ <div className="w-full lg:w-[45%] flex flex-col justify-center min-w-0">
+ {slide.badge && (
+ <span
+ className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider w-fit mb-2"
+ style={{ backgroundColor: palette.primary, color: "#111111" }}
+ >
+ {slide.badge}
+ </span>
+ )}
+ <motion.h2
+ {...anim(0)}
+ className={`${isPresentation ? "text-2xl sm:text-3xl" : "text-base sm:text-xl"} font-bold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && (
+ <motion.p {...anim(0.06)} className={`${baseFont} text-neutral-500 text-xs sm:text-sm mt-1 leading-snug`}>
+ {slide.subtitle}
+ </motion.p>
+ )}
+ {slide.description && (
+ <motion.div
+ {...anim(0.12)}
+ className={`mt-3 p-3 rounded-md ${isUIDeck ? "bg-[#FFFDF5] border-2 border-[#FEDE3B]" : "bg-[#EAF2FB] border border-[#005AAB]/30"}`}
+ >
+ <p className={`${baseFont} text-neutral-700 text-xs sm:text-sm leading-relaxed`}>
+ {slide.description}
+ </p>
+ </motion.div>
+ )}
+ {slide.bullets && slide.bullets.length > 0 && (
+ <div className="mt-3 space-y-1.5">
+ {slide.bullets.slice(0, 3).map((b, i) => (
+ <motion.div key={i} {...anim(0.16 + i * 0.05)} className="flex items-start gap-2">
+ <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: palette.primary }} />
+ <span className="text-xs text-neutral-700 leading-snug">{b}</span>
+ </motion.div>
+ ))}
+ </div>
+ )}
+ </div>
+
+ <div className="w-full lg:w-[55%] h-full min-h-0 flex items-center justify-center p-3 sm:p-4 rounded-md bg-neutral-50/80 border border-neutral-200/60 ">
+ <SlideChart type="donut" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
+ </div>
+ </div>
+ ) : (
+ <>
+ <div className="mb-2 sm:mb-4">
+ <motion.h2
+ {...anim(0)}
+ className={`${isPresentation ? "text-3xl" : "text-base sm:text-xl"} font-bold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && <motion.p {...anim(0.06)} className={`${baseFont} text-neutral-500 mt-0.5`}>{slide.subtitle}</motion.p>}
+ </div>
+ <div className="flex-1 flex items-center justify-center min-h-0">
+ <SlideChart type="donut" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
+ </div>
+ </>
+ )}
+ </div>
+ );
+ }
+
+ /* ──── FLOW DIAGRAM SLIDE ──── */
+ case "flowDiagram":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[7%] relative ${bodyFontClass} justify-between`} style={dynamicBgStyle}>
+ <div className="mb-2">
+ <motion.h2
+ {...anim(0)}
+ className={`${isPresentation ? "text-3xl" : "text-base sm:text-xl"} font-bold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && <motion.p {...anim(0.06)} className={`${baseFont} text-neutral-500 mt-0.5`}>{slide.subtitle}</motion.p>}
+ </div>
+ <div className="flex-1 flex items-center justify-center my-auto">
+ <FlowDiagram nodes={slide.flowNodes} primaryColor={palette.primary} isPresentation={isPresentation} />
+ </div>
+ {slide.description && (
+ <motion.p {...anim(0.2)} className={`${baseFont} text-neutral-500 text-center max-w-xl mx-auto mt-2 leading-relaxed`}>
+ {slide.description}
+ </motion.p>
+ )}
+ </div>
+ );
+
+ /* ──── COMPARISON TABLE MATRIX SLIDE ──── */
+ case "tableComparison": {
+ const hasRealTableRows = slide.tableRows && slide.tableRows.length > 0;
+ const titleLen = safeString(slide.title).length;
+ const titleClass = titleLen > 70
+ ? "text-base sm:text-xl font-extrabold leading-snug line-clamp-2"
+ : titleLen > 45
+ ? "text-lg sm:text-2xl font-extrabold leading-tight line-clamp-2"
+ : `text-2xl sm:text-3xl font-bold ${headingFontClass} leading-tight`;
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative overflow-hidden`} style={dynamicBgStyle}>
+ {renderSlideHeader(titleClass)}
+
+ <div className="flex-1 flex flex-col justify-center my-auto w-full min-h-0 overflow-hidden">
+ {hasRealTableRows ? (
+ <ComparisonTable headers={slide.tableHeaders} rows={slide.tableRows} primaryColor={palette.primary} isPresentation={isPresentation} isUIDeck={isUIDeck} isBinusDeck={isBinusDeck} />
+ ) : slide.bullets && slide.bullets.length > 0 ? (
+ <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3 my-auto">
+ {slide.bullets.slice(0, 6).map((b, bIdx) => {
+ const parts = b.split(/:\s*|\s*-\s*|\s*\|\s*/);
+ const cardTitle = parts[0] || `Dimension 0${bIdx + 1}`;
+ const cardDesc = parts.length > 1 ? parts.slice(1).join(": ") : parts[0];
+ const isYellow = bIdx % 2 === 0;
+
+ return (
+ <motion.div
+ key={bIdx}
+ {...anim(0.1 + bIdx * 0.05)}
+ className={`p-3 rounded-md border flex flex-col justify-between ${
+ getCardTheme(isYellow).cardBgClass
+ }`}
+ >
+ <span className={`font-extrabold text-xs sm:text-sm leading-tight ${
+ getCardTheme(isYellow).titleClass + " "
+ }`}>
+ {cardTitle}
+ </span>
+ {parts.length > 1 && (
+ <p className={`text-[11px] sm:text-xs mt-1.5 leading-snug ${
+ getCardTheme(isYellow).descClass + " "
+ }`}>
+ {cardDesc}
+ </p>
+ )}
+ </motion.div>
+ );
+ })}
+ </div>
+ ) : slide.description ? (
+ <div className={`p-4 rounded-md ${isUIDeck ? "bg-[#FFFDF5] border-2 border-[#FEDE3B]" : "border border-[#005AAB]/30 bg-[#EAF2FB]"} text-xs sm:text-sm text-neutral-800 `}>
+ {safeString(slide.description)}
+ </div>
+ ) : null}
+ </div>
+
+ {renderSlideFooter()}
+ </div>
+ );
+ }
+
+ /* ──── MILESTONE TIMELINE SLIDE ──── */
+ case "timeline": {
+ const milestonesToUse = (slide.timelineMilestones && slide.timelineMilestones.length > 0)
+ ? slide.timelineMilestones
+ : (slide.bullets && slide.bullets.length > 0)
+ ? slide.bullets.map((b, idx) => {
+ const parts = b.split(/:\s*|\s*-\s*/);
+ return {
+ quarter: `Phase 0${idx + 1}`,
+ title: parts[0] || `Phase 0${idx + 1}`,
+ description: parts.length > 1 ? parts.slice(1).join(": ") : parts[0],
+ status: (idx === 0 ? "done" : idx === 1 ? "active" : "planned") as "done" | "active" | "planned",
+ };
+ })
+ : [
+ { quarter: "Phase 01", title: "Assessment & Discovery", description: "Comprehensive audit, vulnerability mapping & baseline setup.", status: "done" as const },
+ { quarter: "Phase 02", title: "Architecture & Controls", description: "Design resilient policy frameworks & automated monitoring.", status: "active" as const },
+ { quarter: "Phase 03", title: "Multi-Tier Rollout", description: "Enterprise-wide deployment and team operational enablement.", status: "planned" as const },
+ { quarter: "Phase 04", title: "Continuous Optimization", description: "Proactive threat intelligence & executive review reporting.", status: "planned" as const },
+ ];
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+
+ <div className="flex-1 flex items-center justify-center my-auto w-full">
+ <MilestoneTimeline milestones={milestonesToUse} primaryColor={palette.primary} isPresentation={isPresentation} />
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+ }
+
+ /* ──── RADAR CHART SLIDE ──── */
+ case "chartRadar": {
+ const hasNarrative = Boolean(slide.description || (slide.bullets && slide.bullets.length > 0));
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass} justify-between`} style={dynamicBgStyle}>
+ {hasNarrative ? (
+ <div className="flex flex-col lg:flex-row gap-6 w-full h-full min-h-0 items-center">
+ <div className="w-full lg:w-[45%] flex flex-col justify-center min-w-0">
+ <motion.h2
+ {...anim(0)}
+ className={`text-2xl sm:text-3xl font-bold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && <motion.p {...anim(0.06)} className="text-sm sm:text-base text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
+ {slide.description && (
+ <motion.div {...anim(0.12)} className={`mt-3 p-3 rounded-md ${isUIDeck ? "bg-[#FFFDF5] border-2 border-[#FEDE3B]" : "bg-[#EAF2FB] border border-[#005AAB]/30"}`}>
+ <p className={`${baseFont} text-neutral-700 text-xs sm:text-sm leading-relaxed`}>
+ {slide.description}
+ </p>
+ </motion.div>
+ )}
+ </div>
+ <div className="w-full lg:w-[55%] h-full min-h-0 flex items-center justify-center p-3 sm:p-4 rounded-md bg-neutral-50/80 border border-neutral-200/60 ">
+ <SlideChart type="radar" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
+ </div>
+ </div>
+ ) : (
+ <>
+ <div className="mb-2">
+ <motion.h2
+ {...anim(0)}
+ className={`text-2xl sm:text-3xl font-bold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && <motion.p {...anim(0.06)} className="text-sm sm:text-base text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
+ </div>
+ <div className="flex-1 flex items-center justify-center min-h-0">
+ <SlideChart type="radar" data={slide.chartData} primaryColor={palette.primary} accentColor={palette.accent} isPresentation={isPresentation} isThumbnail={isThumbnail} />
+ </div>
+ </>
+ )}
+ </div>
+ );
+ }
+
+ /* ──── QUADRANT MATRIX SLIDE ──── */
+ case "quadrantMatrix":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass} justify-between`} style={dynamicBgStyle}>
+ <div className="mb-2">
+ <motion.h2
+ {...anim(0)}
+ className={`text-2xl sm:text-3xl font-bold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && <motion.p {...anim(0.06)} className="text-sm sm:text-base text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
+ </div>
+ <div className="flex-1 flex items-center justify-center">
+ <QuadrantMatrix data={slide.quadrantData} primaryColor={palette.primary} isPresentation={isPresentation} />
+ </div>
+ </div>
+ );
+
+ /* ──── FUNNEL DIAGRAM SLIDE ──── */
+ case "funnel":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative ${bodyFontClass} justify-between`} style={dynamicBgStyle}>
+ <div className="mb-2">
+ <motion.h2
+ {...anim(0)}
+ className={`text-2xl sm:text-3xl font-bold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && <motion.p {...anim(0.06)} className="text-sm sm:text-base text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
+ </div>
+ <div className="flex-1 flex items-center justify-center">
+ <FunnelDiagram stages={slide.funnelStages} primaryColor={palette.primary} isPresentation={isPresentation} />
+ </div>
+ </div>
+ );
+
+ /* ──── 12. CIRCULAR CYCLE LOOP WITH CURVED ARROWS ──── */
+ case "cycleLoop":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
+ <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
+ 
+ <div className="flex-1 flex items-center gap-6 my-auto">
+ {/* Left Column: Title & Big Stat */}
+ <div className="w-[36%] flex flex-col justify-between">
+ <div>
+ <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}>
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && (
+ <h6 className="text-xs font-bold text-neutral-900 mt-2">
+ {slide.subtitle}
+ </h6>
+ )}
+ {slide.description && (
+ <p className="text-[10px] sm:text-xs text-neutral-500 mt-1 leading-relaxed">
+ {slide.description}
+ </p>
+ )}
+ </div>
+ {slide.stats?.[0]?.value && (
+ <div className="mt-4">
+ <span className={`${isPresentation ? "text-3xl sm:text-4xl" : "text-2xl sm:text-3xl"} font-black text-neutral-950 block leading-none`}>
+ {slide.stats[0].value}
+ </span>
+ {slide.stats[0].label && (
+ <p className="text-[9px] text-neutral-400 mt-1">
+ {slide.stats[0].label}
+ </p>
+ )}
+ </div>
+ )}
+ </div>
+
+ {/* Right Column: Triangular Cycle Loop with Curved Arcs or Step Cards */}
+ <div className="flex-1 flex items-center justify-center">
+ {slide.cycleNodes && slide.cycleNodes.length >= 3 ? (
+ <CurvedCycleLoop nodes={slide.cycleNodes} primaryColor={palette.primary} isPresentation={isPresentation} />
+ ) : (
+ <div className="w-full flex flex-col gap-2 overflow-hidden">
+ {(slide.bullets || []).slice(0, 3).map((b, bIdx) => {
+ const isYellow = bIdx % 2 === 0;
+ return (
+ <div
+ key={bIdx}
+ className={`p-2.5 sm:p-3 rounded-md border flex items-start gap-2.5 ${
+ getCardTheme(isYellow).cardBgClass
+ }`}
+ >
+ <span
+ className={`w-5 h-5 rounded-sm flex items-center justify-center font-bold text-[10px] shrink-0 ${
+ getCardTheme(isYellow).badgeBgClass
+ }`}
+ >
+ 0{bIdx + 1}
+ </span>
+ <p className={`text-xs sm:text-[13px] leading-snug ${
+ getCardTheme(isYellow).titleClass + " "
+ }`}>
+ {safeString(b)}
+ </p>
+ </div>
+ );
+ })}
+ </div>
+ )}
+ </div>
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── ARCHITECTURE STACK SLIDE ──── */
+ case "architecture":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
+ <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
+ <div className="mb-2">
+ <motion.h2
+ {...anim(0)}
+ className={`text-2xl sm:text-3xl font-bold ${headingFontClass} text-neutral-950 leading-tight`}>
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && <motion.p {...anim(0.06)} className="text-sm sm:text-base text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
+ </div>
+ <div className="flex-1 flex items-center justify-center">
+ <ArchitectureStack primaryColor={palette.primary} isPresentation={isPresentation} />
+ </div>
+ {slide.description && (
+ <motion.p {...anim(0.2)} className="text-xs sm:text-sm text-neutral-500 text-center max-w-xl mx-auto mt-2 leading-relaxed">
+ {slide.description}
+ </motion.p>
+ )}
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── 8. CHEVRON PROCESS ARROW BAR SLIDE ──── */
+ case "chevronProcess": {
+ const chevronSteps = slide.chevronSteps && slide.chevronSteps.length > 0
+ ? slide.chevronSteps
+ : (slide.bullets && slide.bullets.length > 0
+ ? slide.bullets.slice(0, 5).map((b, i) => {
+ const parts = b.split(/:\s*|—\s*|-\s*/);
+ return {
+ title: `${i + 1} · ${parts[0]?.trim() || `Step ${i + 1}`}`,
+ description: parts[1]?.trim() || b,
+ };
+ })
+ : [
+ { title: "1 · Frame", description: "Define the problem, the goal and constraints", pill: "Fails here: wrong question", pillType: "blue" as const },
+ { title: "2 · Gather", description: "Collect facts, evidence and options" },
+ { title: "3 · Evaluate", description: "Weigh options against criteria and risk", pill: "Rarely where it fails", pillType: "neutral" as const },
+ { title: "4 · Decide", description: "Commit to one option and own it" },
+ { title: "5 · Act & Learn", description: "Execute, measure the result, adjust", pill: "Fails here: no learning", pillType: "blue" as const },
+ ]);
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+ <div className="flex-1 flex items-center justify-center my-auto w-full">
+ <ChevronProcessBar
+ steps={chevronSteps}
+ primaryColor={palette.primary}
+ accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+ keyInsight={slide.insightBarText || slide.highlight || "Key insight: Most bad decisions fail at step 1 (wrong question) or step 5 (no learning), not at step 3."}
+ isPresentation={isPresentation}
+ />
+ </div>
+ {renderSlideFooter()}
+ </div>
+ );
+ }
+
+ /* ──── 9. DUAL GAUGE RINGS WITH SPLIT CARDS ──── */
+ case "gaugeRings":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between overflow-hidden`} style={dynamicBgStyle}>
+ <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
+ <div className="flex-1 flex items-center gap-6 my-auto">
+ {/* Left Column: Title, Subtitle, & Optional Cards */}
+ <div className="w-[36%] flex flex-col justify-between py-1">
+ <div>
+ <motion.h2
+ {...anim(0)}
+ className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && (
+ <p className="text-xs sm:text-sm text-neutral-500 mt-2 leading-relaxed">
+ {slide.subtitle}
+ </p>
+ )}
+ </div>
+
+ {slide.cards && slide.cards.length > 0 && (
+ <div className="mt-3 flex flex-col gap-2">
+ {slide.cards.slice(0, 2).map((c, cIdx) => (
+ <div
+ key={cIdx}
+ className="rounded-md p-2.5 text-[10px] sm:text-xs font-semibold text-neutral-950 leading-snug flex items-start gap-2"
+ style={{ backgroundColor: palette.primary }}
+ >
+ <span className="w-1.5 h-1.5 rounded-full bg-neutral-950 mt-1.5 shrink-0" />
+ <span className="line-clamp-2">{c.title}</span>
+ </div>
+ ))}
+ </div>
+ )}
+ </div>
+
+ {/* Thin Divider */}
+ <div className="w-[1.5px] self-stretch bg-neutral-200 " />
+
+ {/* Right Column: Gauges */}
+ <div className="flex-1 flex items-center justify-center">
+ <GaugeRings gauges={slide.gaugeItems} primaryColor={palette.primary} isPresentation={isPresentation} />
+ </div>
+ </div>
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── 4. ASCENDING TRAJECTORY SLIDE ──── */
+ case "ascendingTrajectory":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
+ <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
+ <div className="mb-2">
+ <motion.h2
+ {...anim(0)}
+ className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}>
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
+ </div>
+ <div className="flex-1 flex items-center justify-center my-auto">
+ <AscendingTrajectory nodes={slide.trajectoryNodes} primaryColor={palette.primary} isPresentation={isPresentation} />
+ </div>
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── VERTICAL PROGRESS STACK SLIDE ──── */
+ case "verticalProgress":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
+ <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
+ <div className="mb-2">
+ <motion.h2
+ {...anim(0)}
+ className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}>
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
+ </div>
+ <div className="flex-1 flex items-center justify-center my-auto">
+ <VerticalProgressStack items={slide.verticalProgressItems} primaryColor={palette.primary} isPresentation={isPresentation} />
+ </div>
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── 1. SPLIT METRIC HERO (LEFT GLOWING CARD + RIGHT NUMBERED ROWS) ──── */
+ case "splitMetric":
+ if (isDualTone) {
+ return renderDualToneSplit(
+ <div>
+ <h2 className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} leading-tight`}>
+ {slide.title}
+ </h2>
+ {slide.subtitle && (
+ <p className="text-xs sm:text-sm mt-3 opacity-80 leading-relaxed">
+ {slide.subtitle}
+ </p>
+ )}
+ </div>,
+ <div className="flex-1 flex items-center my-auto">
+ <SplitMetricHero metricBox={slide.metricBox} items={slide.verticalProgressItems} primaryColor={palette.primary} isPresentation={isPresentation} />
+ </div>,
+ "35%"
+ );
+ }
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
+ <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
+ 
+ <div className="mb-2">
+ <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}>
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
+ </div>
+
+ <div className="flex-1 flex items-center my-auto">
+ <SplitMetricHero metricBox={slide.metricBox} items={slide.verticalProgressItems} primaryColor={palette.primary} isPresentation={isPresentation} />
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── 2. HORIZONTAL MILESTONES BAR ──── */
+ case "horizontalMilestones":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
+ <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
+ 
+ <div className="flex items-start justify-between gap-4 mb-2">
+ <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} ${isUIDeck ? "text-black" : "text-[#005AAB]"} leading-tight`}>
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && (
+ <motion.p {...anim(0.06)} className="text-xs text-neutral-500 max-w-xs text-right leading-relaxed">
+ {slide.subtitle}
+ </motion.p>
+ )}
+ </div>
+
+ <div className="flex-1 flex items-center my-auto">
+ <HorizontalMilestonesBar milestones={slide.horizontalMilestones} primaryColor={palette.primary} isPresentation={isPresentation} />
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── 3. BOLD STATEMENT / GET IN TOUCH ──── */
+ case "boldStatement":
+ if (isDualTone) {
+ return renderDualToneSplit(
+ <div>
+ <h1 className={`text-2xl sm:text-3xl lg:text-4xl font-black ${headingFontClass} leading-[1.1] tracking-tight`}>
+ {slide.title}
+ </h1>
+ </div>,
+ <div className="my-auto max-w-xl space-y-4">
+ {slide.subtitle && (
+ <p className="text-sm sm:text-base md:text-lg font-medium text-neutral-800 leading-relaxed">
+ {slide.subtitle}
+ </p>
+ )}
+ {slide.ctaText && (
+ <div className="pt-2">
+ <span
+ className="px-6 py-2.5 rounded-full font-bold text-xs sm:text-sm inline-flex items-center gap-2 cursor-pointer"
+ style={{ backgroundColor: palette.primary, color: primaryTextColor }}
+ >
+ {slide.ctaText}
+ </span>
+ </div>
+ )}
+ </div>,
+ "45%"
+ );
+ }
+
+ if (isGradient) {
+ return (
+ <div
+ className="w-full h-full flex flex-col p-[7%] relative justify-between"
+ style={{
+ background: `linear-gradient(135deg, ${palette.primary} 0%, ${palette.primary}CC 35%, #FFFFFF 90%)`,
+ color: "#111111",
+ }}
+ >
+ <SlideFrameHeader
+ badge={slide.badge || "Process Infographic"}
+ category={slide.category || "Impactful Business"}
+ primaryColor="#111111"
+ />
+ 
+ <div className="flex-1 flex flex-col justify-center max-w-[85%]">
+ <motion.h1
+ {...anim(0.06)}
+ className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05] text-neutral-950"
+ >
+ {slide.title}
+ </motion.h1>
+ {slide.subtitle && (
+ <motion.p
+ {...anim(0.12)}
+ className="text-sm sm:text-base font-medium mt-4 leading-relaxed max-w-lg text-neutral-800"
+ >
+ {slide.subtitle}
+ </motion.p>
+ )}
+ {slide.ctaText && (
+ <motion.div {...anim(0.18)} className="mt-8">
+ <span
+ className="px-6 py-3 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2.5 w-fit transition-all cursor-pointer bg-neutral-950 text-white hover:bg-neutral-800"
+ >
+ {slide.ctaText} →
+ </span>
+ </motion.div>
+ )}
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={false} />
+ </div>
+ );
+ }
+
+ return (
+ <div
+ className="w-full h-full flex flex-col p-[7%] relative justify-between overflow-hidden"
+ style={{ backgroundColor: palette.primary, color: primaryTextColor }}
+ >
+ <SlideFrameHeader
+ badge={slide.badge || "Process Infographic"}
+ category={slide.category || "Impactful Business"}
+ primaryColor={primaryTextColor}
+ />
+ 
+ <div className="flex-1 flex flex-col justify-center max-w-[85%]">
+ <motion.h1
+ {...anim(0.06)}
+ className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05]"
+ style={{ color: primaryTextColor }}
+ >
+ {slide.title}
+ </motion.h1>
+ {slide.subtitle && (
+ <motion.p
+ {...anim(0.12)}
+ className="text-sm sm:text-base font-medium mt-4 leading-relaxed max-w-lg"
+ style={{ color: primaryTextColor === "#111111" ? "rgba(17,17,17,0.8)" : "rgba(255,255,255,0.8)" }}
+ >
+ {slide.subtitle}
+ </motion.p>
+ )}
+ {slide.ctaText && (
+ <motion.div {...anim(0.18)} className="mt-8">
+ <span
+ className="px-6 py-3 rounded-full font-bold text-xs sm:text-sm inline-flex items-center gap-2.5 w-fit transition-all cursor-pointer"
+ style={{
+ backgroundColor: primaryTextColor === "#111111" ? "#111111" : "#FFFFFF",
+ color: primaryTextColor === "#111111" ? "#FFFFFF" : "#111111",
+ }}
+ >
+ {slide.ctaText} →
+ </span>
+ </motion.div>
+ )}
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={primaryTextColor === "#FFFFFF"} />
+ </div>
+ );
+
+ /* ──── 5. BUBBLE CLUSTER (3 INTERSECTING CIRCLES) ──── */
+ case "bubbleCluster":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
+ <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
+ 
+ <div className="mb-2">
+ <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 leading-tight`}>
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-0.5">{slide.subtitle}</motion.p>}
+ </div>
+
+ <div className="flex-1 flex items-center justify-center my-auto">
+ <BubbleClusterDiagram nodes={slide.bubbleNodes} primaryColor={palette.primary} isPresentation={isPresentation} />
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── 6. IMAGE SPLIT WITH YELLOW ACCENTS & METRICS ──── */
+ case "imageSplitMetric":
+ return (
+ <div className="w-full h-full bg-white flex flex-col p-[6%] relative justify-between" style={dynamicBgStyle}>
+ <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
+ 
+ <div className="flex-1 flex items-center gap-6 my-auto">
+ {/* Left Card: Visual & Floating Box */}
+ <div className="w-[38%] flex flex-col gap-3">
+ <div className="relative w-full h-32 sm:h-40 rounded-lg overflow-hidden bg-neutral-200 border border-neutral-300/40">
+ <Image
+ src={slide.imageUrl || "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&auto=format&fit=crop&q=80"}
+ alt="Presentation Visual"
+ fill
+ className="object-cover"
+ />
+ </div>
+ <div className="rounded-lg p-3 text-[10px] sm:text-xs text-neutral-900 font-medium leading-snug" style={{ backgroundColor: palette.primary }}>
+ {slide.description || "Visualize Every Process Clearly With Structured Steps And Engaging"}
+ </div>
+ </div>
+
+ {/* Right Card: Headline & Stat */}
+ <div className="flex-1 flex flex-col justify-between">
+ <div>
+ <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 leading-tight`}>
+ {slide.title}
+ </motion.h2>
+ {slide.highlight && (
+ <div className="mt-3 rounded-lg p-3 text-[10px] sm:text-xs text-neutral-900 font-medium leading-snug" style={{ backgroundColor: `${palette.primary}40` }}>
+ {slide.highlight}
+ </div>
+ )}
+ </div>
+
+ {slide.stats && slide.stats[0] && (
+ <div className="mt-4 flex items-baseline gap-3">
+ <span className={`${isPresentation ? "text-4xl sm:text-5xl" : "text-3xl sm:text-4xl"} font-black text-neutral-950 `}>
+ {slide.stats[0].value}
+ </span>
+ <span className="text-[10px] sm:text-xs text-neutral-500 max-w-[200px] leading-tight">
+ {slide.stats[0].label}
+ </span>
+ </div>
+ )}
+ </div>
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── 7. BOLD IMPACT WITH MASSIVE STAT ──── */
+ case "boldImpact":
+ if (isDualTone) {
+ return renderDualToneSplit(
+ <div>
+ <h2 className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} leading-tight`}>
+ {slide.title}
+ </h2>
+ {slide.subtitle && (
+ <p className="text-xs sm:text-sm mt-3 opacity-80 leading-relaxed">
+ {slide.subtitle}
+ </p>
+ )}
+ </div>,
+ <div className="flex-1 flex items-center justify-between gap-6 my-auto">
+ <div className="flex-1">
+ <span
+ className="text-4xl sm:text-6xl font-black leading-none block"
+ style={{ color: palette.primary }}
+ >
+ {slide.stats?.[0]?.value || "+85%"}
+ </span>
+ <p className="text-xs text-neutral-600 mt-2">
+ {slide.stats?.[0]?.label || "Compounding acceleration across key execution metrics"}
+ </p>
+ </div>
+ {slide.description && (
+ <div className="w-[45%] rounded-lg p-4 bg-white border border-neutral-200/80 ">
+ <p className="text-xs font-semibold text-neutral-800 leading-snug">
+ {slide.description}
+ </p>
+ </div>
+ )}
+ </div>,
+ "38%"
+ );
+ }
+
+ if (isGradient) {
+ return (
+ <div
+ className="w-full h-full flex flex-col p-[6%] relative justify-between"
+ style={{
+ background: `linear-gradient(135deg, ${palette.primary} 0%, ${palette.primary}B3 30%, #FFFFFF 85%)`,
+ color: "#111111",
+ }}
+ >
+ <SlideFrameHeader
+ badge={slide.badge || "Process Infographic"}
+ category={slide.category || "Impactful Business"}
+ primaryColor="#111111"
+ />
+ 
+ <div className="flex items-start justify-between gap-6 mb-4">
+ <motion.h2
+ {...anim(0)}
+ className="text-2xl sm:text-4xl font-extrabold leading-tight flex-1 text-neutral-950"
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && (
+ <p
+ className="text-xs max-w-xs leading-relaxed text-neutral-800"
+ >
+ {slide.subtitle}
+ </p>
+ )}
+ </div>
+
+ <div className="flex-1 flex items-center justify-between gap-6 my-auto">
+ {/* Left Big Stat */}
+ <div className="flex-1">
+ {slide.highlight && (
+ <p
+ className="text-xs font-semibold mb-1 text-neutral-800"
+ >
+ {slide.highlight}
+ </p>
+ )}
+ <span
+ className={`${isPresentation ? "text-5xl sm:text-6xl" : "text-4xl sm:text-5xl"} font-black leading-none block text-neutral-950`}
+ >
+ {slide.stats?.[0]?.value || "+85%"}
+ </span>
+ <p
+ className="text-xs mt-1 text-neutral-700"
+ >
+ {slide.stats?.[0]?.label || "Compounding acceleration across key execution metrics"}
+ </p>
+ </div>
+
+ {/* Right Secondary/White Card */}
+ <div
+ className="w-[42%] rounded-lg p-3.5 sm:p-4 bg-white/90 border border-neutral-200/80"
+ >
+ <div
+ className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold mb-2 bg-neutral-950 text-white"
+ >
+ <Sparkles className="w-3 h-3" />
+ </div>
+ <p className="text-xs font-semibold leading-snug text-neutral-800">
+ {slide.description || "Visualize Every Process Clearly With Structured Steps And Engaging"}
+ </p>
+ </div>
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={false} />
+ </div>
+ );
+ }
+
+ return (
+ <div
+ className="w-full h-full flex flex-col p-[6%] relative justify-between overflow-hidden"
+ style={{ backgroundColor: palette.primary, color: primaryTextColor }}
+ >
+ <SlideFrameHeader
+ badge={slide.badge || "Process Infographic"}
+ category={slide.category || "Impactful Business"}
+ primaryColor={primaryTextColor}
+ />
+ 
+ <div className="flex items-start justify-between gap-6 mb-4">
+ <motion.h2
+ {...anim(0)}
+ className="text-2xl sm:text-4xl font-extrabold leading-tight flex-1"
+ style={{ color: primaryTextColor }}
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && (
+ <p
+ className="text-xs max-w-xs leading-relaxed"
+ style={{ color: primaryTextColor === "#111111" ? "rgba(17,17,17,0.75)" : "rgba(255,255,255,0.75)" }}
+ >
+ {slide.subtitle}
+ </p>
+ )}
+ </div>
+
+ <div className="flex-1 flex items-center justify-between gap-6 my-auto">
+ {/* Left Big Stat */}
+ <div className="flex-1">
+ {slide.highlight && (
+ <p
+ className="text-xs font-semibold mb-1"
+ style={{ color: primaryTextColor === "#111111" ? "rgba(17,17,17,0.85)" : "rgba(255,255,255,0.85)" }}
+ >
+ {slide.highlight}
+ </p>
+ )}
+ <span
+ className={`${isPresentation ? "text-5xl sm:text-6xl" : "text-4xl sm:text-5xl"} font-black leading-none block`}
+ style={{ color: primaryTextColor }}
+ >
+ {slide.stats?.[0]?.value || "+85%"}
+ </span>
+ <p
+ className="text-xs mt-1"
+ style={{ color: primaryTextColor === "#111111" ? "rgba(17,17,17,0.7)" : "rgba(255,255,255,0.7)" }}
+ >
+ {slide.stats?.[0]?.label || "Compounding acceleration across key execution metrics"}
+ </p>
+ </div>
+
+ {/* Right Secondary/White Card */}
+ <div
+ className="w-[42%] rounded-lg p-3.5 sm:p-4 bg-white/95 text-neutral-950 border border-neutral-200/80"
+ >
+ <div
+ className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold mb-2 bg-neutral-950 text-white"
+ >
+ <Sparkles className="w-3 h-3" />
+ </div>
+ <p className="text-xs font-semibold leading-snug text-neutral-800">
+ {slide.description || "Visualize Every Process Clearly With Structured Steps And Engaging"}
+ </p>
+ </div>
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={primaryTextColor === "#FFFFFF"} />
+ </div>
+ );
+
+ /* ──── 10. ASYMMETRIC STAT MATRIX ──── */
+ case "asymmetricMatrix":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
+ <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
+ 
+ <div className="flex-1 flex items-center gap-6 my-auto">
+ {/* Left Matrix */}
+ <div className="w-[62%]">
+ <AsymmetricMatrixGrid items={slide.asymmetricCards} primaryColor={palette.primary} isPresentation={isPresentation} />
+ </div>
+
+ {/* Right Headline */}
+ <div className="flex-1">
+ <motion.h2 {...anim(0)} className={`text-2xl sm:text-4xl font-extrabold ${headingFontClass} text-neutral-950 leading-tight`}>
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && (
+ <motion.p {...anim(0.06)} className="text-xs sm:text-sm text-neutral-500 mt-2 leading-relaxed">
+ {slide.subtitle}
+ </motion.p>
+ )}
+ </div>
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── 11. VERTICAL CONNECTED RINGS CHAIN ──── */
+ case "connectedRings":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col p-[6%] relative justify-between`} style={dynamicBgStyle}>
+ <SlideFrameHeader badge={slide.badge} category={slide.category} isDark={isDarkSlide} primaryColor={palette.primary} />
+ 
+ <div className="flex-1 flex items-center gap-6 my-auto">
+ {/* Left Column: Title & Big Stat */}
+ <div className="w-[38%] flex flex-col justify-between">
+ <div>
+ <motion.h2 {...anim(0)} className={`text-2xl sm:text-3xl font-extrabold ${headingFontClass} text-neutral-950 leading-tight`}>
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && (
+ <p className="text-xs text-neutral-500 mt-1">
+ {slide.subtitle}
+ </p>
+ )}
+ </div>
+ <div className="mt-6">
+ <span className={`${isPresentation ? "text-4xl sm:text-5xl" : "text-3xl sm:text-4xl"} font-black text-neutral-950 block leading-none`}>
+ {slide.stats?.[0]?.value || "5729+"}
+ </span>
+ <p className="text-[10px] sm:text-xs text-neutral-500 mt-2 leading-tight">
+ {slide.stats?.[0]?.label || "Highlight Every Milestone Using Connected Readability"}
+ </p>
+ </div>
+ </div>
+
+ {/* Right Column: Connected Rings */}
+ <div className="flex-1">
+ <ConnectedVerticalRings rings={slide.connectedRings} primaryColor={palette.primary} isPresentation={isPresentation} />
+ </div>
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── CTA SLIDE ──── */
+ case "cta":
+ if (isDualTone) {
+ return renderDualToneSplit(
+ <div>
+ <h2 className={`text-2xl sm:text-4xl font-extrabold ${headingFontClass} leading-tight`}>
+ {slide.title}
+ </h2>
+ </div>,
+ <div className="my-auto max-w-xl space-y-4">
+ {slide.subtitle && (
+ <p className="text-base sm:text-lg text-neutral-700 leading-relaxed">
+ {slide.subtitle}
+ </p>
+ )}
+ {slide.description && (
+ <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">
+ {slide.description}
+ </p>
+ )}
+ {slide.ctaText && (
+ <div className="pt-2">
+ <span
+ className="px-6 py-2.5 rounded-full font-bold text-xs sm:text-sm inline-flex items-center gap-2 cursor-pointer"
+ style={{ backgroundColor: palette.primary, color: primaryTextColor }}
+ >
+ {slide.ctaText}
+ </span>
+ </div>
+ )}
+ </div>,
+ "45%"
+ );
+ }
+
+ return (
+ <div className={`w-full h-full bg-neutral-950 flex flex-col justify-center items-center text-center p-[10%] relative overflow-hidden ${bodyFontClass} text-white`}>
+ <div
+ className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[60%] h-[40%] rounded-full blur-3xl opacity-20"
+ style={{ backgroundColor: palette.primary }}
+ />
+
+ <div className="relative z-10 flex flex-col items-center">
+ <motion.h2
+ {...anim(0)}
+ className={`text-3xl sm:text-4xl font-bold ${headingFontClass} text-white leading-tight`}
+ >
+ {slide.title}
+ </motion.h2>
+ {slide.subtitle && (
+ <motion.p {...anim(0.08)} className="text-sm sm:text-base text-neutral-400 mt-3 max-w-md">
+ {slide.subtitle}
+ </motion.p>
+ )}
+ {slide.description && (
+ <motion.p {...anim(0.16)} className="text-xs sm:text-sm text-neutral-500 mt-3 max-w-sm leading-relaxed">
+ {slide.description}
+ </motion.p>
+ )}
+ {slide.ctaText && (
+ <motion.div
+ {...anim(0.24)}
+ className="mt-6 px-6 py-2.5 sm:py-3 rounded-md text-neutral-950 font-bold text-sm sm:text-base flex items-center gap-2"
+ style={{ backgroundColor: palette.primary }}
+ >
+ {safeString(slide.ctaText)}
+ </motion.div>
+ )}
+ </div>
+
+ <motion.div {...anim(0.3)} className="absolute bottom-[8%] flex items-center gap-2 z-10">
+ <div
+ className="w-6 h-6 rounded-full flex items-center justify-center text-neutral-950"
+ style={{ backgroundColor: palette.primary }}
+ >
+ <Layers className="w-3.5 h-3.5" />
+ </div>
+ <span className="text-xs text-neutral-500">{slide.footer || ""}</span>
+ </motion.div>
+ </div>
+ );
+
+ /* ──── ACTION LIST / LEARNING OBJECTIVES SLIDE ──── */
+ case "actionList":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+
+ <div className={`flex-1 flex flex-col justify-center gap-2.5 sm:gap-3.5 my-auto pl-4 border-l-2 sm:border-l-4 ${isUIDeck ? "border-[#FEDE3B]" : "border-[#005AAB]"}`}>
+ {(slide.actionItems && slide.actionItems.length > 0
+ ? slide.actionItems
+ : (slide.bullets || []).map((b, idx) => {
+ const parts = b.split(/:\s*|\s*-\s*/);
+ return { verb: parts[0], text: parts.slice(1).join(": ") || parts[0], tag: idx === 3 ? "Built today · reused through the Capstone" : undefined };
+ })
+ ).map((item, idx) => {
+ const isYellow = idx % 2 === 0;
+ return (
+ <motion.div
+ key={idx}
+ {...anim(0.12 + idx * 0.05)}
+ className={`flex items-center justify-between gap-3 p-2.5 sm:p-3 rounded-md border transition-colors ${
+ getCardTheme(isYellow).cardBgClass
+ }`}
+ >
+ <div className="flex items-start gap-2.5 sm:gap-3.5">
+ <span className={`font-mono font-bold text-sm sm:text-base shrink-0 ${isUIDeck ? "text-neutral-950" : (isYellow ? "text-[#854D0E] " : "text-[#005AAB] ")}`}>
+ {idx + 1}.
+ </span>
+ <div className="text-xs sm:text-sm text-neutral-900 leading-snug">
+ {item.verb && (
+ <strong className={`font-extrabold mr-1.5 uppercase tracking-wide ${isUIDeck ? "text-neutral-950" : (isYellow ? "text-[#854D0E] " : "text-[#005AAB] ")}`}>
+ {item.verb}
+ </strong>
+ )}
+ {item.text}
+ </div>
+ </div>
+ {item.tag && (
+ <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-[#FFDD3C]/25 text-[#854D0E] border border-[#FFDD3C]/40">
+ {item.tag}
+ </span>
+ )}
+ </motion.div>
+ );
+ })}
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── 3-COLUMN CARD GRID (INSTRUMENT COMPARISON) ──── */
+ case "cardGrid":
+ const displayCards: Array<{
+ title: string;
+ tag?: string;
+ bullets?: string[];
+ description?: string;
+ footer?: string;
+ }> = slide.cards && slide.cards.length > 0
+ ? slide.cards
+ : (slide.bullets && slide.bullets.length > 0
+ ? slide.bullets.map((b, i) => {
+ const bulletStr = safeString(b);
+ const colonIdx = bulletStr.indexOf(":");
+ const title = colonIdx > 0 && colonIdx < 40 ? bulletStr.slice(0, colonIdx) : `Point ${i + 1}`;
+ const body = colonIdx > 0 && colonIdx < 40 ? bulletStr.slice(colonIdx + 1).trim() : bulletStr;
+ return { title, bullets: [body] };
+ })
+ : (slide.description ? [{ title: "Overview", bullets: [slide.description] }] : []));
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between px-[5%] sm:px-[6%] py-3.5 sm:py-4.5 relative`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+
+ <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 my-auto items-stretch">
+ {displayCards.map((card, cIdx) => {
+ const isYellow = cIdx % 2 === 0;
+ return (
+ <motion.div
+ key={cIdx}
+ {...anim(0.1 + cIdx * 0.06)}
+ className={`flex flex-col justify-between rounded-md overflow-hidden border ${
+ isBinusDeck ? "border-2 border-[#23A3E7] bg-[#EAF5FC]" : isUIDeck ? "border-2 border-[#FEDE3B] bg-[#FFFDF5]" : (isYellow ? "border-[#FFDD3C] bg-[#FFFDF5] " : "border-[#005AAB]/30 bg-[#F5F9FE] ")
+ }`}
+ >
+ <div
+ className="px-3.5 py-2 font-extrabold text-xs sm:text-sm tracking-wide flex items-center justify-between"
+ style={{
+ backgroundColor: isBinusDeck ? (isYellow ? "#23A3E7" : "#174A7F") : isUIDeck ? "#FEDE3B" : isYellow ? "#FFDD3C" : "#005AAB",
+ color: isBinusDeck ? "#FFFFFF" : isUIDeck ? "#000000" : isYellow ? "#272525" : "#FFFFFF",
+ }}
+ >
+ <span>{card.title}</span>
+ {card.tag && <span className="text-[10px] font-mono opacity-85">{card.tag}</span>}
+ </div>
+
+ <div className="p-3 sm:p-4 flex-1 space-y-2 text-xs sm:text-[13px] text-neutral-800 ">
+ {card.bullets && card.bullets.map((b, bIdx) => (
+ <div key={bIdx} className="flex items-start gap-2">
+ <span className={`shrink-0 mt-0.5 ${isYellow ? "text-[#854D0E] " : "text-[#005AAB] "}`}>•</span>
+ <span className="leading-snug">{b}</span>
+ </div>
+ ))}
+ {card.description && <p className="leading-snug text-neutral-600 ">{card.description}</p>}
+ </div>
+
+ {card.footer && (
+ <div className="p-2 sm:p-2.5 bg-amber-500/10 border-t border-amber-500/30 text-amber-900 text-[11px] font-semibold">
+ {card.footer}
+ </div>
+ )}
+ </motion.div>
+ );
+ })}
+ </div>
+
+ {slide.calloutBox && (
+ <div className="p-2.5 rounded-lg bg-neutral-900 text-white text-xs flex items-center gap-2">
+ <span className="text-[#FFE500] font-bold shrink-0">{slide.calloutBox.title || "Note"}:</span>
+ <span>{slide.calloutBox.text}</span>
+ </div>
+ )}
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── CASE STUDY (HORIZONTAL TIMELINE & CALLOUT) ──── */
+ case "caseStudy":
+ const studyCards = slide.cards && slide.cards.length >= 2
+ ? slide.cards
+ : (slide.bullets && slide.bullets.length >= 2
+ ? [
+ {
+ title: "Stage 01",
+ tag: "Initial Context",
+ bullets: slide.bullets.slice(0, Math.ceil(slide.bullets.length / 2)),
+ },
+ {
+ title: "Stage 02",
+ tag: "Key Outcome",
+ bullets: slide.bullets.slice(Math.ceil(slide.bullets.length / 2)),
+ }
+ ]
+ : (slide.bullets?.length === 1
+ ? [{ title: "Scenario Overview", bullets: slide.bullets }]
+ : (slide.description ? [{ title: "Scenario Overview", bullets: [slide.description] }] : [])));
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between px-[5%] sm:px-[6%] py-3.5 sm:py-4.5 relative`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+
+ <div className="flex flex-col md:flex-row items-center gap-3 sm:gap-4 my-auto">
+ {studyCards.map((sc, scIdx) => {
+ const isYellow = scIdx % 2 === 0;
+ return (
+ <React.Fragment key={scIdx}>
+ <motion.div
+ {...anim(0.1 + scIdx * 0.08)}
+ className={`flex-1 w-full rounded-md border p-4 flex flex-col justify-between ${
+ getCardTheme(isYellow).cardBgClass
+ }`}
+ >
+ <div className="flex items-center justify-between mb-2">
+ <span className={`font-extrabold text-sm sm:text-base ${getCardTheme(isYellow).titleClass + " "}`}>
+ {sc.title}
+ </span>
+ {sc.tag && (
+ <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+ getCardTheme(isYellow).badgeBgClass
+ }`}>
+ {sc.tag}
+ </span>
+ )}
+ </div>
+ <div className="space-y-1.5 text-xs sm:text-[13px] text-neutral-800 ">
+ {sc.bullets && sc.bullets.map((b, bIdx) => (
+ <div key={bIdx} className="flex items-start gap-2">
+ <span className={`shrink-0 ${isYellow ? "text-[#854D0E] " : "text-[#005AAB] "}`}>•</span>
+ <span>{b}</span>
+ </div>
+ ))}
+ {sc.description && <p>{sc.description}</p>}
+ </div>
+ {sc.footer && (
+ <div className="mt-3 pt-2 border-t border-neutral-200/60 text-[11px] font-semibold text-neutral-500">
+ {sc.footer}
+ </div>
+ )}
+ </motion.div>
+
+ {scIdx < studyCards.length - 1 && (
+ <div className="text-neutral-400 font-black text-xl shrink-0">
+ →
+ </div>
+ )}
+ </React.Fragment>
+ );
+ })}
+ </div>
+
+ {slide.calloutBox ? (
+ <motion.div
+ {...anim(0.24)}
+ className="p-3.5 sm:p-4 rounded-md bg-neutral-950 text-white border border-neutral-800 flex items-center justify-between gap-3"
+ >
+ <div className="flex items-center gap-3">
+ <span className="text-xl">❓</span>
+ <div>
+ <div className="text-[11px] font-bold uppercase tracking-wider text-[#FFDD3C]">
+ {slide.calloutBox.title || "The Question for the Room"}
+ </div>
+ <div className="text-xs sm:text-sm font-semibold text-neutral-100">
+ {slide.calloutBox.text}
+ </div>
+ </div>
+ </div>
+ </motion.div>
+ ) : slide.description ? (
+ <div className="p-3 rounded-md bg-neutral-950 text-white text-xs font-semibold flex items-center gap-2">
+ <span className="text-[#FFDD3C]">Key Dilemma:</span>
+ <span>{slide.description}</span>
+ </div>
+ ) : null}
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── SPLIT POLL / DILEMMA ──── */
+ case "splitPoll":
+ const taxCard = slide.cards?.[0] || {
+ title: slide.bullets?.[0]?.split(/[:—–-]/)[0]?.trim() || "Perspective A",
+ description: slide.bullets?.[0]?.split(/[:—–-]/).slice(1).join("—").trim() || slide.bullets?.[0] || slide.description || "Primary Consideration",
+ };
+ const legalCard = slide.cards?.[1] || {
+ title: slide.bullets?.[1]?.split(/[:—–-]/)[0]?.trim() || "Perspective B",
+ description: slide.bullets?.[1]?.split(/[:—–-]/).slice(1).join("—").trim() || slide.bullets?.[1] || "Alternative Consideration",
+ };
+ const pollOpts = slide.pollOptions && slide.pollOptions.length > 0
+ ? slide.pollOptions
+ : (slide.bullets && slide.bullets.length > 2
+ ? slide.bullets.slice(2, 5).map((b, bIdx) => ({
+ label: String.fromCharCode(65 + bIdx),
+ text: safeString(b),
+ }))
+ : []);
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between px-[5%] sm:px-[6%] py-3.5 sm:py-4.5 relative`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 my-2">
+ <motion.div {...anim(0.1)} className="rounded-md overflow-hidden border border-[#FFDD3C] bg-[#FFFDF5] ">
+ <div className="bg-[#FFDD3C] text-[#272525] font-extrabold px-3.5 py-1.5 uppercase tracking-wider text-xs flex items-center justify-between">
+ <span>{taxCard.title}</span>
+ <span className="text-[10px] font-bold opacity-80">PERSPECTIVE 01</span>
+ </div>
+ <div className="p-3 sm:p-4 text-xs sm:text-sm text-neutral-800 font-semibold leading-relaxed">
+ {taxCard.description || taxCard.bullets?.join(" ")}
+ </div>
+ </motion.div>
+
+ <motion.div {...anim(0.14)} className="rounded-md overflow-hidden border border-[#005AAB]/30 bg-[#F5F9FE] ">
+ <div className="bg-[#005AAB] text-white font-extrabold px-3.5 py-1.5 uppercase tracking-wider text-xs flex items-center justify-between">
+ <span>{legalCard.title}</span>
+ <span className="text-[10px] font-bold opacity-80">PERSPECTIVE 02</span>
+ </div>
+ <div className="p-3 sm:p-4 text-xs sm:text-sm text-neutral-800 font-semibold leading-relaxed">
+ {legalCard.description || legalCard.bullets?.join(" ")}
+ </div>
+ </motion.div>
+ </div>
+
+ {pollOpts.length > 0 && (
+ <div className="p-3.5 rounded-md bg-neutral-50 border border-neutral-200 space-y-2">
+ <div className="text-xs sm:text-sm font-bold text-neutral-900 flex items-center gap-2">
+ <span>Decision Poll</span>
+ </div>
+ <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+ {pollOpts.map((opt, oIdx) => (
+ <div
+ key={oIdx}
+ className="flex items-center gap-2.5 p-2 rounded-md bg-white border border-neutral-200 hover:border-amber-400 cursor-pointer transition-colors text-xs"
+ >
+ <span className="w-5 h-5 rounded-full bg-[#005AAB] text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+ {opt.label}
+ </span>
+ <span className="text-neutral-800 font-medium leading-tight">
+ {opt.text}
+ </span>
+ </div>
+ ))}
+ </div>
+ </div>
+ )}
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── INTERACTIVE CASE CARD & PROMPT TEST ──── */
+ case "interactiveCase":
+ const caseCardObj = slide.cards?.[0] || {
+ title: slide.bullets?.[0]?.split(/[:—–-]/)[0]?.trim() || "Brief / Input",
+ bullets: slide.bullets && slide.bullets.length > 0 ? slide.bullets.slice(0, 3) : (slide.description ? [slide.description] : ["Primary details."]),
+ };
+ const templateCardObj = slide.cards?.[1] || {
+ title: "Key Framework",
+ bullets: slide.bullets && slide.bullets.length > 3 ? slide.bullets.slice(3) : ["Scope & Requirements", "Risk Analysis & Assessment", "Execution Strategy & Next Steps"],
+ };
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between px-[5%] sm:px-[6%] py-3.5 sm:py-4.5 relative`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 my-2">
+ <motion.div {...anim(0.1)} className="rounded-md border border-[#FFDD3C] bg-[#FFFDF5] p-3.5 flex flex-col justify-between">
+ <div className="bg-[#FFDD3C] text-[#272525] font-extrabold px-3 py-1 rounded-sm text-xs w-fit mb-2 uppercase tracking-wider">
+ {caseCardObj.title || "Case Card"}
+ </div>
+ <div className="space-y-1.5 text-xs sm:text-[13px] text-neutral-800 ">
+ {caseCardObj.bullets && caseCardObj.bullets.map((b, bIdx) => (
+ <div key={bIdx} className="flex items-start gap-2">
+ <span className="text-[#854D0E] shrink-0">•</span>
+ <span>{b}</span>
+ </div>
+ ))}
+ </div>
+ {slide.promptBox && (
+ <div className="mt-3 p-2.5 rounded-md bg-neutral-100 border border-neutral-200 text-[11px] font-mono text-neutral-700 ">
+ <span className="font-bold text-neutral-900 block mb-0.5">{slide.promptBox.label}:</span>
+ &ldquo;{slide.promptBox.prompt}&rdquo;
+ </div>
+ )}
+ </motion.div>
+
+ <motion.div {...anim(0.14)} className="rounded-md border border-[#005AAB]/30 bg-[#F5F9FE] p-3.5 flex flex-col justify-between">
+ <div className="bg-[#005AAB] text-white font-extrabold px-3 py-1 rounded-sm text-xs w-fit mb-2 uppercase tracking-wider">
+ {templateCardObj.title || "Output Template"}
+ </div>
+ <div className="space-y-1.5 text-xs sm:text-[13px] text-neutral-800 ">
+ {templateCardObj.bullets && templateCardObj.bullets.map((b, bIdx) => (
+ <div key={bIdx} className="p-1.5 rounded-sm bg-white border border-neutral-200 flex items-center justify-between">
+ <span className="font-medium">{b}</span>
+ <span className="text-[10px] text-neutral-400 font-mono">Fill in</span>
+ </div>
+ ))}
+ </div>
+ </motion.div>
+ </div>
+
+ {slide.bottomBanners && slide.bottomBanners.length > 0 && (
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+ {slide.bottomBanners.map((bn, bnIdx) => (
+ <div
+ key={bnIdx}
+ className={`p-2.5 rounded-md font-medium ${
+ bn.variant === "yellow"
+ ? "bg-[#FFDD3C]/20 text-[#854D0E] border border-[#FFDD3C]/50"
+ : "bg-[#005AAB]/15 text-[#005AAB] border border-[#005AAB]/30"
+ }`}
+ >
+ <span className="font-bold mr-1.5">{bn.title}:</span>
+ <span>{bn.text}</span>
+ </div>
+ ))}
+ </div>
+ )}
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── FULL-BLEED BREAK SCREEN ──── */
+ case "breakSlide":
+ return (
+ <SectionDivider
+ partLabel={slide.badge || "BREAK · 5 MINUTES"}
+ title={safeString(slide.title)}
+ subtitle={safeString(slide.subtitle)}
+ primaryColor={palette.primary}
+ accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ transparentBg={hasTemplateBg && isPartBg}
+ />
+ );
+
+ /* ──── KEY INSIGHT / SYNTHESIS SLIDE ──── */
+ case "keyInsight":
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[6%] sm:p-[7%] relative`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+
+ <div className="my-auto space-y-3">
+ {slide.tableRows && slide.tableRows.length > 0 && (
+ <div className={`rounded-md overflow-hidden border ${isUIDeck ? "border-[#FEDE3B] shadow-xs" : "border-neutral-200"} bg-white max-w-2xl`}>
+ <table className="w-full text-left text-xs sm:text-sm">
+ <thead>
+ <tr className={`${isUIDeck ? "bg-gradient-to-b from-[#FFF58A] via-[#FEDE3B] to-[#F5C400] text-neutral-950 border-b border-[#D8A700]/50" : "bg-neutral-100 border-b border-neutral-200"}`}>
+ {(slide.tableHeaders || ["Instrument", "Wins on", "Loses on"]).map((h, hIdx) => (
+ <th key={hIdx} className={`p-2.5 ${isUIDeck ? "font-black text-neutral-950" : "font-bold"}`}>{h}</th>
+ ))}
+ </tr>
+ </thead>
+ <tbody>
+ {slide.tableRows.map((r, rIdx) => (
+ <tr key={rIdx} className="border-b border-neutral-100 last:border-b-0">
+ <td className="p-2.5 font-extrabold">{r.feature || r.cells?.[0]}</td>
+ <td className="p-2.5 font-semibold text-neutral-900 ">{r.current || r.cells?.[1]}</td>
+ <td className="p-2.5 font-semibold text-[#854D0E] ">{r.proposed || r.cells?.[2]}</td>
+ </tr>
+ ))}
+ </tbody>
+ </table>
+ </div>
+ )}
+
+ {slide.actionItems && slide.actionItems.length > 0 && (
+ <div className="space-y-2">
+ {slide.actionItems.map((ai, aiIdx) => {
+ const isYellow = aiIdx % 2 === 0;
+ return (
+ <div
+ key={aiIdx}
+ className={`flex items-start gap-3 p-2.5 rounded-md border ${
+ getCardTheme(isYellow).cardBgClass
+ }`}
+ >
+ <span
+ className={`w-5 h-5 rounded-sm font-bold text-xs flex items-center justify-center shrink-0 ${
+ getCardTheme(isYellow).badgeBgClass
+ }`}
+ >
+ {aiIdx + 1}
+ </span>
+ <div className="text-xs sm:text-sm font-semibold text-neutral-900 ">
+ {ai.verb && <strong className={`mr-1.5 ${isYellow ? "text-[#854D0E] " : "text-[#005AAB] "}`}>{ai.verb}</strong>}
+ {ai.text}
+ </div>
+ </div>
+ );
+ })}
+ </div>
+ )}
+
+ {slide.quote && (
+ <div className={`p-3.5 sm:p-4 rounded-md border-l-4 ${isBinusDeck ? "border-[#23A3E7] bg-[#EAF5FC]" : isUIDeck ? "border-[#FEDE3B] bg-[#FFFDF5]" : "border-[#005AAB] bg-[#EAF2FB]"} `}>
+ <p className="text-xs sm:text-sm italic font-semibold text-neutral-800 leading-relaxed">
+ &ldquo;{slide.quote.text}&rdquo;
+ </p>
+ {slide.quote.author && (
+ <span className={`block mt-1 text-[11px] font-mono ${isBinusDeck ? "text-[#018ED5]" : isUIDeck ? "text-[#AC9629]" : "text-[#005AAB]"} `}>— {slide.quote.author}</span>
+ )}
+ </div>
+ )}
+
+ {slide.bullets && slide.bullets.length > 0 && !slide.actionItems && (
+ <div className="space-y-1.5 text-xs sm:text-sm text-neutral-700 ">
+ {slide.bullets.map((b, bIdx) => (
+ <div key={bIdx} className="flex items-start gap-2">
+ <span className="text-[#FFE500] font-bold">✔</span>
+ <span>{b}</span>
+ </div>
+ ))}
+ </div>
+ )}
+ </div>
+
+ <SlideFrameFooter footer={slide.footer} slideNumber={slide.slideNumber} isDark={isDarkSlide} />
+ </div>
+ );
+
+ /* ──── SECTION DIVIDER SLIDE ──── */
+ case "sectionDivider":
+ return (
+ <SectionDivider
+ partLabel={slide.badge || slide.category || "BAGIAN"}
+ title={safeString(slide.title)}
+ subtitle={safeString(slide.subtitle)}
+ primaryColor={palette.primary}
+ accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ transparentBg={hasTemplateBg && isPartBg}
+ isDarkBg={!isUIDeck}
+ />
+ );
+
+ /* ──── PAIRED ROWS SLIDE (MASALAH → PERBAIKAN) ──── */
+ case "pairedRows": {
+ const pairedItems = slide.pairedRows && slide.pairedRows.length > 0
+ ? slide.pairedRows
+ : (slide.bullets && slide.bullets.length > 0
+ ? slide.bullets.map((b) => {
+ const arrowParts = b.split(/\s*→\s*|\s*->\s*|\s*:\s*|\s*vs\.?\s*/i);
+ return {
+ left: arrowParts[0] || b,
+ right: arrowParts[1] || "Solusi dan langkah pencegahan operasional",
+ };
+ })
+ : [
+ { left: "Perangkat dan aplikasi tidak pernah diperbarui", right: "Aktifkan pembaruan otomatis berkala" },
+ { left: "Akun mantan karyawan masih aktif di sistem", right: "Cabut hak akses seketika saat peran berubah" },
+ { left: "Backup tidak pernah diuji coba pemulihan", right: "Jadwalkan uji pemulihan rutin berkala" },
+ ]);
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+
+ <div className="my-auto w-full flex-1 flex flex-col justify-center min-h-0">
+ <PairedRows
+ items={pairedItems}
+ primaryColor={palette.primary}
+ isPresentation={isPresentation}
+ />
+ </div>
+
+ {slide.insightBarText && (
+ <div className="mt-2 shrink-0">
+ <InsightBar
+ text={slide.insightBarText}
+ primaryColor={palette.primary}
+ accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ />
+ </div>
+ )}
+
+ {renderSlideFooter()}
+ </div>
+ );
+ }
+
+ /* ──── HORIZONTAL STACK CARDS (ALTERNATING ROLES) ──── */
+ case "horizontalStack": {
+ const stackItems = slide.stackCards && slide.stackCards.length > 0
+ ? slide.stackCards
+ : (slide.bullets && slide.bullets.length > 0
+ ? slide.bullets.map((b, idx) => {
+ const colonIdx = b.indexOf(":");
+ return {
+ title: colonIdx > 0 ? b.slice(0, colonIdx).trim() : `Pilar 0${idx + 1}`,
+ tag: `Pillar 0${idx + 1}`,
+ description: colonIdx > 0 ? b.slice(colonIdx + 1).trim() : b,
+ };
+ })
+ : [
+ { title: "Kerahasiaan", tag: "CONFIDENTIALITY", description: "Hanya pihak berwenang yang dapat mengakses data sensitif organisasi." },
+ { title: "Integritas", tag: "INTEGRITY", description: "Data tetap akurat, konsisten, dan tidak diubah tanpa otorisasi sah." },
+ { title: "Ketersediaan", tag: "AVAILABILITY", description: "Sistem dan data selalu dapat diakses saat dibutuhkan oleh bisnis." },
+ ]);
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+
+ <div className="my-auto w-full flex-1 flex flex-col justify-center min-h-0 py-1">
+ <HorizontalStackCards
+ cards={stackItems}
+ primaryColor={palette.primary}
+ secondaryColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ />
+ </div>
+
+ {slide.noteBoxText && (
+ <div className="mt-2 shrink-0">
+ <NoteBox text={slide.noteBoxText} isPresentation={isPresentation} />
+ </div>
+ )}
+
+ {renderSlideFooter()}
+ </div>
+ );
+ }
+
+ /* ──── CONNECTED RAIL STEPPER SLIDE ──── */
+ case "connectedRailStepper": {
+ const railSteps = slide.railSteps && slide.railSteps.length > 0
+ ? slide.railSteps
+ : (slide.processSteps && slide.processSteps.length > 0
+ ? slide.processSteps.map((s, idx) => ({ stepNumber: idx + 1, title: s.title, description: s.description }))
+ : (slide.bullets && slide.bullets.length > 0
+ ? slide.bullets.map((b, idx) => {
+ const colon = b.indexOf(":");
+ return {
+ stepNumber: idx + 1,
+ title: colon > 0 ? b.slice(0, colon).trim() : `Langkah ${idx + 1}`,
+ description: colon > 0 ? b.slice(colon + 1).trim() : b,
+ };
+ })
+ : [
+ { stepNumber: 1, title: "Deteksi", description: "Kenali sinyal awal serangan secara proaktif." },
+ { stepNumber: 2, title: "Isolasi", description: "Batasi penyebaran dan putus jalur koneksi yang terdampak." },
+ { stepNumber: 3, title: "Investigasi", description: "Cari akar penyebab dan analisa cakupan sistem." },
+ { stepNumber: 4, title: "Pulihkan", description: "Kembalikan operasional dari cadangan terverifikasi." },
+ { stepNumber: 5, title: "Evaluasi", description: "Sempurnakan tata kelola dan komunikasikan ke pihak terkait." },
+ ]));
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+
+ <div className="my-auto w-full flex-1 flex flex-col justify-between min-h-0 py-1 gap-2 overflow-hidden">
+ <div className="my-auto w-full">
+ <ConnectedRailStepper
+ steps={railSteps}
+ primaryColor={palette.primary}
+ secondaryColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ />
+ </div>
+
+ {(slide.insightBarText || slide.description) && (
+ <div className="shrink-0 mt-auto">
+ <InsightBar
+ text={slide.insightBarText || slide.description || "Siapa memutuskan apa harus jelas sebelum insiden terjadi."}
+ primaryColor={palette.primary}
+ accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ />
+ </div>
+ )}
+ </div>
+
+ {renderSlideFooter()}
+ </div>
+ );
+ }
+
+ /* ──── ASCENDING COLUMNS SLIDE ──── */
+ case "ascendingColumns": {
+ const levels = slide.ascendingLevels && slide.ascendingLevels.length > 0
+ ? slide.ascendingLevels
+ : (slide.bullets && slide.bullets.length > 0
+ ? slide.bullets.map((b, idx) => {
+ const colon = b.indexOf(":");
+ return {
+ levelNumber: idx + 1,
+ tag: `LEVEL ${idx + 1}`,
+ title: colon > 0 ? b.slice(0, colon).trim() : `Tahap ${idx + 1}`,
+ description: colon > 0 ? b.slice(colon + 1).trim() : b,
+ };
+ })
+ : [
+ { tag: "LEVEL 1", title: "Dasar", description: "Reaktif: bertindak setelah insiden terjadi." },
+ { tag: "LEVEL 2", title: "Terkelola", description: "Kebijakan dan kontrol operasional dasar berjalan." },
+ { tag: "LEVEL 3", title: "Terukur", description: "Risiko dipantau dengan metrik dan indikator berkala." },
+ { tag: "LEVEL 4", title: "Adaptif", description: "Belajar dari insiden dan terus menyesuaikan sistem secara proaktif." },
+ ]);
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+
+ <div className="my-auto w-full flex-1 flex flex-col justify-end min-h-0 pt-2 pb-1">
+ <AscendingColumns
+ levels={levels}
+ primaryColor={palette.primary}
+ secondaryColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ />
+ </div>
+
+ {renderSlideFooter()}
+ </div>
+ );
+ }
+
+ /* ──── EXECUTIVE CHECKLIST SLIDE ──── */
+ case "checklist": {
+ const checkItems = slide.checklistItems && slide.checklistItems.length > 0
+ ? slide.checklistItems
+ : (slide.bullets && slide.bullets.length > 0
+ ? slide.bullets
+ : [
+ "MFA aktif pada email dan seluruh dokumen kerja penting",
+ "Backup sistem diuji pemulihannya secara berkala",
+ "Perangkat dan aplikasi selalu diperbarui otomatis",
+ "Hak akses dan otorisasi ditinjau secara berkala",
+ "Aturan penggunaan AI dan batasan data telah disepakati",
+ "Seluruh tim memahami rencana respons insiden darurat",
+ ]);
+
+ const checklistPadding = hasTemplateBg
+ ? (checkItems.length >= 5 ? "pt-[3.5%] sm:pt-[4%] px-[5.6%] pb-[8%] sm:pb-[8.5%]" : contentPadding)
+ : contentPadding;
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${checklistPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ <div className={`shrink-0 ${checkItems.length >= 5 ? "mb-1 sm:mb-1.5" : "mb-2"} flex items-start justify-between gap-4`}>
+ <div className="flex-1">
+ {renderSlideHeader()}
+ </div>
+
+ <div
+ className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shrink-0 mt-1"
+ style={{ backgroundColor: isUIDeck ? "#FEDE3B" : (palette.secondary || palette.accent || "#FFDD3C"), color: "#000000" }}
+ >
+ {checkItems.length} BUTIR
+ </div>
+ </div>
+
+ <div className="my-auto w-full flex-1 flex flex-col justify-center min-h-0 overflow-hidden">
+ <ExecutiveChecklist
+ items={checkItems}
+ badgeLabel={slide.badge || "EXERCISE 1"}
+ primaryColor={isUIDeck ? "#FEDE3B" : palette.primary}
+ isPresentation={isPresentation}
+ isUIDeck={isUIDeck}
+ isBinusDeck={isBinusDeck}
+ />
+ </div>
+
+ {renderSlideFooter()}
+ </div>
+ );
+ }
+
+ /* ──── CLOSING ACTION SLIDE ──── */
+ case "closingAction": {
+ const actions = slide.bullets && slide.bullets.length > 0
+ ? slide.bullets
+ : [
+ "Aktifkan MFA pada akun email dan dokumen kerja Anda",
+ "Tanyakan ke tim: kapan terakhir backup diuji pulih?",
+ "Sepakati data apa yang boleh masuk ke tool AI publik",
+ ];
+
+ return (
+ <ClosingAction
+ tag={slide.badge || "LANGKAH BERIKUTNYA"}
+ title={safeString(slide.title)}
+ subtitle={safeString(slide.subtitle)}
+ actions={actions}
+ contactText={slide.contactFooterText}
+ primaryColor={palette.primary}
+ accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ transparentBg={hasTemplateBg}
+ isDarkBg={!isUIDeck && (isClosingBg || isPartBg)}
+ isUIDeck={isUIDeck}
+ />
+ );
+ }
+
+ /* ──── FORMULA HERO WITH SPLIT FACTORS & STAT CARD (SLIDE 2) ──── */
+ case "formulaHero": {
+ const getStatVal = (st: any): string => {
+ if (!st) return "";
+ if (typeof st === "string") return st;
+ return String(st.value || "");
+ };
+ const getStatDesc = (st: any): string => {
+ if (!st) return "";
+ if (typeof st === "string") return "";
+ return String(st.label || st.description || "");
+ };
+
+ const formulaText = slide.formulaData?.formula || slide.title || slide.description || "Decision Impact = Speed × Scale × Confidence";
+ const formulaLabel = slide.formulaData?.formulaLabel || "THE FORMULA";
+ const formulaSub = slide.formulaData?.formulaSubtext || slide.subtitle || "AI raises all three at once, for opportunity and risk alike.";
+ 
+ const rawFactors = slide.formulaData?.factors && slide.formulaData.factors.length > 0
+ ? slide.formulaData.factors
+ : (slide.cards && slide.cards.length > 0
+ ? slide.cards.map((c) => ({ title: c.title, description: c.description || c.subtitle || "" }))
+ : (slide.bullets && slide.bullets.length > 0
+ ? slide.bullets.slice(0, 3).map((b, i) => {
+ const parts = b.split(/:\s*|—\s*|-\s*/);
+ return {
+ title: parts[0]?.trim() || `Factor 0${i + 1}`,
+ description: parts[1]?.trim() || b,
+ };
+ })
+ : [
+ { title: "Speed", description: "From periodic review to continuous decisions" },
+ { title: "Cost", description: "One more analysis costs almost nothing; one wrong decision costs a lot" },
+ { title: "Risk", description: "Low-stakes move to AI; high-stakes decisions carry more weight than ever" },
+ ]));
+
+ const rawStatBox = slide.formulaData?.statBox || (slide.stats && slide.stats.length > 0 ? {
+ value: getStatVal(slide.stats[0]) || "61%",
+ description: getStatDesc(slide.stats[0]) || getStatVal(slide.stats[1]) || "of managers say at least half their decision-making time is ineffective",
+ source: "McKinsey Quarterly",
+ } : {
+ value: "61%",
+ description: "of leaders say decision-making speed & confidence directly determines ROI",
+ source: "McKinsey Quarterly, 1,200+ managers",
+ });
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+ <FormulaHeroSplit
+ formulaLabel={formulaLabel}
+ formula={formulaText}
+ formulaSubtext={formulaSub}
+ factors={rawFactors}
+ statBox={rawStatBox}
+ primaryColor={palette.primary}
+ accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ />
+ {renderSlideFooter()}
+ </div>
+ );
+ }
+
+ /* ──── TREE COMPARISON CARDS & TAKEAWAY (SLIDE 4) ──── */
+ case "treeComparison": {
+ const getStatVal = (st: any): string => {
+ if (!st) return "";
+ if (typeof st === "string") return st;
+ return String(st.value || "");
+ };
+ const getStatDesc = (st: any): string => {
+ if (!st) return "";
+ if (typeof st === "string") return "";
+ return String(st.label || st.description || "");
+ };
+
+ const topCallout = slide.treeData?.topCallout || (slide.stats && slide.stats.length > 0 ? {
+ stat: getStatVal(slide.stats[0]) || "3.2×",
+ label: getStatDesc(slide.stats[0]) || "higher metric",
+ note: slide.description || "Push everyone to the app? No: engagement drives both.",
+ } : {
+ stat: "3.2×",
+ label: "higher LTV for app users",
+ note: slide.description || "Push everyone to the app? No: underlying engagement drives both.",
+ });
+
+ const cards = slide.treeData?.cards && slide.treeData.cards.length > 0
+ ? slide.treeData.cards
+ : (slide.cards && slide.cards.length > 0
+ ? slide.cards.slice(0, 3).map((c, i) => ({
+ title: c.title,
+ description: c.description || c.subtitle || "",
+ rootNode: (c.bullets && c.bullets[0]) || "Root Cause",
+ childNodes: [(c.bullets && c.bullets[1]) || "Driver A", (c.bullets && c.bullets[2]) || "Driver B"] as [string, string],
+ }))
+ : [
+ {
+ title: "Selection bias",
+ rootNode: "Motivation",
+ childNodes: ["Joins training", "Better results"] as [string, string],
+ description: "Volunteers for a training program were already more motivated",
+ },
+ {
+ title: "Reverse causation",
+ rootNode: "Revenue growth",
+ childNodes: ["Enables hiring", "Expands footprint"] as [string, string],
+ description: "Revenue growth enables hiring, not the other way round",
+ },
+ {
+ title: "Spurious correlation",
+ rootNode: "Third factor",
+ childNodes: ["Metric A", "Metric B"] as [string, string],
+ description: "Two metrics rise together because of a third factor, e.g. economic expansion",
+ },
+ ]);
+
+ const bottomTakeaway = slide.treeData?.bottomTakeaway || slide.insightBarText || slide.highlight || (
+ "Ask before acting on any correlation: \"Is there a plausible story where something else causes both X and Y?\""
+ );
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+ <TreeComparisonCards
+ topCallout={topCallout}
+ cards={cards}
+ bottomTakeaway={bottomTakeaway}
+ primaryColor={palette.primary}
+ accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ />
+ {renderSlideFooter()}
+ </div>
+ );
+ }
+
+ /* ──── CASE STUDY & 3-LINE EXERCISE (SLIDE 5) ──── */
+ case "caseExercise": {
+ const getStatVal = (st: any): string => {
+ if (!st) return "";
+ if (typeof st === "string") return st;
+ return String(st.value || "");
+ };
+ const getStatDesc = (st: any): string => {
+ if (!st) return "";
+ if (typeof st === "string") return "";
+ return String(st.label || st.description || "");
+ };
+
+ const situationText = slide.exerciseData?.situationText || slide.description || (
+ "PT Cahaya Energi Nusantara replaces about 200 smart meters a month. Today the queue is set by meter age. A vendor offers an AI model that ranks meters by failure risk using 3 years of outage logs. Dian Pratama, Head of Network Operations, must decide how to use it."
+ );
+
+ const metrics = slide.exerciseData?.dataMetrics && slide.exerciseData.dataMetrics.length > 0
+ ? slide.exerciseData.dataMetrics
+ : (slide.stats && slide.stats.length > 0
+ ? slide.stats.slice(0, 3).map((st: any, i) => ({
+ value: getStatVal(st) || `Metric 0${i + 1}`,
+ label: getStatDesc(st) || `Key Metric 0${i + 1}`,
+ }))
+ : [
+ { value: "18,400", label: "meters in service" },
+ { value: "2023–2025", label: "outage logs coverage" },
+ { value: "6%", label: "unrecorded installation date" },
+ ]);
+
+ const twist = slide.exerciseData?.twistBox || slide.calloutBox?.text || (
+ "two hospitals and a water-treatment plant are on feeders served by the oldest meters."
+ );
+
+ const lines = slide.exerciseData?.exerciseLines && slide.exerciseData.exerciseLines.length > 0
+ ? slide.exerciseData.exerciseLines
+ : (slide.bullets && slide.bullets.length > 0
+ ? slide.bullets.slice(0, 3)
+ : [
+ "Which AIDM mode fits the monthly replacement queue? Why?",
+ "Which part of the decision must stay Override, and why?",
+ "One escalation rule the AI must follow.",
+ ]);
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+ <CaseStudyExercise
+ situationTitle={slide.exerciseData?.situationTitle || "SITUATION"}
+ situationText={situationText}
+ dataMetrics={metrics}
+ twistBox={twist}
+ exerciseTitle={slide.exerciseData?.exerciseTitle || "WHAT TO WRITE · 3 LINES"}
+ exerciseLines={lines}
+ primaryColor={palette.primary}
+ accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ />
+ {renderSlideFooter()}
+ </div>
+ );
+ }
+
+ /* ──── PYRAMID HIERARCHY (3-TIER APEX STRATEGY) ──── */
+ case "pyramidHierarchy": {
+ const tiers = slide.cards && slide.cards.length >= 3
+ ? slide.cards.slice(0, 3).map((c, i) => ({
+ level: i === 0 ? "Apex · Vision" : i === 1 ? "Pillars · Strategy" : "Foundation · Enablers",
+ title: c.title,
+ description: c.description || c.subtitle,
+ items: c.bullets,
+ tag: c.tag,
+ }))
+ : (slide.bullets && slide.bullets.length >= 3
+ ? [
+ { level: "Apex · Core Objective", title: slide.bullets[0], description: "Unified organizational priority", tag: "APEX" },
+ { level: "Pillars · Strategic Execution", title: slide.bullets[1], description: "Operational core thrusts", tag: "STRATEGY" },
+ { level: "Foundation · Enabling Capabilities", title: slide.bullets[2], description: "Infrastructure and cross-functional support", tag: "FOUNDATION" },
+ ]
+ : undefined);
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+ <div className="my-auto w-full flex-1 flex flex-col justify-center min-h-0 overflow-hidden py-1">
+ <PyramidHierarchy
+ tiers={tiers}
+ primaryColor={palette.primary}
+ accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ />
+ </div>
+ {renderSlideFooter()}
+ </div>
+ );
+ }
+
+ /* ──── TRANSFORMATION DELTA BRIDGE (AS-IS → CATALYST → TO-BE) ──── */
+ case "transformationBridge": {
+ const asIsData = slide.pairedRows && slide.pairedRows.length > 0
+ ? {
+ title: "Kondisi Saat Ini (As-Is)",
+ tag: "CURRENT FRICTION (AS-IS)",
+ points: slide.pairedRows.map((p) => p.left),
+ }
+ : {
+ title: "Legacy Operating Model",
+ tag: "CURRENT FRICTION (AS-IS)",
+ points: slide.bullets?.slice(0, 3) || [
+ "Fragmented data silos across divisions",
+ "Manual approval bottlenecks and latency",
+ "Reactive risk management post-incident",
+ ],
+ };
+
+ const toBeData = slide.pairedRows && slide.pairedRows.length > 0
+ ? {
+ title: "Target Transformasi (To-Be)",
+ tag: "TARGET OUTCOME (TO-BE)",
+ points: slide.pairedRows.map((p) => p.right),
+ }
+ : {
+ title: "Modern Autonomous Enterprise",
+ tag: "TARGET OUTCOME (TO-BE)",
+ points: [
+ "Unified telemetry and real-time visibility",
+ "Automated compliance with human-in-the-loop",
+ "Proactive error prevention and 99.9% reliability",
+ ],
+ };
+
+ const catalystData = {
+ title: slide.highlight || "Transformation Engine",
+ description: slide.description || "Centralized digital capability standardizing execution across squads",
+ metricChange: (slide.stats && (slide.stats[0] as any)?.value) || "3x Velocity",
+ };
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+ <TransformationBridge
+ asIs={asIsData}
+ catalyst={catalystData}
+ toBe={toBeData}
+ primaryColor={palette.primary}
+ accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ />
+ {renderSlideFooter()}
+ </div>
+ );
+ }
+
+ /* ──── RADIAL HUB & ECOSYSTEM (CORE MANDATE + SATELLITES) ──── */
+ case "radialHub": {
+ const satellites = slide.cards && slide.cards.length >= 4
+ ? slide.cards.slice(0, 4).map((c, i) => ({
+ title: c.title,
+ description: c.description || c.subtitle || "Operational governance sphere",
+ metric: (slide.stats && (slide.stats[i] as any)?.value) || undefined,
+ tag: c.tag || `DOMAIN 0${i + 1}`,
+ }))
+ : (slide.bullets && slide.bullets.length >= 4
+ ? slide.bullets.slice(0, 4).map((b, i) => {
+ const parts = b.split(/:\s*|—\s*|-\s*/);
+ return {
+ title: parts[0]?.trim() || `Domain 0${i + 1}`,
+ description: parts[1]?.trim() || b,
+ tag: `PILLAR 0${i + 1}`,
+ };
+ })
+ : undefined);
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between ${contentPadding} relative ${bodyFontClass} overflow-hidden`} style={dynamicBgStyle}>
+ {renderSlideHeader()}
+ <RadialHubEcosystem
+ coreHubTitle={slide.highlight || slide.title || "Core Orchestration Hub"}
+ coreHubSub="Single Operational Spine"
+ satellites={satellites}
+ primaryColor={palette.primary}
+ accentColor={palette.secondary || palette.accent || "#FFDD3C"}
+ isPresentation={isPresentation}
+ />
+ {renderSlideFooter()}
+ </div>
+ );
+ }
+
+ /* ──── SPLIT CASE COMPARISON (BEFORE VS AFTER ON SPLIT BACKGROUND) ──── */
+ case "splitComparison": {
+ const beforeTitle = slide.beforeCard?.title || "BEFORE AI";
+ const beforeItems =
+ slide.beforeCard?.bullets && slide.beforeCard.bullets.length > 0
+ ? slide.beforeCard.bullets
+ : slide.pairedRows && slide.pairedRows.length > 0
+ ? slide.pairedRows.map((r) => r.left)
+ : slide.bullets && slide.bullets.length >= 2
+ ? slide.bullets.slice(0, Math.ceil(slide.bullets.length / 2))
+ : undefined;
+ const beforeText = slide.beforeCard?.description || (slide.pairedRows?.[0]?.left ? undefined : slide.description);
+
+ const afterTitle = slide.afterCard?.title || "AFTER AI";
+ const afterItems =
+ slide.afterCard?.bullets && slide.afterCard.bullets.length > 0
+ ? slide.afterCard.bullets
+ : slide.pairedRows && slide.pairedRows.length > 0
+ ? slide.pairedRows.map((r) => r.right)
+ : slide.bullets && slide.bullets.length >= 2
+ ? slide.bullets.slice(Math.ceil(slide.bullets.length / 2))
+ : undefined;
+ const afterText = slide.afterCard?.description;
+
+ const insightText =
+ slide.insightBarText ||
+ slide.highlight ||
+ "Key insight: AI didn't replace the leader. It changed what the leader decides.";
+
+ return (
+ <SplitCaseComparison
+ title={safeString(slide.title)}
+ subtitle={safeString(slide.subtitle)}
+ badge={slide.badge}
+ beforeTitle={beforeTitle}
+ beforeItems={beforeItems}
+ beforeText={beforeText}
+ afterTitle={afterTitle}
+ afterItems={afterItems}
+ afterText={afterText}
+ insightText={insightText}
+ isPresentation={isPresentation}
+ fontTitleClass={headingFontClass}
+ isUIDeck={isUIDeck}
+ />
+ );
+ }
+
+ /* ──── SPLIT SPEAKER PROFILE (FACILITATOR / SPEAKER BIO) ──── */
+ case "splitProfile":
+ return (
+ <SplitProfileSlide
+ title={safeString(slide.title)}
+ subtitle={safeString(slide.subtitle || "Facilitator")}
+ badge={slide.badge}
+ tag={slide.profileData?.tag || "SPEAKER PROFILE"}
+ roleOrg={slide.profileData?.role || slide.description}
+ bio={slide.profileData?.bio || slide.bullets?.join(". ")}
+ photoUrl={slide.profileData?.photoUrl || slide.imageUrl}
+ isPresentation={isPresentation}
+ fontTitleClass={headingFontClass}
+ isUIDeck={isUIDeck}
+ isBinusDeck={isBinusDeck}
+ transparentBg={hasTemplateBg}
+ />
+ );
+
+ /* ──── WORKED EXAMPLE / STATISTICAL PROCESS CONTROL (REVO / CLAUDE) ──── */
+ case "workedExample": {
+ const stat0 = slide.stats?.[0];
+ const bigStat = stat0
+ ? { value: stat0.value || "40,000", label: stat0.label || "top-ups a day" }
+ : undefined;
+
+ const baselineBox = slide.calloutBox
+ ? {
+ title: slide.calloutBox.title || "JULY BASELINE",
+ centreText: slide.calloutBox.text?.split("\n")[0] || "Centre 97.26%",
+ limitsText: slide.calloutBox.text?.split("\n")[1] || "Limits 96.30% – 98.22%",
+ }
+ : undefined;
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
+ {/* Slide Title */}
+ <div className="mb-4 sm:mb-6">
+ {slide.badge && (
+ <span className="inline-block text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 text-[#005AAB] mb-1">
+ {slide.badge}
+ </span>
+ )}
+ <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${headingFontClass} text-[#005AAB] tracking-tight leading-tight`}>
+ {safeString(slide.title)}
+ </h2>
+ {slide.subtitle && (
+ <p className="text-xs sm:text-sm text-neutral-500 mt-1 font-medium">{safeString(slide.subtitle)}</p>
+ )}
+ </div>
+
+ {/* Worked Example Diagram (Chart on left, 3 stacked cards on right) */}
+ <div className="flex-1 flex items-center justify-center min-h-0">
+ <ControlChartWorkedExample
+ bigStat={bigStat}
+ baselineBox={baselineBox}
+ isPresentation={isPresentation}
+ />
+ </div>
+ </div>
+ );
+ }
+
+ /* ──── MACHINE LEARNING 3-STEP PIPELINE (REVO / CLAUDE) ──── */
+ case "mlPipeline": {
+ const bottomNoteText = slide.calloutBox?.text || slide.highlight || (slide.bullets && slide.bullets.length > 0 ? slide.bullets[slide.bullets.length - 1] : undefined);
+
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
+ {/* Slide Title */}
+ <div className="mb-3 sm:mb-4">
+ {slide.badge && (
+ <span className="inline-block text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 text-[#005AAB] mb-1">
+ {slide.badge}
+ </span>
+ )}
+ <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${headingFontClass} text-[#005AAB] tracking-tight leading-tight`}>
+ {safeString(slide.title)}
+ </h2>
+ {slide.subtitle && (
+ <p className="text-xs sm:text-sm text-neutral-500 mt-1 font-medium">{safeString(slide.subtitle)}</p>
+ )}
+ </div>
+
+ {/* Pipeline Component */}
+ <div className="flex-1 flex items-center justify-center min-h-0">
+ <MLPipelineSlide
+ bottomNote={bottomNoteText}
+ isPresentation={isPresentation}
+ />
+ </div>
+ </div>
+ );
+ }
+
+ /* ──── LLM TOKEN GENERATION & NEXT-WORD PROBABILITY (REVO / CLAUDE) ──── */
+ case "llmGeneration": {
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[5%] sm:p-[6%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
+ {/* Slide Title */}
+ <div className="mb-3 sm:mb-4">
+ {slide.badge && (
+ <span className="inline-block text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 text-[#005AAB] mb-1">
+ {slide.badge}
+ </span>
+ )}
+ <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${headingFontClass} text-[#005AAB] tracking-tight leading-tight`}>
+ {safeString(slide.title)}
+ </h2>
+ {slide.subtitle && (
+ <p className="text-xs sm:text-sm text-neutral-500 mt-1 font-medium">{safeString(slide.subtitle)}</p>
+ )}
+ </div>
+
+ {/* LLM Generation Component */}
+ <div className="flex-1 flex items-center justify-center min-h-0">
+ <LLMGenerationSlide
+ overviewText={slide.description}
+ promptText={slide.calloutBox?.text ? `"${slide.calloutBox.text}"` : undefined}
+ answerText={slide.bullets?.[0] || undefined}
+ isPresentation={isPresentation}
+ />
+ </div>
+ </div>
+ );
+ }
+
+ /* ──── HANDS-ON CASE WORKSHEET (3 NEED CARDS + TABLE + TWIST) ──── */
+ case "caseWorksheet": {
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[4.5%] sm:p-[5.5%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
+ {/* Slide Header: Title with HANDS-ON badge next to it */}
+ <div className="mb-3">
+ <div className="flex items-center gap-3">
+ <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${headingFontClass} text-[#005AAB] tracking-tight leading-tight`}>
+ {safeString(slide.title)}
+ </h2>
+ <span className="px-2.5 py-0.5 rounded-sm bg-[#FFDD3C] text-neutral-900 font-extrabold text-[11px] sm:text-xs uppercase tracking-wider shrink-0 shadow-2xs">
+ {slide.badge || "HANDS-ON"}
+ </span>
+ </div>
+ {slide.subtitle && (
+ <p className="text-xs sm:text-[13px] text-neutral-600 mt-1 font-normal leading-relaxed">
+ {safeString(slide.subtitle)}
+ </p>
+ )}
+ </div>
+
+ {/* Case Worksheet Component */}
+ <div className="flex-1 flex items-center justify-center min-h-0">
+ <CaseWorksheetSlide
+ taskInstruction={slide.calloutBox?.text || undefined}
+ twistBadge={slide.insightBarText ? "TWIST" : undefined}
+ twistPrompt={slide.insightBarText || undefined}
+ isPresentation={isPresentation}
+ />
+ </div>
+ </div>
+ );
+ }
+
+ default:
+ // Safe fallback layout: Clean elegant bullets/overview
+ return (
+ <div className={`w-full h-full ${bgClasses} flex flex-col justify-between p-[8%] relative ${bodyFontClass}`} style={dynamicBgStyle}>
+ <div className="mb-2">
+ <motion.h2
+ {...anim(0)}
+ className={`text-2xl sm:text-3xl font-bold ${headingFontClass} text-neutral-950 leading-tight`}
+ >
+ {safeString(slide.title || "Slide Overview")}
+ </motion.h2>
+ {slide.subtitle && (
+ <motion.p {...anim(0.06)} className="text-sm sm:text-base text-neutral-500 mt-1">
+ {safeString(slide.subtitle)}
+ </motion.p>
+ )}
+ </div>
+
+ <div className="flex-1 flex flex-col justify-center gap-2.5 my-auto">
+ {slide.bullets && slide.bullets.length > 0 ? (
+ slide.bullets.map((b, i) => (
+ <motion.div key={i} {...anim(0.1 + i * 0.08)} className="flex items-start gap-2.5">
+ <CheckCircle2
+ className="w-4 h-4 mt-0.5 shrink-0"
+ style={{ color: palette.primary }}
+ />
+ <span className="text-xs sm:text-sm text-neutral-700 ">
+ {safeString(b)}
+ </span>
+ </motion.div>
+ ))
+ ) : slide.description ? (
+ <motion.p {...anim(0.12)} className="text-xs sm:text-sm text-neutral-600 leading-relaxed max-w-xl">
+ {safeString(slide.description)}
+ </motion.p>
+ ) : null}
+ </div>
+
+ <div className="relative z-10 flex items-center gap-2 mt-auto">
+ <div
+ className="w-5 h-5 rounded-sm flex items-center justify-center"
+ style={{ backgroundColor: palette.primary, color: palette.id === "launcher" ? "#111" : "#fff" }}
+ >
+ <Layers className="w-3 h-3" />
+ </div>
+ <span className="text-xs font-semibold text-neutral-400">{slide.footer || ""}</span>
+ </div>
+ </div>
+ );
+ }
+ };
+
+ return (
+ <div
+ className={`w-full h-full ${bodyFontClass} select-text overflow-hidden relative slide-canvas`}
+ data-slide-canvas="true"
+ style={
+ hasTemplateBg
+ ? {
+ backgroundImage: `url(${bgImage})`,
+ backgroundSize: "100% 100%",
+ backgroundPosition: "center",
+ backgroundRepeat: "no-repeat",
+ }
+ : undefined
+ }
+ >
+ {renderSlideContent()}
+ </div>
+ );
 }
 
 /* ───────────────────────────────────────────────────
@@ -5725,9 +7106,15 @@ function SlideThumbnail({
       </span>
       <button
         onClick={onClick}
-        className={`group/thumb relative flex-1 aspect-[16/9] rounded-none overflow-hidden border-2 transition-all cursor-pointer text-left bg-white dark:bg-[#18181b] ${
+        className={`group/thumb relative flex-1 aspect-[16/9] rounded-none overflow-hidden border-2 transition-all cursor-pointer text-left bg-white shadow-xs ${
           isActive
-            ? "border-[#7C3AED] ring-2 ring-[#7C3AED]/25 scale-[1.01]"
+            ? (palette.id === "itb"
+                ? "border-[#005AAB] ring-2 ring-[#005AAB]/30 scale-[1.01]"
+                : palette.id === "ui"
+                ? "border-[#FEDE3B] ring-2 ring-[#FEDE3B]/40 scale-[1.01]"
+                : palette.id === "binus"
+                ? "border-[#174A7F] ring-2 ring-[#23A3E7]/30 scale-[1.01]"
+                : "border-[#FFDE3C] ring-2 ring-[#FFDE3C]/35 scale-[1.01]")
             : "border-neutral-200/90 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 opacity-80 hover:opacity-100"
         }`}
       >
@@ -5861,8 +7248,11 @@ export default function DeckGeneratorPage() {
   const [step, setStep] = useState<"input" | "styler" | "confirm" | "slides">("input");
   const [content, setContent] = useState("");
   const [attachedSkill, setAttachedSkill] = useState<AttachedSkill | null>(null);
-  const [slideCount, setSlideCount] = useState("10");
-  const [selectedTargetCount, setSelectedTargetCount] = useState<number>(10);
+  const [slideCount, setSlideCount] = useState("7");
+  const [selectedTargetCount, setSelectedTargetCount] = useState<number>(7);
+  const [customTargetInput, setCustomTargetInput] = useState<string>("");
+  const [showSlideCountPicker, setShowSlideCountPicker] = useState<boolean>(false);
+  const [tempSelectedCount, setTempSelectedCount] = useState<number>(7);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -5916,16 +7306,89 @@ export default function DeckGeneratorPage() {
       const reader = new FileReader();
       reader.onload = (e) => {
         const text = (e.target?.result as string) || "";
-        setAttachedSkill({
-          id: `file-${Date.now()}`,
-          name: file.name,
-          title: file.name.replace(/\.[^/.]+$/, ""),
-          content: text,
+        const lower = `${file.name} ${text}`.toLowerCase();
+        let autoSkillId = "itb";
+        let autoSkillName = "ITB_Deck_Rules.md";
+        let autoSkillTitle = "ITB × RevoU Deck Design Rules";
+        let autoSkillContent = ITB_SKILL_MD;
+
+        // Prioritize explicit institution markers from filename or content
+        const isUploadITB =
+          file.name.toLowerCase().includes("itb") ||
+          lower.includes("itb-deck-design-rules") ||
+          lower.includes("institut teknologi bandung") ||
+          lower.includes("itb × revou") ||
+          lower.includes("itb_deck_rules") ||
+          lower.includes("template-itb") ||
+          lower.includes("itb-deck");
+
+        const isUploadUI =
+          !isUploadITB &&
+          (file.name.toLowerCase().includes("ui") ||
+            lower.includes("ui-deck-design-rules") ||
+            lower.includes("universitas indonesia") ||
+            lower.includes("ui × revou") ||
+            lower.includes("ui_deck_rules") ||
+            lower.includes("makara"));
+
+        const isUploadBinus =
+          !isUploadITB &&
+          !isUploadUI &&
+          (file.name.toLowerCase().includes("binus") ||
+            lower.includes("binus-deck-design-rules") ||
+            lower.includes("bina nusantara") ||
+            lower.includes("binus × revou") ||
+            lower.includes("binus_deck_rules") ||
+            lower.includes("binus-deck"));
+
+        if (isUploadBinus) {
+          autoSkillId = "binus";
+          autoSkillName = "BINUS_Deck_Rules.md";
+          autoSkillTitle = "BINUS × RevoU Deck Design Rules";
+          autoSkillContent = BINUS_SKILL_MD;
+          const binusPal = COLOR_PALETTES.find((p) => p.id === "binus");
+          if (binusPal) {
+            setSelectedPalette(binusPal);
+            setBgColors({ color1: binusPal.primary, color2: binusPal.secondary, color3: binusPal.accent || "#FFDE3D" });
+            setIsCustomBgColors(true);
+          }
+        } else if (isUploadUI) {
+          autoSkillId = "ui";
+          autoSkillName = "UI_Deck_Rules.md";
+          autoSkillTitle = "UI × RevoU Deck Design Rules";
+          autoSkillContent = UI_SKILL_MD;
+          const uiPal = COLOR_PALETTES.find((p) => p.id === "ui");
+          if (uiPal) {
+            setSelectedPalette(uiPal);
+            setBgColors({ color1: uiPal.primary, color2: uiPal.secondary, color3: uiPal.accent || "#AC9629" });
+            setIsCustomBgColors(true);
+          }
+        } else {
+          // Default: ITB standard
+          autoSkillId = "itb";
+          autoSkillName = "ITB_Deck_Rules.md";
+          autoSkillTitle = "ITB × RevoU Deck Design Rules";
+          autoSkillContent = ITB_SKILL_MD;
+          const itbPal = COLOR_PALETTES.find((p) => p.id === "itb");
+          if (itbPal) {
+            setSelectedPalette(itbPal);
+            setBgColors({ color1: itbPal.primary, color2: itbPal.secondary, color3: itbPal.accent || "#FFEC8E" });
+            setIsCustomBgColors(true);
+          }
+        }
+
+        const skillObj: AttachedSkill = {
+          id: autoSkillId,
+          name: autoSkillName,
+          title: autoSkillTitle,
+          content: `${autoSkillContent}\n\n=== USER UPLOADED DOCUMENT (${file.name}) ===\n${text}`,
           badge: ext,
           size: sizeFormatted,
           type: "text",
           isExtracting: false,
-        });
+        };
+        setAttachedSkill(skillObj);
+        applyAttachedSkillDirectives(skillObj);
       };
       reader.readAsText(file);
       return;
@@ -6141,8 +7604,12 @@ export default function DeckGeneratorPage() {
       content.trim() ||
       (attachedSkill
         ? (attachedSkill.id === "itb" || attachedSkill.name?.toLowerCase().includes("itb")
-            ? "Program Eksekutif ITB × RevoU: Data-Driven & AI-Enabled Decision Making for Leaders (Governance, Risk & Compliance for Data and AI Strategy)"
-            : attachedSkill.content)
+            ? "Executive Program ITB × RevoU: [Program Name] — Strategic Leadership, Governance & Scalable Innovation"
+            : attachedSkill.id === "ui" || attachedSkill.name?.toLowerCase().includes("ui")
+            ? "Program Eksekutif UI × RevoU: Product Strategy & Technological Innovation for Digital Leaders (Alignment + Rapid Prototyping + Scalable Governance)"
+            : attachedSkill.id === "binus" || attachedSkill.name?.toLowerCase().includes("binus")
+            ? "Executive Masterclass: Applied Cybersecurity & Enterprise Resilience Architecture (Zero Trust, Cloud Defense, GRC, Incident Response & Threat Hunting)"
+            : attachedSkill.name || "Executive Strategic Deck")
         : "");
     if (!effectiveContent) return;
     setIsPlanningOutline(true);
@@ -6150,11 +7617,10 @@ export default function DeckGeneratorPage() {
     try {
       const activeProvider = typeof window !== "undefined" ? (localStorage.getItem("ai_provider") || "deepseek") : "deepseek";
       const storedApiKey = typeof window !== "undefined" ? (localStorage.getItem(`ai_key_${activeProvider}`) || (activeProvider === "deepseek" ? localStorage.getItem("deepseek_api_key") : "") || "") : "";
-      const storedModel = typeof window !== "undefined" ? (localStorage.getItem(`ai_model_${activeProvider}`) || (activeProvider === "deepseek" ? localStorage.getItem("deepseek_selected_model") : "") || (activeProvider === "deepseek" ? "deepseek-chat" : "")) : "deepseek-chat";
+      const storedModel = typeof window !== "undefined" ? (localStorage.getItem(`ai_model_${activeProvider}`) || (activeProvider === "deepseek" ? localStorage.getItem("deepseek_selected_model") : "") || (activeProvider === "openrouter" ? "google/gemini-2.5-flash" : activeProvider === "gemini" ? "gemini-2.5-flash" : "deepseek-chat")) : "deepseek-chat";
 
-      const skillDirectives = attachedSkill
-        ? `=== INSTITUTIONAL SKILL ATTACHMENT (${attachedSkill.name}) ===\n${attachedSkill.content}\n`
-        : "";
+      const resolvedSkill = getInstitutionalSkill(effectiveContent, attachedSkill);
+      const skillDirectives = `=== INSTITUTIONAL SKILL ATTACHMENT (${resolvedSkill.name}) ===\n${resolvedSkill.content}\n`;
       const combinedDirectives = [skillDirectives, clonedStyle?.visualDirectives || ""].filter(Boolean).join("\n\n");
 
       const res = await fetch("/api/decks/plan-outline", {
@@ -6166,8 +7632,8 @@ export default function DeckGeneratorPage() {
           audience,
           purpose,
           layoutMood,
-          templateRulesMarkdown: attachedSkill?.content || ITB_SKILL_MD,
-          templateName: attachedSkill?.name || "ITB_Gamma_Deck_Rules.md",
+          templateRulesMarkdown: resolvedSkill.content,
+          templateName: resolvedSkill.name,
           clonedStyleDirectives: combinedDirectives,
           apiKey: storedApiKey,
           provider: activeProvider,
@@ -6178,16 +7644,27 @@ export default function DeckGeneratorPage() {
       const data = await res.json();
       if (data.success && Array.isArray(data.outline) && data.outline.length > 0) {
         let finalOutline = data.outline;
+        const isEnglishOutline = finalOutline.some((o: any) =>
+          o.headline && /^[A-Za-z0-9\s\-:,;&'"!?()]+$/.test(o.headline) &&
+          !/\b(?:dan|yang|untuk|dengan|pada|ke|di|dari|inisiatif|pilar|arsitektur|tata\s*kelola)\b/i.test(o.headline)
+        );
+
         if (finalOutline.length < targetCount) {
           const needed = targetCount - finalOutline.length;
           const last = finalOutline[finalOutline.length - 1];
           const middle = finalOutline.slice(0, -1);
           const extra = Array.from({ length: needed }, (_, i) => ({
             slideNumber: middle.length + i + 1,
-            headline: `Inisiatif Strategis ${middle.length + i + 1}`,
-            subheadline: "Analisis mendalam dimensi operasional dan tata kelola",
+            headline: isEnglishOutline
+              ? `Strategic Initiative ${middle.length + i + 1}: Cross-Functional Capability`
+              : `Inisiatif Strategis ${middle.length + i + 1}`,
+            subheadline: isEnglishOutline
+              ? "Comprehensive operational framework and executive governance"
+              : "Analisis mendalam dimensi operasional dan tata kelola",
             visualLayout: "Card Grid",
-            description: "Uraian komprehensif kapabilitas sistemik untuk mendukung keputusan kepemimpinan.",
+            description: isEnglishOutline
+              ? "Systemic capability blueprint supporting boardroom decision-making."
+              : "Uraian komprehensif kapabilitas sistemik untuk mendukung keputusan kepemimpinan.",
           }));
           finalOutline = [...middle, ...extra, last];
         } else if (finalOutline.length > targetCount) {
@@ -6216,133 +7693,167 @@ export default function DeckGeneratorPage() {
     }
   };
 
+  const applyAttachedSkillDirectives = (skill: AttachedSkill) => {
+    // ──── INTELLIGENT .MD CONTENT PARSER ────
+    const mdContent = (skill.content || "").toLowerCase();
+
+    // 1. FONT DETECTION: Parse the .md content for font-family declarations
+    const fontRedHatMatch = /red\s*hat\s*display/i.test(skill.content || "");
+    const fontInterMatch = /\binter\b/i.test(mdContent) && /font/i.test(mdContent);
+    const fontJakartaMatch = /jakarta/i.test(mdContent) && /font/i.test(mdContent);
+    const fontOutfitMatch = /\boutfit\b/i.test(mdContent) && /font/i.test(mdContent);
+    const fontBricolageMatch = /bricolage/i.test(mdContent) && /font/i.test(mdContent);
+
+    if (fontRedHatMatch) {
+      applyFontPreset("red-hat", "red-hat");
+    } else if (fontInterMatch) {
+      applyFontPreset("inter", "inter");
+    } else if (fontJakartaMatch) {
+      applyFontPreset("jakarta", "jakarta");
+    } else if (fontOutfitMatch) {
+      applyFontPreset("outfit", "outfit");
+    } else if (fontBricolageMatch) {
+      applyFontPreset("bricolage", "inter");
+    }
+
+    // 2. COLOR DETECTION: Extract hex color codes from .md content
+    const hexMatches = (skill.content || "").match(/#[0-9A-Fa-f]{6}/g);
+    if (hexMatches && hexMatches.length >= 2) {
+      const uniqueColors = [...new Set(hexMatches)];
+      const matchedPal = COLOR_PALETTES.find((p) =>
+        uniqueColors.some((c) => c.toLowerCase() === p.primary.toLowerCase()) ||
+        uniqueColors.some((c) => c.toLowerCase() === p.secondary.toLowerCase())
+      );
+
+      if (matchedPal) {
+        setSelectedPalette(matchedPal);
+        setBgColors({
+          color1: matchedPal.primary,
+          color2: matchedPal.secondary,
+          color3: matchedPal.accent || matchedPal.secondary,
+        });
+        setIsCustomBgColors(true);
+      } else {
+        const color1 = uniqueColors[0] || "#005AAB";
+        const color2 = uniqueColors[1] || "#FFDD3C";
+        const color3 = uniqueColors[2] || uniqueColors[1] || "#FFEC8E";
+
+        setSelectedPalette({
+          id: "template-custom",
+          name: `Template (${color1.toUpperCase()})`,
+          primary: color1,
+          secondary: color2,
+          accent: color3,
+          bgLight: "bg-white",
+          bgDark: "dark:bg-[#121212]",
+          textPrimary: "text-neutral-950",
+          badgeBg: "bg-neutral-900 text-white",
+        });
+        setBgColors({ color1, color2, color3 });
+        setIsCustomBgColors(true);
+      }
+    } else if (skill.id === "itb" || skill.name?.toLowerCase().includes("itb")) {
+      const itbPal = COLOR_PALETTES.find((p) => p.id === "itb");
+      if (itbPal) {
+        setSelectedPalette(itbPal);
+        setBgColors({
+          color1: itbPal.primary,
+          color2: itbPal.secondary,
+          color3: itbPal.accent || "#FFEC8E",
+        });
+        setIsCustomBgColors(true);
+      }
+    } else if (skill.id === "binus" || skill.name?.toLowerCase().includes("binus") || skill.name?.toLowerCase().includes("bina_nusantara")) {
+      const binusPal = COLOR_PALETTES.find((p) => p.id === "binus");
+      if (binusPal) {
+        setSelectedPalette(binusPal);
+        setBgColors({
+          color1: binusPal.primary,
+          color2: binusPal.secondary,
+          color3: binusPal.accent || "#FFDE3D",
+        });
+        setIsCustomBgColors(true);
+      }
+    } else if (skill.id === "ui" || skill.name?.toLowerCase().includes("ui")) {
+      const uiPal = COLOR_PALETTES.find((p) => p.id === "ui");
+      if (uiPal) {
+        setSelectedPalette(uiPal);
+        setBgColors({
+          color1: uiPal.primary,
+          color2: uiPal.secondary,
+          color3: uiPal.accent || "#AC9629",
+        });
+        setIsCustomBgColors(true);
+      }
+    }
+
+    // 3. STYLE DETECTION: Parse for bg style preferences
+    if (/solid/i.test(mdContent) && /background|style|bg/i.test(mdContent)) {
+      setBgStyle("solid");
+    } else if (/gradient/i.test(mdContent)) {
+      setBgStyle("gradient");
+    } else if (/dark/i.test(mdContent) && /background|mode|theme/i.test(mdContent)) {
+      setBgStyle("dark");
+    }
+
+    // 4. MOOD & AUDIENCE DETECTION
+    if (/executive|formal|corporate|institutional/i.test(mdContent)) {
+      setLayoutMood("executive");
+      setAudience("Executives & C-Level");
+    } else if (/data|metric|chart|analyti/i.test(mdContent)) {
+      setLayoutMood("data");
+    } else {
+      setLayoutMood("framework");
+    }
+
+    // 5. DENSITY DETECTION
+    if (/density.*medium|medium.*density/i.test(mdContent)) {
+      setDensity("medium");
+    } else if (/density.*detailed|detailed.*density/i.test(mdContent)) {
+      setDensity("detailed");
+    } else if (/density.*brief|brief.*density/i.test(mdContent)) {
+      setDensity("brief");
+    }
+  };
+
+  const handleConfirmSlideCountAndPlan = (targetCount: number) => {
+    const validCount = Math.min(Math.max(targetCount, 3), 100);
+    setShowSlideCountPicker(false);
+    setSelectedTargetCount(validCount);
+    setSlideCount(String(validCount));
+    setSlideCountPreference(`${validCount} Slides`);
+    handlePlanOutline(validCount);
+    setStep("confirm");
+  };
+
   const handleStartGenerationFromInput = () => {
+    // 1. Apply template rules if attached
     if (attachedSkill) {
-      // ──── INTELLIGENT .MD CONTENT PARSER ────
-      // Instead of just checking file name for "itb", actually READ the .md content
-      // to extract font, color, style, and audience directives.
-      const mdContent = (attachedSkill.content || "").toLowerCase();
+      applyAttachedSkillDirectives(attachedSkill);
+    }
 
-      // 1. FONT DETECTION: Parse the .md content for font-family declarations
-      const fontRedHatMatch = /red\s*hat\s*display/i.test(attachedSkill.content || "");
-      const fontInterMatch = /\binter\b/i.test(mdContent) && /font/i.test(mdContent);
-      const fontJakartaMatch = /jakarta/i.test(mdContent) && /font/i.test(mdContent);
-      const fontOutfitMatch = /\boutfit\b/i.test(mdContent) && /font/i.test(mdContent);
-      const fontBricolageMatch = /bricolage/i.test(mdContent) && /font/i.test(mdContent);
-
-      if (fontRedHatMatch) {
-        applyFontPreset("red-hat", "red-hat");
-      } else if (fontInterMatch) {
-        applyFontPreset("inter", "inter");
-      } else if (fontJakartaMatch) {
-        applyFontPreset("jakarta", "jakarta");
-      } else if (fontOutfitMatch) {
-        applyFontPreset("outfit", "outfit");
-      } else if (fontBricolageMatch) {
-        applyFontPreset("bricolage", "inter");
-      }
-
-      // 2. COLOR DETECTION: Extract hex color codes from .md content
-      const hexMatches = (attachedSkill.content || "").match(/#[0-9A-Fa-f]{6}/g);
-      if (hexMatches && hexMatches.length >= 2) {
-        const uniqueColors = [...new Set(hexMatches)];
-
-        // Check if any extracted color matches a known primary/secondary palette in COLOR_PALETTES
-        const matchedPal = COLOR_PALETTES.find((p) =>
-          uniqueColors.some((c) => c.toLowerCase() === p.primary.toLowerCase()) ||
-          uniqueColors.some((c) => c.toLowerCase() === p.secondary.toLowerCase())
-        );
-
-        if (matchedPal) {
-          setSelectedPalette(matchedPal);
-          setBgColors({
-            color1: matchedPal.primary,
-            color2: matchedPal.secondary,
-            color3: matchedPal.accent || matchedPal.secondary,
-          });
-          setIsCustomBgColors(true);
-        } else {
-          const color1 = uniqueColors[0] || "#005AAB";
-          const color2 = uniqueColors[1] || "#FFDD3C";
-          const color3 = uniqueColors[2] || uniqueColors[1] || "#FFEC8E";
-
-          setSelectedPalette({
-            id: "template-custom",
-            name: `Template (${color1.toUpperCase()})`,
-            primary: color1,
-            secondary: color2,
-            accent: color3,
-            bgLight: "bg-white",
-            bgDark: "dark:bg-[#121212]",
-            textPrimary: "text-neutral-950",
-            badgeBg: "bg-neutral-900 text-white",
-          });
-          setBgColors({ color1, color2, color3 });
-          setIsCustomBgColors(true);
-        }
-      } else if (attachedSkill.id === "itb" || attachedSkill.name?.toLowerCase().includes("itb")) {
-        // Fallback to ITB palette if name contains "itb" but no hex codes found
-        const itbPal = COLOR_PALETTES.find((p) => p.id === "itb");
-        if (itbPal) {
-          setSelectedPalette(itbPal);
-          setBgColors({
-            color1: itbPal.primary,
-            color2: itbPal.secondary,
-            color3: itbPal.accent || "#FFEC8E",
-          });
-          setIsCustomBgColors(true);
-        }
-      }
-
-      // 3. STYLE DETECTION: Parse for bg style preferences
-      if (/solid/i.test(mdContent) && /background|style|bg/i.test(mdContent)) {
-        setBgStyle("solid");
-      } else if (/gradient/i.test(mdContent)) {
-        setBgStyle("gradient");
-      } else if (/dark/i.test(mdContent) && /background|mode|theme/i.test(mdContent)) {
-        setBgStyle("dark");
-      }
-
-      // 4. MOOD & AUDIENCE DETECTION
-      if (/executive|formal|corporate|institutional/i.test(mdContent)) {
-        setLayoutMood("executive");
-        setAudience("Executives & C-Level");
-      } else if (/data|metric|chart|analyti/i.test(mdContent)) {
-        setLayoutMood("data");
-      } else {
-        setLayoutMood("framework");
-      }
-
-      // 5. DENSITY DETECTION
-      if (/density.*medium|medium.*density/i.test(mdContent)) {
-        setDensity("medium");
-      } else if (/density.*detailed|detailed.*density/i.test(mdContent)) {
-        setDensity("detailed");
-      } else if (/density.*brief|brief.*density/i.test(mdContent)) {
-        setDensity("brief");
-      }
-
-      const parsed = parsePromptBreakdown(content);
-      if (parsed.length > 0) {
-        setEditableBreakdown(parsed);
-        setSelectedTargetCount(parsed.length);
-      } else {
-        let targetCount = parseInt(slideCount, 10) || 10;
-        const countMatch = (content + " " + (attachedSkill.content || "")).match(/(\d+)\s*(slide|deck|halaman)/i);
-        if (countMatch && parseInt(countMatch[1], 10) > 0) {
-          targetCount = Math.min(Math.max(parseInt(countMatch[1], 10), 3), 100);
-          setSlideCount(String(targetCount));
-          setSlideCountPreference(`${targetCount} Slides`);
-        }
-        setSelectedTargetCount(targetCount);
-        handlePlanOutline(targetCount);
-      }
-
+    // 2. Check if content contains a multi-slide outline (e.g. 40 slides, 37 slides, etc.)
+    const parsed = parsePromptBreakdown(content);
+    if (parsed.length >= 2) {
+      // User provided their own complete outline! Keep it 100% intact, do NOT overwrite with AI
+      setEditableBreakdown(parsed);
+      setSelectedTargetCount(parsed.length);
+      setSlideCount(String(parsed.length));
+      setSlideCountPreference(`${parsed.length} Slides`);
       setStep("confirm");
       return;
     }
 
-    setStep("styler");
+    // 3. User gave a topic / document prompt without a full multi-slide outline:
+    // DO NOT auto-generate 10 slides! First prompt the user to determine their desired slide count.
+    const countMatch = (content + " " + (attachedSkill ? attachedSkill.content || "" : "")).match(/(\d+)\s*(slide|deck|halaman)/i);
+    if (countMatch && parseInt(countMatch[1], 10) > 0) {
+      const detected = Math.min(Math.max(parseInt(countMatch[1], 10), 3), 100);
+      setTempSelectedCount(detected);
+    } else {
+      setTempSelectedCount(selectedTargetCount || 7);
+    }
+    setShowSlideCountPicker(true);
   };
 
   // Load user defaults and custom brain from settings
@@ -6473,7 +7984,6 @@ export default function DeckGeneratorPage() {
   const [isThumbnailCollapsed, setIsThumbnailCollapsed] = useState(false);
   const [speakerNotes, setSpeakerNotes] = useState<Record<string, string>>({});
   const [isSpeakerNotesOpen, setIsSpeakerNotesOpen] = useState(false);
-  const [activeToolbarAction, setActiveToolbarAction] = useState<string | null>(null);
 
   // AI Slide Co-Pilot & Prompt Editor State
   const [editPrompt, setEditPrompt] = useState<string>("");
@@ -6483,6 +7993,35 @@ export default function DeckGeneratorPage() {
   const [slidesHistory, setSlidesHistory] = useState<SlideData[][]>([]);
 
   const presentationRef = useRef<HTMLDivElement>(null);
+  const centerWorkspaceRef = useRef<HTMLDivElement>(null);
+  const [centerHeight, setCenterHeight] = useState<number | null>(null);
+
+  // Sync left filmstrip height to match the center workspace (slide + co-pilot chatbox boundary)
+  useEffect(() => {
+    if (step !== "slides") return;
+    const el = centerWorkspaceRef.current;
+    if (!el) return;
+
+    const measureHeight = () => {
+      if (el.offsetHeight > 0) {
+        setCenterHeight(el.offsetHeight);
+      }
+    };
+
+    measureHeight();
+
+    const ro = new ResizeObserver(() => {
+      measureHeight();
+    });
+    ro.observe(el);
+
+    window.addEventListener("resize", measureHeight);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measureHeight);
+    };
+  }, [step, activeSlideIndex, isSpeakerNotesOpen, slides.length]);
+
   const activeSlide = slides[activeSlideIndex];
 
   /* Keyboard Navigation for presentation mode */
@@ -6716,14 +8255,37 @@ async function streamBuildSlide(
 
     try {
       const activeProvider = typeof window !== "undefined" ? (localStorage.getItem("ai_provider") || "deepseek") : "deepseek";
-      const storedApiKey = typeof window !== "undefined" ? (localStorage.getItem(`ai_key_${activeProvider}`) || localStorage.getItem("deepseek_api_key") || "") : "";
-      const storedModel = typeof window !== "undefined" ? (localStorage.getItem(`ai_model_${activeProvider}`) || localStorage.getItem("deepseek_selected_model") || "deepseek-chat") : "deepseek-chat";
+      const storedApiKey = typeof window !== "undefined" ? (localStorage.getItem(`ai_key_${activeProvider}`) || (activeProvider === "deepseek" ? localStorage.getItem("deepseek_api_key") : "") || "") : "";
+      const storedModel = typeof window !== "undefined" ? (localStorage.getItem(`ai_model_${activeProvider}`) || (activeProvider === "deepseek" ? localStorage.getItem("deepseek_selected_model") : "") || (activeProvider === "openrouter" ? "google/gemini-2.5-flash" : activeProvider === "gemini" ? "gemini-2.5-flash" : "deepseek-chat")) : (activeProvider === "openrouter" ? "google/gemini-2.5-flash" : activeProvider === "gemini" ? "gemini-2.5-flash" : "deepseek-chat");
       const storedCustomBrain = typeof window !== "undefined" ? (localStorage.getItem("deck_custom_brain") || "") : "";
 
-      const skillDirectives = attachedSkill
-        ? `=== INSTITUTIONAL SKILL ATTACHMENT (${attachedSkill.name}) ===\n${attachedSkill.content}\n`
-        : "";
+      const resolvedSkill = getInstitutionalSkill(`${content} ${attachedSkill?.name || ""}`, attachedSkill);
+      const skillDirectives = `=== INSTITUTIONAL SKILL ATTACHMENT (${resolvedSkill.name}) ===\n${resolvedSkill.content}\n`;
       const effectiveDirectives = [skillDirectives, clonedStyle?.visualDirectives || ""].filter(Boolean).join("\n\n");
+
+      // Auto-align palette to institution if user has not explicitly locked a custom palette
+      if (resolvedSkill.id === "ui" && selectedPalette.id !== "ui") {
+        const uiPal = COLOR_PALETTES.find((p) => p.id === "ui");
+        if (uiPal) {
+          setSelectedPalette(uiPal);
+          setBgColors({ color1: uiPal.primary, color2: uiPal.secondary, color3: uiPal.accent || "#AC9629" });
+          setIsCustomBgColors(true);
+        }
+      } else if (resolvedSkill.id === "binus" && selectedPalette.id !== "binus") {
+        const binusPal = COLOR_PALETTES.find((p) => p.id === "binus");
+        if (binusPal) {
+          setSelectedPalette(binusPal);
+          setBgColors({ color1: binusPal.primary, color2: binusPal.secondary, color3: binusPal.accent || "#FFDE3D" });
+          setIsCustomBgColors(true);
+        }
+      } else if (resolvedSkill.id === "itb" && selectedPalette.id !== "itb") {
+        const itbPal = COLOR_PALETTES.find((p) => p.id === "itb");
+        if (itbPal) {
+          setSelectedPalette(itbPal);
+          setBgColors({ color1: itbPal.primary, color2: itbPal.secondary, color3: itbPal.accent || "#FFEC8E" });
+          setIsCustomBgColors(true);
+        }
+      }
 
       // ════════════════════════════════════════════════════════════════════
       // PHASE 1: REAL AI ANALYSIS & PLANNING (Content-Adaptive Blueprint)
@@ -6758,8 +8320,8 @@ async function streamBuildSlide(
               audience,
               purpose,
               layoutMood,
-              templateRulesMarkdown: attachedSkill?.content || ITB_SKILL_MD,
-              templateName: attachedSkill?.name || "ITB_Gamma_Deck_Rules.md",
+              templateRulesMarkdown: resolvedSkill.content,
+              templateName: resolvedSkill.name,
               clonedStyleDirectives: effectiveDirectives,
               apiKey: storedApiKey,
               provider: activeProvider,
@@ -6870,8 +8432,8 @@ async function streamBuildSlide(
                       density,
                       bgStylePreference: bgStyle,
                       customBgColors: isCustomBgColors ? bgColors : undefined,
-                      templateRulesMarkdown: attachedSkill?.content || ITB_SKILL_MD,
-                      templateName: attachedSkill?.name || "ITB_Gamma_Deck_Rules.md",
+                      templateRulesMarkdown: resolvedSkill.content,
+                      templateName: resolvedSkill.name,
                       clonedStyleDirectives: effectiveDirectives,
                       clonedReferenceSummary: clonedStyle?.designDNASummary || "",
                       previousSlideSummary: startIdx > 0 ? {
@@ -6892,7 +8454,7 @@ async function streamBuildSlide(
                 const chunkSlides: SlideData[] =
                   chunkData.success && Array.isArray(chunkData.slides)
                     ? chunkData.slides.map((s: any, idx: number) => ({
-                        ...normalizeSlide(s, startIdx + idx),
+                        ...normalizeSlide({ ...s, institution: resolvedSkill.id, theme: resolvedSkill.id }, startIdx + idx),
                         isGeneratingSlide: false,
                       }))
                     : chunkBreakdown.map((b, idx) => ({
@@ -6903,6 +8465,8 @@ async function streamBuildSlide(
                             title: b.headline,
                             subtitle: b.subheadline,
                             description: b.description,
+                            institution: resolvedSkill.id,
+                            theme: resolvedSkill.id,
                           },
                           startIdx + idx
                         ),
@@ -6923,6 +8487,8 @@ async function streamBuildSlide(
                         title: workingBreakdown[i]?.headline,
                         subtitle: workingBreakdown[i]?.subheadline,
                         description: workingBreakdown[i]?.description,
+                        institution: resolvedSkill.id,
+                        theme: resolvedSkill.id,
                       },
                       i
                     ),
@@ -6940,7 +8506,7 @@ async function streamBuildSlide(
         }
 
         const finalCompleteSlides = builtSlides.map((s, idx) => ({
-          ...(s || normalizeSlide(workingBreakdown[idx], idx)),
+          ...(s || normalizeSlide({ ...workingBreakdown[idx], institution: resolvedSkill.id, theme: resolvedSkill.id }, idx)),
           isGeneratingSlide: false,
         }));
         setSlides(finalCompleteSlides);
@@ -6977,8 +8543,8 @@ async function streamBuildSlide(
           paletteId: selectedPalette.id,
           specialNotes,
           customBrainInstruction: storedCustomBrain,
-          templateRulesMarkdown: attachedSkill?.content || ITB_SKILL_MD,
-          templateName: attachedSkill?.name || "ITB_Gamma_Deck_Rules.md",
+          templateRulesMarkdown: resolvedSkill.content,
+          templateName: resolvedSkill.name,
           clonedStyleDirectives: effectiveDirectives,
           clonedReferenceSummary: clonedStyle?.designDNASummary || "",
           apiKey: storedApiKey,
@@ -6992,7 +8558,9 @@ async function streamBuildSlide(
         ? data.slides
         : DEMO_SLIDES;
 
-      const targetSlidesList: SlideData[] = rawList.map((s: any, idx: number) => normalizeSlide(s, idx));
+      const targetSlidesList: SlideData[] = rawList.map((s: any, idx: number) =>
+        normalizeSlide({ ...s, institution: resolvedSkill.id, theme: resolvedSkill.id }, idx)
+      );
 
       setGeneratingProgress(95);
       setGeneratingStage("Fase 3/3 — Finalisasi & quality check...");
@@ -7046,6 +8614,7 @@ async function streamBuildSlide(
         titleFont,
         bodyFont,
         deckTitle: title,
+        templateName: attachedSkill?.id || (selectedPalette.id === "ui" ? "ui" : selectedPalette.id === "binus" ? "binus" : "itb"),
       });
     } catch (err) {
       console.error("Export PPTX failed:", err);
@@ -7067,8 +8636,8 @@ async function streamBuildSlide(
 
     try {
       const activeProvider = typeof window !== "undefined" ? (localStorage.getItem("ai_provider") || "deepseek") : "deepseek";
-      const storedApiKey = typeof window !== "undefined" ? (localStorage.getItem(`ai_key_${activeProvider}`) || localStorage.getItem("deepseek_api_key") || "") : "";
-      const storedModel = typeof window !== "undefined" ? (localStorage.getItem(`ai_model_${activeProvider}`) || localStorage.getItem("deepseek_selected_model") || "deepseek-chat") : "deepseek-chat";
+      const storedApiKey = typeof window !== "undefined" ? (localStorage.getItem(`ai_key_${activeProvider}`) || (activeProvider === "deepseek" ? localStorage.getItem("deepseek_api_key") : "") || "") : "";
+      const storedModel = typeof window !== "undefined" ? (localStorage.getItem(`ai_model_${activeProvider}`) || (activeProvider === "deepseek" ? localStorage.getItem("deepseek_selected_model") : "") || (activeProvider === "openrouter" ? "google/gemini-2.5-flash" : activeProvider === "gemini" ? "gemini-2.5-flash" : "deepseek-chat")) : (activeProvider === "openrouter" ? "google/gemini-2.5-flash" : activeProvider === "gemini" ? "gemini-2.5-flash" : "deepseek-chat");
 
       const response = await fetch("/api/decks/edit", {
         method: "POST",
@@ -7234,7 +8803,7 @@ async function streamBuildSlide(
           
           {/* Header Section */}
           <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <h1 className="text-3xl sm:text-[40px] font-normal font-lora tracking-tight text-neutral-900 dark:text-white leading-[1.2]">
+            <h1 className="text-3xl sm:text-[40px] font-normal font-lora tracking-tight text-neutral-950 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-b dark:from-white dark:via-neutral-200 dark:to-neutral-400/90 leading-[1.2] inline-block">
               Transform your ideas into stunning decks
             </h1>
             <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-400 font-normal">
@@ -7256,7 +8825,7 @@ async function streamBuildSlide(
           />
 
           <div
-            className="max-w-2xl mx-auto bg-white dark:bg-[#121212] rounded-lg border border-neutral-200/90 dark:border-neutral-800 shadow-xs p-4 sm:p-5 relative transition-all focus-within:ring-2 focus-within:ring-[#FFE54C]/50 focus-within:border-[#E5BC10]"
+            className="max-w-2xl mx-auto bg-white dark:bg-[#121212] rounded-lg border border-neutral-200/90 dark:border-neutral-800 shadow-xs p-4 sm:p-5 relative transition-all focus-within:border-neutral-400 dark:focus-within:border-neutral-600 focus-within:ring-1 focus-within:ring-neutral-400/20 dark:focus-within:ring-neutral-600/20"
           >
             {/* Attached Skill / File Card (Claude-style Exact Square Card) */}
             {attachedSkill && (
@@ -7331,13 +8900,21 @@ async function streamBuildSlide(
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+                  if (content.trim() || attachedSkill) {
+                    handleStartGenerationFromInput();
+                  }
+                }
+              }}
               placeholder="Write a message or notes (optional)..."
               rows={attachedSkill ? 7 : 10}
               className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:ring-0 text-sm sm:text-base outline-none resize-none min-h-[180px] font-sans leading-relaxed"
             />
 
             {/* Bottom Bar: Attach File on Left + Generate Button on Right */}
-            <div className="flex items-center justify-between gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-800/80">
+            <div className="flex items-center justify-between gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800/80">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -7348,6 +8925,20 @@ async function streamBuildSlide(
                   <Paperclip className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
                   <span>Attach File</span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempSelectedCount(selectedTargetCount || 7);
+                    setShowSlideCountPicker(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer border border-neutral-200/80 dark:border-neutral-700"
+                  title="Tentukan target jumlah slide"
+                >
+                  <Layers className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
+                  <span>Target: <strong>{selectedTargetCount || 7} Slide</strong></span>
+                </button>
+
                 {customBrainActive && (
                   <span
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/20"
@@ -7362,13 +8953,14 @@ async function streamBuildSlide(
                 type="button"
                 disabled={!content.trim() && !attachedSkill}
                 onClick={handleStartGenerationFromInput}
-                className={`h-8.5 px-4 rounded-md font-semibold text-xs flex items-center justify-center transition-all ${
+                className={`h-8.5 px-4.5 rounded-md font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
                   content.trim() || attachedSkill
                     ? "bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 cursor-pointer active:scale-95 shadow-xs"
                     : "bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed opacity-50"
                 }`}
               >
-                <span>Generate</span>
+                <Sparkles className="w-3.5 h-3.5 text-neutral-950" />
+                <span>Generate Outline →</span>
               </button>
             </div>
           </div>
@@ -7389,7 +8981,7 @@ async function streamBuildSlide(
                       // Pasang file skill attachment template-ITB.md di atas chatbox
                       setAttachedSkill({
                         id: "itb",
-                        name: "ITB_Gamma_Deck_Rules.md",
+                        name: "ITB_Deck_Rules.md",
                         title: "ITB × RevoU Deck Design Rules",
                         content: ITB_SKILL_MD,
                       });
@@ -7400,6 +8992,52 @@ async function streamBuildSlide(
                           color1: itbPal.primary,
                           color2: itbPal.secondary,
                           color3: itbPal.accent || "#FFEC8E",
+                        });
+                        setIsCustomBgColors(true);
+                      }
+                      applyFontPreset("red-hat", "red-hat");
+                      setBgStyle("solid");
+                      setDensity("medium");
+                    } else if (selected.id === "sc-ui") {
+                      // Kosongkan chatbox content agar tetap bersih
+                      setContent("");
+                      // Pasang file skill attachment UI_Deck_Rules.md di atas chatbox
+                      setAttachedSkill({
+                        id: "ui",
+                        name: "UI_Deck_Rules.md",
+                        title: "UI × RevoU Deck Design Rules",
+                        content: UI_SKILL_MD,
+                      });
+                      const uiPal = COLOR_PALETTES.find((p) => p.id === "ui");
+                      if (uiPal) {
+                        setSelectedPalette(uiPal);
+                        setBgColors({
+                          color1: uiPal.primary,
+                          color2: uiPal.secondary,
+                          color3: uiPal.accent || "#AC9629",
+                        });
+                        setIsCustomBgColors(true);
+                      }
+                      applyFontPreset("red-hat", "red-hat");
+                      setBgStyle("solid");
+                      setDensity("medium");
+                    } else if (selected.id === "sc-binus") {
+                      // Kosongkan chatbox content agar tetap bersih
+                      setContent("");
+                      // Pasang file skill attachment BINUS_Deck_Rules.md di atas chatbox
+                      setAttachedSkill({
+                        id: "binus",
+                        name: "BINUS_Deck_Rules.md",
+                        title: "BINUS × RevoU Deck Design Rules",
+                        content: BINUS_SKILL_MD,
+                      });
+                      const binusPal = COLOR_PALETTES.find((p) => p.id === "binus");
+                      if (binusPal) {
+                        setSelectedPalette(binusPal);
+                        setBgColors({
+                          color1: binusPal.primary,
+                          color2: binusPal.secondary,
+                          color3: binusPal.accent || "#FFDE3D",
                         });
                         setIsCustomBgColors(true);
                       }
@@ -7427,7 +9065,7 @@ async function streamBuildSlide(
           {/* Header Title, Subtitle & Right-Aligned Back Button */}
           <div className="flex items-start justify-between gap-4 pt-1">
             <div className="space-y-1">
-              <h1 className="text-3xl sm:text-[34px] font-normal sm:font-medium tracking-tight text-neutral-900 dark:text-white leading-tight">
+              <h1 className="text-3xl sm:text-[34px] font-lora font-medium tracking-tight text-neutral-950 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-b dark:from-white dark:via-neutral-200 dark:to-neutral-400/90 leading-tight inline-block">
                 A few quick questions
               </h1>
               <p className="text-sm sm:text-[14.5px] text-neutral-500 dark:text-neutral-400 font-normal">
@@ -7449,7 +9087,7 @@ async function streamBuildSlide(
           {clonedStyle ? (
             <div className="p-3.5 sm:p-4 rounded-lg bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-md bg-neutral-200/80 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center justify-center shrink-0 border border-neutral-300/60 dark:border-neutral-750">
+                <div className="w-8 h-8 rounded-md bg-neutral-200/80 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center justify-center shrink-0 border border-neutral-300/60 dark:border-neutral-700">
                   <Sparkles className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
                 </div>
                 <div>
@@ -7478,7 +9116,7 @@ async function streamBuildSlide(
                 <button
                   type="button"
                   onClick={() => setShowCloneStyleModal(true)}
-                  className="px-2.5 py-1 rounded-md text-xs font-medium bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-750 transition-colors"
+                  className="px-2.5 py-1 rounded-md text-xs font-medium bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                 >
                   Ubah
                 </button>
@@ -7495,8 +9133,8 @@ async function streamBuildSlide(
           ) : attachedSkill ? (
             <div className="p-3.5 sm:p-4 rounded-lg bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-md bg-neutral-200/80 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center justify-center shrink-0 border border-neutral-300/60 dark:border-neutral-750">
-                  <FileText className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
+                <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-100 flex items-center justify-center shrink-0 border border-neutral-200 dark:border-neutral-700 shadow-2xs">
+                  <FileText className="w-4 h-4 text-neutral-700 dark:text-neutral-100 stroke-[2]" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
@@ -8002,7 +9640,7 @@ async function streamBuildSlide(
       )}
 
       {/* ══════════════════════════════════════════════════════════
-       * STEP 3: CONFIRMATION & SLIDE BREAKDOWN PREVIEW (MINIMALIST 16:9 CARDS ALA GAMMA)
+       * STEP 3: CONFIRMATION & SLIDE BREAKDOWN PREVIEW (MINIMALIST 16:9 CARDS)
        * ══════════════════════════════════════════════════════════ */}
       {step === "confirm" && (
         <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5 font-sans animate-in fade-in duration-200">
@@ -8010,16 +9648,7 @@ async function streamBuildSlide(
           {/* Header Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-neutral-200/80 dark:border-neutral-800">
             <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-750">
-                  {editableBreakdown.length} Slides
-                </span>
-                <span className="text-xs text-neutral-400">•</span>
-                <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                  16:9 Widescreen
-                </span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-neutral-900 dark:text-white">
+              <h1 className="text-2xl sm:text-3xl font-lora font-medium tracking-tight text-neutral-950 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-b dark:from-white dark:via-neutral-200 dark:to-neutral-400/90 inline-block">
                 Review Presentation Outline
               </h1>
               <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
@@ -8031,7 +9660,7 @@ async function streamBuildSlide(
               <button
                 type="button"
                 onClick={() => setStep(attachedSkill ? "input" : "styler")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer border border-neutral-200/80 dark:border-neutral-750"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer border border-neutral-200/80 dark:border-neutral-700"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>{attachedSkill ? "Back to Input" : "Back to Options"}</span>
@@ -8039,10 +9668,20 @@ async function streamBuildSlide(
               <Button
                 type="button"
                 onClick={handleGenerate}
-                className="h-8.5 px-4.5 rounded-md font-semibold text-xs bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-98 transition-all"
+                disabled={isPlanningOutline || editableBreakdown.length === 0}
+                className="h-8.5 px-4.5 rounded-md font-semibold text-xs bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-98 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Sparkles className="w-3.5 h-3.5 text-neutral-950" />
-                <span>Generate {editableBreakdown.length} Slides Now</span>
+                {isPlanningOutline ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-neutral-950" />
+                    <span>Menyiapkan Outline ({selectedTargetCount} Slides)...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5 text-neutral-950" />
+                    <span>Generate {editableBreakdown.length} Slides Now</span>
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -8051,8 +9690,8 @@ async function streamBuildSlide(
           {attachedSkill && (
             <div className="p-4 sm:p-5 rounded-lg bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-md bg-neutral-200/80 dark:bg-neutral-850 text-neutral-700 dark:text-neutral-300 flex items-center justify-center shrink-0 border border-neutral-300/60 dark:border-neutral-750">
-                  <FileText className="w-5 h-5 text-neutral-700 dark:text-neutral-300" />
+                <div className="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-100 flex items-center justify-center shrink-0 border border-neutral-200 dark:border-neutral-700 shadow-2xs">
+                  <FileText className="w-5 h-5 text-neutral-700 dark:text-neutral-100 stroke-[2]" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2.5">
@@ -8072,7 +9711,7 @@ async function streamBuildSlide(
               <button
                 type="button"
                 onClick={() => setStep("styler")}
-                className="px-3.5 py-2 rounded-md text-xs sm:text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white bg-white dark:bg-neutral-800 border border-neutral-200/80 dark:border-neutral-750 hover:bg-neutral-100/80 dark:hover:bg-neutral-750 transition-colors ml-auto sm:ml-0 shadow-2xs"
+                className="px-3.5 py-2 rounded-md text-xs sm:text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white bg-white dark:bg-neutral-800 border border-neutral-200/80 dark:border-neutral-700 hover:bg-neutral-100/80 dark:hover:bg-neutral-700 transition-colors ml-auto sm:ml-0 shadow-2xs"
               >
                 Kustomisasi Gaya (Opsional) →
               </button>
@@ -8111,7 +9750,7 @@ async function streamBuildSlide(
             <button
               type="button"
               onClick={handleAddSlideCard}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-neutral-200/80 dark:border-neutral-750 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-750 text-xs sm:text-[13px] font-semibold text-neutral-800 dark:text-neutral-200 transition-colors cursor-pointer ml-auto shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-neutral-200/80 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-xs sm:text-[13px] font-semibold text-neutral-800 dark:text-neutral-200 transition-colors cursor-pointer ml-auto shadow-2xs"
             >
               <Plus className="w-4 h-4" />
               <span>Add Slide</span>
@@ -8124,14 +9763,14 @@ async function streamBuildSlide(
               <span className="text-xs sm:text-[13px] font-semibold text-neutral-700 dark:text-neutral-300">
                 Target Slide:
               </span>
-              <div className="inline-flex p-0.5 rounded-md bg-neutral-200/60 dark:bg-neutral-800 border border-neutral-200/60 dark:border-neutral-750 gap-0.5">
-                {[5, 10, 20, 30, 35, 50, 75, 100].map((num) => (
+              <div className="inline-flex p-0.5 rounded-md bg-neutral-200/60 dark:bg-neutral-800 border border-neutral-200/60 dark:border-neutral-700 gap-0.5 flex-wrap">
+                {[5, 6, 7, 8, 10, 12, 15, 20, 30, 40, 50].map((num) => (
                   <button
                     key={num}
                     type="button"
                     disabled={isPlanningOutline}
                     onClick={() => handlePlanOutline(num)}
-                    className={`px-3 py-1.5 rounded-[5px] text-xs sm:text-[13px] transition-all cursor-pointer ${
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-[5px] text-xs sm:text-[13px] transition-all cursor-pointer ${
                       editableBreakdown.length === num || selectedTargetCount === num
                         ? "bg-white dark:bg-neutral-700 text-neutral-950 dark:text-white shadow-2xs font-bold"
                         : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white font-medium"
@@ -8140,21 +9779,61 @@ async function streamBuildSlide(
                     {num}
                   </button>
                 ))}
+                {/* Custom active pill if count is not in standard presets (e.g. 37, 38) */}
+                {![5, 6, 7, 8, 10, 12, 15, 20, 30, 40, 50].includes(editableBreakdown.length || selectedTargetCount) && (
+                  <span className="px-2.5 sm:px-3 py-1.5 rounded-[5px] text-xs sm:text-[13px] bg-white dark:bg-neutral-700 text-neutral-950 dark:text-white shadow-2xs font-bold">
+                    {editableBreakdown.length || selectedTargetCount} (Aktif)
+                  </span>
+                )}
+              </div>
+
+              {/* Custom Number Input & Set Button */}
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  min="3"
+                  max="100"
+                  value={customTargetInput}
+                  onChange={(e) => setCustomTargetInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const n = parseInt(customTargetInput, 10);
+                      if (n >= 3 && n <= 100) {
+                        handlePlanOutline(n);
+                      }
+                    }
+                  }}
+                  placeholder="Kustom (misal: 38)"
+                  className="w-28 sm:w-32 h-8 px-2.5 rounded-md text-xs bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-500 dark:focus:border-neutral-400"
+                />
+                <button
+                  type="button"
+                  disabled={isPlanningOutline || !customTargetInput || parseInt(customTargetInput, 10) < 3}
+                  onClick={() => {
+                    const n = parseInt(customTargetInput, 10);
+                    if (n >= 3 && n <= 100) {
+                      handlePlanOutline(n);
+                    }
+                  }}
+                  className="h-8 px-3 rounded-md text-xs font-semibold bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-neutral-800 dark:text-neutral-200 cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Set
+                </button>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
               {isPlanningOutline ? (
                 <span className="text-xs sm:text-[13px] font-medium text-neutral-600 dark:text-neutral-400 flex items-center gap-2">
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Menyusun alur cerita...</span>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#D4A800]" />
+                  <span>Menyusun alur cerita ({selectedTargetCount} slide)...</span>
                 </span>
               ) : (
                 <span className="text-xs sm:text-[13px] text-neutral-600 dark:text-neutral-300">
                   {editableBreakdown.length >= 10 ? (
                     <span className="inline-flex items-center gap-2 font-medium">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                      <span>Pipeline batching aktif ({Math.ceil(editableBreakdown.length / 5)} batch)</span>
+                      <span>Pipeline batching aktif ({Math.ceil(editableBreakdown.length / 5)} batch • {editableBreakdown.length} slide)</span>
                     </span>
                   ) : (
                     <span>{editableBreakdown.length} slide siap</span>
@@ -8278,7 +9957,7 @@ async function streamBuildSlide(
                     ) : s.visualLayout?.toLowerCase().includes("metric") || s.visualLayout?.toLowerCase().includes("kpi") ? (
                       <div className="flex items-center gap-1.5 flex-wrap h-6 overflow-hidden">
                         {(s.stats || ["Growth: +42%", "Efficiency: 94%"]).slice(0, 2).map((st, i) => (
-                          <span key={i} className="text-[9.5px] font-mono px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-750 truncate">
+                          <span key={i} className="text-[9.5px] font-mono px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200/80 dark:border-neutral-700 truncate">
                             {st}
                           </span>
                         ))}
@@ -8369,7 +10048,6 @@ async function streamBuildSlide(
               </div>
               <div className="text-center">
                 <span className="text-xs font-medium block">Add New Slide</span>
-                <span className="text-[10px] text-neutral-400 font-mono">16:9 Widescreen</span>
               </div>
             </div>
           </div>
@@ -8426,7 +10104,7 @@ async function streamBuildSlide(
           {!isGenerating && (
             <div className="flex items-center justify-between gap-3 px-1 py-1 border-b border-neutral-200/80 dark:border-neutral-800 pb-3">
               <div className="flex items-center gap-3 min-w-0">
-                <h2 className="text-sm sm:text-base font-bold text-neutral-950 dark:text-white truncate max-w-[200px] sm:max-w-md">
+                <h2 className="text-sm sm:text-base font-lora font-medium text-neutral-950 dark:text-neutral-100 truncate max-w-[200px] sm:max-w-md">
                   {content.split("\n")[0]?.substring(0, 45) || "Presentation Deck"}
                 </h2>
                 <span className="text-xs text-neutral-600 dark:text-neutral-400 font-semibold tabular-nums bg-neutral-100 dark:bg-neutral-800 px-2.5 py-0.5 rounded-full border border-neutral-200/60 dark:border-neutral-700/60">
@@ -8435,15 +10113,6 @@ async function streamBuildSlide(
               </div>
 
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsPresentation(true)}
-                  className="h-8.5 text-xs font-semibold border-neutral-200 dark:border-neutral-800 rounded-md gap-1.5 cursor-pointer shadow-2xs hover:border-neutral-300"
-                >
-                  <Play className="w-3.5 h-3.5 text-[#D4A800] fill-[#D4A800]" />
-                  <span className="hidden sm:inline">Present</span>
-                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -8467,11 +10136,17 @@ async function streamBuildSlide(
           )}
 
           {/* Main Studio Workspace Layout */}
-          <div className="flex gap-3 sm:gap-4 min-h-[calc(100vh-210px)] relative">
+          <div className="flex gap-3 sm:gap-4 relative items-start">
             
             {/* ──── LEFT COLUMN: VERTICAL NUMBERED SLIDE THUMBNAILS (GOOGLE SLIDES STYLE FILMSTRIP) ──── */}
             {!isThumbnailCollapsed && (
-              <div className="hidden md:flex flex-col w-[185px] lg:w-[220px] shrink-0 border-r border-neutral-200/80 dark:border-neutral-800/80 pr-2 select-none justify-between sticky top-3.5 h-[calc(100vh-145px)] max-h-[calc(100vh-145px)]">
+              <div
+                style={{
+                  height: centerHeight ? `${centerHeight}px` : undefined,
+                  maxHeight: centerHeight ? `${centerHeight}px` : "calc(100vh - 145px)",
+                }}
+                className="hidden md:flex flex-col w-[185px] lg:w-[220px] shrink-0 border-r border-neutral-200/80 dark:border-neutral-800/80 pr-2 select-none justify-between sticky top-3.5"
+              >
                 {/* Thumbnails Scroll List: Google Slides-style independent vertical scroll with visible scrollbar */}
                 <div className="flex-1 min-h-0 space-y-3 overflow-y-auto pr-1.5 pb-2 overscroll-contain slide-filmstrip-scroll">
                   {slides.map((slide, i) => (
@@ -8538,95 +10213,93 @@ async function streamBuildSlide(
             )}
 
             {/* ──── CENTER WORKSPACE: RULERS + 16:9 CANVAS + SPEAKER NOTES ──── */}
-            <div className="flex-1 flex flex-col items-center justify-start min-w-0 px-1 sm:px-2 relative">
-              
-              {/* Subtle Top Horizontal Ruler Simulation */}
-              <div className="w-full max-w-4xl h-4 border-b border-neutral-200/70 dark:border-neutral-800/70 mb-2 hidden lg:flex items-end justify-between px-3 text-[9px] font-mono text-neutral-300 dark:text-neutral-700 select-none">
-                <span>|</span>
-                <span>•</span>
-                <span>•</span>
-                <span>•</span>
-                <span>| 25</span>
-                <span>•</span>
-                <span>•</span>
-                <span>•</span>
-                <span>| 50 (Center)</span>
-                <span>•</span>
-                <span>•</span>
-                <span>•</span>
-                <span>| 75</span>
-                <span>•</span>
-                <span>•</span>
-                <span>•</span>
-                <span>| 100</span>
-              </div>
+            <div
+              className="flex-1 flex flex-col items-center justify-start min-w-0 px-1 sm:px-2 relative"
+            >
+              {/* Measure container: Ruler + 16:9 Active Slide + Pagination Bar (< 1 of 8 >) */}
+              <div
+                ref={centerWorkspaceRef}
+                className="w-full flex flex-col items-center justify-start"
+              >
+                {/* Subtle Top Horizontal Ruler Simulation */}
+                <div className="w-full max-w-4xl h-4 border-b border-neutral-200/70 dark:border-neutral-800/70 mb-2 hidden lg:flex items-end justify-between px-3 text-[9px] font-mono text-neutral-300 dark:text-neutral-700 select-none">
+                  <span>|</span>
+                  <span>•</span>
+                  <span>•</span>
+                  <span>•</span>
+                  <span>| 25</span>
+                  <span>•</span>
+                  <span>•</span>
+                  <span>•</span>
+                  <span>| 50 (Center)</span>
+                  <span>•</span>
+                  <span>•</span>
+                  <span>•</span>
+                  <span>| 75</span>
+                  <span>•</span>
+                  <span>•</span>
+                  <span>•</span>
+                  <span>| 100</span>
+                </div>
 
-              {/* Main 16:9 Active Slide Canvas */}
-              {activeSlide ? (
-                <div className="w-full max-w-4xl aspect-[16/9] rounded-none overflow-hidden border border-neutral-200/90 dark:border-neutral-800 relative group bg-white dark:bg-neutral-950 transition-all">
-                  <div
-                    key={activeSlide.id || `slide-${activeSlideIndex}`}
-                    className="w-full h-full"
-                  >
-                    <SlideRenderer
-                      slide={activeSlide}
-                      slideIndex={activeSlideIndex}
-                      totalSlides={slides.length}
-                      palette={selectedPalette}
-                      bgStyle={bgStyle}
-                      fontPairing={fontPairing}
-                      titleFont={titleFont}
-                      bodyFont={bodyFont}
-                    />
+                {/* Main 16:9 Active Slide Canvas */}
+                {activeSlide ? (
+                  <div className="w-full max-w-4xl aspect-[16/9] rounded-none overflow-hidden border border-neutral-300 dark:border-neutral-700 shadow-xl relative group bg-white transition-all">
+                    <div
+                      key={activeSlide.id || `slide-${activeSlideIndex}`}
+                      className="w-full h-full"
+                    >
+                      <SlideRenderer
+                        slide={activeSlide}
+                        slideIndex={activeSlideIndex}
+                        totalSlides={slides.length}
+                        palette={selectedPalette}
+                        bgStyle={bgStyle}
+                        fontPairing={fontPairing}
+                        titleFont={titleFont}
+                        bodyFont={bodyFont}
+                      />
+                    </div>
                   </div>
+                ) : (
+                  <div className="w-full max-w-4xl aspect-[16/9] rounded-none border-2 border-dashed border-neutral-200 dark:border-neutral-800 flex flex-col items-center justify-center gap-3 bg-neutral-50/50 dark:bg-neutral-900/30">
+                    <Loader2 className="w-8 h-8 text-[#9E7D00] dark:text-[#FFE54C] animate-spin" />
+                    <p className="text-xs text-neutral-500 font-medium">
+                      Sedang menyusun canvas presentasi...
+                    </p>
+                  </div>
+                )}
 
-                  {/* Fullscreen Overlay Button */}
+                {/* Bottom Navigation Pagination Bar */}
+                <div className="flex items-center justify-center gap-3 mt-3.5">
                   <button
-                    onClick={() => setIsPresentation(true)}
-                    className="absolute top-3 right-3 p-2 bg-black/40 hover:bg-black/70 backdrop-blur-xs rounded-md text-white/90 hover:text-white transition-all opacity-0 group-hover:opacity-100 cursor-pointer z-30"
-                    title="Fullscreen Presentation"
+                    onClick={() =>
+                      setActiveSlideIndex((prev) => Math.max(prev - 1, 0))
+                    }
+                    disabled={activeSlideIndex === 0}
+                    className="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white hover:border-neutral-400 dark:hover:border-neutral-600 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
+                    title="Previous Slide"
                   >
-                    <Maximize2 className="w-4 h-4" />
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <span className="text-xs text-neutral-600 dark:text-neutral-400 font-medium font-mono tabular-nums min-w-[70px] text-center">
+                    {activeSlideIndex + 1} of {slides.length}
+                  </span>
+
+                  <button
+                    onClick={() =>
+                      setActiveSlideIndex((prev) =>
+                        Math.min(prev + 1, slides.length - 1)
+                      )
+                    }
+                    disabled={activeSlideIndex === slides.length - 1}
+                    className="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white hover:border-neutral-400 dark:hover:border-neutral-600 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
+                    title="Next Slide"
+                  >
+                    <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
-              ) : (
-                <div className="w-full max-w-4xl aspect-[16/9] rounded-none border-2 border-dashed border-neutral-200 dark:border-neutral-800 flex flex-col items-center justify-center gap-3 bg-neutral-50/50 dark:bg-neutral-900/30">
-                  <Loader2 className="w-8 h-8 text-[#9E7D00] dark:text-[#FFE54C] animate-spin" />
-                  <p className="text-xs text-neutral-500 font-medium">
-                    Sedang menyusun canvas presentasi...
-                  </p>
-                </div>
-              )}
-
-              {/* Bottom Navigation Pagination Bar */}
-              <div className="flex items-center justify-center gap-3 mt-3.5">
-                <button
-                  onClick={() =>
-                    setActiveSlideIndex((prev) => Math.max(prev - 1, 0))
-                  }
-                  disabled={activeSlideIndex === 0}
-                  className="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white hover:border-neutral-400 dark:hover:border-neutral-600 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
-                  title="Previous Slide"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-
-                <span className="text-xs text-neutral-600 dark:text-neutral-400 font-medium font-mono tabular-nums min-w-[70px] text-center">
-                  {activeSlideIndex + 1} of {slides.length}
-                </span>
-
-                <button
-                  onClick={() =>
-                    setActiveSlideIndex((prev) =>
-                      Math.min(prev + 1, slides.length - 1)
-                    )
-                  }
-                  disabled={activeSlideIndex === slides.length - 1}
-                  className="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white hover:border-neutral-400 dark:hover:border-neutral-600 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
-                  title="Next Slide"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
               </div>
 
               {/* ──── AI PROMPT ITERATION / CO-PILOT EDIT PANEL (MODERN MINIMALIST LLM STYLE) ──── */}
@@ -8678,39 +10351,59 @@ async function streamBuildSlide(
                   </div>
                 </div>
 
-                {/* Prompt Input Form (Clean LLM Chat Style) */}
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleApplyPromptEdit();
-                  }}
-                  className="flex items-center gap-2 bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 rounded-md px-3 py-1.5 focus-within:border-neutral-400 dark:focus-within:border-neutral-600 transition-all"
-                >
-                  <input
-                    type="text"
+                {/* LLM Mode Chatbox Container */}
+                <div className="rounded-xl border border-neutral-200/90 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 p-3 sm:p-3.5 focus-within:border-neutral-400 dark:focus-within:border-neutral-600 focus-within:bg-white dark:focus-within:bg-[#121212] transition-all">
+                  <textarea
                     value={editPrompt}
                     onChange={(e) => setEditPrompt(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                        e.preventDefault();
+                        if (!isEditingSlide && editPrompt.trim()) {
+                          handleApplyPromptEdit();
+                        }
+                      }
+                    }}
                     placeholder={
                       editScope === "single"
                         ? `Edit instructions for Slide ${activeSlideIndex + 1} (e.g., "Change to comparison table", "Make text more punchy", etc.)...`
                         : `Edit instructions for ALL ${slides.length} slides (e.g., "Use executive C-level tone", "Translate to English", etc.)...`
                     }
                     disabled={isEditingSlide}
-                    className="flex-1 bg-transparent border-none text-xs sm:text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-0 py-1"
+                    rows={2}
+                    className="w-full bg-transparent border-none text-xs sm:text-[13.5px] text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-0 resize-none min-h-[46px] leading-relaxed"
                   />
-                  <Button
-                    type="submit"
-                    size="sm"
-                    disabled={isEditingSlide || !editPrompt.trim()}
-                    className="bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 font-semibold text-xs h-7.5 px-3 rounded-md cursor-pointer shrink-0 disabled:opacity-40 transition-all"
-                  >
-                    {isEditingSlide ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      "Apply"
-                    )}
-                  </Button>
-                </form>
+
+                  {/* Bottom Action Bar: Helper info on Left + Apply Button on Right */}
+                  <div className="flex items-center justify-between gap-2 pt-2.5 mt-1 border-t border-neutral-200/50 dark:border-neutral-800/60">
+                    <span className="text-[11px] text-neutral-400 dark:text-neutral-500 font-normal hidden sm:inline">
+                      Tekan <kbd className="px-1 py-0.5 rounded bg-neutral-200/70 dark:bg-neutral-800 text-[10px] font-mono text-neutral-600 dark:text-neutral-300">Enter</kbd> untuk apply, <kbd className="px-1 py-0.5 rounded bg-neutral-200/70 dark:bg-neutral-800 text-[10px] font-mono text-neutral-600 dark:text-neutral-300">Shift+Enter</kbd> baris baru
+                    </span>
+                    <span className="text-[11px] text-neutral-400 sm:hidden">
+                      {editScope === "single" ? `Slide ${activeSlideIndex + 1}` : "All Slides"}
+                    </span>
+
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={isEditingSlide || !editPrompt.trim()}
+                      onClick={() => handleApplyPromptEdit()}
+                      className="bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 font-semibold text-xs h-7.5 px-3.5 rounded-md cursor-pointer shrink-0 disabled:opacity-40 transition-all shadow-2xs ml-auto"
+                    >
+                      {isEditingSlide ? (
+                        <span className="flex items-center gap-1.5">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Applying...</span>
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-neutral-950" />
+                          <span>Apply</span>
+                        </span>
+                      )}
+                    </Button>
+                  </div>
+                </div>
 
                 {/* Status or Success Notification */}
                 {editStatusMessage && (
@@ -8728,6 +10421,7 @@ async function streamBuildSlide(
                         { label: "Convert to Table", prompt: "Change this slide layout to tableComparison with clear feature rows" },
                         { label: "Convert to Split Metric", prompt: "Change this slide layout to splitMetric with large metric numbers on the left and detail on the right" },
                         { label: "Convert to Milestones", prompt: "Change this slide layout to horizontalMilestones with 4 progressive stages" },
+                        { label: "+ Tambah Ilustrasi PNG", prompt: "Tambahkan ilustrasi gambar PNG minimalis yang relevan dengan topik slide ini" },
                         { label: "Add Key Metrics", prompt: "Add relevant quantitative stats, numbers, and percentage metrics" },
                       ]
                     : [
@@ -8809,9 +10503,15 @@ async function streamBuildSlide(
                   <button
                     key={`mobile-thumb-${slide.id || 'item'}-${i}`}
                     onClick={() => setActiveSlideIndex(i)}
-                    className={`shrink-0 w-20 aspect-[16/9] rounded-none overflow-hidden border-2 transition-all cursor-pointer relative bg-white dark:bg-[#18181b] ${
+                    className={`shrink-0 w-20 aspect-[16/9] rounded-none overflow-hidden border-2 transition-all cursor-pointer relative bg-white shadow-xs ${
                       i === activeSlideIndex
-                        ? "border-[#7C3AED]"
+                        ? (selectedPalette.id === "itb"
+                            ? "border-[#005AAB] ring-2 ring-[#005AAB]/30"
+                            : selectedPalette.id === "ui"
+                            ? "border-[#FEDE3B] ring-2 ring-[#FEDE3B]/40"
+                            : selectedPalette.id === "binus"
+                            ? "border-[#174A7F] ring-2 ring-[#23A3E7]/30"
+                            : "border-[#FFDE3C] ring-2 ring-[#FFDE3C]/35")
                         : "border-neutral-200/90 dark:border-neutral-800 opacity-70 hover:opacity-100"
                     }`}
                   >
@@ -8833,58 +10533,6 @@ async function streamBuildSlide(
               </div>
             </div>
 
-            {/* ──── RIGHT COLUMN: STUDIO ACTION TOOLBAR (MATCHING USER SCREENSHOT) ──── */}
-            <div className="hidden xl:flex flex-col items-center gap-4 py-2 px-1 border-l border-neutral-200/80 dark:border-neutral-800/80 pl-3 select-none sticky top-3.5 self-start">
-              
-              <button
-                type="button"
-                onClick={() => setActiveToolbarAction(activeToolbarAction === "media" ? null : "media")}
-                className="flex flex-col items-center gap-1 text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white transition-colors cursor-pointer group"
-                title="Add Media"
-              >
-                <div className="w-9 h-9 rounded-md border border-neutral-200/90 dark:border-neutral-800 flex items-center justify-center group-hover:border-neutral-400 dark:group-hover:border-neutral-600 bg-white dark:bg-neutral-900">
-                  <ImageIcon className="w-4 h-4" />
-                </div>
-                <span className="text-[10px] font-medium">Media</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveToolbarAction(activeToolbarAction === "upload" ? null : "upload")}
-                className="flex flex-col items-center gap-1 text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white transition-colors cursor-pointer group"
-                title="Upload Dokumen / Aset"
-              >
-                <div className="w-9 h-9 rounded-md border border-neutral-200/90 dark:border-neutral-800 flex items-center justify-center group-hover:border-neutral-400 dark:group-hover:border-neutral-600 bg-white dark:bg-neutral-900">
-                  <Upload className="w-4 h-4" />
-                </div>
-                <span className="text-[10px] font-medium">Upload</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveToolbarAction(activeToolbarAction === "rekam" ? null : "rekam")}
-                className="flex flex-col items-center gap-1 text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white transition-colors cursor-pointer group"
-                title="Rekam Sesi Latihan"
-              >
-                <div className="w-9 h-9 rounded-md border border-neutral-200/90 dark:border-neutral-800 flex items-center justify-center group-hover:border-neutral-400 dark:group-hover:border-neutral-600 bg-white dark:bg-neutral-900 shadow-2xs">
-                  <Video className="w-4 h-4 text-rose-500" />
-                </div>
-                <span className="text-[10px] font-medium">Rekam</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStep("styler")}
-                className="flex flex-col items-center gap-1 text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white transition-colors cursor-pointer group"
-                title="Ubah Tema & Transformasi AI"
-              >
-                <div className="w-9 h-9 rounded-md border border-neutral-200/90 dark:border-neutral-800 flex items-center justify-center group-hover:border-neutral-400 dark:group-hover:border-neutral-600 bg-white dark:bg-neutral-900 shadow-2xs">
-                  <Wand2 className="w-4 h-4 text-[#9E7D00] dark:text-[#FFE54C]" />
-                </div>
-                <span className="text-[10px] font-medium">Transformasi</span>
-              </button>
-
-            </div>
 
           </div>
         </div>
@@ -8917,21 +10565,42 @@ async function streamBuildSlide(
         skill={attachedSkill}
       />
 
+      {/* ──── SLIDE COUNT PICKER MODAL (BEFORE GENERATING OUTLINE) ──── */}
+      <SlideCountPickerModal
+        isOpen={showSlideCountPicker}
+        onClose={() => setShowSlideCountPicker(false)}
+        initialCount={tempSelectedCount || selectedTargetCount || 7}
+        topicSnippet={
+          content.trim()
+            ? content.trim().slice(0, 120)
+            : attachedSkill
+            ? attachedSkill.title || attachedSkill.name
+            : ""
+        }
+        onConfirm={handleConfirmSlideCountAndPlan}
+      />
+
       {/* Fullscreen Claude-style Drag & Drop Overlay */}
       {isDragging && (
         <div className="fixed inset-0 z-50 pointer-events-none transition-all duration-200 flex items-center justify-center">
           {/* Soft blurred backdrop */}
           <div className="absolute inset-0 bg-white/80 dark:bg-[#141415]/85 backdrop-blur-xs" />
 
-          {/* Launcher OS Inset Perimeter Border */}
-          <div className="absolute inset-4 sm:inset-6 md:inset-8 border-2 border-[#E5BC10] dark:border-[#FFDE3C] rounded-2xl sm:rounded-3xl pointer-events-none shadow-[0_0_25px_rgba(229,188,16,0.18)]" />
+          {/* Launcher OS Inset Perimeter Border (Clean, no glow) */}
+          <div className="absolute inset-4 sm:inset-6 md:inset-8 border-2 border-[#E5BC10] dark:border-[#FFDE3C] rounded-2xl sm:rounded-3xl pointer-events-none" />
 
           {/* Launcher OS Center Icon Cluster + Drop files here */}
           <div className="relative z-10 flex flex-col items-center justify-center select-none">
             <div className="flex items-center justify-center gap-1.5 mb-2.5 text-[#B89200] dark:text-[#FFDE3C]">
-              <ImageIcon className="w-6 h-6 stroke-[1.8]" />
-              <FileText className="w-7 h-7 stroke-[1.8] -mx-0.5" />
-              <Folder className="w-6 h-6 stroke-[1.8]" />
+              <ImageIcon
+                className="w-6 h-6 stroke-[1.8] transition-transform"
+                style={{ transform: "rotate(-30deg)" }}
+              />
+              <FileText className="w-7 h-7 stroke-[1.8] -mx-0.5 z-10" />
+              <Folder
+                className="w-6 h-6 stroke-[1.8] transition-transform"
+                style={{ transform: "rotate(30deg)" }}
+              />
             </div>
             <p className="text-base sm:text-lg font-semibold text-[#8C6D00] dark:text-[#FFDE3C] tracking-tight">
               Drop files here
@@ -9369,3 +11038,257 @@ function SkillRulesModal({
     </div>
   );
 }
+
+/* ───────────────────────────────────────────────────
+ * Slide Count Picker Modal (MoodCheck Spring Animation & Minimalist Aesthetic)
+ * ─────────────────────────────────────────────────── */
+function SlideCountPickerModal({
+  isOpen,
+  onClose,
+  topicSnippet,
+  initialCount,
+  onConfirm,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  topicSnippet?: string;
+  initialCount: number;
+  onConfirm: (count: number) => void;
+}) {
+  const [selectedCount, setSelectedCount] = useState<number>(initialCount || 7);
+  const [customInput, setCustomInput] = useState<string>("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedCount(initialCount || 7);
+      setCustomInput("");
+    }
+  }, [isOpen, initialCount]);
+
+  // Escape key listener to close modal (matching MoodCheck behavior)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  const presets = [
+    { count: 5, label: "5 Slide", badge: "Ringkas", desc: "Quick Pitch / Executive Summary (5 Menit)" },
+    { count: 6, label: "6 Slide", badge: "Briefing", desc: "Latar belakang, tantangan, dan solusi inti" },
+    { count: 7, label: "7 Slide", badge: "Strategis", desc: "Alur strategis lengkap & rekomendasi eksekusi" },
+    { count: 8, label: "8 Slide", badge: "Eksekutif", desc: "Struktur komprehensif untuk decision maker" },
+    { count: 10, label: "10 Slide", badge: "Mendalam", desc: "Pembahasan mendalam per pilar/topik materi" },
+    { count: 12, label: "12 Slide", badge: "Workshop", desc: "Format pelatihan / modul workshop terstruktur" },
+  ];
+
+  const handleApply = (cnt?: number) => {
+    const finalCount = cnt || (customInput ? parseInt(customInput, 10) : selectedCount);
+    if (finalCount && finalCount >= 3 && finalCount <= 100) {
+      onConfirm(finalCount);
+    } else {
+      onConfirm(7);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          key="slide-count-modal-container"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0, transition: { duration: 0.22 } }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 select-none font-sans"
+        >
+          {/* Frosted Glass Backdrop Overlay - matching MoodCheck signature styling */}
+          <motion.div
+            key="slide-count-modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.2 } }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/15 dark:bg-black/50 backdrop-blur-sm transition-all duration-300 cursor-pointer"
+          />
+
+          {/* Modal Container with Center Vertical Swipe IN & OUT (MoodCheck signature spring animation) */}
+          <motion.div
+            key="slide-count-modal-card"
+            initial={{ opacity: 0, scaleY: 0.1, scaleX: 0.95 }}
+            animate={{ opacity: 1, scaleY: 1, scaleX: 1 }}
+            exit={{
+              opacity: 0,
+              scaleY: 0.1,
+              scaleX: 0.95,
+              transition: {
+                type: "spring",
+                damping: 24,
+                stiffness: 300,
+                mass: 0.75,
+              },
+            }}
+            transition={{
+              type: "spring",
+              damping: 26,
+              stiffness: 340,
+              mass: 0.8,
+            }}
+            style={{ transformOrigin: "center center" }}
+            className="relative w-full max-w-[490px] bg-white dark:bg-[#141414] border border-neutral-200/90 dark:border-neutral-800/90 rounded-2xl shadow-xl dark:shadow-2xl z-10 flex flex-col overflow-hidden"
+          >
+            {/* Minimalist Header */}
+            <div className="px-5 py-4 border-b border-neutral-100 dark:border-neutral-800/80 flex items-center justify-between bg-white dark:bg-[#141414]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200/60 dark:border-neutral-700/60 flex items-center justify-center text-neutral-700 dark:text-neutral-300 shrink-0">
+                  <Layers className="w-4 h-4 stroke-[1.8]" />
+                </div>
+                <div>
+                  <h2 className="text-[14.5px] font-semibold text-neutral-900 dark:text-neutral-100 tracking-tight">
+                    Tentukan Jumlah Slide
+                  </h2>
+                  <p className="text-[11.5px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+                    Pilih target slide sebelum AI mulai menyusun kerangka deck
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800/80 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+              {topicSnippet && (
+                <div className="p-2.5 rounded-lg bg-neutral-50/80 dark:bg-[#181818]/70 border border-neutral-200/60 dark:border-neutral-800/70 text-xs text-neutral-600 dark:text-neutral-400 flex items-center gap-2">
+                  <span className="font-medium text-neutral-900 dark:text-neutral-200 shrink-0">Materi:</span>
+                  <span className="italic line-clamp-1 text-neutral-600 dark:text-neutral-400 text-[11.5px]">
+                    {topicSnippet}
+                  </span>
+                </div>
+              )}
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10.5px] font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                    Pilihan Jumlah Slide
+                  </span>
+                  <span className="text-[11px] text-neutral-400">Klik untuk memilih</span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {presets.map((preset) => {
+                    const isSelected = selectedCount === preset.count && !customInput;
+                    return (
+                      <button
+                        key={preset.count}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCount(preset.count);
+                          setCustomInput("");
+                        }}
+                        onDoubleClick={() => handleApply(preset.count)}
+                        className={`p-2.5 sm:p-3 rounded-lg border text-left transition-all duration-150 cursor-pointer flex flex-col justify-between group ${
+                          isSelected
+                            ? "bg-amber-400/[0.04] dark:bg-amber-400/[0.05] border-amber-400/50 dark:border-amber-400/40 shadow-2xs"
+                            : "bg-white dark:bg-[#181818]/60 border-neutral-200/70 dark:border-neutral-800/70 hover:border-neutral-300 dark:hover:border-neutral-700"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span
+                            className={`text-[13px] font-semibold ${
+                              isSelected
+                                ? "text-neutral-950 dark:text-neutral-100"
+                                : "text-neutral-800 dark:text-neutral-200"
+                            }`}
+                          >
+                            {preset.label}
+                          </span>
+                          <span
+                            className={`text-[9.5px] px-1.5 py-0.5 rounded font-medium ${
+                              isSelected
+                                ? "bg-amber-400/15 text-amber-700 dark:text-amber-300 border border-amber-400/25"
+                                : "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
+                            }`}
+                          >
+                            {preset.badge}
+                          </span>
+                        </div>
+                        <p className="text-[10.5px] leading-snug text-neutral-500 dark:text-neutral-400 line-clamp-2">
+                          {preset.desc}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Minimalist Custom Input */}
+              <div className="pt-2.5 border-t border-neutral-100 dark:border-neutral-800/70">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[10.5px] font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                    Atau Tentukan Jumlah Kustom
+                  </label>
+                  {customInput && parseInt(customInput, 10) >= 3 && (
+                    <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                      {parseInt(customInput, 10)} slide dipilih
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="3"
+                    max="100"
+                    placeholder="Misal: 7, 14, 25..."
+                    value={customInput}
+                    onChange={(e) => {
+                      setCustomInput(e.target.value);
+                      const n = parseInt(e.target.value, 10);
+                      if (n >= 3 && n <= 100) {
+                        setSelectedCount(n);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleApply();
+                      }
+                    }}
+                    className="flex-1 h-8 px-3 rounded-lg text-xs bg-neutral-50/70 dark:bg-[#181818]/70 border border-neutral-200/80 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:border-amber-400/50 dark:focus:border-amber-400/40"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Minimalist Footer */}
+            <div className="px-5 py-3 border-t border-neutral-100 dark:border-neutral-800/80 flex items-center justify-between bg-neutral-50/40 dark:bg-[#101010]/50">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApply()}
+                className="h-8 px-3.5 rounded-lg font-medium text-xs bg-[#FFDE3C] hover:bg-[#ffe55c] text-neutral-950 shadow-2xs border border-[#E5BC10]/20 flex items-center gap-1.5 cursor-pointer active:scale-98 transition-all"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-neutral-950" />
+                <span>Mulai Buat Kerangka ({customInput ? parseInt(customInput, 10) || selectedCount : selectedCount} Slide) →</span>
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+

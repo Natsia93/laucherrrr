@@ -162,7 +162,7 @@ export function SlackEmailBridgeModal({
                 <select
                   value={simChannelId}
                   onChange={(e) => setSimChannelId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500]"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
                 >
                   {existingEmailChannels.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -182,7 +182,7 @@ export function SlackEmailBridgeModal({
                     placeholder="Nama Pengirim (mis. Budi Santoso)"
                     value={simFromName}
                     onChange={(e) => setSimFromName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500]"
+                    className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
                     required
                   />
                 </div>
@@ -196,7 +196,7 @@ export function SlackEmailBridgeModal({
                     placeholder="budi@klien.com"
                     value={simFromEmail}
                     onChange={(e) => setSimFromEmail(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500]"
+                    className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
                     required
                   />
                 </div>
@@ -211,7 +211,7 @@ export function SlackEmailBridgeModal({
                   placeholder="Subjek email atau perihal pesan..."
                   value={simSubject}
                   onChange={(e) => setSimSubject(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500]"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
                   required
                 />
               </div>
@@ -225,7 +225,7 @@ export function SlackEmailBridgeModal({
                   placeholder="Tuliskan isi pesan email yang masuk..."
                   value={simBody}
                   onChange={(e) => setSimBody(e.target.value)}
-                  className="w-full p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500] resize-none leading-relaxed"
+                  className="w-full p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 resize-none leading-relaxed"
                   required
                 />
               </div>
@@ -261,7 +261,7 @@ export function SlackEmailBridgeModal({
                   placeholder="inbox-billing"
                   value={channelName}
                   onChange={(e) => setChannelName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500]"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
                   required
                 />
               </div>
@@ -275,7 +275,7 @@ export function SlackEmailBridgeModal({
                   placeholder="billing@perusahaan.com"
                   value={emailAddress}
                   onChange={(e) => setEmailAddress(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500]"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
                   required
                 />
               </div>
@@ -289,7 +289,7 @@ export function SlackEmailBridgeModal({
                   placeholder="Inbound faktur & konfirmasi pembayaran"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#FFE500]"
+                  className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
                 />
               </div>
 

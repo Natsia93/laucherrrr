@@ -30,6 +30,11 @@ const PROVIDER_CONFIG: Record<string, {
     defaultModel: "gemini-2.0-flash",
     label: "Google Gemini",
   },
+  openrouter: {
+    baseURL: "https://openrouter.ai/api/v1",
+    defaultModel: "google/gemini-2.5-flash",
+    label: "OpenRouter",
+  },
 };
 
 export async function POST(req: NextRequest) {
@@ -54,7 +59,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const targetModel = model || config.defaultModel;
+    let targetModel = model || config.defaultModel;
+    if (provider === "openrouter" && !targetModel.includes("/")) {
+      targetModel = "google/gemini-2.5-flash";
+    }
 
     // Google Gemini uses official GoogleGenerativeAI SDK
     if (provider === "gemini") {
@@ -66,12 +74,16 @@ export async function POST(req: NextRequest) {
       return await testAnthropic(apiKey, targetModel, config.label);
     }
 
-    // DeepSeek and OpenAI use OpenAI-compatible SDK
+    // DeepSeek, OpenAI, and OpenRouter use OpenAI-compatible SDK
     const startTime = Date.now();
     const client = new OpenAI({
       baseURL: config.baseURL,
       apiKey,
       timeout: 15000,
+      defaultHeaders: provider === "openrouter" ? {
+        "HTTP-Referer": "https://launcher-os.local",
+        "X-Title": "Launcher OS",
+      } : undefined,
     });
 
     const response = await client.chat.completions.create({

@@ -4,7 +4,7 @@ description: Visual design and content generation rules for ITB × RevoU slide d
 ---
 
 # ITB × RevoU Deck Design System
-### A single source of truth for any AI (Claude, ChatGPT, Gemini, Copilot, Gamma, etc.) that creates, restyles, reviews or exports slide decks for the ITB × RevoU "Data-Driven & AI-Enabled Decision Making for Leaders" program.
+### A single source of truth for any AI (Claude, ChatGPT, Gemini, Copilot, Launcher OS, etc.) that creates, restyles, reviews or exports slide decks for ITB × RevoU executive programs ([Program Name]).
 
 > **How to use this file:** paste it (or attach it) before your request. Every rule is written as a measurable value. If a rule and the user's outline conflict, keep the outline's wording and apply the rule to the visual form. Never invent facts, numbers, names or dates.
 
@@ -93,7 +93,11 @@ PowerPoint and Google Slides only have **Bold on/off**. Map like this:
 - **Bold:** only for lead-ins ("Note:", "Rule:", "Key insight:") and one key phrase per block.
 - **Italic:** only for quotes, example answers, prompts and "how to spot it" descriptions.
 - **Title length:** shorten the title rather than wrap to 3 lines.
-- **Language:** keep the outline's language. Indonesian terms stay Indonesian.
+- **Language (Strict Standard):**
+  - Match the exact language requested by the user or used in the input topic.
+  - If the user requests English (e.g., "in English", "bahasa Inggris", or writes the prompt/outline in English), ALL generated slide elements — titles, subtitles, card headers, body copy, badges, table headers, and speaker notes — MUST be written 100% in English.
+  - Never translate or force an English deck into Indonesian.
+  - Only retain Indonesian when the user explicitly requests Bahasa Indonesia or provides an Indonesian input outline.
 
 ---
 
@@ -187,7 +191,7 @@ Five prepared 1920 × 1080 backgrounds. Place each as a **full-bleed picture at 
 
 | Element | Spec |
 |---|---|
-| **Rounded card** | Radius 16–22 px, padding 22–36 px. No shadows. No gradient fills. |
+| **Rounded card** | Radius 6–8 px (rounded-lg / rounded-md, halus & profesional, dilarang terlalu bulat), padding 22–36 px. No shadows. No gradient fills. |
 | **Header-band card** | White body, 3 px colored border, colored top band (yellow or blue) holding the label/heading. |
 | **Pill / chip** | Fully rounded (radius = height/2), 24 px bold text, height ~40–48 px. For tags, verdicts, durations, module codes. |
 | **HANDS-ON tag** | Golden Yellow pill **beside** the title, 26 px bold, letter-spacing 2 px, text "HANDS-ON". Meta line underneath: "10 minutes, squad". |
@@ -290,7 +294,7 @@ Ask first: *what is this slide's idea?* Then draw that idea.
 - No shadows, glows, bevels or 3D.
 
 ### 9.6 Shapes
-- Cards = **Rounded Rectangle**. Corner radius: pptxgenjs `rectRadius` in inches (16–22 px → 0.11–0.15 in); in raw OOXML the `adj` value = radius ÷ min(width, height) × 50,000 (cap 50,000).
+- Cards = **Rounded Rectangle**. Corner radius: pptxgenjs `rectRadius` in inches (6–8 px → 0.04–0.06 in (subtle rounded-lg, bukan bubbly)); in raw OOXML the `adj` value = radius ÷ min(width, height) × 50,000 (cap 50,000).
 - Pills = Rounded Rectangle with radius = height ÷ 2.
 - Circles = Ellipse with equal width/height.
 - Accent bars (yellow left edge, divider bar) = thin Rectangles, not borders.

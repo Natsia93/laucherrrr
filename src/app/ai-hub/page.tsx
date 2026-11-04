@@ -132,7 +132,7 @@ export default function AiHubPage() {
                 }
               }}
               placeholder="Ketik topik dokumen, strategi, atau prompt langsung... (Tekan Enter untuk launch)"
-              className="flex-1 px-4 py-2.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#FFE500] transition-all"
+              className="flex-1 px-4 py-2.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-all"
             />
             <button
               onClick={() => handleLaunchWorkspace(selectedModel, quickPrompt)}

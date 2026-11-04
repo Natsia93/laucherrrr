@@ -65,7 +65,7 @@ import type { GlobalVariable } from "@/components/automation/GlobalVariablesModa
 
 type SettingsTab = "profile" | "apikeys" | "automation" | "security";
 type AutomationSubView = "hub" | "variables" | "webhooks" | "connectors";
-type AIProvider = "deepseek" | "openai" | "anthropic" | "gemini";
+type AIProvider = "deepseek" | "openai" | "anthropic" | "gemini" | "openrouter";
 
 export interface ConnectorConfig {
   gmail: { email: string; appPassword?: string; senderName?: string; connected: boolean };
@@ -104,6 +104,7 @@ const AI_PROVIDERS: Record<AIProvider, {
   dashboardLabel: string;
   models: { value: string; label: string }[];
   color: string;
+  logo: string;
 }> = {
   deepseek: {
     label: "DeepSeek",
@@ -116,6 +117,7 @@ const AI_PROVIDERS: Record<AIProvider, {
       { value: "deepseek-reasoner", label: "DeepSeek R1 (Reasoner)" },
     ],
     color: "#4D6BFE",
+    logo: "/logo/API-provider/deepsek.svg",
   },
   openai: {
     label: "OpenAI",
@@ -129,6 +131,7 @@ const AI_PROVIDERS: Record<AIProvider, {
       { value: "o3-mini", label: "o3-mini (Reasoning)" },
     ],
     color: "#10A37F",
+    logo: "/logo/API-provider/openai-light.svg",
   },
   anthropic: {
     label: "Anthropic (Claude)",
@@ -142,6 +145,7 @@ const AI_PROVIDERS: Record<AIProvider, {
       { value: "claude-3-opus-20240229", label: "Claude 3 Opus" },
     ],
     color: "#D4A27F",
+    logo: "/logo/API-provider/claude-color.svg",
   },
   gemini: {
     label: "Google Gemini",
@@ -150,12 +154,33 @@ const AI_PROVIDERS: Record<AIProvider, {
     dashboardUrl: "https://aistudio.google.com/apikey",
     dashboardLabel: "Get Key from Google AI Studio",
     models: [
-      { value: "gemini-3.8-flash", label: "Gemini 3.8 Flash (Latest & Recommended)" },
-      { value: "gemini-3.5-flash", label: "Gemini 3.5 Flash" },
-      { value: "gemini-flash-latest", label: "Gemini Flash Latest" },
-      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash (Recommended & Fast)" },
+      { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash (Next-Gen)" },
+      { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash (Ultra Lightweight)" },
+      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro (Deep Reasoning)" },
+      { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro (High Context)" },
     ],
     color: "#4285F4",
+    logo: "/logo/API-provider/gemini.svg",
+  },
+  openrouter: {
+    label: "OpenRouter",
+    keyPrefix: "sk-or-",
+    keyPlaceholder: "sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxx",
+    dashboardUrl: "https://openrouter.ai/keys",
+    dashboardLabel: "Get Key from OpenRouter",
+    models: [
+      { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash (via OpenRouter - Recommended)" },
+      { value: "google/gemini-2.0-flash-001", label: "Gemini 2.0 Flash (via OpenRouter)" },
+      { value: "google/gemini-flash-1.5", label: "Gemini 1.5 Flash (via OpenRouter)" },
+      { value: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro (via OpenRouter)" },
+      { value: "deepseek/deepseek-chat", label: "DeepSeek V3 (via OpenRouter)" },
+      { value: "deepseek/deepseek-r1", label: "DeepSeek R1 (via OpenRouter)" },
+      { value: "anthropic/claude-3.5-sonnet", label: "Claude 3.5 Sonnet (via OpenRouter)" },
+      { value: "openai/gpt-4o-mini", label: "GPT-4o Mini (via OpenRouter)" },
+    ],
+    color: "#6366F1",
+    logo: "/logo/API-provider/openrouter-.svg",
   },
 };
 
@@ -240,6 +265,35 @@ export default function SettingsPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [savedKeys, setSavedKeys] = useState<Record<string, boolean>>({});
+
+  // Security & Cloud Infrastructure Health Check State
+  const [isCheckingCloud, setIsCheckingCloud] = useState(false);
+  const [cloudLatency, setCloudLatency] = useState<number | null>(null);
+  const [cloudCheckStatus, setCloudCheckStatus] = useState<"idle" | "healthy" | "error">("idle");
+
+  const handleTestCloudHealth = async () => {
+    setIsCheckingCloud(true);
+    setCloudCheckStatus("idle");
+    const start = performance.now();
+    try {
+      const res = await fetch("/api/automation/variables", { method: "GET" });
+      const end = performance.now();
+      const lat = Math.round(end - start);
+      setCloudLatency(lat);
+      if (res.ok) {
+        setCloudCheckStatus("healthy");
+        triggerToast(`Cloud connection verified (${lat}ms latency)`);
+      } else {
+        setCloudCheckStatus("error");
+        triggerToast("Cloud service responded with an error.");
+      }
+    } catch {
+      setCloudCheckStatus("error");
+      triggerToast("Unable to reach cloud endpoints.");
+    } finally {
+      setIsCheckingCloud(false);
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -1087,172 +1141,162 @@ export default function SettingsPage() {
       <div className="max-w-[1200px] mx-auto px-2 sm:px-4 lg:px-6 space-y-6 pb-28 sm:pb-12 font-sans">
         {/* Toast Notification */}
         {toastMessage && (
-          <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 px-4 py-2.5 rounded-lg shadow-2xl text-xs font-medium animate-in fade-in slide-in-from-top-3 duration-200 border border-white/15">
-            <CheckCircle2 className="w-4 h-4 text-[#FCD62C] dark:text-[#9E7D00]" />
+          <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 px-4 py-2.5 rounded-md shadow-2xl text-xs font-medium animate-in fade-in slide-in-from-top-3 duration-200 border border-neutral-800 dark:border-neutral-200">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
             <span>{toastMessage}</span>
           </div>
         )}
 
-        {/* Page Header with Clean Dynamic Hierarchy Breadcrumb Route */}
-        <div className="pb-2">
-          <div className="space-y-1.5">
-            <h1 className="tracking-tight leading-tight flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+        {/* HEADER SECTION - Apple / Slack Dispatcher Standard */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-2 border-b border-neutral-200/60 dark:border-neutral-800/60">
+          <div className="space-y-2">
+            {/* Breadcrumb Hierarchy */}
+            <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-neutral-400 dark:text-neutral-500">
               <button
                 type="button"
                 onClick={() => {
                   setActiveTab("profile");
                   setAutomationSubView("hub");
                 }}
-                className="text-base sm:text-lg lg:text-xl text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 font-light transition-colors cursor-pointer"
+                className="hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors cursor-pointer"
               >
-                Account & Settings
+                Settings
               </button>
+              <span className="text-neutral-300 dark:text-neutral-600">/</span>
+              <span className="text-neutral-800 dark:text-neutral-200">
+                {activeTab === "profile" && "Profile & Account"}
+                {activeTab === "apikeys" && "AI API Key"}
+                {activeTab === "automation" && (
+                  automationSubView === "hub"
+                    ? "Automation & Integrations"
+                    : automationSubView === "variables"
+                    ? "Global Variables"
+                    : automationSubView === "webhooks"
+                    ? "Webhook Gateway"
+                    : "Connectors"
+                )}
+                {activeTab === "security" && "Security & Cloud"}
+              </span>
+            </div>
 
-              {activeTab === "profile" && (
-                <>
-                  <span className="text-base sm:text-lg lg:text-xl text-neutral-300 dark:text-neutral-600 font-light select-none">/</span>
-                  <span className="text-2xl sm:text-3xl lg:text-[34px] font-medium text-neutral-950 dark:text-white">Profile & Account</span>
-                </>
-              )}
-
-              {activeTab === "apikeys" && (
-                <>
-                  <span className="text-base sm:text-lg lg:text-xl text-neutral-300 dark:text-neutral-600 font-light select-none">/</span>
-                  <span className="text-2xl sm:text-3xl lg:text-[34px] font-medium text-neutral-950 dark:text-white">AI API Key</span>
-                </>
-              )}
-
-              {activeTab === "security" && (
-                <>
-                  <span className="text-base sm:text-lg lg:text-xl text-neutral-300 dark:text-neutral-600 font-light select-none">/</span>
-                  <span className="text-2xl sm:text-3xl lg:text-[34px] font-medium text-neutral-950 dark:text-white">Security & Cloud</span>
-                </>
-              )}
-
+            {/* Title with Lora Font & Metallic Gradient in Dark Mode */}
+            <h1 className="text-3xl sm:text-4xl font-lora font-normal sm:font-medium tracking-tight text-neutral-950 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-b dark:from-white dark:via-neutral-200 dark:to-neutral-400/90 leading-tight">
+              {activeTab === "profile" && "Profile & Account"}
+              {activeTab === "apikeys" && "AI API Key"}
               {activeTab === "automation" && (
-                <>
-                  <span className="text-base sm:text-lg lg:text-xl text-neutral-300 dark:text-neutral-600 font-light select-none">/</span>
-                  {automationSubView === "hub" ? (
-                    <span className="text-2xl sm:text-3xl lg:text-[34px] font-medium text-neutral-950 dark:text-white">Automation & Integration</span>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setAutomationSubView("hub")}
-                        className="text-base sm:text-lg lg:text-xl text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 font-light transition-colors cursor-pointer"
-                      >
-                        Automation & Integration
-                      </button>
-                      <span className="text-base sm:text-lg lg:text-xl text-neutral-300 dark:text-neutral-600 font-light select-none">/</span>
-                      <span className="text-2xl sm:text-3xl lg:text-[34px] font-medium text-neutral-950 dark:text-white">
-                        {automationSubView === "variables" && "Global Variables & Secrets"}
-                        {automationSubView === "webhooks" && "Webhook Trigger Gateway"}
-                        {automationSubView === "connectors" && "Connected App Connectors"}
-                      </span>
-                    </>
-                  )}
-                </>
+                automationSubView === "hub"
+                  ? "Automation & Integrations"
+                  : automationSubView === "variables"
+                  ? "Global Variables & Secrets"
+                  : automationSubView === "webhooks"
+                  ? "Webhook Trigger Gateway"
+                  : "Connected App Connectors"
               )}
+              {activeTab === "security" && "Security & Cloud"}
             </h1>
 
-            <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-400 font-normal">
-              {activeTab === "automation" && automationSubView === "variables"
-                ? "Store and manage secret tokens, webhook URLs, and global configuration parameters"
-                : activeTab === "automation" && automationSubView === "webhooks"
-                ? "Public serverless endpoints to trigger Launcher OS automations from Zapier, Make, or backend servers"
-                : activeTab === "automation" && automationSubView === "connectors"
-                ? "1-Click native authorization to sync Google Sheets, WhatsApp, Slack, and Notion"
-                : "Manage profile, configure AI API Key (BYOK), automations, and generator preferences"}
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 font-normal max-w-2xl leading-relaxed">
+              {activeTab === "profile" && "Manage your personal profile, credentials, and account security preferences."}
+              {activeTab === "apikeys" && "Bring Your Own Key (BYOK) — configure API keys for Claude, OpenAI, DeepSeek, and Gemini."}
+              {activeTab === "automation" && automationSubView === "variables" && "Store and manage secret tokens, webhook URLs, and global configuration parameters."}
+              {activeTab === "automation" && automationSubView === "webhooks" && "Public serverless endpoints to trigger Launcher OS automations from external webhooks."}
+              {activeTab === "automation" && automationSubView === "connectors" && "Native connectors to sync Google Sheets, WhatsApp, Slack, and Notion."}
+              {activeTab === "automation" && automationSubView === "hub" && "Connect webhooks, manage global environment variables, and link external services."}
+              {activeTab === "security" && "Inspect serverless cloud infrastructure, database latency, and storage health."}
             </p>
           </div>
         </div>
 
-        {/* Sleek Segmented Tab Bar - Rock Solid with No Layout Shifts */}
-        <div className="flex items-center p-1 bg-neutral-100/90 dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-lg overflow-x-auto max-w-full scrollbar-hide gap-1">
-          <button
-            onClick={() => setActiveTab("profile")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
-              activeTab === "profile"
-                ? "bg-[#FCD62C] text-neutral-950 shadow-xs"
-                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
-            }`}
-          >
-            <User className="w-4 h-4 shrink-0" />
-            <span>Profile & Account</span>
-          </button>
+        {/* 2. MASTER CARDS WRAPPER (TANPA ROUNDED - POLOS) SEPERTI DI OVERVIEW & SLACK DISPATCHER */}
+        <div className="border border-neutral-200/50 dark:border-neutral-800/80 rounded-none bg-neutral-50/30 dark:bg-[#0d0d0d]/60 p-4 sm:p-6 lg:p-7 space-y-6 shadow-none">
+          {/* Apple-Style Segmented Tab Bar - Rock Solid with No Layout Shifts */}
+          <div className="flex items-center p-1 bg-neutral-100/90 dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-md overflow-x-auto max-w-full scrollbar-hide gap-1">
+            <button
+              onClick={() => setActiveTab("profile")}
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
+                activeTab === "profile"
+                  ? "bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 shadow-xs"
+                  : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
+              }`}
+            >
+              <User className="w-4 h-4 shrink-0" />
+              <span>Profile & Account</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab("apikeys")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
-              activeTab === "apikeys"
-                ? "bg-[#FCD62C] text-neutral-950 shadow-xs"
-                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
-            }`}
-          >
-            <Key className="w-4 h-4 shrink-0" />
-            <span>AI API Key</span>
-          </button>
+            <button
+              onClick={() => setActiveTab("apikeys")}
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
+                activeTab === "apikeys"
+                  ? "bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 shadow-xs"
+                  : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
+              }`}
+            >
+              <Key className="w-4 h-4 shrink-0" />
+              <span>AI API Key</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab("automation")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
-              activeTab === "automation"
-                ? "bg-[#FCD62C] text-neutral-950 shadow-xs"
-                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
-            }`}
-          >
-            <Workflow className="w-4 h-4 shrink-0" />
-            <span>Automation & Integrations</span>
-            {globalVariables.length > 0 && (
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+            <button
+              onClick={() => setActiveTab("automation")}
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === "automation"
-                  ? "bg-neutral-950/15 text-neutral-950"
-                  : "bg-neutral-950/10 dark:bg-white/20 text-neutral-700 dark:text-neutral-300"
-              }`}>
-                {globalVariables.length}
-              </span>
-            )}
-          </button>
+                  ? "bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 shadow-xs"
+                  : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
+              }`}
+            >
+              <Workflow className="w-4 h-4 shrink-0" />
+              <span>Automation & Integrations</span>
+              {globalVariables.length > 0 && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-medium ${
+                  activeTab === "automation"
+                    ? "bg-white/20 dark:bg-neutral-950/20 text-white dark:text-neutral-950"
+                    : "bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
+                }`}>
+                  {globalVariables.length}
+                </span>
+              )}
+            </button>
 
+            <button
+              onClick={() => setActiveTab("security")}
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
+                activeTab === "security"
+                  ? "bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 shadow-xs"
+                  : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4 shrink-0" />
+              <span>Security & Cloud</span>
+            </button>
+          </div>
 
-          <button
-            onClick={() => setActiveTab("security")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer ${
-              activeTab === "security"
-                ? "bg-[#FCD62C] text-neutral-950 shadow-xs"
-                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white"
-            }`}
-          >
-            <ShieldCheck className="w-4 h-4 shrink-0" />
-            <span>Security & Cloud</span>
-          </button>
-        </div>
+          {/* SECTION DIVIDER LINE */}
+          <div className="h-[1px] w-full bg-neutral-200/50 dark:bg-neutral-800/80" />
 
         {/* ══════════════════════════════════════════════════════════
          * TAB 1: AI API KEY (MULTI-PROVIDER BYOK)
          * ══════════════════════════════════════════════════════════ */}
         {activeTab === "apikeys" && (
           <div className="space-y-6">
-            <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-xs space-y-6">
+            <Card className="p-6 sm:p-7 bg-white dark:bg-[#111111] border-neutral-200/80 dark:border-neutral-800/80 rounded-md shadow-none space-y-6">
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100 dark:border-neutral-800">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100 dark:border-neutral-800/80">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="text-sm sm:text-base font-medium text-neutral-950 dark:text-white leading-tight tracking-tight">
                       AI Provider API Key (BYOK)
                     </h2>
                     {hasConfiguredKey ? (
-                      <span className="text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-1.5">
+                      <span className="text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded-md flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         {providerConfig.label} Connected
                       </span>
                     ) : (
-                      <span className="text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md">
+                      <span className="text-[11px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 px-2.5 py-0.5 rounded-md">
                         Not Configured
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 font-normal mt-0.5">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 font-normal mt-0.5">
                     Bring Your Own Key — select your AI provider and enter your API key
                   </p>
                 </div>
@@ -1261,19 +1305,24 @@ export default function SettingsPage() {
                   href={providerConfig.dashboardUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-200 bg-neutral-100/90 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 px-3.5 py-2 rounded-md transition-colors cursor-pointer self-start sm:self-auto"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-700 dark:text-neutral-200 bg-neutral-100/90 dark:bg-neutral-800/80 hover:bg-neutral-200 dark:hover:bg-neutral-700 px-3.5 py-2 rounded-lg transition-colors cursor-pointer self-start sm:self-auto border border-neutral-200/60 dark:border-neutral-700/60"
                 >
                   <span>{providerConfig.dashboardLabel}</span>
                   <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                 </a>
               </div>
 
-              {/* Provider Selector Pills */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
-                  AI Provider
-                </label>
-                <div className="flex flex-wrap gap-2">
+              {/* Provider Selector Pills (Apple / Slack Brand Standard) */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs sm:text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                    AI Provider
+                  </label>
+                  <span className="text-[11px] text-neutral-400 font-normal">
+                    Select your preferred LLM engine
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2.5">
                   {(Object.keys(AI_PROVIDERS) as AIProvider[]).map((key) => {
                     const p = AI_PROVIDERS[key];
                     const isActive = selectedProvider === key;
@@ -1283,16 +1332,43 @@ export default function SettingsPage() {
                         key={key}
                         type="button"
                         onClick={() => handleProviderChange(key)}
-                        className={`relative px-4 py-2.5 rounded-md text-sm font-medium transition-all cursor-pointer border flex items-center gap-2 ${
+                        className={`relative px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-150 cursor-pointer border flex items-center gap-2.5 select-none active:scale-[0.98] ${
                           isActive
                             ? "bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 border-neutral-950 dark:border-white shadow-xs"
-                            : "bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600"
+                            : "bg-white dark:bg-[#141414] text-neutral-700 dark:text-neutral-300 border-neutral-200/90 dark:border-neutral-800/80 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50/80 dark:hover:bg-[#1a1a1a]"
                         }`}
                       >
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
-                        <span>{p.label}</span>
-                        {hasKey && !isActive && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Key saved" />
+                        {/* Official Provider Brand Logo with Dark/Light Mode Adaptability */}
+                        <div className="w-4 h-4 shrink-0 flex items-center justify-center">
+                          {key === "openai" ? (
+                            <svg
+                              className="w-4 h-4 shrink-0 fill-current"
+                              viewBox="0 0 24 24"
+                              aria-hidden="true"
+                            >
+                              <path d="M22.282 9.821a6 6 0 0 0-.516-4.91 6.05 6.05 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a6 6 0 0 0-3.998 2.9 6.05 6.05 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.05 6.05 0 0 0 6.515 2.9A6 6 0 0 0 13.26 24a6.06 6.06 0 0 0 5.772-4.206 6 6 0 0 0 3.997-2.9 6.06 6.06 0 0 0-.747-7.073M13.26 22.43a4.48 4.48 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.8.8 0 0 0 .392-.681v-6.737l2.02 1.168a.07.07 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494M3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.77.77 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646M2.34 7.896a4.5 4.5 0 0 1 2.366-1.973V11.6a.77.77 0 0 0 .388.677l5.815 3.354-2.02 1.168a.08.08 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855-5.833-3.387L15.119 7.2a.08.08 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667m2.01-3.023-.141-.085-4.774-2.782a.78.78 0 0 0-.785 0L9.409 9.23V6.897a.07.07 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.8.8 0 0 0-.393.681zm1.097-2.365 2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5Z" />
+                            </svg>
+                          ) : (
+                            <img
+                              src={p.logo}
+                              alt={p.label}
+                              className="w-4 h-4 shrink-0 object-contain"
+                            />
+                          )}
+                        </div>
+
+                        <span className="tracking-tight">{p.label}</span>
+
+                        {/* Subtle status dot when API key is saved */}
+                        {hasKey && (
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${
+                              isActive
+                                ? "bg-emerald-400 dark:bg-emerald-600"
+                                : "bg-emerald-500 dark:bg-emerald-400"
+                            }`}
+                            title="Key saved"
+                          />
                         )}
                       </button>
                     );
@@ -1302,7 +1378,7 @@ export default function SettingsPage() {
 
               {/* Model Selector (LauncherSelect) */}
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                <label className="text-xs sm:text-sm font-medium text-neutral-800 dark:text-neutral-200">
                   Model
                 </label>
                 <LauncherSelect
@@ -1315,11 +1391,11 @@ export default function SettingsPage() {
               {/* API Key Input */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                  <label className="text-xs sm:text-sm font-medium text-neutral-800 dark:text-neutral-200">
                     {providerConfig.label} API Key
                   </label>
                   <span className="text-[11px] text-neutral-400 font-mono">
-                    Format: <code className="text-[#9E7D00] dark:text-[#FCD62C]">{providerConfig.keyPrefix}...</code>
+                    Format: <code className="text-neutral-700 dark:text-neutral-300 font-medium">{providerConfig.keyPrefix}...</code>
                   </span>
                 </div>
 
@@ -1332,7 +1408,7 @@ export default function SettingsPage() {
                       if (testResult.status !== "idle") setTestResult({ status: "idle" });
                     }}
                     placeholder={providerConfig.keyPlaceholder}
-                    className="h-10 pl-3 pr-10 text-sm bg-neutral-50/80 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 rounded-md text-neutral-950 dark:text-white font-mono placeholder:text-neutral-400 focus-visible:ring-1 focus-visible:ring-[#FCD62C]"
+                    className="h-10 pl-3.5 pr-10 text-xs sm:text-sm bg-neutral-50/70 dark:bg-neutral-900/50 border border-neutral-200/90 dark:border-neutral-800/90 rounded-lg text-neutral-950 dark:text-white font-mono placeholder:text-neutral-400 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 focus-visible:ring-1 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-600 transition-colors"
                   />
                   <button
                     type="button"
@@ -1352,7 +1428,7 @@ export default function SettingsPage() {
               {/* Connection Test Result Box */}
               {testResult.status !== "idle" && (
                 <div
-                  className={`p-3.5 rounded-md border flex items-start gap-3 transition-all ${
+                  className={`p-3.5 rounded-xl border flex items-start gap-3 transition-all ${
                     testResult.status === "testing"
                       ? "bg-neutral-50 dark:bg-neutral-900/80 border-neutral-200 dark:border-neutral-800"
                       : testResult.status === "success"
@@ -1361,7 +1437,7 @@ export default function SettingsPage() {
                   }`}
                 >
                   {testResult.status === "testing" && (
-                    <Loader2 className="w-4 h-4 text-[#9E7D00] dark:text-[#FCD62C] animate-spin shrink-0 mt-0.5" />
+                    <Loader2 className="w-4 h-4 text-neutral-500 animate-spin shrink-0 mt-0.5" />
                   )}
                   {testResult.status === "success" && (
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
@@ -1401,7 +1477,7 @@ export default function SettingsPage() {
               )}
 
               {/* Security Callout */}
-              <div className="p-3 rounded-md bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-neutral-800/80 flex items-start gap-2.5">
+              <div className="p-3.5 rounded-xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-neutral-800/80 flex items-start gap-2.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                 <div className="space-y-0.5 text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
                   <span className="font-medium text-neutral-900 dark:text-neutral-200">
@@ -1414,14 +1490,14 @@ export default function SettingsPage() {
               </div>
 
               {/* Footer Actions */}
-              <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between flex-wrap gap-3">
+              <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800/80 flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleTestConnection}
                     disabled={testResult.status === "testing" || !apiKey.trim()}
-                    className="h-9.5 text-sm font-medium px-4 rounded-md border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center gap-2 cursor-pointer disabled:opacity-40"
+                    className="h-10 text-xs sm:text-sm font-medium px-4 rounded-lg border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center gap-2 cursor-pointer disabled:opacity-40"
                   >
                     {testResult.status === "testing" ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1435,9 +1511,9 @@ export default function SettingsPage() {
                     <button
                       type="button"
                       onClick={handleRemoveApiKey}
-                      className="px-3 py-1.5 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md transition-colors cursor-pointer flex items-center gap-1.5"
+                      className="px-3.5 py-2 text-xs sm:text-sm font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                       <span>Remove Key</span>
                     </button>
                   )}
@@ -1446,7 +1522,7 @@ export default function SettingsPage() {
                 <Button
                   type="button"
                   onClick={handleSaveApiKey}
-                  className="h-9.5 bg-[#FCD62C] hover:bg-[#ebd524] text-neutral-950 font-semibold text-sm px-5 rounded-md shadow-xs flex items-center justify-center cursor-pointer active:scale-98 transition-all"
+                  className="h-10 px-5 rounded-lg text-xs sm:text-sm font-medium bg-neutral-950 hover:bg-neutral-800 text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-neutral-950 transition-all active:scale-[0.99] cursor-pointer shadow-xs flex items-center justify-center"
                 >
                   <span>Save Key Settings</span>
                 </Button>
@@ -1463,21 +1539,21 @@ export default function SettingsPage() {
             {/* SUB-VIEW 1: THE 3-CARD OVERVIEW HUB */}
             {automationSubView === "hub" && (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   {/* Card 1: Global Variables & Secrets */}
                   <div
                     onClick={() => setAutomationSubView("variables")}
-                    className="group p-5 rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-[#121212] hover:border-neutral-400 dark:hover:border-neutral-600 transition-all cursor-pointer shadow-xs hover:shadow-md flex flex-col justify-between gap-4"
+                    className="group p-6 rounded-md border border-neutral-200/80 dark:border-neutral-800/80 bg-white dark:bg-[#111111] hover:border-neutral-400 dark:hover:border-neutral-600 transition-all cursor-pointer shadow-none flex flex-col justify-between gap-5"
                   >
                     <div className="space-y-3">
-                      <div className="w-8 h-8 rounded-md bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200/80 dark:border-neutral-700/60 flex items-center justify-center text-neutral-700 dark:text-neutral-300">
+                      <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200/80 dark:border-neutral-700/60 flex items-center justify-center text-neutral-700 dark:text-neutral-300">
                         <Key className="w-4 h-4" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-neutral-950 dark:text-white transition-colors">
+                        <h3 className="text-sm font-medium text-neutral-950 dark:text-white transition-colors">
                           Global Variables & Secrets
                         </h3>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 leading-relaxed">
                           Store tokens, webhook URLs, and parameters shared across all automation flows using <code className="font-mono text-[11px] px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-medium">{"{{KEY}}"}</code> syntax.
                         </p>
                       </div>
@@ -1491,17 +1567,17 @@ export default function SettingsPage() {
                   {/* Card 2: External Webhook Gateway */}
                   <div
                     onClick={() => setAutomationSubView("webhooks")}
-                    className="group p-5 rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-[#121212] hover:border-neutral-400 dark:hover:border-neutral-600 transition-all cursor-pointer shadow-xs hover:shadow-md flex flex-col justify-between gap-4"
+                    className="group p-6 rounded-md border border-neutral-200/80 dark:border-neutral-800/80 bg-white dark:bg-[#111111] hover:border-neutral-400 dark:hover:border-neutral-600 transition-all cursor-pointer shadow-none flex flex-col justify-between gap-5"
                   >
                     <div className="space-y-3">
-                      <div className="w-8 h-8 rounded-md bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200/80 dark:border-neutral-700/60 flex items-center justify-center text-neutral-700 dark:text-neutral-300">
+                      <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200/80 dark:border-neutral-700/60 flex items-center justify-center text-neutral-700 dark:text-neutral-300">
                         <Globe className="w-4 h-4" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-neutral-950 dark:text-white transition-colors">
+                        <h3 className="text-sm font-medium text-neutral-950 dark:text-white transition-colors">
                           External Webhook Gateway
                         </h3>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 leading-relaxed">
                           Public serverless endpoints to trigger Launcher OS automations from Zapier, Make, n8n, GitHub, or cURL.
                         </p>
                       </div>
@@ -1515,17 +1591,17 @@ export default function SettingsPage() {
                   {/* Card 3: Connected App Connectors */}
                   <div
                     onClick={() => setAutomationSubView("connectors")}
-                    className="group p-5 rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-[#121212] hover:border-neutral-400 dark:hover:border-neutral-600 transition-all cursor-pointer shadow-xs hover:shadow-md flex flex-col justify-between gap-4"
+                    className="group p-6 rounded-md border border-neutral-200/80 dark:border-neutral-800/80 bg-white dark:bg-[#111111] hover:border-neutral-400 dark:hover:border-neutral-600 transition-all cursor-pointer shadow-none flex flex-col justify-between gap-5"
                   >
                     <div className="space-y-3">
-                      <div className="w-8 h-8 rounded-md bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200/80 dark:border-neutral-700/60 flex items-center justify-center text-neutral-700 dark:text-neutral-300">
+                      <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200/80 dark:border-neutral-700/60 flex items-center justify-center text-neutral-700 dark:text-neutral-300">
                         <Layers className="w-4 h-4" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-neutral-950 dark:text-white transition-colors">
+                        <h3 className="text-sm font-medium text-neutral-950 dark:text-white transition-colors">
                           Connected App Connectors
                         </h3>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 leading-relaxed">
                           1-Click authorization to connect Google Sheets, WhatsApp Gateway, Slack Workspace, and Notion.
                         </p>
                       </div>
@@ -1546,14 +1622,14 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => setAutomationSubView("hub")}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#121212] hover:bg-neutral-50 dark:hover:bg-neutral-800 text-xs font-medium text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#121212] hover:bg-neutral-50 dark:hover:bg-neutral-800 text-xs font-medium text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Back to Automation & Integration</span>
                   </button>
                 </div>
 
-                <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl space-y-6 shadow-xs">
+                <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-md space-y-6 shadow-xs">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100 dark:border-neutral-800">
                     <div>
                       <div className="flex items-center gap-2">
@@ -2235,14 +2311,14 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => setAutomationSubView("hub")}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#121212] hover:bg-neutral-50 dark:hover:bg-neutral-800 text-xs font-medium text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#121212] hover:bg-neutral-50 dark:hover:bg-neutral-800 text-xs font-medium text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Back to Automation & Integration</span>
                   </button>
                 </div>
 
-                <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl space-y-4 shadow-xs">
+                <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-md space-y-4 shadow-xs">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-neutral-100 dark:border-neutral-800">
                     <div>
                       <div className="flex items-center gap-2">
@@ -3322,9 +3398,9 @@ export default function SettingsPage() {
                           <Button
                             type="button"
                             onClick={() => saveConnector(activeConnectorModal)}
-                            className="h-8 text-xs bg-[#FFDE3C] hover:bg-[#FCD526] text-neutral-950 font-bold border border-[#E5BC10]/70 cursor-pointer shadow-xs"
+                            className="h-9 px-4 text-xs sm:text-sm font-medium bg-neutral-950 hover:bg-neutral-800 text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-neutral-950 rounded-lg cursor-pointer transition-all active:scale-[0.99] shadow-xs flex items-center gap-1.5"
                           >
-                            <Check className="w-3.5 h-3.5 mr-1" />
+                            <Check className="w-3.5 h-3.5" />
                             <span>Save & Connect</span>
                           </Button>
                         </div>
@@ -3345,26 +3421,26 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Card: Avatar Preview & Upload */}
             <div className="lg:col-span-1 space-y-4">
-              <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl text-center space-y-4 shadow-xs">
+              <Card className="p-6 sm:p-7 bg-white dark:bg-[#111111] border-neutral-200/80 dark:border-neutral-800/80 rounded-md text-center space-y-5 shadow-none">
                 <div className="relative w-28 h-28 mx-auto group">
                   <Avatar
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-28 h-28 border border-neutral-200/80 dark:border-neutral-800 shadow-sm cursor-pointer overflow-hidden transition-transform group-hover:scale-105"
+                    className="w-28 h-28 border border-neutral-200/80 dark:border-neutral-800 shadow-xs cursor-pointer overflow-hidden transition-transform group-hover:scale-105"
                   >
                     {avatarUrl ? (
                       <AvatarImage src={avatarUrl} alt={fullName} className="object-cover w-full h-full" />
                     ) : null}
-                    <AvatarFallback className="bg-neutral-950 text-white font-semibold text-3xl">
+                    <AvatarFallback className="bg-neutral-950 dark:bg-neutral-800 text-white font-medium text-3xl">
                       {fullName ? fullName[0].toUpperCase() : "F"}
                     </AvatarFallback>
                   </Avatar>
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0.5 right-0.5 p-2 rounded-full bg-[#FFE54C] hover:bg-[#FFDE3C] active:bg-[#FCD526] text-neutral-950 border-2 border-white dark:border-[#121212] shadow-md cursor-pointer transition-transform active:scale-90"
+                    className="absolute bottom-0.5 right-0.5 p-2 rounded-full bg-neutral-950 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-950 border-2 border-white dark:border-[#111111] shadow-xs cursor-pointer transition-transform active:scale-90"
                     title="Upload Photo"
                   >
-                    <Camera className="w-4 h-4" />
+                    <Camera className="w-3.5 h-3.5" />
                   </button>
                   <input
                     ref={fileInputRef}
@@ -3379,7 +3455,7 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="text-sm font-medium text-neutral-700 hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-white transition-colors cursor-pointer"
+                    className="text-xs sm:text-sm font-medium text-neutral-700 hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-white transition-colors cursor-pointer"
                   >
                     Change Photo
                   </button>
@@ -3412,7 +3488,7 @@ export default function SettingsPage() {
                           } catch {}
                           triggerToast("Profile photo removed.");
                         }}
-                        className="text-sm font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400 transition-colors cursor-pointer"
+                        className="text-xs sm:text-sm font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400 transition-colors cursor-pointer"
                       >
                         Remove
                       </button>
@@ -3424,7 +3500,7 @@ export default function SettingsPage() {
                   <h3 className="font-medium text-sm text-neutral-950 dark:text-white">
                     {fullName || "User Name"}
                   </h3>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400 font-normal">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 font-normal mt-0.5">
                     {email || "user@example.com"}
                   </p>
                 </div>
@@ -3434,19 +3510,19 @@ export default function SettingsPage() {
             {/* Right Card: Profile Form */}
             <div className="lg:col-span-2">
               <form onSubmit={handleSaveProfile}>
-                <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl space-y-5 shadow-xs">
-                  <div className="space-y-1 pb-3 border-b border-neutral-100 dark:border-neutral-800">
+                <Card className="p-6 sm:p-7 bg-white dark:bg-[#111111] border-neutral-200/80 dark:border-neutral-800/80 rounded-md space-y-6 shadow-none">
+                  <div className="space-y-1 pb-4 border-b border-neutral-100 dark:border-neutral-800/80">
                     <h2 className="text-sm sm:text-base font-medium text-neutral-950 dark:text-white leading-tight tracking-tight">
                       Profile Information
                     </h2>
-                    <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 font-normal">
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400 font-normal">
                       Update your name, email address, and profile picture
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                      <label className="text-xs sm:text-sm font-medium text-neutral-700 dark:text-neutral-300">
                         First Name
                       </label>
                       <Input
@@ -3454,13 +3530,13 @@ export default function SettingsPage() {
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         placeholder="e.g. Muhammad"
-                        className="h-9 px-3 text-xs bg-neutral-50/80 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 rounded-md text-neutral-950 dark:text-white focus-visible:ring-1 focus-visible:ring-[#FCD62C]"
+                        className="h-10 px-3.5 text-xs sm:text-sm bg-neutral-50/70 dark:bg-neutral-900/50 border border-neutral-200/90 dark:border-neutral-800/90 rounded-lg text-neutral-950 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 focus-visible:ring-1 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-600 transition-colors"
                         required
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                      <label className="text-xs sm:text-sm font-medium text-neutral-700 dark:text-neutral-300">
                         Last Name
                       </label>
                       <Input
@@ -3468,13 +3544,13 @@ export default function SettingsPage() {
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         placeholder="e.g. Fiqiy"
-                        className="h-9 px-3 text-xs bg-neutral-50/80 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 rounded-md text-neutral-950 dark:text-white focus-visible:ring-1 focus-visible:ring-[#FCD62C]"
+                        className="h-10 px-3.5 text-xs sm:text-sm bg-neutral-50/70 dark:bg-neutral-900/50 border border-neutral-200/90 dark:border-neutral-800/90 rounded-lg text-neutral-950 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 focus-visible:ring-1 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-600 transition-colors"
                         required
                       />
                     </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-xs sm:text-sm font-medium text-neutral-700 dark:text-neutral-300">
                         Email Address
                       </label>
                       <Input
@@ -3482,16 +3558,16 @@ export default function SettingsPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="e.g. user@revou.co"
-                        className="h-9 px-3 text-xs bg-neutral-50/80 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 rounded-md text-neutral-950 dark:text-white focus-visible:ring-1 focus-visible:ring-[#FCD62C]"
+                        className="h-10 px-3.5 text-xs sm:text-sm bg-neutral-50/70 dark:bg-neutral-900/50 border border-neutral-200/90 dark:border-neutral-800/90 rounded-lg text-neutral-950 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 focus-visible:ring-1 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-600 transition-colors"
                         required
                       />
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 flex justify-end">
+                  <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800/80 flex justify-end">
                     <Button
                       type="submit"
-                      className="h-9.5 bg-[#FCD62C] hover:bg-[#ebd524] text-neutral-950 font-semibold text-sm px-5 rounded-md shadow-xs flex items-center justify-center cursor-pointer active:scale-98 transition-all"
+                      className="h-10 px-5 rounded-lg text-xs sm:text-sm font-medium bg-neutral-950 hover:bg-neutral-800 text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-neutral-950 transition-all active:scale-[0.99] cursor-pointer shadow-xs flex items-center justify-center"
                     >
                       <span>Save Profile</span>
                     </Button>
@@ -3500,23 +3576,23 @@ export default function SettingsPage() {
               </form>
 
               {/* Update Password Card */}
-              <form onSubmit={handleChangePassword} className="mt-5">
-                <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl space-y-5 shadow-xs">
-                  <div className="space-y-1 pb-3 border-b border-neutral-100 dark:border-neutral-800">
+              <form onSubmit={handleChangePassword} className="mt-6">
+                <Card className="p-6 sm:p-7 bg-white dark:bg-[#111111] border-neutral-200/80 dark:border-neutral-800/80 rounded-md space-y-6 shadow-none">
+                  <div className="space-y-1 pb-4 border-b border-neutral-100 dark:border-neutral-800/80">
                     <div className="flex items-center gap-2">
                       <Lock className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
                       <h2 className="text-sm sm:text-base font-medium text-neutral-950 dark:text-white leading-tight tracking-tight">
                         Update Password
                       </h2>
                     </div>
-                    <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 font-normal">
-                      Change your password securely — stored as a hashed value in the database
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400 font-normal">
+                      Change your password securely — stored as a salted hash in the database
                     </p>
                   </div>
 
                   <div className="space-y-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                      <label className="text-xs sm:text-sm font-medium text-neutral-700 dark:text-neutral-300">
                         Current Password
                       </label>
                       <div className="relative">
@@ -3525,7 +3601,7 @@ export default function SettingsPage() {
                           value={currentPassword}
                           onChange={(e) => setCurrentPassword(e.target.value)}
                           placeholder="Enter your current password"
-                          className="h-9 pl-3 pr-10 text-xs bg-neutral-50/80 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 rounded-md text-neutral-950 dark:text-white focus-visible:ring-1 focus-visible:ring-[#FCD62C]"
+                          className="h-10 pl-3.5 pr-10 text-xs sm:text-sm bg-neutral-50/70 dark:bg-neutral-900/50 border border-neutral-200/90 dark:border-neutral-800/90 rounded-lg text-neutral-950 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 focus-visible:ring-1 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-600 transition-colors"
                           required
                         />
                         <button
@@ -3540,7 +3616,7 @@ export default function SettingsPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                        <label className="text-xs sm:text-sm font-medium text-neutral-700 dark:text-neutral-300">
                           New Password
                         </label>
                         <div className="relative">
@@ -3549,7 +3625,7 @@ export default function SettingsPage() {
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             placeholder="Min. 8 characters"
-                            className="h-9 pl-3 pr-10 text-xs bg-neutral-50/80 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 rounded-md text-neutral-950 dark:text-white focus-visible:ring-1 focus-visible:ring-[#FCD62C]"
+                            className="h-10 pl-3.5 pr-10 text-xs sm:text-sm bg-neutral-50/70 dark:bg-neutral-900/50 border border-neutral-200/90 dark:border-neutral-800/90 rounded-lg text-neutral-950 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 focus-visible:ring-1 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-600 transition-colors"
                             required
                             minLength={8}
                           />
@@ -3564,7 +3640,7 @@ export default function SettingsPage() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                        <label className="text-xs sm:text-sm font-medium text-neutral-700 dark:text-neutral-300">
                           Confirm New Password
                         </label>
                         <div className="relative">
@@ -3573,7 +3649,7 @@ export default function SettingsPage() {
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="Re-enter new password"
-                            className={`h-9 pl-3 pr-10 text-xs bg-neutral-50/80 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 rounded-md text-neutral-950 dark:text-white focus-visible:ring-1 focus-visible:ring-[#FCD62C] ${
+                            className={`h-10 pl-3.5 pr-10 text-xs sm:text-sm bg-neutral-50/70 dark:bg-neutral-900/50 border border-neutral-200/90 dark:border-neutral-800/90 rounded-lg text-neutral-950 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 focus-visible:ring-1 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-600 transition-colors ${
                               confirmPassword && confirmPassword !== newPassword ? "border-rose-400 dark:border-rose-500" : ""
                             }`}
                             required
@@ -3594,18 +3670,18 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-md bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-neutral-800/80 flex items-start gap-2.5">
+                  <div className="p-3.5 rounded-xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-neutral-800/80 flex items-start gap-2.5">
                     <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
                       Your password is securely hashed before being stored in the database. We never store or transmit plain-text passwords.
                     </p>
                   </div>
 
-                  <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 flex justify-end">
+                  <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800/80 flex justify-end">
                     <Button
                       type="submit"
                       disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword}
-                      className="h-9.5 bg-[#FCD62C] hover:bg-[#ebd524] text-neutral-950 font-semibold text-sm px-5 rounded-md shadow-xs flex items-center justify-center cursor-pointer active:scale-98 transition-all disabled:opacity-40"
+                      className="h-10 px-5 rounded-lg text-xs sm:text-sm font-medium bg-neutral-950 hover:bg-neutral-800 text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-neutral-950 transition-all active:scale-[0.99] cursor-pointer shadow-xs flex items-center justify-center disabled:opacity-40"
                     >
                       {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
                       <span>Update Password</span>
@@ -3621,24 +3697,40 @@ export default function SettingsPage() {
          * TAB 4: SECURITY & CLOUD
          * ══════════════════════════════════════════════════════════ */}
         {activeTab === "security" && (
-          <Card className="p-5 sm:p-6 bg-white dark:bg-[#121212] border-neutral-200/80 dark:border-neutral-800 rounded-xl space-y-5 shadow-xs">
-            <div className="space-y-1 pb-3 border-b border-neutral-100 dark:border-neutral-800">
-              <h2 className="text-sm sm:text-base font-medium text-neutral-950 dark:text-white leading-tight tracking-tight">
-                Cloud Infrastructure Status
-              </h2>
-              <p className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 font-normal">
-                Serverless Postgres database connection and media storage for your presentations
-              </p>
+          <Card className="p-6 sm:p-7 bg-white dark:bg-[#111111] border-neutral-200/80 dark:border-neutral-800/80 rounded-md space-y-6 shadow-none">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100 dark:border-neutral-800/80">
+              <div>
+                <h2 className="text-sm sm:text-base font-medium text-neutral-950 dark:text-white leading-tight tracking-tight">
+                  Cloud Infrastructure Status
+                </h2>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 font-normal mt-0.5">
+                  Serverless Postgres database connection, media storage, and real-time latency
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleTestCloudHealth}
+                disabled={isCheckingCloud}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium border border-neutral-200/90 dark:border-neutral-800 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer self-start sm:self-auto disabled:opacity-50"
+              >
+                {isCheckingCloud ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Activity className="w-3.5 h-3.5 text-emerald-500" />
+                )}
+                <span>Check Infrastructure Health</span>
+              </button>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3.5 rounded-xl border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/60">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <div className="space-y-3.5">
+              <div className="flex items-center justify-between p-4 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-50/50 dark:bg-neutral-900/40">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                     <Database className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="font-medium text-xs text-neutral-900 dark:text-white block">
+                    <span className="font-medium text-xs sm:text-sm text-neutral-900 dark:text-white block">
                       Neon Serverless Postgres
                     </span>
                     <span className="text-[11px] text-neutral-500 font-mono">
@@ -3646,18 +3738,29 @@ export default function SettingsPage() {
                     </span>
                   </div>
                 </div>
-                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
-                  Connected
-                </span>
+                <div className="flex items-center gap-2.5">
+                  {cloudLatency !== null && (
+                    <span className="text-[11px] font-mono text-neutral-400 dark:text-neutral-500">
+                      {cloudLatency}ms
+                    </span>
+                  )}
+                  <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-md border ${
+                    cloudCheckStatus === "error"
+                      ? "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20"
+                      : "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+                  }`}>
+                    {cloudCheckStatus === "error" ? "Degraded" : "Connected"}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex items-center justify-between p-3.5 rounded-xl border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/60">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <div className="flex items-center justify-between p-4 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-50/50 dark:bg-neutral-900/40">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-9 h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center justify-center">
                     <HardDrive className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="font-medium text-xs text-neutral-900 dark:text-white block">
+                    <span className="font-medium text-xs sm:text-sm text-neutral-900 dark:text-white block">
                       Neon Object Storage
                     </span>
                     <span className="text-[11px] text-neutral-500 font-mono">
@@ -3665,13 +3768,14 @@ export default function SettingsPage() {
                     </span>
                   </div>
                 </div>
-                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
+                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
                   Active
                 </span>
               </div>
             </div>
           </Card>
         )}
+        </div>
       </div>
     </AppShell>
   );

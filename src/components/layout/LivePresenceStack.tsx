@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Check,
@@ -33,12 +33,16 @@ const COLOR_PALETTE = [
   "#38BDF8", // Sky
 ];
 
+const DEFAULT_MOOD: MoodOption = { id: "great", emoji: "😄", label: "Great" };
+
 function getOrCreateClientId(): string {
   if (typeof window === "undefined") return "client-init";
   let id = sessionStorage.getItem("launcher_os_client_id");
   if (!id) {
     id = `usr_${Math.random().toString(36).substring(2, 8)}`;
-    sessionStorage.setItem("launcher_os_client_id", id);
+    try {
+      sessionStorage.setItem("launcher_os_client_id", id);
+    } catch {}
   }
   return id;
 }
@@ -52,24 +56,66 @@ function getOrCreateClientColor(clientId: string): string {
       hash = clientId.charCodeAt(i) + ((hash << 5) - hash);
     }
     color = COLOR_PALETTE[Math.abs(hash) % COLOR_PALETTE.length];
-    sessionStorage.setItem("launcher_os_client_color", color);
+    try {
+      sessionStorage.setItem("launcher_os_client_color", color);
+    } catch {}
   }
   return color;
 }
 
-function getStoredLocalAvatar(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("user_avatar_url") || null;
+// React 18 useSyncExternalStore subscriptions: guarantees 100% byte-for-byte match during SSR/hydration
+function subscribeProfile(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  window.addEventListener("user_avatar_changed", callback);
+  window.addEventListener("user_profile_changed", callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener("user_avatar_changed", callback);
+    window.removeEventListener("user_profile_changed", callback);
+  };
 }
 
-function getStoredLocalName(): string | null {
-  if (typeof window === "undefined") return null;
+function getAvatarSnapshot(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("user_avatar_url") || "";
+}
+
+function getAvatarServerSnapshot(): string {
+  return "";
+}
+
+function getNameSnapshot(): string {
+  if (typeof window === "undefined") return "";
   const first = localStorage.getItem("user_first_name");
   const last = localStorage.getItem("user_last_name");
   if (first || last) return `${first || ""} ${last || ""}`.trim();
   const full = localStorage.getItem("user_full_name");
   if (full) return full.trim();
-  return null;
+  return "";
+}
+
+function getNameServerSnapshot(): string {
+  return "";
+}
+
+function subscribeMood(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  window.addEventListener("user_mood_changed", callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener("user_mood_changed", callback);
+  };
+}
+
+function getMoodSnapshot(): string {
+  if (typeof window === "undefined") return JSON.stringify(DEFAULT_MOOD);
+  return localStorage.getItem("user_daily_mood") || JSON.stringify(DEFAULT_MOOD);
+}
+
+function getMoodServerSnapshot(): string {
+  return JSON.stringify(DEFAULT_MOOD);
 }
 
 export function LivePresenceStack() {
@@ -79,30 +125,29 @@ export function LivePresenceStack() {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Synchronously initialize avatar and name from localStorage for zero-flicker on route transitions
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(getStoredLocalAvatar);
-  const [customName, setCustomName] = useState<string | null>(getStoredLocalName);
+  // Synchronize avatar, custom name, and mood reactively & hydration-safe
+  const storedAvatar = useSyncExternalStore(subscribeProfile, getAvatarSnapshot, getAvatarServerSnapshot);
+  const storedName = useSyncExternalStore(subscribeProfile, getNameSnapshot, getNameServerSnapshot);
+  const moodString = useSyncExternalStore(subscribeMood, getMoodSnapshot, getMoodServerSnapshot);
+
+  const currentMood: MoodOption = useMemo(() => {
+    try {
+      return JSON.parse(moodString);
+    } catch {
+      return DEFAULT_MOOD;
+    }
+  }, [moodString]);
 
   // Derive stable client identity
   const clientIdRef = useRef<string>("");
   const clientColorRef = useRef<string>("#FFE54C");
 
-  const [currentMood, setCurrentMood] = useState<MoodOption>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("user_daily_mood");
-        if (saved) return JSON.parse(saved);
-      } catch {}
-    }
-    return { id: "great", emoji: "😄", label: "Great" };
-  });
-
   // Determine current user's display name
-  const rawName = customName || session?.user?.name || "Member";
+  const rawName = storedName || session?.user?.name || "Member";
   const nameParts = rawName.trim().split(/\s+/);
   const currentUserName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : nameParts[0];
 
-  const currentAvatar = avatarUrl || session?.user?.image || undefined;
+  const currentAvatar = storedAvatar || session?.user?.image || undefined;
 
   // Stable refs to prevent recreating sync functions and triggering infinite re-renders
   const stateRef = useRef({
@@ -186,30 +231,21 @@ export function LivePresenceStack() {
     [getCurrentUserPayload]
   );
 
-  // Initialize client and presence lifecycle (mount only once)
+  // Initialize client identity & presence lifecycle (mount only once)
   useEffect(() => {
     const id = getOrCreateClientId();
     const color = getOrCreateClientColor(id);
     clientIdRef.current = id;
     clientColorRef.current = color;
 
-    // Refresh from localStorage on mount
-    const savedAvatar = localStorage.getItem("user_avatar_url");
-    if (savedAvatar) setAvatarUrl(savedAvatar);
-    const savedName = getStoredLocalName();
-    if (savedName) setCustomName(savedName);
-
-    try {
-      const savedMood = localStorage.getItem("user_daily_mood");
-      if (savedMood) setCurrentMood(JSON.parse(savedMood));
-    } catch {}
-
-    // 1. Initial Join / Heartbeat
-    syncPresence("join");
+    // 1. Initial Join / Heartbeat (deferred to avoid synchronous setState in effect)
+    const initTimer = setTimeout(() => {
+      void syncPresence("join");
+    }, 0);
 
     // 2. Continuous Heartbeat interval (every 4 seconds)
     const interval = setInterval(() => {
-      syncPresence("heartbeat");
+      void syncPresence("heartbeat");
     }, 4000);
 
     // 3. Tab Close / Unload beacon (instantly marks offline on server when browser tab is closed)
@@ -230,79 +266,45 @@ export function LivePresenceStack() {
       channel = new BroadcastChannel("launcher_os_presence");
       channel.onmessage = (e) => {
         if (e.data?.type === "PRESENCE_CHANGED" || e.data?.type === "MOOD_UPDATE") {
-          syncPresence("heartbeat");
+          void syncPresence("heartbeat");
         } else if (e.data?.type === "PROFILE_UPDATE" || e.data?.type === "AVATAR_UPDATE") {
-          if (e.data?.avatar !== undefined) setAvatarUrl(e.data.avatar);
-          if (e.data?.name) setCustomName(e.data.name);
-          setTimeout(() => syncPresence("heartbeat"), 50);
+          setTimeout(() => {
+            void syncPresence("heartbeat");
+          }, 50);
         }
       };
     }
 
     return () => {
+      clearTimeout(initTimer);
       clearInterval(interval);
       window.removeEventListener("beforeunload", handleUnload);
       if (channel) {
         channel.close();
       }
-      // CRITICAL: Do NOT call handleUnload() here!
-      // In Next.js client-side navigation, components unmount on every page switch.
-      // Calling handleUnload() here was falsely deleting the user's presence session on page change.
     };
   }, [syncPresence]);
 
-  // Listen for mood changes from modal
+  // Keep presence backend updated whenever avatar or profile changes
   useEffect(() => {
-    const handleMoodChange = (e: any) => {
-      const moodData: MoodOption = e.detail;
-      if (moodData) {
-        setCurrentMood(moodData);
-        setTimeout(() => {
-          syncPresence("update_mood");
-        }, 50);
+    if (storedAvatar || storedName) {
+      const timer = setTimeout(() => {
+        void syncPresence("heartbeat");
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [storedAvatar, storedName, syncPresence]);
 
-        if (typeof window !== "undefined" && "BroadcastChannel" in window) {
-          const ch = new BroadcastChannel("launcher_os_presence");
-          ch.postMessage({ type: "MOOD_UPDATE", mood: moodData });
-          ch.close();
-        }
-      }
+  // Keep presence backend updated when mood changes
+  useEffect(() => {
+    const handleMoodChange = () => {
+      setTimeout(() => {
+        syncPresence("update_mood");
+      }, 50);
     };
 
     window.addEventListener("user_mood_changed", handleMoodChange);
     return () => window.removeEventListener("user_mood_changed", handleMoodChange);
-  }, [syncPresence]);
-
-  // Listen for avatar / profile changes (instant reactive UI updates)
-  useEffect(() => {
-    const handleAvatarChange = (e: any) => {
-      const newAvatar = e.detail !== undefined ? e.detail : localStorage.getItem("user_avatar_url");
-      setAvatarUrl(newAvatar);
-      setTimeout(() => {
-        syncPresence("heartbeat");
-      }, 50);
-    };
-
-    const handleProfileChange = (e: any) => {
-      if (e.detail?.name) {
-        setCustomName(e.detail.name);
-      }
-      if (e.detail?.avatar !== undefined) {
-        setAvatarUrl(e.detail.avatar);
-      }
-      setTimeout(() => {
-        syncPresence("heartbeat");
-      }, 50);
-    };
-
-    window.addEventListener("user_avatar_changed", handleAvatarChange);
-    window.addEventListener("user_profile_changed", handleProfileChange);
-    window.addEventListener("storage", handleAvatarChange);
-    return () => {
-      window.removeEventListener("user_avatar_changed", handleAvatarChange);
-      window.removeEventListener("user_profile_changed", handleProfileChange);
-      window.removeEventListener("storage", handleAvatarChange);
-    };
   }, [syncPresence]);
 
   const handleCopyLink = () => {
@@ -314,7 +316,17 @@ export function LivePresenceStack() {
   };
 
   // Immediate synchronous fallback guarantees user's avatar is always visible on first frame
-  const localMe = getCurrentUserPayload();
+  const localMe: ActiveUser = {
+    id: "me",
+    name: currentUserName || "Member",
+    role: session?.user?.email ? "Lead" : "Member",
+    avatar: currentAvatar,
+    color: "#FFE54C",
+    status: "Active",
+    moodEmoji: currentMood.emoji,
+    moodLabel: currentMood.label,
+    isCurrentUser: true,
+  };
   const displayUsers = users.length > 0
     ? users.map((u) => (u.isCurrentUser ? { ...u, avatar: localMe.avatar || u.avatar, name: localMe.name || u.name } : u))
     : [localMe];
@@ -324,11 +336,7 @@ export function LivePresenceStack() {
   return (
     <>
       {/* Mood Check-In Modal */}
-      <MoodCheckInModal
-        onSelectMood={(mood) => {
-          setCurrentMood(mood);
-        }}
-      />
+      <MoodCheckInModal />
 
       <div className="relative flex items-center">
         {/* Seamless Overlapping Avatars Stack with Prominent Mood Badges */}
@@ -347,10 +355,12 @@ export function LivePresenceStack() {
             >
               {/* Main Avatar with Instant Painting & Larger 40px Size */}
               <div
+                suppressHydrationWarning
                 className="w-10 h-10 rounded-full border-[1.5px] border-white dark:border-[#141414] shadow-xs overflow-hidden flex items-center justify-center text-[12px] font-black text-neutral-950 shrink-0"
                 style={{ backgroundColor: user.color }}
               >
                 {user.avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={user.avatar}
                     alt={user.name}
@@ -360,7 +370,7 @@ export function LivePresenceStack() {
                     }}
                   />
                 ) : (
-                  <span>{user.name.charAt(0).toUpperCase()}</span>
+                  <span suppressHydrationWarning>{user.name.charAt(0).toUpperCase()}</span>
                 )}
               </div>
 
@@ -467,6 +477,7 @@ export function LivePresenceStack() {
                             style={{ backgroundColor: user.color }}
                           >
                             {user.avatar ? (
+                              // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={user.avatar}
                                 alt={user.name}

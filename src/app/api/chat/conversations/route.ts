@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 async function getAuthenticatedUser() {
   const session = await auth.api.getSession({
@@ -44,7 +44,21 @@ export async function GET() {
         : "",
     }));
 
-    return NextResponse.json({ conversations });
+    // Deduplicate in response to guarantee UI never shows duplicate conversations
+    const deduplicated: typeof conversations = [];
+    const seen = new Set<string>();
+
+    for (const c of conversations) {
+      // Group by title and 5-second creation window
+      const timeWindow = Math.floor(new Date(c.createdAt).getTime() / 5000);
+      const key = `${c.title}__${timeWindow}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        deduplicated.push(c);
+      }
+    }
+
+    return NextResponse.json({ conversations: deduplicated });
   } catch (error: any) {
     console.error("GET /api/chat/conversations error:", error);
     return NextResponse.json(
@@ -105,9 +119,36 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const newTitle = deriveTitle();
+
+    // Guard: Prevent rapid parallel insertion of the same conversation within 5 seconds
+    const [recentDuplicate] = await db
+      .select()
+      .from(schema.chatConversations)
+      .where(
+        and(
+          eq(schema.chatConversations.userId, user.id),
+          eq(schema.chatConversations.title, newTitle)
+        )
+      )
+      .orderBy(desc(schema.chatConversations.createdAt))
+      .limit(1);
+
+    if (recentDuplicate && Date.now() - new Date(recentDuplicate.createdAt).getTime() < 5000) {
+      const [updated] = await db
+        .update(schema.chatConversations)
+        .set({
+          messages: messagesArray,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.chatConversations.id, recentDuplicate.id))
+        .returning();
+
+      return NextResponse.json({ conversation: updated });
+    }
+
     // Insert new conversation
     const newId = id || `conv_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-    const newTitle = deriveTitle();
 
     const [created] = await db
       .insert(schema.chatConversations)

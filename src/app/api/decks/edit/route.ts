@@ -42,6 +42,7 @@ Your task is to modify, transform, or refine presentation slides based strictly 
    - "connectedRings": Array<{ percentage: number; title: string; description: string }>
    - "asymmetricCards": Array<{ stat: string; text: string }>
    - "flowNodes": Array<{ title: string; subtitle?: string; tag?: string }>
+   - "imageUrl": string (optional, PNG image url or description if user explicitly asks for an image/illustration)
    - "ctaText": string (optional)
    - "footer": string (optional)
    - "slideNumber": string (optional)
@@ -88,9 +89,19 @@ export async function POST(req: NextRequest) {
       deepseek: "https://api.deepseek.com",
       openai: "https://api.openai.com/v1",
       gemini: "https://generativelanguage.googleapis.com/v1beta/openai",
+      openrouter: "https://openrouter.ai/api/v1",
     };
 
-    const effectiveApiKey = userApiKey || req.headers.get("x-deepseek-api-key") || process.env.DEEPSEEK_API_KEY;
+    const serverApiKey =
+      provider === "openai"
+        ? process.env.OPENAI_API_KEY
+        : provider === "gemini"
+        ? process.env.GEMINI_API_KEY
+        : provider === "openrouter"
+        ? process.env.OPENROUTER_API_KEY
+        : process.env.DEEPSEEK_API_KEY;
+
+    const effectiveApiKey = userApiKey || req.headers.get("x-deepseek-api-key") || serverApiKey;
 
     let userInstructionPrompt = "";
     if (scope === "single") {
@@ -135,10 +146,27 @@ Return the full array of updated SlideData JSON objects with the edits applied t
           baseURL: providerBaseUrls[provider] || providerBaseUrls.deepseek,
           apiKey: effectiveApiKey.trim(),
           timeout: 45000,
+          defaultHeaders: provider === "openrouter" ? {
+            "HTTP-Referer": "https://launcher-os.local",
+            "X-Title": "Launcher OS",
+          } : undefined,
         });
 
+        let effectiveModel =
+          provider === "gemini"
+            ? (!model || model === "deepseek-chat" || !model.includes("gemini") ? "gemini-2.5-flash" : model)
+            : provider === "openrouter"
+            ? (model || "google/gemini-2.5-flash")
+            : (model || "deepseek-chat");
+
+        if (provider === "openrouter" && !effectiveModel.includes("/")) {
+          if (effectiveModel.includes("gemini")) effectiveModel = `google/${effectiveModel}`;
+          else if (effectiveModel.includes("deepseek")) effectiveModel = "deepseek/deepseek-chat";
+          else effectiveModel = "google/gemini-2.5-flash";
+        }
+
         const response = await aiClient.chat.completions.create({
-          model: model || "deepseek-chat",
+          model: effectiveModel,
           temperature: 0.25,
           messages: [
             { role: "system", content: EDIT_SYSTEM_PROMPT },
@@ -174,6 +202,16 @@ Return the full array of updated SlideData JSON objects with the edits applied t
             // Ensure ID and slideNumber are preserved if omitted
             if (!updatedSlide.id) updatedSlide.id = currentSlide.id || `slide-${activeSlideIndex + 1}`;
             if (!updatedSlide.slideNumber) updatedSlide.slideNumber = currentSlide.slideNumber;
+
+            // Conditional Image Generator hook if user explicitly requested an image/illustration
+            if (/gambar|ilustrasi|image|illustration|visual|foto/i.test(prompt) && !updatedSlide.imageUrl) {
+              const cleanSubject = prompt.replace(/buatkan|tambahkan|generate|gambar|ilustrasi|image|illustration|tolong|please|foto|visual/gi, "").trim() || updatedSlide.title;
+              const enhancedPrompt = `Minimalist corporate vector illustration of ${cleanSubject}, modern flat executive slide graphic, clean geometric shapes, palette navy blue and golden yellow, high contrast on white background, no text, no watermark, crisp vector PNG`;
+              const seed = Math.floor(Math.random() * 999999);
+              updatedSlide.imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1024&height=768&nologo=true&seed=${seed}`;
+              updatedSlide.layout = "imageSplitMetric";
+            }
+
             return new Response(
               JSON.stringify({
                 success: true,
@@ -302,6 +340,12 @@ function applyDeterministicSingleEdit(slide: SlideData, prompt: string, index: n
       { percentage: 95, title: "Typographic Precision", description: "Strict design token & font pairing compliance" },
       { percentage: 88, title: "Stakeholder Alignment", description: "High-impact visual diagrams that convert" },
     ];
+  } else if (p.includes("gambar") || p.includes("ilustrasi") || p.includes("image") || p.includes("visual") || p.includes("foto")) {
+    const cleanSubject = prompt.replace(/buatkan|tambahkan|generate|gambar|ilustrasi|image|illustration|tolong|please|foto|visual/gi, "").trim() || copy.title;
+    const enhancedPrompt = `Minimalist corporate vector illustration of ${cleanSubject}, modern flat executive slide graphic, clean geometric shapes, palette navy blue and golden yellow, high contrast on white background, no text, no watermark, crisp vector PNG`;
+    const seed = Math.floor(Math.random() * 999999);
+    copy.imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1024&height=768&nologo=true&seed=${seed}`;
+    copy.layout = "imageSplitMetric";
   }
 
   // Text modifications

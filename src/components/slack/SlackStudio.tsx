@@ -885,7 +885,7 @@ export function SlackStudio() {
                 placeholder="Cari channel..."
                 value={channelFilterQuery}
                 onChange={(e) => setChannelFilterQuery(e.target.value)}
-                className="w-full pl-7 pr-2.5 py-1 rounded-md bg-white/60 dark:bg-neutral-800/70 text-xs text-neutral-950 dark:text-white placeholder:text-neutral-950/50 dark:placeholder:text-neutral-400 border border-black/10 dark:border-transparent focus:border-neutral-950 dark:focus:border-[#FFE500] focus:bg-white dark:focus:bg-neutral-800 focus:outline-none transition-all"
+                className="w-full pl-7 pr-2.5 py-1 rounded-md bg-white/60 dark:bg-neutral-800/70 text-xs text-neutral-950 dark:text-white placeholder:text-neutral-950/50 dark:placeholder:text-neutral-400 border border-black/10 dark:border-transparent focus:border-neutral-950 dark:focus:border-neutral-500 focus:bg-white dark:focus:bg-neutral-800 focus:outline-none transition-all"
               />
             </div>
           </div>

@@ -17,6 +17,7 @@ const OPERATION_OPTIONS = [
 
 const THEME_OPTIONS = [
   { value: "Institutional Standard", label: "ITB × RevoU Institutional Standard" },
+  { value: "UI Institutional Standard", label: "UI × RevoU Institutional Standard" },
   { value: "McKinsey Clean", label: "McKinsey Executive Clean (Light)" },
   { value: "Dark Mode Executive", label: "Dark Minimalist Executive (16:9)" },
   { value: "Tech Pitch Deck", label: "Silicon Valley Tech Pitch Deck" },

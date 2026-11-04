@@ -48,6 +48,14 @@ Aturan ini dirancang agar kompatibel 100% dan dapat dijalankan secara konsisten 
    - **Slide N (Impact / Call-to-Action)**: `boldStatement`, `boldImpact`, atau `cta` untuk penutup yang kuat.
    - *Aturan Anti-Monoton*: DILARANG mengulang layout yang sama lebih dari 2 kali berturut-turut dalam satu deck.
 
+6. **Anti-AI Slop & Natural Human Writing (Non-Negotiable)**:
+   - Dilarang memakai em dash (`—`). Gunakan koma, kurung, atau kalimat baru.
+   - Dilarang memakai formula klise *"not X but Y"*, *"it's not X, it's Y"*, atau *"X isn't about A, it's about B"*.
+   - Dilarang membuat irama pengungkapan titik dua di tengah prosa (*"Three things matter: speed..."*).
+   - Dilarang memakai buzzword AI klise: *delve, leverage, foster, robust, seamless, landscape, ecosystem, tapestry, journey, pivotal, crucial, holistic, game-changer*.
+   - Dilarang menyimpulkan dengan klise: *"In conclusion"*, *"Ultimately"*, *"At the end of the day"*.
+   - Variasikan panjang kalimat secara natural, hindari trik teatrikal paragraf satu baris tanpa verba.
+
 ---
 
 ## 2. Pilihan Gaya Institusi (Institutional Templates)
@@ -79,7 +87,24 @@ Aturan ini dirancang agar kompatibel 100% dan dapat dijalankan secara konsisten 
   - Satuan dinyatakan di header (*"IDR Billion"*).
   - Strip *"So What:"* di bawah slide analitis.
 
-### C. Template Launcher OS — Executive Core
+### C. Template BINUS — Applied Cybersecurity (RevoU × BINUS)
+- **Karakter:** Cybersecurity, arsitektur sistem defensif, mitigasi insiden, zero trust, dan kepemimpinan enterprise.
+- **Font:** **Red Hat Display** (Single font untuk seluruh elemen).
+- **Palet Warna Baku:**
+  - Primary: **Deep Blue** (`#174A7F`) — Judul slide, kartu kesimpulan/otoritas, header tabel.
+  - Secondary: **Medium Blue** (`#018ED5`) — Subjudul, subheadings, konektor alur.
+  - Dominant: **Light Sky Blue** (`#23A3E7`) — Warna dominan untuk kartu diagram, blok kategori, node aktif.
+  - Warm Support: **Light Orange** (`#F2941B`) & **Deep Orange** (`#E27F2D`) — Peringatan, tingkat ancaman, perbandingan kontras.
+  - Accent: **Golden Yellow** (`#FFDE3D`) — Aksen terbatas untuk angka metrik utama, highlight penting, dan badge `HANDS-ON`.
+  - Soft Tint: **Soft Sky Tint** (`#EAF5FC`) & **Soft Yellow** (`#FFEC8E`) — Wadah baca dan Note Box.
+  - Backgrounds: 8 Background Khusus di `/bg-deck/binus-deck/`.
+  - Text: Dark Slate (`#1E293B`) untuk body copy.
+- **Komponen Khas:**
+  - `Prompt Card`: Kartu prompt dengan border 2px Deep Blue `#174A7F`.
+  - `Insight Bar`: Kartu Deep Blue dengan aksen kiri Golden Yellow `#FFDE3D` tebal 14px.
+  - Status dalam kata: `High` / `Medium` / `Low` / `Critical` / `Optimal` (dilarang lampu warna merah/hijau).
+
+### D. Template Launcher OS — Executive Core
 - **Font:** SF Pro Display / Plus Jakarta Sans.
 - **Palet Warna:** Kuning Vibrant (`#FFDE3C` / `#FFE500`) + Deep Obsidian (`#121212`) + White (`#FFFFFF`).
 

@@ -3,8 +3,17 @@
 import React, { useState, Suspense, useEffect, useRef, useCallback, useMemo } from "react";
 import { marked } from "marked";
 
-// Configure marked synchronous mode (v18+)
-marked.use({ async: false });
+// Configure marked synchronous mode with target="_blank" for all links (v18+)
+marked.use({
+  async: false,
+  gfm: true,
+  renderer: {
+    link({ href, title, text }: { href: string; title?: string | null; text: string }) {
+      const titleAttr = title ? ` title="${title}"` : "";
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer"${titleAttr}>${text}</a>`;
+    },
+  },
+});
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { 
@@ -262,9 +271,16 @@ function WorkspaceContent() {
           mode: isAssistantMode ? currentMode : 'doc',
           isContinue,
           // BYOK: send user's API key and provider
-          apiKey: typeof window !== "undefined" ? (localStorage.getItem(`ai_key_${localStorage.getItem("ai_provider") || "deepseek"}`) || localStorage.getItem("deepseek_api_key") || "") : "",
+          apiKey: typeof window !== "undefined"
+            ? (localStorage.getItem(`ai_key_${localStorage.getItem("ai_provider") || "deepseek"}`) ||
+               ((localStorage.getItem("ai_provider") || "deepseek") === "deepseek" ? localStorage.getItem("deepseek_api_key") : "") || "")
+            : "",
           provider: typeof window !== "undefined" ? (localStorage.getItem("ai_provider") || "deepseek") : "deepseek",
-          selectedModel: typeof window !== "undefined" ? (localStorage.getItem(`ai_model_${localStorage.getItem("ai_provider") || "deepseek"}`) || localStorage.getItem("deepseek_selected_model") || "") : "",
+          selectedModel: typeof window !== "undefined"
+            ? (localStorage.getItem(`ai_model_${localStorage.getItem("ai_provider") || "deepseek"}`) ||
+               ((localStorage.getItem("ai_provider") || "deepseek") === "openrouter" ? "google/gemini-2.5-flash" :
+                (localStorage.getItem("ai_provider") || "deepseek") === "gemini" ? "gemini-2.5-flash" : localStorage.getItem("deepseek_selected_model")) || "")
+            : "",
         }),
       });
 
