@@ -440,29 +440,29 @@ function GoogleSheetsContent() {
                   {/* Center: Scrollable Single-Line Tabs Strip (Muscle Memory Google Sheets) */}
                   <div
                     ref={tabsScrollRef}
-                    className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 mx-2 no-scrollbar scroll-smooth"
+                    className="flex items-center overflow-x-auto flex-1 min-w-0 mx-2 no-scrollbar scroll-smooth"
                   >
-                    {currentSheet.tabs.map((tab) => {
+                    {currentSheet.tabs.map((tab, tabIdx) => {
                       const isActive = activeTab === tab.title;
                       return (
-                        <button
-                          key={tab.id}
-                          type="button"
-                          onClick={() => handleTabChange(tab.title)}
-                          className={`whitespace-nowrap px-3.5 py-1.5 rounded-t-sm text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 border-b-2 ${
-                            isActive
-                              ? "bg-white dark:bg-[#222222] text-neutral-950 dark:text-white border-neutral-900 dark:border-white shadow-xs font-semibold"
-                              : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white border-transparent font-medium"
-                          }`}
-                          title={`Switch to ${tab.title}`}
-                        >
-                          <span className="whitespace-nowrap">{tab.title}</span>
-                          <ChevronDown
-                            className={`w-3 h-3 shrink-0 ${
-                              isActive ? "text-neutral-600 dark:text-neutral-300" : "text-neutral-400 opacity-50"
+                        <React.Fragment key={tab.id}>
+                          <button
+                            type="button"
+                            onClick={() => handleTabChange(tab.title)}
+                            className={`whitespace-nowrap px-3.5 py-1.5 rounded-t-sm text-xs transition-all flex items-center cursor-pointer shrink-0 border-b-2 ${
+                              isActive
+                                ? "bg-white dark:bg-[#202020] text-neutral-950 dark:text-white border-neutral-900 dark:border-white shadow-xs font-semibold"
+                                : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white border-transparent font-medium"
                             }`}
-                          />
-                        </button>
+                            title={`Switch to ${tab.title}`}
+                          >
+                            <span>{tab.title}</span>
+                          </button>
+                          {/* Garis Pemisah Antar Tab */}
+                          {tabIdx < currentSheet.tabs.length - 1 && (
+                            <div className="w-[1px] h-3.5 bg-neutral-300 dark:bg-neutral-800 shrink-0 mx-0.5" />
+                          )}
+                        </React.Fragment>
                       );
                     })}
                   </div>
