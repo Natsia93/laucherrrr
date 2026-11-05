@@ -395,20 +395,20 @@ function GoogleSheetsContent() {
                   <button
                     type="button"
                     onClick={() => setIsWrapText((prev) => !prev)}
-                    className={`h-8.5 px-3 rounded-md text-xs font-medium border flex items-center gap-1.5 transition-all cursor-pointer ${
+                    className={`h-8.5 px-3 rounded-md text-xs font-medium border flex items-center gap-2 transition-all cursor-pointer ${
                       isWrapText
-                        ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 border-neutral-900 dark:border-white shadow-xs"
-                        : "bg-white dark:bg-neutral-900/70 text-neutral-600 dark:text-neutral-300 border-neutral-200/80 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700"
+                        ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-950 border-neutral-900 dark:border-white shadow-xs"
+                        : "bg-white dark:bg-neutral-900/70 text-neutral-600 dark:text-neutral-400 border-neutral-200/80 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-200"
                     }`}
                     title={isWrapText ? "Wrap Text active: long cell content wraps onto multiple lines" : "Clip text active: single line with truncation"}
                   >
                     <WrapText className="w-3.5 h-3.5" />
                     <span>Wrap Text</span>
                     <span
-                      className={`text-[9.5px] px-1 py-0.5 rounded font-mono uppercase tracking-wider ${
+                      className={`text-[9.5px] px-1.5 py-0.5 rounded font-mono uppercase tracking-wider ${
                         isWrapText
-                          ? "bg-emerald-500/20 text-emerald-300 dark:bg-emerald-500/30 dark:text-emerald-700 font-semibold"
-                          : "bg-neutral-200 dark:bg-neutral-800 text-neutral-500"
+                          ? "bg-white/20 text-white dark:bg-black/15 dark:text-neutral-950 font-semibold"
+                          : "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
                       }`}
                     >
                       {isWrapText ? "On" : "Off"}
@@ -419,20 +419,20 @@ function GoogleSheetsContent() {
                   <button
                     type="button"
                     onClick={() => setIsFreezeColumns((prev) => !prev)}
-                    className={`h-8.5 px-3 rounded-md text-xs font-medium border flex items-center gap-1.5 transition-all cursor-pointer ${
+                    className={`h-8.5 px-3 rounded-md text-xs font-medium border flex items-center gap-2 transition-all cursor-pointer ${
                       isFreezeColumns
-                        ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 border-neutral-900 dark:border-white shadow-xs"
-                        : "bg-white dark:bg-neutral-900/70 text-neutral-600 dark:text-neutral-300 border-neutral-200/80 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700"
+                        ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-950 border-neutral-900 dark:border-white shadow-xs"
+                        : "bg-white dark:bg-neutral-900/70 text-neutral-600 dark:text-neutral-400 border-neutral-200/80 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-200"
                     }`}
                     title={isFreezeColumns ? "Freeze columns active: columns remain sticky on horizontal scroll" : "Freeze columns disabled"}
                   >
                     <Pin className="w-3.5 h-3.5" />
                     <span>Freeze</span>
                     <span
-                      className={`text-[9.5px] px-1 py-0.5 rounded font-mono uppercase tracking-wider ${
+                      className={`text-[9.5px] px-1.5 py-0.5 rounded font-mono uppercase tracking-wider ${
                         isFreezeColumns
-                          ? "bg-emerald-500/20 text-emerald-300 dark:bg-emerald-500/30 dark:text-emerald-700 font-semibold"
-                          : "bg-neutral-200 dark:bg-neutral-800 text-neutral-500"
+                          ? "bg-white/20 text-white dark:bg-black/15 dark:text-neutral-950 font-semibold"
+                          : "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
                       }`}
                     >
                       {isFreezeColumns ? `${effectiveFreezeCount} col` : "Off"}
@@ -642,7 +642,7 @@ function GoogleSheetsContent() {
                   <span>{headers.length} columns</span>
                   <span>•</span>
                   <span className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
-                    <Pin className="w-3 h-3 text-emerald-500" />
+                    <Pin className="w-3 h-3 text-neutral-400" />
                     Google Sheets Rules: {metaFrozenCols > 0 ? `${metaFrozenCols} frozen column(s)` : "Default 1 frozen column"}
                     {currentSheet.frozenRowCount ? `, ${currentSheet.frozenRowCount} frozen row(s)` : ""}
                   </span>
