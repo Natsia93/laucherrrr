@@ -396,8 +396,8 @@ export function AnimatedLogoutIcon({ className = "", size = 18, ...props }: Anim
 }
 
 /**
- * 9. 📁 Animated Google Drive Icon
- * Floating 3-way drive triangle geometry with subtle levitation on hover
+ * 9. 📁 Animated Google Drive Icon (Official Logo Geometry)
+ * The iconic 3-band mobius trapezoid with fluid spring rotation & segment hover pop
  */
 export function AnimatedDriveIcon({ className = "", size = 18, ...props }: AnimatedIconProps) {
   return (
@@ -409,26 +409,39 @@ export function AnimatedDriveIcon({ className = "", size = 18, ...props }: Anima
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.8"
+        strokeWidth="1.7"
         strokeLinecap="round"
         strokeLinejoin="round"
         className="w-full h-full overflow-visible"
         {...props}
       >
         <style dangerouslySetInnerHTML={{ __html: `
-          .group:hover .drive-shape {
-            animation: driveLevitate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          .group:hover .drive-master {
+            animation: driveRotatePop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            transform-origin: 12px 12.5px;
           }
-          @keyframes driveLevitate {
-            0% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-1.5px) scale(1.06); }
-            100% { transform: translateY(0) scale(1); }
+          .group:hover .drive-band-1 { animation: driveBandPulse 0.4s ease 0s forwards; }
+          .group:hover .drive-band-2 { animation: driveBandPulse 0.4s ease 0.07s forwards; }
+          .group:hover .drive-band-3 { animation: driveBandPulse 0.4s ease 0.14s forwards; }
+          @keyframes driveRotatePop {
+            0% { transform: rotate(0deg) scale(1); }
+            45% { transform: rotate(20deg) scale(1.14); }
+            75% { transform: rotate(-5deg) scale(1.04); }
+            100% { transform: rotate(0deg) scale(1); }
+          }
+          @keyframes driveBandPulse {
+            0% { opacity: 0.75; }
+            50% { opacity: 1; }
+            100% { opacity: 0.85; }
           }
         ` }} />
-        <g className="drive-shape origin-center">
-          <path d="m4 15 4-7h8l-4 7H4z" />
-          <path d="m16 8 4 7-4 7H8l4-7h8z" opacity="0.8" />
-          <path d="M8 22 4 15l4-7 4 7-4 7z" opacity="0.6" />
+        <g className="drive-master">
+          {/* Top band (Yellow) */}
+          <path d="M8.6 3.5h6.8L21 14h-6.8z" className="drive-band-1 origin-[12px_8.75px]" />
+          {/* Left band (Green) */}
+          <path d="M8.6 3.5 3 14l3.4 6.5L12 10z" className="drive-band-2 origin-[7.5px_11.75px]" />
+          {/* Bottom band (Blue) */}
+          <path d="M21 14l-3.4 6.5H6.4L12 14z" className="drive-band-3 origin-[13.7px_17.25px]" />
         </g>
       </svg>
     </span>
@@ -436,8 +449,8 @@ export function AnimatedDriveIcon({ className = "", size = 18, ...props }: Anima
 }
 
 /**
- * 10. 📊 Animated Google Sheets Icon
- * Spreadsheet table grid with staggered cell waves on hover
+ * 10. 📊 Animated Google Sheets Icon (Official Folded Document & Grid)
+ * Iconic dog-ear document with responsive table grid & cell pulse on hover
  */
 export function AnimatedSheetsIcon({ className = "", size = 18, ...props }: AnimatedIconProps) {
   return (
@@ -449,33 +462,54 @@ export function AnimatedSheetsIcon({ className = "", size = 18, ...props }: Anim
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.8"
+        strokeWidth="1.7"
         strokeLinecap="round"
         strokeLinejoin="round"
         className="w-full h-full overflow-visible"
         {...props}
       >
         <style dangerouslySetInnerHTML={{ __html: `
-          .group:hover .sheet-cell-1 { animation: cellPulse 0.4s ease 0s forwards; }
-          .group:hover .sheet-cell-2 { animation: cellPulse 0.4s ease 0.08s forwards; }
-          .group:hover .sheet-cell-3 { animation: cellPulse 0.4s ease 0.16s forwards; }
-          .group:hover .sheet-cell-4 { animation: cellPulse 0.4s ease 0.24s forwards; }
-          @keyframes cellPulse {
+          .group:hover .sheets-doc-body {
+            animation: sheetsDocJump 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            transform-origin: 12px 12px;
+          }
+          .group:hover .sheets-fold-flap {
+            animation: sheetsFoldFlap 0.4s ease-in-out forwards;
+            transform-origin: 14px 8px;
+          }
+          .group:hover .sheets-grid-inner {
+            animation: sheetsGridPulse 0.4s ease 0.08s forwards;
+            transform-origin: 12px 14.5px;
+          }
+          @keyframes sheetsDocJump {
             0% { transform: scale(1); }
-            50% { transform: scale(1.15); }
+            40% { transform: scale(1.12); }
             100% { transform: scale(1); }
           }
+          @keyframes sheetsFoldFlap {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.25) translate(-0.5px, 0.5px); }
+            100% { transform: scale(1); }
+          }
+          @keyframes sheetsGridPulse {
+            0% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.15); }
+            100% { opacity: 1; transform: scale(1); }
+          }
         ` }} />
-        <rect width="18" height="18" x="3" y="3" rx="2" />
-        <path d="M3 9h18" />
-        <path d="M3 15h18" />
-        <path d="M9 9v12" />
-        <path d="M15 9v12" />
-        {/* Animated small cell indicator dots inside */}
-        <circle cx="6" cy="6" r="1" className="sheet-cell-1 origin-[6px_6px] fill-current" />
-        <circle cx="12" cy="12" r="1" className="sheet-cell-2 origin-[12px_12px] fill-current" />
-        <circle cx="18" cy="12" r="1" className="sheet-cell-3 origin-[18px_12px] fill-current" />
-        <circle cx="12" cy="18" r="1" className="sheet-cell-4 origin-[12px_18px] fill-current" />
+        <g className="sheets-doc-body">
+          {/* Document outline with folded corner */}
+          <path d="M14 2.5H6a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.5z" />
+          {/* Folded dog-ear flap */}
+          <polyline points="14 2.5 14 8.5 20 8.5" className="sheets-fold-flap" />
+          
+          {/* Internal Google Sheets Grid (Table) */}
+          <g className="sheets-grid-inner">
+            <rect x="7" y="11" width="10" height="7" rx="0.5" strokeWidth="1.4" />
+            <line x1="7" y1="14.5" x2="17" y2="14.5" strokeWidth="1.3" />
+            <line x1="12" y1="11" x2="12" y2="18" strokeWidth="1.3" />
+          </g>
+        </g>
       </svg>
     </span>
   );
