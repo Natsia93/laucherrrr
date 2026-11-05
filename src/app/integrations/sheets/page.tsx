@@ -6,7 +6,6 @@ import { authClient } from "@/lib/auth-client";
 import {
   FileSpreadsheet,
   RefreshCw,
-  Plus,
   ExternalLink,
   ChevronDown,
   ChevronLeft,
@@ -14,8 +13,6 @@ import {
   Menu,
   Table as TableIcon,
   Search,
-  X,
-  CheckCircle2,
   WrapText,
   Pin,
 } from "lucide-react";
@@ -79,19 +76,6 @@ function GoogleSheetsContent() {
         behavior: "smooth",
       });
     }
-  };
-
-  // Modals
-  const [isAddRowModalOpen, setIsAddRowModalOpen] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [newSheetTitle, setNewSheetTitle] = useState("");
-  const [newRowValues, setNewRowValues] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const triggerToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
   };
 
   // 1. Fetch user's spreadsheet list
@@ -176,69 +160,6 @@ function GoogleSheetsContent() {
     }
   };
 
-  const handleCreateSpreadsheet = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSheetTitle.trim()) return;
-
-    try {
-      setIsSubmitting(true);
-      const res = await fetch("/api/google/sheets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "create",
-          title: newSheetTitle.trim(),
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok && data.spreadsheet?.spreadsheetId) {
-        setIsCreateModalOpen(false);
-        setNewSheetTitle("");
-        triggerToast("Spreadsheet created successfully");
-        await fetchSpreadsheets();
-        setSelectedSheetId(data.spreadsheet.spreadsheetId);
-      }
-    } catch (err) {
-      console.error("Failed to create spreadsheet:", err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleAppendRow = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentSheet) return;
-
-    const headersList = currentSheet.values[0] || [];
-    const orderedValues = headersList.map((h) => newRowValues[h] || "");
-
-    try {
-      setIsSubmitting(true);
-      const res = await fetch("/api/google/sheets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "append_row",
-          spreadsheetId: currentSheet.id,
-          range: `${activeTab || "Sheet1"}!A1`,
-          values: orderedValues,
-        }),
-      });
-
-      if (res.ok) {
-        setIsAddRowModalOpen(false);
-        setNewRowValues({});
-        triggerToast("New row added to Google Sheets");
-        await fetchSheetDetail(currentSheet.id, activeTab);
-      }
-    } catch (err) {
-      console.error("Failed to append row:", err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   // Process rows & headers
   const headers = currentSheet?.values?.[0] || [];
   const rows = currentSheet?.values?.slice(1) || [];
@@ -304,49 +225,8 @@ function GoogleSheetsContent() {
                 <span>Open in Google</span>
               </a>
             )}
-
-            {isConnected && (
-              <>
-                <button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="px-3.5 py-1.5 rounded-md text-xs font-medium border border-neutral-200/80 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>New Sheet</span>
-                </button>
-
-                {currentSheet && (
-                  <button
-                    onClick={() => {
-                      setNewRowValues({});
-                      setIsAddRowModalOpen(true);
-                    }}
-                    className="px-3.5 py-1.5 rounded-md text-xs font-medium bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 hover:opacity-90 transition-opacity flex items-center gap-1.5 cursor-pointer shadow-xs"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Row</span>
-                  </button>
-                )}
-              </>
-            )}
           </div>
         </div>
-
-        {/* FEEDBACK TOAST NOTIFICATION */}
-        {toastMessage && (
-          <div className="p-4 rounded-md text-xs sm:text-sm font-normal flex items-center justify-between border transition-all bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100">
-            <div className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
-              <span>{toastMessage}</span>
-            </div>
-            <button
-              onClick={() => setToastMessage(null)}
-              className="text-xs text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 cursor-pointer"
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
 
         {/* OAUTH PERMISSION NOTICE (IF DISCONNECTED) */}
         {!isConnected && (
@@ -486,7 +366,7 @@ function GoogleSheetsContent() {
                   No spreadsheet selected
                 </h4>
                 <p className="text-xs text-neutral-500 max-w-sm mx-auto">
-                  Pick a spreadsheet from the selector above or click &quot;New Sheet&quot; to start tracking data.
+                  Pick a spreadsheet from the selector above to start viewing and monitoring data.
                 </p>
               </div>
             </div>
@@ -498,7 +378,7 @@ function GoogleSheetsContent() {
                   Spreadsheet is empty
                 </h4>
                 <p className="text-xs text-neutral-500 max-w-sm mx-auto">
-                  No columns or rows found in tab &quot;{activeTab || "Sheet1"}&quot;. Click &quot;Add Row&quot; to create the initial row.
+                  No columns or rows found in tab &quot;{activeTab || "Sheet1"}&quot;.
                 </p>
               </div>
             </div>
@@ -627,19 +507,8 @@ function GoogleSheetsContent() {
               {/* GOOGLE SHEETS AUTHENTIC BOTTOM TAB BAR */}
               {currentSheet?.tabs && currentSheet.tabs.length > 0 && (
                 <div className="border-t border-neutral-200/80 dark:border-neutral-800 bg-neutral-100/90 dark:bg-[#151515] flex items-center justify-between px-2 py-1 select-none text-xs">
-                  {/* Left Controls (+ Add Row & Menu) */}
+                  {/* Left Controls (Menu to cycle tabs) */}
                   <div className="flex items-center gap-1 shrink-0 pr-2 border-r border-neutral-200/80 dark:border-neutral-800">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setNewRowValues({});
-                        setIsAddRowModalOpen(true);
-                      }}
-                      className="p-1.5 rounded hover:bg-neutral-200/80 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer"
-                      title="Add Row to current sheet"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -728,116 +597,6 @@ function GoogleSheetsContent() {
             </div>
           )}
         </div>
-
-        {/* ADD ROW MODAL */}
-        {isAddRowModalOpen && currentSheet && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-            <div className="bg-white dark:bg-[#121212] border border-neutral-200 dark:border-neutral-800 rounded-md p-5 sm:p-6 w-full max-w-lg shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
-              <div className="flex items-center justify-between pb-3 border-b border-neutral-100 dark:border-neutral-800/80 shrink-0">
-                <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 uppercase tracking-wider">
-                  Append Row to Google Sheets
-                </h3>
-                <button
-                  onClick={() => setIsAddRowModalOpen(false)}
-                  className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <form onSubmit={handleAppendRow} className="space-y-3.5 overflow-y-auto pr-1 flex-1">
-                {headers.map((colName, idx) => (
-                  <div key={idx} className="space-y-1.5">
-                    <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                      {colName || `Column ${String.fromCharCode(65 + idx)}`}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={`Enter value for ${colName}...`}
-                      value={newRowValues[colName] || ""}
-                      onChange={(e) =>
-                        setNewRowValues((prev) => ({
-                          ...prev,
-                          [colName]: e.target.value,
-                        }))
-                      }
-                      className="w-full h-9.5 px-3 rounded-md border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-colors"
-                    />
-                  </div>
-                ))}
-
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-800 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setIsAddRowModalOpen(false)}
-                    className="px-3.5 py-1.5 rounded-md text-xs font-medium border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="px-4 py-1.5 rounded-md bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer shadow-xs"
-                  >
-                    {isSubmitting ? "Saving..." : "Save Row"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* CREATE SPREADSHEET MODAL */}
-        {isCreateModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-            <div className="bg-white dark:bg-[#121212] border border-neutral-200 dark:border-neutral-800 rounded-md p-5 sm:p-6 w-full max-w-md shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between pb-3 border-b border-neutral-100 dark:border-neutral-800/80">
-                <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 uppercase tracking-wider">
-                  Create New Spreadsheet
-                </h3>
-                <button
-                  onClick={() => setIsCreateModalOpen(false)}
-                  className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <form onSubmit={handleCreateSpreadsheet} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                    Spreadsheet Title
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Launcher OS Tracking Data"
-                    value={newSheetTitle}
-                    onChange={(e) => setNewSheetTitle(e.target.value)}
-                    className="w-full h-10 px-3.5 rounded-md border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 text-sm text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-colors"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
-                  <button
-                    type="button"
-                    onClick={() => setIsCreateModalOpen(false)}
-                    className="px-3.5 py-1.5 rounded-md text-xs font-medium border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || !newSheetTitle.trim()}
-                    className="px-4 py-1.5 rounded-md bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer shadow-xs"
-                  >
-                    {isSubmitting ? "Creating..." : "Create Spreadsheet"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </AppShell>
   );
