@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -37,7 +37,7 @@ interface SheetDetail {
   values: string[][];
 }
 
-export default function GoogleSheetsPage() {
+function GoogleSheetsContent() {
   const { data: session } = authClient.useSession();
   const searchParams = useSearchParams();
   const initialSpreadsheetId = searchParams.get("spreadsheetId") || "";
@@ -592,6 +592,23 @@ export default function GoogleSheetsPage() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+export default function GoogleSheetsPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppShell>
+          <div className="py-24 flex flex-col items-center justify-center gap-3 text-neutral-400">
+            <RefreshCw className="w-6 h-6 animate-spin text-emerald-500" />
+            <p className="text-xs">Loading Google Sheets Studio...</p>
+          </div>
+        </AppShell>
+      }
+    >
+      <GoogleSheetsContent />
+    </Suspense>
   );
 }
 
