@@ -576,24 +576,6 @@ function GoogleSheetsContent() {
                   </div>
                 </div>
               )}
-
-              {/* Status Footer info */}
-              <div className="px-3 py-2 bg-neutral-50/70 dark:bg-neutral-900/90 border-t border-neutral-200/70 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-3 text-[11px] text-neutral-400 font-mono">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span>{rows.length} rows recorded</span>
-                  <span>•</span>
-                  <span>{headers.length} columns</span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
-                    <Pin className="w-3 h-3 text-neutral-400" />
-                    Google Sheets Rules: {metaFrozenCols > 0 ? `${metaFrozenCols} frozen column(s)` : "Default 1 frozen column"}
-                    {currentSheet.frozenRowCount ? `, ${currentSheet.frozenRowCount} frozen row(s)` : ""}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>Current Tab: {activeTab || "Sheet1"}</span>
-                </div>
-              </div>
             </div>
           )}
         </div>
