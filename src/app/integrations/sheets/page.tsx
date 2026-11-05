@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -9,10 +9,12 @@ import {
   Plus,
   ExternalLink,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
   Table as TableIcon,
   Search,
   X,
-  Layers,
   CheckCircle2,
   WrapText,
   Pin,
@@ -66,6 +68,18 @@ function GoogleSheetsContent() {
   // Google Sheet Display Rules: Multiline Text Wrapping & Sticky Frozen Columns
   const [isWrapText, setIsWrapText] = useState(true);
   const [isFreezeColumns, setIsFreezeColumns] = useState(true);
+
+  // Tab horizontal scroll ref
+  const tabsScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollTabs = (direction: "left" | "right") => {
+    if (tabsScrollRef.current) {
+      tabsScrollRef.current.scrollBy({
+        left: direction === "left" ? -240 : 240,
+        behavior: "smooth",
+      });
+    }
+  };
 
   // Modals
   const [isAddRowModalOpen, setIsAddRowModalOpen] = useState(false);
@@ -453,30 +467,6 @@ function GoogleSheetsContent() {
                 </div>
               )}
             </div>
-
-            {/* TAB SELECTOR (MATCHING PRESET PILLS) */}
-            {currentSheet?.tabs && currentSheet.tabs.length > 1 && (
-              <div className="flex items-center gap-2 overflow-x-auto pt-1">
-                <span className="text-xs text-neutral-400 font-medium mr-1 flex items-center gap-1 shrink-0">
-                  <Layers className="w-3.5 h-3.5" />
-                  Tabs:
-                </span>
-                {currentSheet.tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => handleTabChange(tab.title)}
-                    className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer border ${
-                      activeTab === tab.title
-                        ? "bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 border-transparent shadow-xs"
-                        : "bg-white dark:bg-neutral-900/70 text-neutral-600 dark:text-neutral-300 border-neutral-200/80 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700"
-                    }`}
-                  >
-                    {tab.title}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* SECTION DIVIDER LINE */}
@@ -634,8 +624,92 @@ function GoogleSheetsContent() {
                 </table>
               </div>
 
-              {/* Table Footer info */}
-              <div className="p-3 bg-neutral-50/60 dark:bg-neutral-900 border-t border-neutral-200/80 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-3 text-[11px] text-neutral-400 font-mono">
+              {/* GOOGLE SHEETS AUTHENTIC BOTTOM TAB BAR */}
+              {currentSheet?.tabs && currentSheet.tabs.length > 0 && (
+                <div className="border-t border-neutral-200/80 dark:border-neutral-800 bg-neutral-100/90 dark:bg-[#151515] flex items-center justify-between px-2 py-1 select-none text-xs">
+                  {/* Left Controls (+ Add Row & Menu) */}
+                  <div className="flex items-center gap-1 shrink-0 pr-2 border-r border-neutral-200/80 dark:border-neutral-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewRowValues({});
+                        setIsAddRowModalOpen(true);
+                      }}
+                      className="p-1.5 rounded hover:bg-neutral-200/80 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer"
+                      title="Add Row to current sheet"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (currentSheet.tabs.length > 1) {
+                          const currIdx = currentSheet.tabs.findIndex((t) => t.title === activeTab);
+                          const nextTab = currentSheet.tabs[(currIdx + 1) % currentSheet.tabs.length];
+                          if (nextTab) handleTabChange(nextTab.title);
+                        }
+                      }}
+                      className="p-1.5 rounded hover:bg-neutral-200/80 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer"
+                      title="Next Tab"
+                    >
+                      <Menu className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Center: Scrollable Single-Line Tabs Strip (Muscle Memory Google Sheets) */}
+                  <div
+                    ref={tabsScrollRef}
+                    className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 mx-2 no-scrollbar scroll-smooth"
+                  >
+                    {currentSheet.tabs.map((tab) => {
+                      const isActive = activeTab === tab.title;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => handleTabChange(tab.title)}
+                          className={`whitespace-nowrap px-3.5 py-1.5 rounded-t-sm text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 border-b-2 ${
+                            isActive
+                              ? "bg-white dark:bg-[#222222] text-neutral-950 dark:text-white border-neutral-900 dark:border-white shadow-xs font-semibold"
+                              : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white border-transparent font-medium"
+                          }`}
+                          title={`Switch to ${tab.title}`}
+                        >
+                          <span className="whitespace-nowrap">{tab.title}</span>
+                          <ChevronDown
+                            className={`w-3 h-3 shrink-0 ${
+                              isActive ? "text-neutral-600 dark:text-neutral-300" : "text-neutral-400 opacity-50"
+                            }`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Right: Horizontal Scroll Arrows */}
+                  <div className="flex items-center gap-0.5 shrink-0 pl-2 border-l border-neutral-200/80 dark:border-neutral-800">
+                    <button
+                      type="button"
+                      onClick={() => scrollTabs("left")}
+                      className="p-1 rounded hover:bg-neutral-200/80 dark:hover:bg-neutral-800 text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer"
+                      title="Scroll tabs left"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => scrollTabs("right")}
+                      className="p-1 rounded hover:bg-neutral-200/80 dark:hover:bg-neutral-800 text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer"
+                      title="Scroll tabs right"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Status Footer info */}
+              <div className="px-3 py-2 bg-neutral-50/70 dark:bg-neutral-900/90 border-t border-neutral-200/70 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-3 text-[11px] text-neutral-400 font-mono">
                 <div className="flex items-center gap-3 flex-wrap">
                   <span>{rows.length} rows recorded</span>
                   <span>•</span>
@@ -648,7 +722,7 @@ function GoogleSheetsContent() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span>Active Tab: {activeTab || "Sheet1"}</span>
+                  <span>Current Tab: {activeTab || "Sheet1"}</span>
                 </div>
               </div>
             </div>
