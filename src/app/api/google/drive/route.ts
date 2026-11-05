@@ -39,8 +39,11 @@ export async function GET(req: NextRequest) {
     // Build Google Drive q query
     const queryParts: string[] = ["trashed = false"];
 
-    if (folderId) {
+    if (folderId && folderId !== "root") {
       queryParts.push(`'${folderId}' in parents`);
+    } else if (!search) {
+      // At root view, show items residing in root or directly shared with user
+      queryParts.push("('root' in parents or sharedWithMe = true)");
     }
 
     if (search) {
@@ -63,8 +66,10 @@ export async function GET(req: NextRequest) {
 
     const driveUrl = new URL("https://www.googleapis.com/drive/v3/files");
     driveUrl.searchParams.set("q", q);
-    driveUrl.searchParams.set("pageSize", "50");
-    driveUrl.searchParams.set("fields", "nextPageToken,files(id,name,mimeType,modifiedTime,size,iconLink,webViewLink,thumbnailLink,owners,starred,sharedWithMeTime)");
+    driveUrl.searchParams.set("pageSize", "60");
+    driveUrl.searchParams.set("supportsAllDrives", "true");
+    driveUrl.searchParams.set("includeItemsFromAllDrives", "true");
+    driveUrl.searchParams.set("fields", "nextPageToken,files(id,name,mimeType,modifiedTime,size,iconLink,webViewLink,thumbnailLink,owners,parents,starred,sharedWithMeTime)");
     driveUrl.searchParams.set("orderBy", "folder,modifiedTime desc");
 
     const driveRes = await fetch(driveUrl.toString(), {
@@ -97,10 +102,34 @@ export async function GET(req: NextRequest) {
 
     const driveData = await driveRes.json();
 
+    // Fetch current folder metadata if browsing a specific subfolder
+    let currentFolder: { id: string; name: string } | null = null;
+    if (folderId && folderId !== "root") {
+      try {
+        const folderMetaRes = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folderId)}?fields=id,name,mimeType&supportsAllDrives=true`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              Accept: "application/json",
+            },
+            cache: "no-store",
+          }
+        );
+        if (folderMetaRes.ok) {
+          const folderMeta = await folderMetaRes.json();
+          currentFolder = { id: folderMeta.id, name: folderMeta.name };
+        }
+      } catch (e) {
+        console.warn("[GoogleDriveAPI] Could not fetch folder metadata:", e);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       googleConnected: true,
       driveScopeGranted: true,
+      currentFolder,
       files: driveData.files || [],
       nextPageToken: driveData.nextPageToken || null,
     });
