@@ -12,7 +12,12 @@ export async function GET(req: NextRequest) {
     });
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({
+        success: true,
+        googleConnected: false,
+        sheetsScopeGranted: false,
+        spreadsheets: [],
+      });
     }
 
     const accessToken = await getValidGoogleAccessToken(session.user.id);
@@ -60,7 +65,7 @@ export async function GET(req: NextRequest) {
       }
 
       const meta = await metaRes.json();
-      const sheetTabs = (meta.sheets || []).map((s: any) => ({
+      const sheetTabs = (meta.sheets || []).map((s: { properties?: { sheetId?: number; title?: string; gridProperties?: { rowCount?: number; columnCount?: number } } }) => ({
         id: s.properties?.sheetId,
         title: s.properties?.title || "Sheet1",
         rowCount: s.properties?.gridProperties?.rowCount,
@@ -141,10 +146,11 @@ export async function GET(req: NextRequest) {
       sheetsScopeGranted: true,
       spreadsheets: listData.files || [],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : "Internal server error";
     console.error("[GoogleSheetsAPI] GET error:", error);
     return NextResponse.json(
-      { error: error?.message || "Internal server error" },
+      { error: errorMsg },
       { status: 500 }
     );
   }
@@ -157,7 +163,12 @@ export async function POST(req: NextRequest) {
     });
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({
+        success: true,
+        googleConnected: false,
+        sheetsScopeGranted: false,
+        spreadsheets: [],
+      });
     }
 
     const accessToken = await getValidGoogleAccessToken(session.user.id);
@@ -236,10 +247,11 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : "Internal server error";
     console.error("[GoogleSheetsAPI] POST error:", error);
     return NextResponse.json(
-      { error: error?.message || "Internal server error" },
+      { error: errorMsg },
       { status: 500 }
     );
   }

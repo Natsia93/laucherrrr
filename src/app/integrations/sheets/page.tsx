@@ -11,14 +11,10 @@ import {
   ChevronDown,
   Table as TableIcon,
   Search,
-  Check,
   X,
-  ChevronRight,
   Layers,
   CheckCircle2,
-  HardDrive,
 } from "lucide-react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 interface SpreadsheetSummary {
@@ -429,7 +425,7 @@ function GoogleSheetsContent() {
                   No spreadsheet selected
                 </h4>
                 <p className="text-xs text-neutral-500 max-w-sm mx-auto">
-                  Pick a spreadsheet from the selector above or click "New Sheet" to start tracking data.
+                  Pick a spreadsheet from the selector above or click &quot;New Sheet&quot; to start tracking data.
                 </p>
               </div>
             </div>
@@ -441,7 +437,7 @@ function GoogleSheetsContent() {
                   Spreadsheet is empty
                 </h4>
                 <p className="text-xs text-neutral-500 max-w-sm mx-auto">
-                  No columns or rows found in tab "{activeTab || "Sheet1"}". Click "Add Row" to create the initial row.
+                  No columns or rows found in tab &quot;{activeTab || "Sheet1"}&quot;. Click &quot;Add Row&quot; to create the initial row.
                 </p>
               </div>
             </div>

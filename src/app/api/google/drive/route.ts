@@ -12,7 +12,12 @@ export async function GET(req: NextRequest) {
     });
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({
+        success: true,
+        googleConnected: false,
+        driveScopeGranted: false,
+        files: [],
+      });
     }
 
     const accessToken = await getValidGoogleAccessToken(session.user.id);
@@ -99,10 +104,11 @@ export async function GET(req: NextRequest) {
       files: driveData.files || [],
       nextPageToken: driveData.nextPageToken || null,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : "Internal server error";
     console.error("[GoogleDriveAPI] GET error:", error);
     return NextResponse.json(
-      { error: error?.message || "Internal server error" },
+      { error: errorMsg },
       { status: 500 }
     );
   }
@@ -115,7 +121,12 @@ export async function POST(req: NextRequest) {
     });
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({
+        success: true,
+        googleConnected: false,
+        driveScopeGranted: false,
+        files: [],
+      });
     }
 
     const accessToken = await getValidGoogleAccessToken(session.user.id);
@@ -141,7 +152,7 @@ export async function POST(req: NextRequest) {
       mimeType = "application/vnd.google-apps.document";
     }
 
-    const requestBody: Record<string, any> = {
+    const requestBody: Record<string, unknown> = {
       name: name.trim(),
       mimeType,
     };
@@ -169,10 +180,11 @@ export async function POST(req: NextRequest) {
 
     const newResource = await res.json();
     return NextResponse.json({ success: true, file: newResource }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : "Internal server error";
     console.error("[GoogleDriveAPI] POST error:", error);
     return NextResponse.json(
-      { error: error?.message || "Internal server error" },
+      { error: errorMsg },
       { status: 500 }
     );
   }

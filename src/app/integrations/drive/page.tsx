@@ -21,11 +21,11 @@ import {
   ChevronRight,
   HardDrive,
   X,
-  ShieldCheck,
-  AlertCircle,
   CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
+
+type DriveFilterType = "all" | "spreadsheet" | "document" | "presentation" | "folder";
 
 interface DriveFile {
   id: string;
@@ -321,7 +321,7 @@ export default function GoogleDrivePage() {
                 <button
                   key={f.id}
                   type="button"
-                  onClick={() => setActiveFilter(f.id as any)}
+                  onClick={() => setActiveFilter(f.id as DriveFilterType)}
                   className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer border ${
                     activeFilter === f.id
                       ? "bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 border-transparent shadow-xs"
