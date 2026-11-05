@@ -14,6 +14,8 @@ import {
   X,
   Layers,
   CheckCircle2,
+  WrapText,
+  Pin,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
@@ -28,8 +30,17 @@ interface SheetDetail {
   id: string;
   title: string;
   url: string;
-  tabs: Array<{ id: number; title: string; rowCount?: number; columnCount?: number }>;
+  tabs: Array<{
+    id: number;
+    title: string;
+    rowCount?: number;
+    columnCount?: number;
+    frozenRowCount?: number;
+    frozenColumnCount?: number;
+  }>;
   activeTab: string;
+  frozenRowCount?: number;
+  frozenColumnCount?: number;
   values: string[][];
 }
 
@@ -51,6 +62,10 @@ function GoogleSheetsContent() {
 
   // Table Search Filter
   const [filterText, setFilterText] = useState("");
+
+  // Google Sheet Display Rules: Multiline Text Wrapping & Sticky Frozen Columns
+  const [isWrapText, setIsWrapText] = useState(true);
+  const [isFreezeColumns, setIsFreezeColumns] = useState(true);
 
   // Modals
   const [isAddRowModalOpen, setIsAddRowModalOpen] = useState(false);
@@ -220,6 +235,11 @@ function GoogleSheetsContent() {
     return row.some((cell) => cell?.toLowerCase().includes(match));
   });
 
+  // Google Sheets Freeze & Wrap rules
+  const metaFrozenCols = currentSheet?.frozenColumnCount ?? 0;
+  const targetFreezeCols = metaFrozenCols > 0 ? metaFrozenCols : 1;
+  const effectiveFreezeCount = isFreezeColumns ? Math.min(targetFreezeCols, 2) : 0;
+
   const isConnected = Boolean(googleConnected && sheetsScopeGranted);
 
   return (
@@ -368,17 +388,68 @@ function GoogleSheetsContent() {
                 </div>
               </div>
 
-              {/* Quick Search within Table */}
+              {/* Controls: Wrap Text Toggle, Freeze Columns Toggle & Quick Search */}
               {currentSheet && (
-                <div className="relative w-full sm:w-64">
-                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                  <input
-                    type="text"
-                    placeholder="Search in table..."
-                    value={filterText}
-                    onChange={(e) => setFilterText(e.target.value)}
-                    className="w-full h-8.5 pl-8 pr-3 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/70 text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-colors"
-                  />
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Wrap Text Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => setIsWrapText((prev) => !prev)}
+                    className={`h-8.5 px-3 rounded-md text-xs font-medium border flex items-center gap-1.5 transition-all cursor-pointer ${
+                      isWrapText
+                        ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 border-neutral-900 dark:border-white shadow-xs"
+                        : "bg-white dark:bg-neutral-900/70 text-neutral-600 dark:text-neutral-300 border-neutral-200/80 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700"
+                    }`}
+                    title={isWrapText ? "Wrap Text active: long cell content wraps onto multiple lines" : "Clip text active: single line with truncation"}
+                  >
+                    <WrapText className="w-3.5 h-3.5" />
+                    <span>Wrap Text</span>
+                    <span
+                      className={`text-[9.5px] px-1 py-0.5 rounded font-mono uppercase tracking-wider ${
+                        isWrapText
+                          ? "bg-emerald-500/20 text-emerald-300 dark:bg-emerald-500/30 dark:text-emerald-700 font-semibold"
+                          : "bg-neutral-200 dark:bg-neutral-800 text-neutral-500"
+                      }`}
+                    >
+                      {isWrapText ? "On" : "Off"}
+                    </span>
+                  </button>
+
+                  {/* Freeze Columns Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => setIsFreezeColumns((prev) => !prev)}
+                    className={`h-8.5 px-3 rounded-md text-xs font-medium border flex items-center gap-1.5 transition-all cursor-pointer ${
+                      isFreezeColumns
+                        ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 border-neutral-900 dark:border-white shadow-xs"
+                        : "bg-white dark:bg-neutral-900/70 text-neutral-600 dark:text-neutral-300 border-neutral-200/80 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700"
+                    }`}
+                    title={isFreezeColumns ? "Freeze columns active: columns remain sticky on horizontal scroll" : "Freeze columns disabled"}
+                  >
+                    <Pin className="w-3.5 h-3.5" />
+                    <span>Freeze</span>
+                    <span
+                      className={`text-[9.5px] px-1 py-0.5 rounded font-mono uppercase tracking-wider ${
+                        isFreezeColumns
+                          ? "bg-emerald-500/20 text-emerald-300 dark:bg-emerald-500/30 dark:text-emerald-700 font-semibold"
+                          : "bg-neutral-200 dark:bg-neutral-800 text-neutral-500"
+                      }`}
+                    >
+                      {isFreezeColumns ? `${effectiveFreezeCount} col` : "Off"}
+                    </span>
+                  </button>
+
+                  {/* Quick Search within Table */}
+                  <div className="relative w-full sm:w-56">
+                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                    <input
+                      type="text"
+                      placeholder="Search in table..."
+                      value={filterText}
+                      onChange={(e) => setFilterText(e.target.value)}
+                      className="w-full h-8.5 pl-8 pr-3 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/70 text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-colors"
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -442,24 +513,55 @@ function GoogleSheetsContent() {
               </div>
             </div>
           ) : (
-            /* REAL DATA TABLE */
+            /* REAL DATA TABLE WITH FROZEN COLUMNS & MULTILINE TEXT WRAPPING */
             <div className="border border-neutral-200/70 dark:border-neutral-800 rounded-md bg-white dark:bg-[#121212] overflow-hidden shadow-none">
-              <div className="overflow-x-auto max-h-[600px] calendar-scrollbar">
+              <div className="overflow-x-auto max-h-[640px] calendar-scrollbar">
                 <table className="w-full text-left border-collapse text-xs">
                   {/* Header Row */}
-                  <thead className="sticky top-0 z-10 bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+                  <thead className="sticky top-0 z-30 bg-neutral-100 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
                     <tr>
-                      <th className="w-12 px-3 py-2.5 text-[10.5px] font-mono text-neutral-400 text-center border-r border-neutral-200/60 dark:border-neutral-800/60">
+                      <th className="sticky top-0 left-0 z-40 w-12 min-w-[48px] max-w-[48px] px-3 py-2.5 text-[10.5px] font-mono text-neutral-400 text-center border-r border-neutral-200/80 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 select-none">
                         #
                       </th>
-                      {headers.map((col, idx) => (
-                        <th
-                          key={idx}
-                          className="px-3.5 py-2.5 font-medium text-neutral-800 dark:text-neutral-200 tracking-tight whitespace-nowrap border-r border-neutral-200/60 dark:border-neutral-800/60 last:border-r-0"
-                        >
-                          {col || `Column ${String.fromCharCode(65 + idx)}`}
-                        </th>
-                      ))}
+                      {headers.map((col, idx) => {
+                        const isFrozen = isFreezeColumns && effectiveFreezeCount > 0 && idx < effectiveFreezeCount;
+                        const isLastFrozen = isFrozen && idx === effectiveFreezeCount - 1;
+                        const isShortCol = /(duration|hours|min|profil|id|no|date|time|week|sync|async)/i.test(col || "");
+                        const isLongCol = /(case|example|desc|topic|overview|notes|objective|link|detail|curriculum|summary)/i.test(col || "");
+
+                        let widthClass = "min-w-[180px] max-w-[280px]";
+                        if (isWrapText) {
+                          if (isShortCol) widthClass = "w-28 min-w-[105px] max-w-[130px]";
+                          else if (isLongCol) widthClass = "min-w-[320px] max-w-[520px]";
+                          else widthClass = "min-w-[190px] max-w-[300px]";
+                        } else {
+                          widthClass = "min-w-[160px] max-w-[260px]";
+                        }
+
+                        let stickyHeaderClass = "sticky top-0 z-10 bg-neutral-50 dark:bg-neutral-900";
+                        if (isFrozen) {
+                          if (idx === 0) {
+                            stickyHeaderClass = "sticky top-0 left-[48px] z-30 bg-neutral-100 dark:bg-neutral-900";
+                          } else if (idx === 1) {
+                            stickyHeaderClass = "sticky top-0 left-[224px] z-30 bg-neutral-100 dark:bg-neutral-900";
+                          }
+                        }
+
+                        const dividerBorder = isLastFrozen
+                          ? "border-r-2 border-neutral-300 dark:border-neutral-700 shadow-[3px_0_8px_-2px_rgba(0,0,0,0.12)] dark:shadow-[3px_0_12px_-2px_rgba(0,0,0,0.5)]"
+                          : "border-r border-neutral-200/60 dark:border-neutral-800/60 last:border-r-0";
+
+                        return (
+                          <th
+                            key={idx}
+                            className={`px-3.5 py-2.5 font-medium text-neutral-800 dark:text-neutral-200 tracking-tight ${stickyHeaderClass} ${widthClass} ${dividerBorder} ${
+                              isShortCol ? "text-center" : "text-left"
+                            } ${isWrapText ? "whitespace-normal break-words" : "whitespace-nowrap truncate"}`}
+                          >
+                            {col || `Column ${String.fromCharCode(65 + idx)}`}
+                          </th>
+                        );
+                      })}
                     </tr>
                   </thead>
 
@@ -475,19 +577,56 @@ function GoogleSheetsContent() {
                       filteredRows.map((row, rowIdx) => (
                         <tr
                           key={rowIdx}
-                          className="hover:bg-neutral-50/60 dark:hover:bg-[#161616] transition-colors"
+                          className="group hover:bg-neutral-50/70 dark:hover:bg-[#161616] transition-colors"
                         >
-                          <td className="w-12 px-3 py-2 text-[10px] font-mono text-neutral-400 text-center border-r border-neutral-100 dark:border-neutral-800/60 select-none">
+                          <td className="sticky left-0 z-20 w-12 min-w-[48px] max-w-[48px] px-3 py-3 text-[10px] font-mono text-neutral-400 text-center border-r border-neutral-100 dark:border-neutral-800/60 bg-white dark:bg-[#121212] group-hover:bg-neutral-50/90 dark:group-hover:bg-[#161616] select-none align-top">
                             {rowIdx + 1}
                           </td>
-                          {headers.map((_, colIdx) => (
-                            <td
-                              key={colIdx}
-                              className="px-3.5 py-2 text-neutral-700 dark:text-neutral-300 font-normal whitespace-nowrap border-r border-neutral-100 dark:border-neutral-800/60 last:border-r-0"
-                            >
-                              {row[colIdx] || "--"}
-                            </td>
-                          ))}
+                          {headers.map((colName, colIdx) => {
+                            const isFrozen = isFreezeColumns && effectiveFreezeCount > 0 && colIdx < effectiveFreezeCount;
+                            const isLastFrozen = isFrozen && colIdx === effectiveFreezeCount - 1;
+                            const isShortCol = /(duration|hours|min|profil|id|no|date|time|week|sync|async)/i.test(colName || "");
+                            const isLongCol = /(case|example|desc|topic|overview|notes|objective|link|detail|curriculum|summary)/i.test(colName || "");
+
+                            let widthClass = "min-w-[180px] max-w-[280px]";
+                            if (isWrapText) {
+                              if (isShortCol) widthClass = "w-28 min-w-[105px] max-w-[130px]";
+                              else if (isLongCol) widthClass = "min-w-[320px] max-w-[520px]";
+                              else widthClass = "min-w-[190px] max-w-[300px]";
+                            } else {
+                              widthClass = "min-w-[160px] max-w-[260px]";
+                            }
+
+                            let stickyBodyClass = "bg-white dark:bg-[#121212] group-hover:bg-neutral-50/90 dark:group-hover:bg-[#161616]";
+                            if (isFrozen) {
+                              if (colIdx === 0) {
+                                stickyBodyClass = "sticky left-[48px] z-20 bg-white dark:bg-[#121212] group-hover:bg-neutral-50/90 dark:group-hover:bg-[#161616]";
+                              } else if (colIdx === 1) {
+                                stickyBodyClass = "sticky left-[224px] z-20 bg-white dark:bg-[#121212] group-hover:bg-neutral-50/90 dark:group-hover:bg-[#161616]";
+                              }
+                            }
+
+                            const dividerBorder = isLastFrozen
+                              ? "border-r-2 border-neutral-300 dark:border-neutral-700 shadow-[3px_0_8px_-2px_rgba(0,0,0,0.12)] dark:shadow-[3px_0_12px_-2px_rgba(0,0,0,0.5)]"
+                              : "border-r border-neutral-100 dark:border-neutral-800/60 last:border-r-0";
+
+                            const cellVal = row[colIdx];
+
+                            return (
+                              <td
+                                key={colIdx}
+                                className={`px-3.5 text-neutral-700 dark:text-neutral-300 font-normal transition-colors ${stickyBodyClass} ${widthClass} ${dividerBorder} ${
+                                  isShortCol ? "text-center" : "text-left"
+                                } ${
+                                  isWrapText
+                                    ? "py-3.5 align-top whitespace-pre-wrap break-words leading-relaxed text-[12px]"
+                                    : "py-2.5 align-middle whitespace-nowrap truncate text-[12px]"
+                                }`}
+                              >
+                                {cellVal || "--"}
+                              </td>
+                            );
+                          })}
                         </tr>
                       ))
                     )}
@@ -496,9 +635,21 @@ function GoogleSheetsContent() {
               </div>
 
               {/* Table Footer info */}
-              <div className="p-3 bg-neutral-50/60 dark:bg-neutral-900 border-t border-neutral-200/80 dark:border-neutral-800 flex items-center justify-between text-[11px] text-neutral-400 font-mono">
-                <span>{rows.length} rows recorded</span>
-                <span>Active: {activeTab || "Sheet1"}</span>
+              <div className="p-3 bg-neutral-50/60 dark:bg-neutral-900 border-t border-neutral-200/80 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-3 text-[11px] text-neutral-400 font-mono">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span>{rows.length} rows recorded</span>
+                  <span>•</span>
+                  <span>{headers.length} columns</span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
+                    <Pin className="w-3 h-3 text-emerald-500" />
+                    Google Sheets Rules: {metaFrozenCols > 0 ? `${metaFrozenCols} frozen column(s)` : "Default 1 frozen column"}
+                    {currentSheet.frozenRowCount ? `, ${currentSheet.frozenRowCount} frozen row(s)` : ""}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>Active Tab: {activeTab || "Sheet1"}</span>
+                </div>
               </div>
             </div>
           )}

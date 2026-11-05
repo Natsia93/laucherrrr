@@ -65,18 +65,45 @@ export async function GET(req: NextRequest) {
       }
 
       const meta = await metaRes.json();
-      const sheetTabs = (meta.sheets || []).map((s: { properties?: { sheetId?: number; title?: string; gridProperties?: { rowCount?: number; columnCount?: number } } }) => ({
+      interface SheetTabItem {
+        id?: number;
+        title: string;
+        rowCount?: number;
+        columnCount?: number;
+        frozenRowCount: number;
+        frozenColumnCount: number;
+      }
+
+      const sheetTabs: SheetTabItem[] = (meta.sheets || []).map((s: {
+        properties?: {
+          sheetId?: number;
+          title?: string;
+          gridProperties?: {
+            rowCount?: number;
+            columnCount?: number;
+            frozenRowCount?: number;
+            frozenColumnCount?: number;
+          };
+        };
+      }) => ({
         id: s.properties?.sheetId,
         title: s.properties?.title || "Sheet1",
         rowCount: s.properties?.gridProperties?.rowCount,
         columnCount: s.properties?.gridProperties?.columnCount,
+        frozenRowCount: s.properties?.gridProperties?.frozenRowCount || 0,
+        frozenColumnCount: s.properties?.gridProperties?.frozenColumnCount || 0,
       }));
 
       const activeTab = tabName || sheetTabs[0]?.title || "Sheet1";
-      const range = `${encodeURIComponent(activeTab)}!A1:Z200`;
+      const currentTabMeta = sheetTabs.find((t: SheetTabItem) => t.title === activeTab) || sheetTabs[0];
+      const frozenRowCount = currentTabMeta?.frozenRowCount ?? 1;
+      const frozenColumnCount = currentTabMeta?.frozenColumnCount ?? 0;
+
+      // Range covers up to column AZ and row 300 to prevent truncated tables
+      const safeRangeQuery = `'${activeTab.replace(/'/g, "''")}'!A1:AZ300`;
 
       const valuesRes = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${range}`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(safeRangeQuery)}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -90,6 +117,22 @@ export async function GET(req: NextRequest) {
       if (valuesRes.ok) {
         const valuesData = await valuesRes.json();
         values = valuesData.values || [];
+      } else {
+        // Fallback to simple active tab query if range syntax failed
+        const fallbackRes = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(activeTab)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              Accept: "application/json",
+            },
+            cache: "no-store",
+          }
+        );
+        if (fallbackRes.ok) {
+          const fbData = await fallbackRes.json();
+          values = fbData.values || [];
+        }
       }
 
       return NextResponse.json({
@@ -102,6 +145,8 @@ export async function GET(req: NextRequest) {
           url: meta.spreadsheetUrl || `https://docs.google.com/spreadsheets/d/${meta.spreadsheetId}/edit`,
           tabs: sheetTabs,
           activeTab,
+          frozenRowCount,
+          frozenColumnCount,
           values,
         },
       });
