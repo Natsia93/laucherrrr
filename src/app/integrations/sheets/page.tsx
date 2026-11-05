@@ -42,6 +42,9 @@ interface SheetDetail {
   values: string[][];
 }
 
+// In-memory cache for ultra-fast sheet & tab switching
+const sheetsDetailCache = new Map<string, SheetDetail>();
+
 function GoogleSheetsContent() {
   const { data: session } = authClient.useSession();
   const searchParams = useSearchParams();
@@ -98,9 +101,21 @@ function GoogleSheetsContent() {
     }
   };
 
-  // 2. Fetch details & values of the selected spreadsheet
-  const fetchSheetDetail = async (id: string, tab = "") => {
+  // 2. Fetch details & values of the selected spreadsheet (with in-memory cache)
+  const fetchSheetDetail = async (id: string, tab = "", forceRefresh = false) => {
     if (!id) return;
+    const cacheKey = `${id}::${tab}`;
+
+    // Instant switch if tab is already cached
+    if (!forceRefresh && sheetsDetailCache.has(cacheKey)) {
+      const cached = sheetsDetailCache.get(cacheKey)!;
+      setCurrentSheet(cached);
+      setActiveTab(cached.activeTab);
+      setIsLoadingDetail(false);
+      setIsRefreshing(false);
+      return;
+    }
+
     try {
       setIsLoadingDetail(true);
       const url = `/api/google/sheets?spreadsheetId=${encodeURIComponent(id)}${
@@ -110,6 +125,10 @@ function GoogleSheetsContent() {
       const data = await res.json();
 
       if (data.success && data.spreadsheet) {
+        sheetsDetailCache.set(cacheKey, data.spreadsheet);
+        if (!tab && data.spreadsheet.activeTab) {
+          sheetsDetailCache.set(`${id}::${data.spreadsheet.activeTab}`, data.spreadsheet);
+        }
         setCurrentSheet(data.spreadsheet);
         setActiveTab(data.spreadsheet.activeTab);
       }
@@ -138,9 +157,15 @@ function GoogleSheetsContent() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    // Invalidate cache for current spreadsheet on manual refresh
+    for (const key of sheetsDetailCache.keys()) {
+      if (key.startsWith(`${selectedSheetId}::`)) {
+        sheetsDetailCache.delete(key);
+      }
+    }
     await fetchSpreadsheets();
     if (selectedSheetId) {
-      await fetchSheetDetail(selectedSheetId, activeTab);
+      await fetchSheetDetail(selectedSheetId, activeTab, true);
     }
   };
 

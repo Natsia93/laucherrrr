@@ -39,6 +39,17 @@ interface DriveFile {
   owners?: Array<{ displayName: string; emailAddress: string }>;
 }
 
+interface CachedDriveFolder {
+  files: DriveFile[];
+  currentFolder?: { id: string; name: string };
+  googleConnected: boolean;
+  driveScopeGranted: boolean;
+  timestamp: number;
+}
+
+// In-memory client cache for instantaneous folder routing
+const driveMemoryCache = new Map<string, CachedDriveFolder>();
+
 function GoogleDriveContent() {
   const { data: session } = authClient.useSession();
   const router = useRouter();
@@ -92,7 +103,42 @@ function GoogleDriveContent() {
     }
   }, [currentFolderId]);
 
-  const fetchFiles = async (folderId = currentFolderId, type = activeFilter, query = searchQuery) => {
+  const fetchFiles = async (
+    folderId = currentFolderId,
+    type = activeFilter,
+    query = searchQuery,
+    forceRefresh = false
+  ) => {
+    const cacheKey = `${folderId || "root"}::${type}::${query.trim()}`;
+
+    // Instant cache hit for snappy navigation
+    if (!forceRefresh && driveMemoryCache.has(cacheKey)) {
+      const cached = driveMemoryCache.get(cacheKey)!;
+      setGoogleConnected(cached.googleConnected);
+      setDriveScopeGranted(cached.driveScopeGranted);
+      setFiles(cached.files);
+      setIsLoading(false);
+
+      if (cached.currentFolder && folderId) {
+        setFolderPath((prev) => {
+          const exists = prev.some((p) => p.id === cached.currentFolder!.id);
+          if (!exists) {
+            const updated = [...prev, cached.currentFolder!];
+            if (typeof window !== "undefined") {
+              sessionStorage.setItem("launcher_drive_trail", JSON.stringify(updated));
+            }
+            return updated;
+          }
+          return prev;
+        });
+      }
+
+      // If cached recently within 45s, skip network fetch entirely
+      if (Date.now() - cached.timestamp < 45000) {
+        return;
+      }
+    }
+
     try {
       setIsRefreshing(true);
       const params = new URLSearchParams();
@@ -106,7 +152,17 @@ function GoogleDriveContent() {
       if (data.success) {
         setGoogleConnected(Boolean(data.googleConnected));
         setDriveScopeGranted(Boolean(data.driveScopeGranted));
-        setFiles(data.files || []);
+        const list = data.files || [];
+        setFiles(list);
+
+        // Save to cache
+        driveMemoryCache.set(cacheKey, {
+          files: list,
+          currentFolder: data.currentFolder,
+          googleConnected: Boolean(data.googleConnected),
+          driveScopeGranted: Boolean(data.driveScopeGranted),
+          timestamp: Date.now(),
+        });
 
         // Sync folder name if browsing a direct URL or deep link
         if (data.currentFolder && folderId) {
@@ -179,7 +235,7 @@ function GoogleDriveContent() {
         setIsCreateModalOpen(false);
         setCreateName("");
         triggerToast(`${createType === "folder" ? "Folder" : "Spreadsheet"} created in Drive`);
-        await fetchFiles(currentFolderId, activeFilter, searchQuery);
+        await fetchFiles(currentFolderId, activeFilter, searchQuery, true);
       }
     } catch (err) {
       console.error("Failed to create file/folder:", err);
@@ -290,7 +346,7 @@ function GoogleDriveContent() {
             </div>
 
             <button
-              onClick={() => fetchFiles(currentFolderId, activeFilter, searchQuery)}
+              onClick={() => fetchFiles(currentFolderId, activeFilter, searchQuery, true)}
               disabled={isRefreshing}
               className="px-3.5 py-1.5 rounded-md text-xs font-medium border border-neutral-200/80 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >

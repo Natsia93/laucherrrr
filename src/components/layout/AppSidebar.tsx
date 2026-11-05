@@ -174,7 +174,7 @@ export function AppSidebar() {
           }`}
         >
           {(!collapsed || mobileOpen) ? (
-            <Link href="/overview" className="flex items-center gap-2.5 group overflow-hidden py-1" title="Launcher OS">
+            <Link href="/overview" prefetch={true} className="flex items-center gap-2.5 group overflow-hidden py-1" title="Launcher OS">
               <div className="relative w-6 h-6 shrink-0">
                 <Image
                   src="/logo/Logo_revou.png"
@@ -231,6 +231,7 @@ export function AppSidebar() {
               <Link
                 key={itemIdx}
                 href={item.href}
+                prefetch={true}
                 onClick={() => setMobileOpen(false)}
                 className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] leading-snug transition-all duration-150 ${
                   isActive
