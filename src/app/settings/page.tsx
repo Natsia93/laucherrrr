@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
@@ -2445,6 +2446,12 @@ export default function SettingsPage() {
                           <Settings2 className="w-3.5 h-3.5 mr-1" />
                           <span>{connectors.sheets.connected ? "Edit Settings" : "Configure"}</span>
                         </Button>
+                        <Link
+                          href="/integrations/sheets"
+                          className="h-7.5 px-2.5 text-xs rounded-[5px] bg-emerald-600 hover:bg-emerald-700 text-white font-medium flex items-center justify-center transition-colors shadow-2xs shrink-0"
+                        >
+                          Studio
+                        </Link>
                         {connectors.sheets.connected && (
                           <Button
                             type="button"
@@ -2632,6 +2639,12 @@ export default function SettingsPage() {
                           <Settings2 className="w-3.5 h-3.5 mr-1" />
                           <span>{connectors.drive.connected ? "Edit Settings" : "Configure"}</span>
                         </Button>
+                        <Link
+                          href="/integrations/drive"
+                          className="h-7.5 px-2.5 text-xs rounded-[5px] bg-neutral-900 dark:bg-white hover:opacity-90 text-white dark:text-neutral-900 font-medium flex items-center justify-center transition-opacity shadow-2xs shrink-0"
+                        >
+                          Hub
+                        </Link>
                         {connectors.drive.connected && (
                           <Button
                             type="button"

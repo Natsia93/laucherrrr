@@ -31,6 +31,8 @@ import {
   AnimatedLLMIcon,
   AnimatedDeckIcon,
   AnimatedCalendarIcon,
+  AnimatedDriveIcon,
+  AnimatedSheetsIcon,
   AnimatedSlackIcon,
   AnimatedWorkflowIcon,
   AnimatedSettingsIcon,
@@ -63,6 +65,16 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
     title: "Google Calendar",
     href: "/integrations/calendar",
     icon: AnimatedCalendarIcon,
+  },
+  {
+    title: "Google Drive",
+    href: "/integrations/drive",
+    icon: AnimatedDriveIcon,
+  },
+  {
+    title: "Google Sheets",
+    href: "/integrations/sheets",
+    icon: AnimatedSheetsIcon,
   },
   {
     title: "Slack Dispatcher",

@@ -395,3 +395,90 @@ export function AnimatedLogoutIcon({ className = "", size = 18, ...props }: Anim
   );
 }
 
+/**
+ * 9. 📁 Animated Google Drive Icon
+ * Floating 3-way drive triangle geometry with subtle levitation on hover
+ */
+export function AnimatedDriveIcon({ className = "", size = 18, ...props }: AnimatedIconProps) {
+  return (
+    <span className={`inline-flex items-center justify-center select-none ${className}`} style={{ width: size, height: size }}>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-full h-full overflow-visible"
+        {...props}
+      >
+        <style dangerouslySetInnerHTML={{ __html: `
+          .group:hover .drive-shape {
+            animation: driveLevitate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          }
+          @keyframes driveLevitate {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-1.5px) scale(1.06); }
+            100% { transform: translateY(0) scale(1); }
+          }
+        ` }} />
+        <g className="drive-shape origin-center">
+          <path d="m4 15 4-7h8l-4 7H4z" />
+          <path d="m16 8 4 7-4 7H8l4-7h8z" opacity="0.8" />
+          <path d="M8 22 4 15l4-7 4 7-4 7z" opacity="0.6" />
+        </g>
+      </svg>
+    </span>
+  );
+}
+
+/**
+ * 10. 📊 Animated Google Sheets Icon
+ * Spreadsheet table grid with staggered cell waves on hover
+ */
+export function AnimatedSheetsIcon({ className = "", size = 18, ...props }: AnimatedIconProps) {
+  return (
+    <span className={`inline-flex items-center justify-center select-none ${className}`} style={{ width: size, height: size }}>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-full h-full overflow-visible"
+        {...props}
+      >
+        <style dangerouslySetInnerHTML={{ __html: `
+          .group:hover .sheet-cell-1 { animation: cellPulse 0.4s ease 0s forwards; }
+          .group:hover .sheet-cell-2 { animation: cellPulse 0.4s ease 0.08s forwards; }
+          .group:hover .sheet-cell-3 { animation: cellPulse 0.4s ease 0.16s forwards; }
+          .group:hover .sheet-cell-4 { animation: cellPulse 0.4s ease 0.24s forwards; }
+          @keyframes cellPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+          }
+        ` }} />
+        <rect width="18" height="18" x="3" y="3" rx="2" />
+        <path d="M3 9h18" />
+        <path d="M3 15h18" />
+        <path d="M9 9v12" />
+        <path d="M15 9v12" />
+        {/* Animated small cell indicator dots inside */}
+        <circle cx="6" cy="6" r="1" className="sheet-cell-1 origin-[6px_6px] fill-current" />
+        <circle cx="12" cy="12" r="1" className="sheet-cell-2 origin-[12px_12px] fill-current" />
+        <circle cx="18" cy="12" r="1" className="sheet-cell-3 origin-[18px_12px] fill-current" />
+        <circle cx="12" cy="18" r="1" className="sheet-cell-4 origin-[12px_18px] fill-current" />
+      </svg>
+    </span>
+  );
+}
+
+
