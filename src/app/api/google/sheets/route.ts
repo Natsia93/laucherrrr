@@ -135,6 +135,34 @@ export async function GET(req: NextRequest) {
         }
       }
 
+      // Fetch cell wrap strategies from Google Sheets grid data if available
+      const wrapStrategies: Record<number, string> = {};
+      try {
+        const gridRes = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}?ranges=${encodeURIComponent(safeRangeQuery)}&includeGridData=true&fields=sheets.data.rowData.values.effectiveFormat.wrapStrategy`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              Accept: "application/json",
+            },
+            cache: "no-store",
+          }
+        );
+        if (gridRes.ok) {
+          const gridData = await gridRes.json();
+          const rowData = gridData.sheets?.[0]?.data?.[0]?.rowData || [];
+          rowData.forEach((row: { values?: Array<{ effectiveFormat?: { wrapStrategy?: string } }> }) => {
+            (row.values || []).forEach((cell: { effectiveFormat?: { wrapStrategy?: string } }, colIdx: number) => {
+              if (cell.effectiveFormat?.wrapStrategy === "WRAP") {
+                wrapStrategies[colIdx] = "WRAP";
+              }
+            });
+          });
+        }
+      } catch (err) {
+        console.warn("Could not fetch wrapStrategies:", err);
+      }
+
       return NextResponse.json({
         success: true,
         googleConnected: true,
@@ -147,6 +175,7 @@ export async function GET(req: NextRequest) {
           activeTab,
           frozenRowCount,
           frozenColumnCount,
+          wrapStrategies,
           values,
         },
       });
