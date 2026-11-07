@@ -88,11 +88,6 @@ function GoogleSheetsContent() {
         setSheetsScopeGranted(Boolean(data.sheetsScopeGranted));
         const list: SpreadsheetSummary[] = data.spreadsheets || [];
         setSpreadsheets(list);
-
-        // If no selected sheet and list has items, select the first one
-        if (!selectedSheetId && list.length > 0) {
-          setSelectedSheetId(list[0].id);
-        }
       }
     } catch (err) {
       console.error("Failed to fetch spreadsheets:", err);
@@ -146,7 +141,11 @@ function GoogleSheetsContent() {
 
   useEffect(() => {
     if (selectedSheetId) {
-      fetchSheetDetail(selectedSheetId, activeTab);
+      setActiveTab("");
+      fetchSheetDetail(selectedSheetId, "");
+    } else {
+      setCurrentSheet(null);
+      setActiveTab("");
     }
   }, [selectedSheetId]);
 
@@ -158,14 +157,18 @@ function GoogleSheetsContent() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     // Invalidate cache for current spreadsheet on manual refresh
-    for (const key of sheetsDetailCache.keys()) {
-      if (key.startsWith(`${selectedSheetId}::`)) {
-        sheetsDetailCache.delete(key);
+    if (selectedSheetId) {
+      for (const key of sheetsDetailCache.keys()) {
+        if (key.startsWith(`${selectedSheetId}::`)) {
+          sheetsDetailCache.delete(key);
+        }
       }
     }
     await fetchSpreadsheets();
     if (selectedSheetId) {
       await fetchSheetDetail(selectedSheetId, activeTab, true);
+    } else {
+      setIsRefreshing(false);
     }
   };
 
@@ -279,18 +282,28 @@ function GoogleSheetsContent() {
                 <div className="relative flex-1 max-w-md">
                   <select
                     value={selectedSheetId}
-                    onChange={(e) => setSelectedSheetId(e.target.value)}
+                    onChange={(e) => {
+                      const newId = e.target.value;
+                      setSelectedSheetId(newId);
+                      if (!newId) {
+                        setCurrentSheet(null);
+                        setActiveTab("");
+                      }
+                    }}
                     disabled={isLoadingList || spreadsheets.length === 0}
                     className="w-full h-9 pl-3.5 pr-8 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#121212] text-xs font-medium text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 appearance-none truncate cursor-pointer transition-colors"
                   >
                     {spreadsheets.length === 0 ? (
                       <option value="">{isLoadingList ? "Loading spreadsheets..." : "No spreadsheets found"}</option>
                     ) : (
-                      spreadsheets.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name}
-                        </option>
-                      ))
+                      <>
+                        <option value="">-- Choose a spreadsheet --</option>
+                        {spreadsheets.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name}
+                          </option>
+                        ))}
+                      </>
                     )}
                   </select>
                   <ChevronDown className="w-3.5 h-3.5 text-neutral-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
